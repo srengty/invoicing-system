@@ -4,6 +4,7 @@ Invoicing system is a web application with the following features:
 - Manage agreements
 - Manage invoices
 
+# Landing page
 ![Homepage](docs/img/homepage.jpg)
 
 ## Manage quotations
