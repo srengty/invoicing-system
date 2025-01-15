@@ -1,5 +1,6 @@
 <script setup>
 import ProductTable from '@/Components/ProductTable.vue';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -29,5 +30,7 @@ function handleImageError() {
 
 <template>
     <Head title="Welcome" />
-    <ProductTable/>
+    <GuestLayout>
+        <ProductTable/>
+    </GuestLayout>
 </template>
