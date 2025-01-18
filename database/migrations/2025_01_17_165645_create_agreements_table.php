@@ -55,7 +55,7 @@ return new class extends Migration
             $table->double('amount_no_tax')->default(0)->comment('amount exclude tax');
             $table->double('tax')->default(0)->comment('tax in amount $');
             $table->string('status', 20)->default('Pending')->comment('Open, Closed');
-            $table->foreignId('quotation_no')->constrained('quotations')->nullable();
+            $table->foreignId('quotation_no')->nullable()->constrained('quotations');
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->timestamps();
         });

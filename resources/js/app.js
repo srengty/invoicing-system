@@ -1,3 +1,4 @@
+import 'primeicons/primeicons.css';
 import '../css/app.css';
 import './bootstrap';
 
