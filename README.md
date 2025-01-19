@@ -35,12 +35,15 @@ DB_PASSWORD=
 - Run `php artisan migrate` (to generate tables in the database)
 
 ## Run the web app
-To serve the web application and auto reload for development, run:
-
-```ssh
+To serve the web application and auto reload for development, open terminal then run:
+```
 > php artisan serve
+```
+Then, open another terminal and run:
+```
 > npm run dev
 ```
+Keep both running because they are needed as local web server and resources compiler & live-reload.
 
 ## Deployment
 To deploy the web application on a server or hosting server:

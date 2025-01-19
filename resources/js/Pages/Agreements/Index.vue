@@ -5,8 +5,8 @@
             <div class="flex justify-between items-center p-3">
                 <h1 class="text-2xl">Agreements</h1>
                 <div>
-                    <Button icon="pi pi-plus" label="New"/>
-                    <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns"/>
+                    <Button icon="pi pi-plus" label="New" rounded/>
+                    <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded/>
                 </div>
             </div>
             <DataTable :value="agreements" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">

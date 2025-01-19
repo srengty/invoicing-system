@@ -1,15 +1,15 @@
 
 <template>
     <div class="card inline-flex justify-center mx-2">
-        <Button type="button" :label="selectedMember ? selectedMember.name : 'Select Columns'" @click="toggle" icon="pi pi-plus" />
+        <Button type="button" :label="selectedMember ? selectedMember.name : 'Select Columns'" @click="toggle" icon="pi pi-plus" :rounded="rounded" />
 
         <Popover ref="op">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
                 <div>
                     <span class="font-medium block mb-2">Team Members</span>
-                    <Listbox v-model="model" :options="columns" multiple optionLabel="header" class="w-full border-white" checkmark="" />
-                    <Button label="Apply" class="mt-2" @click="selectColumns()"/>
+                    <Listbox v-model="model" :options="columns" multiple optionLabel="header" scrollHeight="24rem" checkmark="" />
                 </div>
+                <Button label="Apply" class="mt-2" @click="selectColumns()"/>
             </div>
         </Popover>
     </div>
@@ -23,6 +23,9 @@ defineProps({
     columns: {
         type: Array,
     },
+    rounded: {
+        type: Boolean,
+    }
 });
 const model = defineModel({
     type: Array,

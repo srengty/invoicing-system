@@ -1,7 +1,7 @@
 <script setup>
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link } from '@inertiajs/vue3';
-import MainNav from './MainNav.vue';
+import MainNavTree from './MainNavTree.vue';
 </script>
 
 <template>
@@ -15,7 +15,7 @@ import MainNav from './MainNav.vue';
                     </Link>
                     Institute of Technology of Cambodia
                 </div>
-                <MainNav />
+                <MainNavTree />
             </div>
             <div class="md:col-span-5">
                 <div class="bg-slate-100 min-h-10">&emsp;</div>
