@@ -23,4 +23,11 @@ class Customer extends Model
         'bank_account_number',
         'bank_swift',
     ];
+
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class);
+    }
+
 }
+

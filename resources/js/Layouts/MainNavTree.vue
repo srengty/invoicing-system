@@ -1,6 +1,7 @@
 
 <template>
-    <div class="card flex justify-center dark:bg-white">
+    <div class="card flex justify-center dark:bg-white"></div>
+    <div class="card flex justify-center pr-1">
         <PanelMenu :model="items" class="w-full md:w-80" :pt="{panel:{class:'border-0 bg-transparent'}}">
             <template #item="{ item }">
                 <div :class="['flex items-center cursor-pointer group',{'active': page.url === item.href}]">
