@@ -6,8 +6,10 @@
                     <div class="">
                         <Button label="Add Items" icon="pi pi-plus" class="p-button-success" type="submit" rounded/>
                     </div>
-                    <div class="">
-                        <Button label="Add New Customer" icon="pi pi-plus" class="p-button-success" type="submit" rounded/>
+                    <div>
+                        <Link :href="route('customers.create')">
+                            <Button label="Add New Customer" icon="pi pi-plus" class="p-button-success" type="submit" rounded/>
+                        </Link>
                     </div>
                     <div class="">
                         <Button label="Save Invoice" icon="pi pi-check" class="p-button-success" type="submit" rounded/>
@@ -22,15 +24,15 @@
                     </div>
                     <div>
                         <label for="agreement_no" class="block text-lg font-medium">Agreement No</label>
-                        <InputText id="agreement_no" v-model="form.agreement_no" class="w-full" placeholder="Enter agreement number" />
+                        <Dropdown id="agreement_no" v-model="form.agreement_no" :options="agreementOptions" optionLabel="label" optionValue="value" class="w-full" placeholder="Select agreement number" />
                     </div>
                     <div>
                         <label for="quotation_no" class="block text-lg font-medium">Quotation No</label>
-                        <InputText id="quotation_no" v-model="form.quotation_no" class="w-full" placeholder="Enter quotation number" />
+                        <Dropdown id="quotation_no" v-model="form.quotation_no" :options="quotationOptions" optionLabel="label" optionValue="value" class="w-full" placeholder="Select quotation number" />
                     </div>
                     <div>
-                        <label for="customer_id" class="block text-lg font-medium">Customer ID</label>
-                        <InputText id="customer_id" v-model="form.customer_id" class="w-full" placeholder="Enter customer ID" />
+                        <label for="customer_id" class="block text-lg font-medium">Customer/Organization name</label>
+                        <Dropdown id="customer_id" v-model="form.customer_id" :options="customerOptions" optionLabel="label" optionValue="value" class="w-full" placeholder="Select customer" />
                     </div>
                     <div>
                         <label for="address" class="block text-lg font-medium">Address</label>
@@ -70,12 +72,26 @@ const form = useForm({
     status: '',
 });
 
-const statusOptions = [
-    { label: 'Pending', value: 'Pending' },
-    { label: 'Paid', value: 'Paid' },
-    { label: 'Overdue', value: 'Overdue' },
+// Options for dropdowns
+const agreementOptions = [
+    { label: 'Agreement 001', value: '001' },
+    { label: 'Agreement 002', value: '002' },
+    { label: 'Agreement 003', value: '003' },
 ];
 
+const quotationOptions = [
+    { label: 'Quotation 1001', value: '1001' },
+    { label: 'Quotation 1002', value: '1002' },
+    { label: 'Quotation 1003', value: '1003' },
+];
+
+const customerOptions = [
+    { label: 'Customer A', value: 'A' },
+    { label: 'Customer B', value: 'B' },
+    { label: 'Customer C', value: 'C' },
+];
+
+// Submit form
 const submit = () => {
     form.post('/invoices', {
         onSuccess: () => {

@@ -106,6 +106,12 @@ const items = ref([
         icon: 'pi pi-money-bill',
         shortcut: '⌘+W',
         items: [
+        {
+                label: 'Customers',
+                href: '/customers',
+                icon: 'pi pi-user',
+                shortcut: '⌘+W'
+            },
             {
                 label: 'Settings',
                 href: '/settings',

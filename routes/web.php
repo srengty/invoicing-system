@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AgreementController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProfileController;
+use App\Models\Customer;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,6 +21,9 @@ Route::get('/agreements', [AgreementController::class, 'index'])->name('agreemen
 
 Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+
+Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
