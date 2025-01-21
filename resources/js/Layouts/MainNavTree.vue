@@ -1,8 +1,12 @@
 
 <template>
  
+ 
     <div class="card flex justify-center dark:bg-white"></div>
  
+    <div class="card flex justify-center pr-1"></div>
+ 
+    <div class="card flex justify-center dark:bg-white"></div>
     <div class="card flex justify-center pr-1">
  
         <PanelMenu :model="items" class="w-full md:w-80" :pt="{panel:{class:'border-0 bg-transparent'}}">
@@ -109,6 +113,12 @@ const items = ref([
         icon: 'pi pi-money-bill',
         shortcut: '⌘+W',
         items: [
+        {
+                label: 'Customers',
+                href: '/customers',
+                icon: 'pi pi-user',
+                shortcut: '⌘+W'
+            },
             {
                 label: 'Settings',
                 href: '/settings',

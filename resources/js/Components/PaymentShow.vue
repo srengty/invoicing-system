@@ -8,7 +8,6 @@
         <Column field="unit" header="Unit"></Column>
         <Column field="unitPrice" header="Unit Price" :body="priceTemplate"></Column>
         <Column field="subTotal" header="SUB-TOTAL" :body="subTotalTemplate"></Column>
-        <Column header="Action" :body="actionTemplate"></Column>
       </DataTable>
     </div>
 
@@ -85,16 +84,6 @@ const subTotalTemplate = (data) => `₹${data.subTotal.toLocaleString()}`;
 
 // Price template
 const priceTemplate = (data) => `₹${data.unitPrice.toLocaleString()}`;
-
-// Action template (Add and Delete buttons)
-const actionTemplate = (data) => {
-  return `
-    <Button label="Edit" icon="pi pi-pencil" class="p-button-text p-button-sm p-button-info mr-2" />
-    <Button label="Catalog" icon="pi pi-book" class="p-button-text p-button-sm p-button-success mr-2" />
-    <Button label="Add" icon="pi pi-plus" class="p-button-text p-button-sm p-button-success mr-2" @click="addItem(data)" />
-    <Button label="Delete" icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="deleteItem(data.id)" />
-  `;
-};
 
 // Add item function
 const addItem = (data) => {
