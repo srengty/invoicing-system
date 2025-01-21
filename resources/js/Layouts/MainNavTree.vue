@@ -106,12 +106,6 @@ const items = ref([
         icon: 'pi pi-money-bill',
         shortcut: '⌘+W',
         items: [
-        {
-                label: 'Customers',
-                href: '/customers',
-                icon: 'pi pi-user',
-                shortcut: '⌘+W'
-            },
             {
                 label: 'Settings',
                 href: '/settings',
@@ -122,6 +116,27 @@ const items = ref([
                 label: 'Privacy',
                 href: '/privacy',
                 icon: 'pi pi-shield',
+                shortcut: '⌘+P'
+            }
+        ]
+    },
+    {
+        id: 5,
+        label: 'Settings',
+        href: '/settings',
+        icon: 'pi pi-cog',
+        shortcut: '⌘+W',
+        items: [
+        {
+                label: 'Customers',
+                href: '/customers',
+                icon: 'pi pi-user',
+                shortcut: '⌘+W'
+            },
+            {
+                label: 'Products',
+                href: '/products',
+                icon: 'pi pi-box',
                 shortcut: '⌘+P'
             }
         ]
