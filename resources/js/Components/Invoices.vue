@@ -7,9 +7,7 @@
                         <Button label="Add Items" icon="pi pi-plus" class="p-button-success" type="submit" rounded/>
                     </div>
                     <div>
-                        <Link :href="route('customers.create')">
                             <Button label="Add New Customer" icon="pi pi-plus" class="p-button-success" type="submit" rounded/>
-                        </Link>
                     </div>
                     <div class="">
                         <Button label="Save Invoice" icon="pi pi-check" class="p-button-success" type="submit" rounded/>

@@ -21,6 +21,7 @@ Route::get('/agreements', [AgreementController::class, 'index'])->name('agreemen
 
 Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 
 Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
 Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create');
