@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\AgreementController;
+ 
 use App\Http\Controllers\InvoiceController;
+ 
+use App\Http\Controllers\QuotationController;
+ 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -17,8 +21,12 @@ Route::get('/', function () {
 });
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 
+ 
 Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+ 
+Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
+ 
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
