@@ -14,10 +14,15 @@ Add a new quotation:
 View or Print quotation:
 ![View quotation](docs/img/view_quotation.png)
 
+Add a new agreement:
+![Add agreement](docs/img/add_agreement.png)
+
 ## Manage agreements
 ![Agreements](docs/img/agreements.png)
+
 ## Manage invoices
 ![Invoices](docs/img/add_invoice.jpg)
+
 ## Installation
 First, clone this repository. Then:
 - Copy `.env.example` to `.env` and config database:

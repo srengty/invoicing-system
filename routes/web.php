@@ -16,6 +16,7 @@ Route::get('/', function () {
     ]);
 });
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
+Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 

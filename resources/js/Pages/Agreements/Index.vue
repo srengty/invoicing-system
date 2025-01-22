@@ -5,7 +5,7 @@
             <div class="flex justify-between items-center p-3">
                 <h1 class="text-2xl">Agreements</h1>
                 <div>
-                    <Button icon="pi pi-plus" label="New" rounded/>
+                    <Button icon="pi pi-plus" label="New" rounded @click="openCreate" />
                     <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded/>
                 </div>
             </div>
@@ -18,7 +18,7 @@
 <script setup>
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { DataTable, Column, Button, Popover } from 'primevue';
 import { ref } from "vue";
 
@@ -46,5 +46,8 @@ const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 const updateColumns = (columns) => {
     showColumns.value = selectedColumns.value;
+}
+const openCreate = () => {
+    router.get(route("agreements.create"));
 }
 </script>
