@@ -1,8 +1,16 @@
 <?php
 
 use App\Http\Controllers\AgreementController;
+
+use App\Http\Controllers\CustomerController;
+ 
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\ProductController;
+ 
 use App\Http\Controllers\QuotationController;
+ 
 use App\Http\Controllers\ProfileController;
+use App\Models\Customer;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -18,7 +26,32 @@ Route::get('/', function () {
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 
+ 
+Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+ 
+ 
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
+ 
+ 
+Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
+
+Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
+Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
+Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store'); // Store new customer
+Route::get('/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit'); // Update an existing customer
+Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
+
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/create', [ProductController::class, 'create'])->name('products.create'); 
+Route::post('/products', [ProductController::class, 'store'])->name('products.store'); 
+Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit'); 
+Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update'); 
+Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy'); 
+
+
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

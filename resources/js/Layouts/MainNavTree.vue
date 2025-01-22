@@ -1,6 +1,14 @@
 
 <template>
+ 
+ 
+    <div class="card flex justify-center dark:bg-white"></div>
+ 
+    <div class="card flex justify-center pr-1"></div>
+ 
+    <div class="card flex justify-center dark:bg-white"></div>
     <div class="card flex justify-center pr-1">
+ 
         <PanelMenu :model="items" class="w-full md:w-80" :pt="{panel:{class:'border-0 bg-transparent'}}">
             <template #item="{ item }">
                 <div :class="['flex items-center cursor-pointer group',{'active': page.url === item.href}]">
@@ -115,6 +123,27 @@ const items = ref([
                 label: 'Privacy',
                 href: '/privacy',
                 icon: 'pi pi-shield',
+                shortcut: '⌘+P'
+            }
+        ]
+    },
+    {
+        id: 5,
+        label: 'Settings',
+        href: '/settings',
+        icon: 'pi pi-cog',
+        shortcut: '⌘+W',
+        items: [
+        {
+                label: 'Customers',
+                href: '/customers',
+                icon: 'pi pi-user',
+                shortcut: '⌘+W'
+            },
+            {
+                label: 'Products',
+                href: '/products',
+                icon: 'pi pi-box',
                 shortcut: '⌘+P'
             }
         ]
