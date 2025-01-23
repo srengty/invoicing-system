@@ -9,7 +9,9 @@
                 Quotations are proposed to customer to bid for a project.
             </div>
             <div class="flex justify-end p-4 gap-4">
-                <Button label="Issue Quotation" rounded/>
+                <div><Link :href="route('quotations.create')">
+                    <Button label="Issue Quotation" rounded/>
+                </Link></div>
                 <Button label="Issue Invoice" rounded/>
                 <Button label="Record Agreement" rounded/>
             </div>
@@ -47,8 +49,7 @@
 <script setup>
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import { Head } from '@inertiajs/vue3';
-// import { DataTable, Column, Button, Popover } from 'primevue';
+import { Head, Link } from '@inertiajs/vue3';
 import { ref } from "vue";
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';

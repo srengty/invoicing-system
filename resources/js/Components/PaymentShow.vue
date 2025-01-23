@@ -21,10 +21,13 @@
       <p class="font-bold text-lg">{{ calculateTotal }}</p>
     </div>
 
-    <div class="terms mt-4">
-      <h3 class="text-lg">Terms and Conditions</h3>
-      <p>Full payment is required upon quote acceptance.</p>
-      <p>This quote is negotiable for one (1) week from the date stated above.</p>
+    <div class="terms mt-4 flex flex-col">
+      <div class="w-2/3">
+        <h3 class="text-lg">Terms and Conditions</h3>
+        <p>Full payment is required upon quote acceptance.</p>
+        <p>This quote is negotiable for one (1) week from the date stated above.</p>
+      </div>
+
     </div>
 
     <div class="buttons mt-4 flex justify-end">
