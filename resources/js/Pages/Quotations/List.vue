@@ -16,11 +16,15 @@
 
             <div>
                 <DataTable :value="quotations" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem">
-                    <Column 
-                        header="View Print-out" 
-                        style="width: 20%"
-                        body="viewPrintoutTemplate"
-                    />
+                    <Column header="View Print-out" style="width: 20%">
+                        <template #body="" >
+                            <!-- Add button inside the column body template -->
+                            <div class="flex gap-4">
+                                <Button icon="pi pi-plus" label="View" rounded style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-plus" label="Print out" rounded style="padding-left: 12px;padding-right: 18px;" />
+                            </div>
+                        </template>
+                    </Column>
                     <Column field="id" header="No." style="width: 10%" />
                     <Column field="customer.name" header="Customer/Organization Name" style="width: 25%" />
                     <Column field="grand_total" header="Total" style="width: 10%" />
@@ -44,9 +48,11 @@
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { DataTable, Column, Button, Popover } from 'primevue';
+// import { DataTable, Column, Button, Popover } from 'primevue';
 import { ref } from "vue";
-
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Button from 'primevue/button';
 defineProps({
     quotations: {
         type: Array,
