@@ -33,14 +33,6 @@
                     <Column field="status" header="Status" style="width: 15%" />
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
-                <!-- <DataTable :value="quotations" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem">
-                    <Column field="name" header="View Print-out" style="width: 25%"></Column>
-                    <Column field="country.name" header="NO." style="width: 10%"></Column>
-                    <Column field="company" header="Customer/ Organization name" style="width: 25%"></Column>
-                    <Column field="representative.name" header="TOTAL" style="width: 10%"></Column>
-                    <Column field="representative.name" header="STATUS" style="width: 10%"></Column>
-                    <Column field="representative.name" header="CUSTOMER STATUS" style="width: 20%"></Column>
-                </DataTable> -->
             </div>
         </div>
     </GuestLayout>
