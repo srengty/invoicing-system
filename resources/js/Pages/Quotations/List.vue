@@ -9,32 +9,30 @@
                 Quotations are proposed to customer to bid for a project.
             </div>
             <div class="flex justify-end p-4 gap-4">
-                <Button label="Issue Quotation" rounded/>
+                <div><Link :href="route('quotations.create')">
+                    <Button label="Issue Quotation" rounded/>
+                </Link></div>
                 <Button label="Issue Invoice" rounded/>
                 <Button label="Record Agreement" rounded/>
             </div>
 
             <div>
                 <DataTable :value="quotations" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem">
-                    <Column 
-                        header="View Print-out" 
-                        style="width: 20%"
-                        body="viewPrintoutTemplate"
-                    />
+                    <Column header="View Print-out" style="width: 20%">
+                        <template #body="" >
+                            <!-- Add button inside the column body template -->
+                            <div class="flex gap-4">
+                                <Button icon="pi pi-plus" label="View" rounded style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-plus" label="Print out" rounded style="padding-left: 12px;padding-right: 18px;" />
+                            </div>
+                        </template>
+                    </Column>
                     <Column field="id" header="No." style="width: 10%" />
                     <Column field="customer.name" header="Customer/Organization Name" style="width: 25%" />
                     <Column field="grand_total" header="Total" style="width: 10%" />
                     <Column field="status" header="Status" style="width: 15%" />
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
-                <!-- <DataTable :value="quotations" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem">
-                    <Column field="name" header="View Print-out" style="width: 25%"></Column>
-                    <Column field="country.name" header="NO." style="width: 10%"></Column>
-                    <Column field="company" header="Customer/ Organization name" style="width: 25%"></Column>
-                    <Column field="representative.name" header="TOTAL" style="width: 10%"></Column>
-                    <Column field="representative.name" header="STATUS" style="width: 10%"></Column>
-                    <Column field="representative.name" header="CUSTOMER STATUS" style="width: 20%"></Column>
-                </DataTable> -->
             </div>
         </div>
     </GuestLayout>
@@ -43,10 +41,11 @@
 <script setup>
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { DataTable, Column, Button, Popover } from 'primevue';
+import { Head, Link } from '@inertiajs/vue3';
 import { ref } from "vue";
-
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Button from 'primevue/button';
 defineProps({
     quotations: {
         type: Array,

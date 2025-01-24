@@ -32,7 +32,7 @@ Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invo
  
  
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
- 
+Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
  
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 
