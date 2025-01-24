@@ -2,61 +2,47 @@
     <Head title="Create Agreement" />
     <GuestLayout>
         <h1>Create Agreement</h1>
-        <form @submit.prevent="submit">
+        <Form @submit.prevent="submit" v-slot="$form" :initial-values="form">
             <div class="create-agreement flex flex-row gap-4">
-                <div class="border border-gray-200 rounded-lg p-4">
+                <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1">
                         <span>Quotation No.</span>
-                        <input v-model="form.quotation_no" />
+                        <InputNumber name="quotation_no" :use-grouping="false"/>
                         <span>Agreement No.</span>
-                        <input v-model="form.agreement_no" />
+                        <InputNumber name="agreement_no" :use-grouping="false" />
                         <span>Date</span>
-                        <input type="date" pattern="dd/mm/yyyy" v-model="form.date" />
+                        <DatePicker date-format="dd/mm/yy" name="date" showIcon :show-on-focus="false"/>
                         <span>Customer</span>
-                        <input v-model="form.customer" />
+                        <InputText name="customer" />
                         <span>Address</span>
-                        <input v-model="form.address" />
+                        <InputText name="address" />
                         <span>Agreement doc</span>
-                        <input type="file" @input="form.avatar = $event.target.files[0]" />
-                        <span :class="[{ 'hidden': !form.progress }]">Uploading</span>
-                        <progress v-if="form.progress" :value="form.progress.percentage" max="100">
-                            {{ form.progress.percentage }}%
-                        </progress>
+                        <FileUpload name="agreement_doc" />
                     </div>
                 </div>
-                <div class="border border-gray-200 rounded-lg p-4">
+                <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1">
                         <span class="col-span-2 text-xl mb-5">Agreement summary</span>
                         <span>Start date</span>
-                        <input />
+                        <DatePicker date-format="dd/mm/yy" name="start_date"/>
                         <span>End date</span>
-                        <input />
+                        <DatePicker date-format="dd/mm/yy" name="end_date"/>
                         <span>Agreement amount (exclude tax)</span>
-                        <input type="date" pattern="dd/mm/yyyy" />
+                        <InputNumber name="agreement_amount" />
                         <span>Tax amount</span>
-                        <input />
+                        <InputNumber name="tax_amount" min-fraction-digits="2" max-fraction-digits="5"/>
                         <span>Payment schedule</span>
-                        <input />
-                        <span>Agreement doc</span>
-                        <input type="file" @input="form.avatar = $event.target.files[0]" />
-                        <span :class="[{ 'hidden': !form.progress }]">Uploading</span>
-                        <progress v-if="form.progress" :value="form.progress.percentage" max="100">
-                            {{ form.progress.percentage }}%
-                        </progress>
+                        <Button label="Add payment schedule" />
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4">
-                    <div class="grid grid-cols-2 gap-1">
+                    <div class="grid grid-cols-1 gap-1">
                         <span>Attachment</span>
-                        <input type="file" @input="form.avatar = $event.target.files[0]" />
-                        <span :class="[{ 'hidden': !form.progress }]">Uploading</span>
-                        <progress v-if="form.progress" :value="form.progress.percentage" max="100">
-                            {{ form.progress.percentage }}%
-                        </progress>
+                        <FileUpload name="attachment[]" />
                     </div>
                 </div>
             </div>
-        </form>
+        </Form>
     </GuestLayout>
 </template>
 
@@ -64,16 +50,26 @@
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { useForm } from "@inertiajs/vue3";
+import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText } from 'primevue';
+import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
+import { reactive } from 'vue';
 const toast = useToast();
-const form = useForm({
+const form = reactive({
     quotation_no: null,
     agreement_no: null,
-    date: '21/01/2025',
+    date: new Date('01/20/2025'),
     customer: null,
     address: null,
-    avatar: null,
+    agreement_doc: null,
     progress: null,
+    start_date: '01/21/2025',
+    end_date: '01/21/2025',
+    agreement_amount: 0,
+    tax_amount: 0,
+    attachment: null,
+    payment_schedule: [],
+    attachment: null,
 });
 const submit = () => {
     toast.add({ severity: 'success', summary: 'Success', detail: 'Agreement created successfully' });
