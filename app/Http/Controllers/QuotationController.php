@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quotation;
+use App\Models\Customer;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -28,7 +30,13 @@ class QuotationController extends Controller
     public function create()
     {
         // Render a form for creating a new quotation
-        return Inertia::render('Quotations/Create');
+        // return Inertia::render('Quotations/Create');
+        $customers = Customer::select('code', 'name')->get(); // Fetch customer id and name
+        $products = Product::select('code', 'name')->get(); // Fetch customer id and name
+        return inertia('Quotations/Create', [
+            'customers' => $customers, // Pass customers to the frontend
+            'products' => $products, // Pass customers to the frontend
+        ]);
     }
 
     /**
@@ -36,7 +44,7 @@ class QuotationController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate and store the quotation data
+        // Validate and store the quotation data (11 attributes)
         $validated = $request->validate([
             'quotation_no' => 'required|integer|unique:quotations',
             'quotation_date' => 'required|date',
@@ -53,7 +61,7 @@ class QuotationController extends Controller
 
         Quotation::create($validated);
 
-        return redirect()->route('quotations.index')->with('success', 'Quotation created successfully.');
+        return redirect()->route('quotations.list')->with('success', 'Quotation created successfully.');
     }
 
     /**

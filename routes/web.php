@@ -33,7 +33,8 @@ Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invo
  
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
- 
+Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store'); // Store new issued quotation
+
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 
 Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
