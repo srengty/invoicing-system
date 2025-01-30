@@ -72,16 +72,16 @@ const items = ref([
         shortcut: '⌘+R',
         items: [
             {
-                label: 'Sales',
-                href: '/sales',
+                label: 'New quotation',
+                href: '/quotations/create',
                 icon: 'pi pi-chart-line',
-                badge: 3
+                badge: 0
             },
             {
                 label: 'Products',
                 href: '/products',
-                icon: 'pi pi-list',
-                badge: 6
+                icon: 'pi pi-box',
+                shortcut: '⌘+P'
             }
         ]
     },
