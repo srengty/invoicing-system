@@ -46,27 +46,29 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Customer created successfully!');
     }
 
+    // Show customer details
     public function show($id)
-{
-    $customer = Customer::findOrFail($id);
+    {
+        $customer = Customer::findOrFail($id);
 
-    return inertia('Customers/Show', [
-        'customer' => $customer,
-    ]);
-}
-
+        return Inertia::render('Customers/Show', [
+            'customer' => $customer,
+        ]);
+    }
 
     // Show edit form
     public function edit(Customer $customer)
-{
-    return Inertia::render('Customers/Update', [
-        'customer' => $customer->toArray(), // Pass the customer data as props
-    ]);
-}
+    {
+        // Return the edit view with the customer data using Inertia
+        return Inertia::render('Customers/Edit', [
+            'customer' => $customer
+        ]);
+    }
 
     // Update customer
     public function update(Request $request, Customer $customer)
     {
+        // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
@@ -82,9 +84,14 @@ class CustomerController extends Controller
             'bank_swift' => 'nullable|string|max:255',
         ]);
 
+        // Update the customer with validated data
         $customer->update($validated);
 
-        return redirect()->route('customers.index')->with('success', 'Customer updated successfully!');
+        // Return an Inertia response for Inertia-based rendering
+        return Inertia::render('Customers/Show', [
+            'customer' => $customer,
+            'message' => 'Customer updated successfully!',
+        ]);
     }
 
     // Delete customer

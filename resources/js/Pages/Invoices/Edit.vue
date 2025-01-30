@@ -1,14 +1,13 @@
 <template>
   <meta name="_token" content="{{ csrf_token() }}" />
-  <Head title="Create Invoice" />
+  <Head title="Edit Invoice" />
   <GuestLayout>
     <div class="create-invoice">
       <!-- Header Section with Buttons -->
       <div class="flex justify-between items-center p-3 mr-4">
-        <h1 class="text-2xl">Create Invoice</h1>
+        <h1 class="text-2xl">Edit Invoice</h1>
         <div class="flex gap-4">
           <div>
-            <!-- Add Product Button (Opens product selection modal) -->
             <Button
               label="Add Product"
               icon="pi pi-plus"
@@ -20,7 +19,7 @@
           </div>
           <div>
             <Button
-              label="Save Invoice"
+              label="Save Changes"
               icon="pi pi-check"
               class="p-button-success"
               type="button"
@@ -125,7 +124,7 @@
       <div class="m-6">
         <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
           <Column field="index" header="No." :body="indexTemplate"></Column>
-          <Column field="product" header="Product"></Column>
+          <Column field="product" header="Product" :body="productBody"></Column>
           <Column field="qty" header="Qty">
             <template #body="slotProps">
               <InputText v-model="slotProps.data.qty" @input="updateProductSubtotal(slotProps.data)" class="w-full" />
@@ -204,20 +203,21 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
 
-const { products, agreements, quotations, customers } = usePage().props;
+// Receive the props from the server
+const { invoice, products, agreements, quotations, customers } = usePage().props;
 
+// Form initialization with existing invoice data
 const form = useForm({
-  invoice_no: '',
-  agreement_no: '',
-  quotation_no: '',
-  customer_id: '',
-  address: '',
-  phone: '',
-  start_date: '',
-  end_date: '',
-  grand_total: 0,  // Ensure grand_total is initialized as 0 (number)
-  status: '',
-  products:[],
+  invoice_no: invoice.invoice_no || '',
+  agreement_no: invoice.agreement_no || '',
+  quotation_no: invoice.quotation_no || '',
+  customer_id: invoice.customer_id || '',
+  address: invoice.address || '',
+  phone: invoice.phone || '',
+  start_date: invoice.start_date || '',
+  end_date: invoice.end_date || '',
+  grand_total: invoice.grand_total || 0,
+  status: invoice.status || '',
 });
 
 const statusOptions = [
@@ -226,65 +226,58 @@ const statusOptions = [
   { label: 'Cancelled', value: 'cancelled' },
 ];
 
-const submitInvoiceAndRedirect = () => {
-  submitInvoice(); // Call the existing submitInvoice logic
-  Inertia.visit('/invoices'); // Redirect to the invoice index page
-};
-
-const productsList = ref([]);
+const productsList = ref([...invoice.products]);
 const showProductModal = ref(false);
 
-const openProductModal = () => {
-  showProductModal.value = true;
+const unitPriceBody = (slotProps) => {
+  return slotProps.data.unitPrice; // This will display the unit price
 };
 
-const indexTemplate = (data, options) => options.rowIndex + 1;
-
-const actionTemplate = (data) => {
-  return `<Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />`;
-};
-
+// Add Product
 const addProduct = (productId) => {
   const product = products.find((prod) => prod.id === productId);
   if (product) {
-    const newProduct = {
-      id: product.id,            // Ensure the ID is set correctly
-      product: product.name,      // Use the correct product properties
-      qty: 1,                     // Set the quantity properly
+    productsList.value.push({
+      id: product.id,
+      product: product.name,
+      qty: 1,
       unit: product.unit,
       unitPrice: product.price,
-      subTotal: 1 * product.price,
-    };
-    productsList.value.push(newProduct);
+      subTotal: product.price,
+    });
     showProductModal.value = false;
-  } else {
-    console.log('Product not found:', productId);
   }
 };
 
-const removeProduct = (productId) => {
-  productsList.value = productsList.value.filter((product) => product.id !== productId);
+// Update product subtotal
+const updateProductSubtotal = (product) => {
+  product.subTotal = product.qty * product.unitPrice;
 };
 
+// Calculate the total for the invoice
 const calculateTotal = computed(() => {
   return productsList.value.reduce((total, product) => total + product.subTotal, 0);
 });
 
 const calculateGrandTotal = computed(() => {
-  return calculateTotal.value;
+  return calculateTotal.value; // Add taxes, discounts, etc. here if needed
 });
 
-const updateProductSubtotal = (product) => {
-  product.subTotal = product.qty * product.unitPrice;
+// Handle the Save Changes button click
+const submitInvoiceAndRedirect = () => {
+  submitInvoice().then(success => {
+    if (success) {
+      Inertia.visit('/invoices'); // Redirect to the invoice index page
+    }
+  });
 };
 
-const submitInvoice = () => {
+const submitInvoice = async () => {
   if (productsList.value.length === 0) {
     alert('Please add at least one product.');
-    return;
+    return false;
   }
 
-  // Explicitly calculate grand_total
   const grandTotal = productsList.value.reduce((total, product) => total + product.subTotal, 0);
 
   const invoiceData = {
@@ -296,29 +289,43 @@ const submitInvoice = () => {
     phone: form.phone,
     start_date: new Date(form.start_date).toISOString(),
     end_date: new Date(form.end_date).toISOString(),
-    grand_total: grandTotal, // Explicitly set grand_total
+    grand_total: grandTotal,
     status: form.status,
     products: productsList.value.map(product => ({
-      id: product.id,        // Map product ID
-      quantity: product.qty, // Map product quantity
+      id: product.id,
+      quantity: product.qty,
     })),
   };
 
   const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
 
-  fetch('/invoices', {
-    method: "POST",
-    body: JSON.stringify(invoiceData),
-    headers: {
-      'X-CSRF-TOKEN': csrfToken,
-      "Content-type": "application/json"
+  try {
+    const response = await fetch(`/invoices/${invoice.id}`, {
+      method: "PUT",
+      body: JSON.stringify(invoiceData),
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+        "Content-type": "application/json"
+      }
+    });
+    const data = await response.json();
+    if (data.success) {
+      alert('Invoice updated successfully!');
+      return true;
+    } else {
+      alert('Error updating invoice: ' + (data.message || 'Unknown error'));
+      return false;
     }
-  })
+  } catch (error) {
+    console.error('Error:', error);
+    alert('There was an error updating the invoice.');
+    return false;
+  }
 };
 
 const cancel = () => {
-  form.reset();
-  productsList.value = [];
+  // Optionally redirect or reset the form
+  Inertia.visit('/invoices'); // Redirect to the invoice index page
 };
 </script>
 

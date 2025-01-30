@@ -24,4 +24,10 @@ class Product extends Model
 
     // Optional: If you're working with timestamps, you can define the columns here
     public $timestamps = true;
+
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_product')
+                    ->withPivot('quantity'); // Include quantity from the pivot table
+    }
 }
