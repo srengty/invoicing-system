@@ -74,6 +74,7 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { DataTable, Column, Button, Dialog, InputText, InputNumber } from 'primevue';
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { Inertia } from '@inertiajs/inertia';
 
 defineProps({
     products: {
@@ -144,24 +145,20 @@ const submitForm = () => {
     }
 };
 
+// Emit event to notify parent about product deletion
 const deleteProduct = (id) => {
     if (confirm('Are you sure you want to delete this product?')) {
         // Send delete request to the server
         Inertia.delete(route('products.destroy', id), {
             onSuccess: () => {
-                // On success, remove the deleted product from the list of products
-                const index = products.findIndex((product) => product.id === id);
-                if (index !== -1) {
-                    products.splice(index, 1);
-                }
+                // Emit event to notify parent component
+                emit('productDeleted', id);
                 console.log('Product deleted!');
             },
             onError: (error) => {
                 // Handle any errors that occur during the delete request
                 console.error('Error deleting product:', error);
             }
-
-            
         });
     }
 };

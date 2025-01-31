@@ -26,10 +26,7 @@ Route::get('/', function () {
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 
- 
-Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
-Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
- 
+Route::resource('invoices', InvoiceController::class);
  
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
@@ -42,7 +39,7 @@ Route::get('/customers/create', [CustomerController::class, 'create'])->name('cu
 Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store'); // Store new customer
 Route::get('/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
-Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit'); // Update an existing customer
+Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
 Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
