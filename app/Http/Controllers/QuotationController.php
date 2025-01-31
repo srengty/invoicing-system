@@ -32,7 +32,7 @@ class QuotationController extends Controller
         // Render a form for creating a new quotation
         // return Inertia::render('Quotations/Create');
         $customers = Customer::select('name', 'id')->get(); // Fetch customer id and name`
-        $products = Product::select('name', 'id')->get(); // Fetch customer id and name
+        $products = Product::select('name', 'unit', 'price','quantity', 'id')->get(); // Fetch customer id and name
         return inertia('Quotations/Create', [
             'customers' => $customers, // Pass customers to the frontend
             'products' => $products, // Pass customers to the frontend

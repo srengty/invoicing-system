@@ -44,7 +44,7 @@
                             id="customer_id"
                             placeholder="Select a customer"
                             class="w-full w-65"/>    
-                            <!-- <p>Selected Customer code: {{ form.customer_id }}</p> -->
+                            <!-- <p>Selected Customer ID: {{ form.customer_id }}</p> -->
 
                     </div>
                 <div class="w-60 ">
@@ -57,25 +57,30 @@
                 <div class="flex flex-row gap-4 items-end w-1/3">             
                     <div class="flex flex-col gap-2 w-full" >
                         <label for="p_name">Item</label>
-                        <Select 
-                        v-model="form.p_name" 
-                        :options="products" 
-                        optionLabel="name" 
-                        optionValue="name" 
-                        placeholder="Select Product" 
-                        class="w-full md:w-65" />
+                        <MultiSelect 
+                            v-model="selectedProductIds"
+                            
+                            :options="products"
+                            optionLabel="name"
+                            optionValue="id"
+                            placeholder="Select Product"
+                            class="w-full md:w-65"
+                            @change="onProductSelect"
+                        />
                     </div>
-                    <div class="w-60 "><Link :href="route('products.create')"><Button icon="pi pi-plus" label="Add Item" type="submit" rounded /></Link></div>             
+                    <div class="w-60 "><Link :href="route('products.create')"><Button icon="pi pi-plus" label="Add Item" type="submit" rounded /></Link></div>                                
                 </div>
-
+                <!-- <p>Selected product ID: {{ selectedProductIds }}</p> -->
             </div> 
 
-            <div>
-                <DataTable :value="products" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
-                    <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable />
+            <div class="pl-6">
+                <DataTable :value="selectedProductsData" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped >
+                    <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" />
+                    <Column field="subTotal" header="SUB-TOTAL" :body="subTotalTemplate"></Column>
+                    
                     <Column header="Actions">
                         <template #body="slotProps">
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 items-center ">
                                 <Button
                                     icon="pi pi-pencil"
                                     class="p-button-warning"
@@ -83,17 +88,25 @@
                                     @click="openForm(slotProps.data)"
                                     rounded
                                 />
-                                <Button
-                                    icon="pi pi-trash"
-                                    class="p-button-danger"
-                                    label="Delete"
-                                    @click="deleteProduct(slotProps.data.id)"
-                                    rounded
-                                />
+                                <div class="card flex ">
+                                    <Checkbox v-model="checked" binary />
+                                </div>
+
                             </div>
                         </template>
                     </Column>
                 </DataTable>
+                <div class="pl-2">
+                    <div class="total-container mt-4 flex justify-between">
+                        <p class="font-bold">Total</p>
+                        <p class="font-bold">{{ calculateTotal }}</p>
+                    </div>
+
+                    <div class="grand-total-container flex justify-between">
+                        <p class="font-bold text-lg">Grand Total</p>
+                        <p class="font-bold text-lg">{{ calculateGrandTotal }}</p>
+                    </div>
+                </div>
             </div>
 
             <div class="buttons mt-4 mr-4 flex justify-end">
@@ -109,34 +122,40 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { ref } from "vue";
+import { ref} from "vue";
 import Select from 'primevue/select';
+import MultiSelect from 'primevue/multiselect';
 import DatePicker from 'primevue/datepicker';
 import InputText from 'primevue/inputtext';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import Checkbox from 'primevue/checkbox';
 import Button from 'primevue/button';
 import { Form } from '@primevue/forms';
 import { useForm } from '@inertiajs/vue3';
 import Toast from 'primevue/toast';
 import { DataTable, Column} from "primevue";
 import { useToast } from "primevue/usetoast";
+import { Inertia } from "@inertiajs/inertia";
 
-defineProps({
-    products: {
-        type: Array,
-        required: true,
-    },
-    customers: {
-        type: Array,
-        required: true,
-    },
+const props = defineProps({
+  customers: Array,
+  products: Array,
 });
 
 const toast = useToast();
+// Reactive state
+const selectedProduct = ref(null);
+const checked = ref(false);
+
+
+// Handle product selection
+const onProductSelect = (event) => {
+  selectedProduct.value = event.value;
+};
 
 const form = useForm({
-      quotation_no: '',
+      quotation_no: '', 
       quotation_date: '',
       address: '',
       phone_number: '',
@@ -145,15 +164,7 @@ const form = useForm({
 });
 
 // Define columns for DataTable
-const columns = [
-    { field: 'id', header: 'ID' },
-    { field: 'code', header: 'Code' },
-    { field: 'name', header: 'Name' },
-    { field: 'unit', header: 'Unit' },
-    { field: 'price', header: 'Price' },
-    { field: 'quantity', header: 'Quantity' },
-    { field: 'category', header: 'Category' },
-];
+
 
 
 const submit = () => {
@@ -180,13 +191,41 @@ const submit = () => {
 
 <script>
 export default {
-
+    props: {
+        products: Array, // Products passed from the backend
+    },
+    data() {
+        return {
+            selectedProductIds: [], // Selected product IDs
+            checked: false, // Checkbox state
+            columns: [
+                { field: 'id', header: 'No.' },
+                { field: 'name', header: 'Name' },
+                { field: 'unit', header: 'Unit' },
+                { field: 'price', header: 'Unit Price' },
+                { field: 'quantity', header: 'Qty' },
+            ],
+        };
+    },
     computed: {
         formattedCustomers() {
             return this.customers.map(customer => ({
                 id: customer.id,
                 label: `${customer.name} (${customer.code})` // Combine name and email
             }));
+        },
+        // Filter products to get the selected product
+        selectedProductsData() {
+        if (this.selectedProductIds.length > 0) {
+            return this.products.filter(product => this.selectedProductIds.includes(product.id));
+        }
+        return []; // Return an empty array if no products are selected
+        },
+    },
+    
+    methods: {
+        onProductSelect(event) { // Handle product selection
+            this.selectedProduct = event.value; 
         },
 
     },
