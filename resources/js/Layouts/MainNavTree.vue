@@ -13,7 +13,7 @@
             <template #item="{ item }">
                 <div :class="['flex items-center cursor-pointer group',{'active': page.url === item.href}]">
                     <Link :href="item.href" v-ripple class="flex items-center px-4 py-2 group">
-                        <span :class="['rounded-full me-2 w-8 h-8 bg-green-300 flex items-center justify-center',{'hidden':!item.id}]">{{item.id}}</span>
+                        <span :class="['rounded-full me-2 w-8 h-8 bg-green-300 flex items-center justify-center position: fix;',{'hidden':!item.id}]">{{item.id}}</span>
                         <span :class="[item.icon, 'text-primary group-hover:text-inherit']" />
                         <span :class="['ml-2', { 'font-semibold': item.items }]">{{ item.label }}</span>
                     </Link>
@@ -159,4 +159,11 @@ const items = ref([
     .active {
         @apply bg-primary text-white;
     }
+
+    .card {
+    position: sticky;
+    top: 0;
+    z-index: 10; /* Ensure it's above other content */
+}
+
 </style>

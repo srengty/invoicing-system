@@ -18,7 +18,7 @@
                         <div class="flex gap-2">
                             <Button
                                 icon="pi pi-eye"
-                                class="p-button-primary"
+                                class="p-button-info"
                                 label="View"
                                 @click="viewCustomer(slotProps.data.id)"
                                 rounded

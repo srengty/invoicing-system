@@ -24,16 +24,25 @@
           <template #body="{ data }">
             <div class="flex gap-2 justify-center">
               <Button
+                icon="pi pi-print"
+                class="p-button-info"
+                :label="'Print'"
+                @click="printInvoice(data.id)"
+                rounded
+              />
+              <Button
                 icon="pi pi-pencil"
-                class="p-button-warning p-button-text"
+                class="p-button-warning"
                 :label="'Edit'"
                 @click="editInvoice(data.id)"
+                rounded
               />
               <Button
                 icon="pi pi-trash"
-                class="p-button-danger p-button-text"
+                class="p-button-danger"
                 :label="'Delete'"
                 @click="deleteInvoice(data.id)"
+                rounded
               />
             </div>
           </template>
@@ -85,6 +94,17 @@ const deleteInvoice = (id) => {
   if (confirm("Are you sure you want to delete this invoice?")) {
     Inertia.delete(`/invoices/${id}`);
   }
+};
+
+const printInvoice = (id) => {
+  // Create a new window and load the invoice data for printing
+  const invoiceUrl = `/invoices/${id}`; // Assuming you have a route that serves the printable view
+  const printWindow = window.open(invoiceUrl, '_blank');
+  
+  // Wait for the document to load and trigger the print dialog
+  printWindow.onload = () => {
+    printWindow.print();
+  };
 };
 
 // Navigate to Create Invoice page using Inertia

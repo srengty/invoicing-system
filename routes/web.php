@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
  
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingController;
 use App\Models\Customer;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,8 @@ Route::post('/products', [ProductController::class, 'store'])->name('products.st
 Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit'); 
 Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update'); 
 Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy'); 
+
+Route::get('/settings', [SettingController::class, 'index'])->name('settings');
 
 
 

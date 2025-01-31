@@ -196,4 +196,13 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted successfully!');
     }
+
+    public function show($id)
+    {
+        $invoice = Invoice::with(['customer', 'products'])->findOrFail($id);
+
+        return Inertia::render('Invoices/Show', [
+            'invoice' => $invoice
+        ]);
+    }
 }
