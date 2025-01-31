@@ -33,11 +33,11 @@
                 </div>
                 <div>
                     <label for="phone" class="block text-lg font-medium">Phone</label>
-                    <InputText id="phone" v-model="form.phone" class="w-full" placeholder="Enter phone number" />
+                    <InputText id="phone" v-model="form.phone_number" class="w-full" placeholder="Enter phone number" />
                 </div>
                 <div>
                     <label for="telegram" class="block text-lg font-medium">Bank Telegram Number</label>
-                    <InputText id="telegram" v-model="form.telegram" class="w-full" placeholder="Enter telegram number" />
+                    <InputText id="telegram" v-model="form.telegram_number" class="w-full" placeholder="Enter telegram number" />
                 </div>
                 <div>
                     <label for="website" class="block text-lg font-medium">Website</label>
@@ -73,27 +73,26 @@ import { InputText, Button } from 'primevue';
 import { useForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
+import { usePage } from '@inertiajs/vue3';
 
 // Prop to receive customer data
-const props = defineProps({
-    customer: Object
-});
+const { customer } = usePage().props;
 
 // Initialize form with customer data if editing, or empty for new customer
 const form = useForm({
-    id: props.customer?.id || '',
-    name: props.customer?.name || '',
-    code: props.customer?.code || '',
-    address: props.customer?.address || '',
-    email: props.customer?.email || '',
-    phone: props.customer?.phone || '',
-    telegram: props.customer?.telegram || '',
-    website: props.customer?.website || '',
-    bank_name: props.customer?.bank_name || '',
-    bank_address: props.customer?.bank_address || '',
-    bank_account_name: props.customer?.bank_account_name || '',
-    bank_account_number: props.customer?.bank_account_number || '',
-    bank_swift: props.customer?.bank_swift || '',
+    id: customer?.id || '',
+    name: customer?.name || '',
+    code: customer?.code || '',
+    address: customer?.address || '',
+    email: customer?.email || '',
+    phone_number: customer?.phone_number || '',
+    telegram_number: customer?.telegram_number || '',
+    website: customer?.website || '',
+    bank_name: customer?.bank_name || '',
+    bank_address: customer?.bank_address || '',
+    bank_account_name: customer?.bank_account_name || '',
+    bank_account_number: customer?.bank_account_number || '',
+    bank_swift: customer?.bank_swift || '',
 });
 
 // Submit function to either create or update the customer

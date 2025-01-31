@@ -1,5 +1,5 @@
 <template>
-  <meta name="_token" content="{{ csrf_token() }}" />
+  <meta name="csrf-token" content="{{ csrf_token() }}" />
   <Head title="Edit Invoice" />
   <GuestLayout>
     <div class="create-invoice">
@@ -23,7 +23,7 @@
               icon="pi pi-check"
               class="p-button-success"
               type="button"
-              @click="submitInvoiceAndRedirect"
+              @click="submitInvoice"
               rounded
             />
           </div>
@@ -183,7 +183,7 @@
                   label="Add"
                   icon="pi pi-plus"
                   class="p-button-text p-button-success"
-                  @click="addProduct(slotProps.data.id)"
+                  @click="addProduct(slotProps.data)"
                 />
               </template>
             </Column>
@@ -229,24 +229,17 @@ const statusOptions = [
 const productsList = ref([...invoice.products]);
 const showProductModal = ref(false);
 
-const unitPriceBody = (slotProps) => {
-  return slotProps.data.unitPrice; // This will display the unit price
-};
-
 // Add Product
-const addProduct = (productId) => {
-  const product = products.find((prod) => prod.id === productId);
-  if (product) {
-    productsList.value.push({
-      id: product.id,
-      product: product.name,
-      qty: 1,
-      unit: product.unit,
-      unitPrice: product.price,
-      subTotal: product.price,
-    });
-    showProductModal.value = false;
-  }
+const addProduct = (product) => {
+  productsList.value.push({
+    id: product.id,
+    product: product.name,
+    qty: 1,
+    unit: product.unit,
+    unitPrice: product.price,
+    subTotal: product.price,
+  });
+  showProductModal.value = false;
 };
 
 // Update product subtotal
@@ -264,18 +257,10 @@ const calculateGrandTotal = computed(() => {
 });
 
 // Handle the Save Changes button click
-const submitInvoiceAndRedirect = () => {
-  submitInvoice().then(success => {
-    if (success) {
-      Inertia.visit('/invoices'); // Redirect to the invoice index page
-    }
-  });
-};
-
 const submitInvoice = async () => {
   if (productsList.value.length === 0) {
     alert('Please add at least one product.');
-    return false;
+    return;
   }
 
   const grandTotal = productsList.value.reduce((total, product) => total + product.subTotal, 0);
@@ -287,8 +272,8 @@ const submitInvoice = async () => {
     customer_id: form.customer_id,
     address: form.address,
     phone: form.phone,
-    start_date: new Date(form.start_date).toISOString(),
-    end_date: new Date(form.end_date).toISOString(),
+    start_date: form.start_date,
+    end_date: form.end_date,
     grand_total: grandTotal,
     status: form.status,
     products: productsList.value.map(product => ({
@@ -297,34 +282,23 @@ const submitInvoice = async () => {
     })),
   };
 
-  const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
-
   try {
-    const response = await fetch(`/invoices/${invoice.id}`, {
-      method: "PUT",
-      body: JSON.stringify(invoiceData),
-      headers: {
-        'X-CSRF-TOKEN': csrfToken,
-        "Content-type": "application/json"
-      }
+    await form.put(`/invoices/${invoice.id}`, invoiceData, {
+      onSuccess: () => {
+        alert('Invoice updated successfully!');
+        Inertia.visit('/invoices');
+      },
+      onError: (errors) => {
+        alert('Error updating invoice: ' + (errors.message || 'Unknown error'));
+      },
     });
-    const data = await response.json();
-    if (data.success) {
-      alert('Invoice updated successfully!');
-      return true;
-    } else {
-      alert('Error updating invoice: ' + (data.message || 'Unknown error'));
-      return false;
-    }
   } catch (error) {
     console.error('Error:', error);
     alert('There was an error updating the invoice.');
-    return false;
   }
 };
 
 const cancel = () => {
-  // Optionally redirect or reset the form
   Inertia.visit('/invoices'); // Redirect to the invoice index page
 };
 </script>

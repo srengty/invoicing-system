@@ -26,13 +26,14 @@ class CustomerController extends Controller
     // Store a new customer
     public function store(Request $request)
     {
+        // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'code' => 'nullable|integer|max:5000000',
             'address' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
-            'phone_number' => 'nullable|string|max:20',
-            'telegram_number' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:20', // Changed from 'phone_number' to 'phone'
+            'telegram_number' => 'nullable|string|max:20', // Changed from 'telegram_number' to 'telegram'
             'website' => 'nullable|string|max:255',
             'bank_name' => 'nullable|string|max:255',
             'bank_address' => 'nullable|string|max:255',
@@ -41,8 +42,10 @@ class CustomerController extends Controller
             'bank_swift' => 'nullable|string|max:255',
         ]);
 
+        // Create the customer
         Customer::create($validated);
 
+        // Redirect to the customers index page with a success message
         return redirect()->route('customers.index')->with('success', 'Customer created successfully!');
     }
 
@@ -50,7 +53,6 @@ class CustomerController extends Controller
     public function show($id)
     {
         $customer = Customer::findOrFail($id);
-
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
         ]);
@@ -59,9 +61,8 @@ class CustomerController extends Controller
     // Show edit form
     public function edit(Customer $customer)
     {
-        // Return the edit view with the customer data using Inertia
         return Inertia::render('Customers/Edit', [
-            'customer' => $customer
+            'customer' => $customer,
         ]);
     }
 
@@ -71,11 +72,11 @@ class CustomerController extends Controller
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'code' => 'nullable|integer|max:5000000',
             'address' => 'nullable|string|max:255',
             'email' => 'nullable|email|max:255',
-            'phone_number' => 'nullable|string|max:20',
-            'telegram_number' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:20', // Changed from 'phone_number' to 'phone'
+            'telegram_number' => 'nullable|string|max:20', // Changed from 'telegram_number' to 'telegram'
             'website' => 'nullable|string|max:255',
             'bank_name' => 'nullable|string|max:255',
             'bank_address' => 'nullable|string|max:255',
@@ -87,11 +88,8 @@ class CustomerController extends Controller
         // Update the customer with validated data
         $customer->update($validated);
 
-        // Return an Inertia response for Inertia-based rendering
-        return Inertia::render('Customers/Show', [
-            'customer' => $customer,
-            'message' => 'Customer updated successfully!',
-        ]);
+        // Redirect to the customer's show page with a success message
+        return redirect()->route('customers.show', $customer->id)->with('success', 'Customer updated successfully!');
     }
 
     // Delete customer

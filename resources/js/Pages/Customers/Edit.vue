@@ -1,5 +1,5 @@
 <template>
-    <Head title="Create Customer" />
+    <Head title="Update Customer" />
     <GuestLayout>
         <CustomersEdit></CustomersEdit>
     </GuestLayout>

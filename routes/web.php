@@ -37,6 +37,7 @@ Route::get('/customers', [CustomerController::class, 'index'])->name('customers.
 Route::get('/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
 Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store'); // Store new customer
 Route::get('/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
 Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
 Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
 
