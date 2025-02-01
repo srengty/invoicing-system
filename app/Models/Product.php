@@ -21,6 +21,11 @@ class Product extends Model
 
     public $timestamps = true;
 
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_product')
+                    ->withPivot('quantity'); // Include quantity from the pivot table
+    }
     // Example relationship if needed
     public function quotations()
     {
@@ -28,4 +33,5 @@ class Product extends Model
                     ->withPivot('quantity')
                     ->withTimestamps();
     }
+
 }
