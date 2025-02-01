@@ -321,7 +321,10 @@ import Toast from 'primevue/toast';
   };
   
   // On form submission, validate and then attach the products.
-  const submit = () => {
+  const submit = (event) => {
+    if (event && typeof event.preventDefault === "function") {
+    event.preventDefault(); // Ensure the event exists before calling preventDefault
+  }
     // Basic validation: all required fields must be filled and at least one product selected.
     if (
       !form.quotation_no ||
@@ -351,45 +354,6 @@ import Toast from 'primevue/toast';
     // Update totals.
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
-  
-    // Prepare the data object for a new quotation
-    const quotationData = {
-    quotation_no: form.quotation_no, // e.g., "Q-001"
-    quotation_date: new Date(form.quotation_date).toISOString(), // Ensure date is in ISO format
-    customer_id: form.customer_id, // Customer ID from the selection
-    address: form.address,
-    phone_number: form.phone_number,
-    terms: form.terms,
-    total: total,         // Total amount (calculated or provided)
-    tax: tax,             // Tax amount (calculated or provided)
-    grand_total: grandTotal, // Grand total (calculated)
-    // Map the selected products to include product id and quantity for each
-    items: productsList.value.map(product => ({
-        id: product.id,
-        quantity: product.quantity,
-    })),
-    };
-
-    // Retrieve the CSRF token (if your application requires it for form submissions)
-    const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
-
-    // Example: sending the data using fetch (or you can use axios/Inertia)
-    fetch('/quotations', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken,
-    },
-    body: JSON.stringify(quotationData),
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Handle the success response, e.g., redirect or show a notification
-        console.log('Quotation created successfully:', data);
-    })
-    .catch(error => {
-        console.error('Error creating quotation:', error);
-    });
 
     // Post the form data using Inertia.
     form.post(route('quotations.store'), {
@@ -400,6 +364,9 @@ import Toast from 'primevue/toast';
         console.error(errors);
       },
     });
+   
   };
+
+
   </script>
   
