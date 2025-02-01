@@ -18,7 +18,7 @@
                         <div class="flex gap-2">
                             <Button
                                 icon="pi pi-eye"
-                                class="p-button-primary"
+                                class="p-button-info"
                                 label="View"
                                 @click="viewCustomer(slotProps.data.id)"
                                 rounded
@@ -94,7 +94,8 @@ export default {
             this.$inertia.visit(route('customers.create'));
         },
         editCustomer(id) {
-            this.$inertia.visit(route('customers.update', id));
+            // Corrected route for the edit form
+            this.$inertia.visit(route('customers.edit', id)); 
         },
         deleteCustomer(id) {
             if (confirm('Are you sure you want to delete this customer?')) {

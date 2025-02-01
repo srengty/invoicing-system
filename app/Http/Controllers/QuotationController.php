@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quotation;
+use App\Models\Customer;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -28,7 +30,13 @@ class QuotationController extends Controller
     public function create()
     {
         // Render a form for creating a new quotation
-        return Inertia::render('Quotations/Create');
+        // return Inertia::render('Quotations/Create');
+        $customers = Customer::select('name', 'id')->get(); // Fetch customer id and name`
+        $products = Product::select('name', 'unit', 'price','quantity', 'id')->get(); // Fetch customer id and name
+        return inertia('Quotations/Create', [
+            'customers' => $customers, // Pass customers to the frontend
+            'products' => $products, // Pass customers to the frontend
+        ]);
     }
 
     /**
@@ -36,26 +44,33 @@ class QuotationController extends Controller
      */
     public function store(Request $request)
     {
-        // Validate and store the quotation data
+        // Validate the incoming request data
         $validated = $request->validate([
-            'quotation_no' => 'required|integer|unique:quotations',
+            'quotation_no' => 'required|integer|unique:quotations,quotation_no',
             'quotation_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
             'address' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:20',
             'terms' => 'nullable|string|max:255',
-            'total' => 'required|numeric|min:0',
-            'tax' => 'required|numeric|min:0',
-            'grand_total' => 'required|numeric|min:0',
-            'status' => 'required|string|max:20',
-            'customer_status' => 'required|string|max:20',
         ]);
-
-        Quotation::create($validated);
-
-        return redirect()->route('quotations.index')->with('success', 'Quotation created successfully.');
+    
+        // Create a new quotation record
+        $quotation = Quotation::create($validated);
+    
+        // Update the quotation with additional fields
+        $quotation->terms = $request->input('terms') ?? 'default terms'; // Default value for terms
+        $quotation->total = $request->input('total') ?? 0.00; // Default value for total
+        $quotation->tax = $request->input('tax') ?? 0.00; // Default value for tax
+        $quotation->grand_total = $request->input('grand_total') ?? 0.00; // Default value for grand_total
+        $quotation->status = $request->input('status') ?? 'pending'; // Default value for status
+        $quotation->customer_status = $request->input('customer_status') ?? 'active'; // Default value for customer_status
+    
+        // Save the updated quotation
+        $quotation->save();
+    
+        // Redirect to the quotations list with a success message
+        return redirect()->route('quotations.list')->with('success', 'Quotation created successfully.');
     }
-
     /**
      * Display the specified resource.
      */

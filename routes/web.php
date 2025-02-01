@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
  
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingController;
 use App\Models\Customer;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -26,14 +27,12 @@ Route::get('/', function () {
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 
- 
-Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
-Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
- 
+Route::resource('invoices', InvoiceController::class);
  
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
- 
+Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store'); // Store new issued quotation
+
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 
 Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
@@ -41,7 +40,7 @@ Route::get('/customers/create', [CustomerController::class, 'create'])->name('cu
 Route::post('/customers', [CustomerController::class, 'store'])->name('customers.store'); // Store new customer
 Route::get('/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
-Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit'); // Update an existing customer
+Route::get('/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
 Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
 
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
@@ -50,6 +49,8 @@ Route::post('/products', [ProductController::class, 'store'])->name('products.st
 Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit'); 
 Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update'); 
 Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy'); 
+
+Route::get('/settings', [SettingController::class, 'index'])->name('settings');
 
 
 

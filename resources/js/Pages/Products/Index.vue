@@ -6,12 +6,20 @@
                 <h1 class="text-2xl">Manage Products</h1>
                 <Button icon="pi pi-plus" label="New Product" class="p-button-success" @click="openForm()" rounded />
             </div>
+
             <!-- DataTable to display products -->
             <DataTable :value="products" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
                 <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable />
                 <Column header="Actions">
                     <template #body="slotProps">
                         <div class="flex gap-2">
+                            <Button
+                                icon="pi pi-eye"
+                                class="p-button-info"
+                                label="View"
+                                @click="viewProduct(slotProps.data)"
+                                rounded
+                            />
                             <Button
                                 icon="pi pi-pencil"
                                 class="p-button-warning"
@@ -31,8 +39,24 @@
                 </Column>
             </DataTable>
 
+            <!-- View Product Dialog -->
+            <Dialog v-model:visible="isViewDialogVisible" header="Product Details" :modal="true">
+                <div v-if="selectedProduct" class="flex text-lg flex-col gap-2 w-64">
+                    <p><strong>ID:</strong> {{ selectedProduct.id }}</p>
+                    <p><strong>Code:</strong> {{ selectedProduct.code }}</p>
+                    <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
+                    <p><strong>Unit:</strong> {{ selectedProduct.unit }}</p>
+                    <p><strong>Price:</strong> {{ selectedProduct.price }}</p>
+                    <p><strong>Quantity:</strong> {{ selectedProduct.quantity }}</p>
+                    <p><strong>Category:</strong> {{ selectedProduct.category }}</p>
+                </div>
+                <div class="flex justify-end">
+                    <Button label="Close" class="p-button-secondary" @click="isViewDialogVisible = false" />
+                </div>
+            </Dialog>
+
             <!-- Product Form Dialog -->
-            <Dialog :visible="isFormVisible" @hide="closeForm" header="Product Form" :modal="true">
+            <Dialog v-model:visible="isFormVisible" header="Product Form" :modal="true">
                 <form @submit.prevent="submitForm">
                     <div class="field">
                         <label for="code">Code</label>
@@ -74,6 +98,7 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { DataTable, Column, Button, Dialog, InputText, InputNumber } from 'primevue';
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import { Inertia } from '@inertiajs/inertia';
 
 defineProps({
     products: {
@@ -93,8 +118,10 @@ const columns = [
     { field: 'category', header: 'Category' },
 ];
 
-// State for dialog visibility
+// State for form and view dialogs
 const isFormVisible = ref(false);
+const isViewDialogVisible = ref(false);
+const selectedProduct = ref(null);
 
 // Create form using Inertia's `useForm`
 const form = useForm({
@@ -107,10 +134,9 @@ const form = useForm({
     category: '',
 });
 
-// Methods for handling form operations
+// Open product form
 const openForm = (product = null) => {
     if (product) {
-        // Populate form with product data for editing
         form.id = product.id;
         form.code = product.code;
         form.name = product.name;
@@ -119,49 +145,38 @@ const openForm = (product = null) => {
         form.quantity = product.quantity;
         form.category = product.category;
     } else {
-        // Reset form for creating a new product
         form.reset();
     }
     isFormVisible.value = true;
 };
 
+// Close product form
 const closeForm = () => {
     isFormVisible.value = false;
     form.reset();
 };
 
+// Open view product dialog
+const viewProduct = (product) => {
+    selectedProduct.value = product;
+    isViewDialogVisible.value = true;
+};
+
+// Submit product form (create/update)
 const submitForm = () => {
     if (form.id) {
-        // Update existing product
-        form.put(route('products.update', form.id), {
-            onSuccess: () => closeForm(),
-        });
+        form.put(route('products.update', form.id), { onSuccess: () => closeForm() });
     } else {
-        // Create new product
-        form.post(route('products.store'), {
-            onSuccess: () => closeForm(),
-        });
+        form.post(route('products.store'), { onSuccess: () => closeForm() });
     }
 };
 
+// Delete product
 const deleteProduct = (id) => {
     if (confirm('Are you sure you want to delete this product?')) {
-        // Send delete request to the server
         Inertia.delete(route('products.destroy', id), {
-            onSuccess: () => {
-                // On success, remove the deleted product from the list of products
-                const index = products.findIndex((product) => product.id === id);
-                if (index !== -1) {
-                    products.splice(index, 1);
-                }
-                console.log('Product deleted!');
-            },
-            onError: (error) => {
-                // Handle any errors that occur during the delete request
-                console.error('Error deleting product:', error);
-            }
-
-            
+            onSuccess: () => console.log('Product deleted!'),
+            onError: (error) => console.error('Error deleting product:', error),
         });
     }
 };
