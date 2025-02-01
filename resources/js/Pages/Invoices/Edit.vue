@@ -123,16 +123,16 @@
       <!-- Product Table Section -->
       <div class="m-6">
         <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
-          <Column field="index" header="No." :body="indexTemplate"></Column>
-          <Column field="product" header="Product" :body="productBody"></Column>
+          <Column field="id" header="No." :body="indexTemplate"></Column>
+          <Column field="name" header="Product" :body="productBody"></Column>
           <Column field="qty" header="Qty">
             <template #body="slotProps">
               <InputText v-model="slotProps.data.qty" @input="updateProductSubtotal(slotProps.data)" class="w-full" />
             </template>
           </Column>
           <Column field="unit" header="Unit"></Column>
-          <Column field="unitPrice" header="Unit Price"></Column>
-          <Column field="subTotal" header="Sub-Total"></Column>
+          <Column field="price" header="Unit Price"></Column>
+          <Column field="subTotal" header="Sub Total"></Column>
           <Column header="Action" :body="actionTemplate"></Column>
         </DataTable>
         <div class="total-container mt-4 flex justify-between">
@@ -225,7 +225,7 @@ const statusOptions = [
   { label: 'Paid', value: 'paid' },
   { label: 'Cancelled', value: 'cancelled' },
 ];
-
+console.log(invoice.products)
 const productsList = ref([...invoice.products]);
 const showProductModal = ref(false);
 
@@ -237,14 +237,14 @@ const addProduct = (product) => {
     qty: 1,
     unit: product.unit,
     unitPrice: product.price,
-    subTotal: product.price,
+    subTotal: 1 * product.price,
   });
   showProductModal.value = false;
 };
 
 // Update product subtotal
 const updateProductSubtotal = (product) => {
-  product.subTotal = product.qty * product.unitPrice;
+  product.subTotal = product.qty * product.price;
 };
 
 // Calculate the total for the invoice
@@ -281,6 +281,8 @@ const submitInvoice = async () => {
       quantity: product.qty,
     })),
   };
+
+  console.log("invoiceData: ", invoiceData);
 
   try {
     await form.put(`/invoices/${invoice.id}`, invoiceData, {

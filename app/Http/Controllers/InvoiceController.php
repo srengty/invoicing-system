@@ -153,7 +153,7 @@ class InvoiceController extends Controller
         }
 
         // Assuming tax is still 10%
-        $tax = 0.10 * $grand_total;
+        $tax = 0.00 * $grand_total;
         $grand_total += $tax;  // Add tax to grand total
 
         // Update the invoice with the validated data
@@ -166,7 +166,9 @@ class InvoiceController extends Controller
             'phone' => $validated['phone'],
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'grand_total' => $grand_total, // Store only the grand total
+            'grand_total' => $grand_total,
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:1', // Store only the grand total
         ]);
 
         // Handle updating the products associated with this invoice

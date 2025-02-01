@@ -50,11 +50,11 @@
         <!-- Product Table Section -->
         <div class="m-6">
           <DataTable :value="invoice.products" class="p-datatable-striped" responsiveLayout="scroll">
-            <Column field="index" header="No." :body="indexTemplate"></Column>
-            <Column field="product" header="Product"></Column>
+            <Column field="id" header="No." :body="indexTemplate"></Column>
+            <Column field="name" header="Product"></Column>
             <Column field="qty" header="Qty"></Column>
             <Column field="unit" header="Unit"></Column>
-            <Column field="unitPrice" header="Unit Price"></Column>
+            <Column field="price" header="Unit Price"></Column>
             <Column field="subTotal" header="Sub-Total"></Column>
           </DataTable>
           
