@@ -124,7 +124,7 @@
       <!-- Product Table Section -->
       <div class="m-6">
         <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
-          <Column field="index" header="No." :body="indexTemplate"></Column>
+          <Column field="id" header="No." :body="indexTemplate"></Column>
           <Column field="product" header="Product"></Column>
           <Column field="qty" header="Qty">
             <template #body="slotProps">
@@ -133,7 +133,7 @@
           </Column>
           <Column field="unit" header="Unit"></Column>
           <Column field="unitPrice" header="Unit Price"></Column>
-          <Column field="subTotal" header="Sub-Total"></Column>
+          <Column field="subTotal" header="Sub Total"></Column>
           <Column header="Action" :body="actionTemplate"></Column>
         </DataTable>
         <div class="total-container mt-4 flex justify-between">
