@@ -11,7 +11,7 @@
           </div>
           <div>
             <label class="block text-lg font-medium justify-self-end">Customer</label>
-            <p class="justify-self-end">{{ invoice.customer_name }}</p>
+            <p class="justify-self-end">{{ invoice.customer_id }}</p>
           </div>
           <div>
             <label class="block text-lg font-medium">Agreement No</label>
@@ -67,13 +67,13 @@
             <p class="font-bold text-lg">Grand Total</p>
             <p class="font-bold text-lg">{{ invoice.grand_total }}</p>
           </div>
-        </div>
-        
-        <!-- Terms and Conditions -->
-        <div class="terms mt-4">
-          <h3 class="text-lg">Terms and Conditions</h3>
-          <p>Full payment is required upon quote acceptance.</p>
-          <p>This quote is negotiable for one (1) week from the date stated above.</p>
+
+          <!-- Terms and Conditions -->
+          <div class="terms mt-4">
+            <h3 class="text-lg">Terms and Conditions</h3>
+            <p>Full payment is required upon quote acceptance.</p>
+            <p>This quote is negotiable for one (1) week from the date stated above.</p>
+          </div>
         </div>
       </div>
   </template>
@@ -85,7 +85,8 @@
   import { ref } from 'vue';
   import { Button, DataTable, Column } from 'primevue';
   
-  const { invoice } = usePage().props;
+  const { invoice, products, agreements, quotations, customers } = usePage().props;
+
   
   const indexTemplate = (data, options) => options.rowIndex + 1;
   
