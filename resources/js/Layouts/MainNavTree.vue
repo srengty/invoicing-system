@@ -9,10 +9,10 @@
     <div class="card flex justify-center dark:bg-white"></div>
     <div class="card flex justify-center pr-1">
  
-        <PanelMenu :model="items" class="w-full md:w-80" :pt="{panel:{class:'border-0 bg-transparent'}}">
+        <PanelMenu v-model:expandedKeys="expandedKeys" :model="items" class="w-full md:w-80" :pt="{panel:{class:'border-0 bg-transparent p-0'}}" multiple>
             <template #item="{ item }">
-                <div :class="['flex items-center cursor-pointer group',{'active': page.url === item.href}]">
-                    <Link :href="item.href" v-ripple class="flex items-center px-4 py-2 group">
+                <div :class="['flex items-center cursor-pointer group',{'active': page.url==item.href}]">
+                    <Link :href="item.href" class="flex items-center px-4 py-2 group">
                         <span :class="['rounded-full me-2 w-8 h-8 bg-green-300 flex items-center justify-center',{'hidden':!item.id}]">{{item.id}}</span>
                         <span :class="[item.icon, 'text-primary group-hover:text-inherit']" />
                         <span :class="['ml-2', { 'font-semibold': item.items }]">{{ item.label }}</span>
@@ -32,7 +32,7 @@ import { Link, usePage } from "@inertiajs/vue3";
 const page = usePage();
 const items = ref([
     {
-        id: 1,
+        key: 1,
         label: 'Dashboard',
         href: '/',
         icon: 'pi pi-home',
@@ -65,7 +65,7 @@ const items = ref([
         ]
     },
     {
-        id: 2,
+        key: 2,
         label: 'Quotations',
         href: '/quotations',
         icon: 'pi pi-chart-bar',
@@ -86,15 +86,15 @@ const items = ref([
         ]
     },
     {
-        id: 3,
+        key: 3,
         label: 'Agreements',
         href: '/agreements',
         icon: 'pi pi-user',
         shortcut: '>',
         items: [
             {
-                label: 'Settings',
-                href: '/settings',
+                label: 'Create Agreement',
+                href: '/agreements/create',
                 icon: 'pi pi-cog',
                 shortcut: '⌘+O'
             },
@@ -107,7 +107,7 @@ const items = ref([
         ]
     },
     {
-        id: 4,
+        key: 4,
         label: 'Invoices',
         href: '/invoices',
         icon: 'pi pi-money-bill',
@@ -128,7 +128,7 @@ const items = ref([
         ]
     },
     {
-        id: 5,
+        key: 5,
         label: 'Settings',
         href: '/settings',
         icon: 'pi pi-cog',
@@ -149,14 +149,21 @@ const items = ref([
         ]
     }
 ]);
+const expandedKeys = ref(items.value.reduce((acc, item) => {
+    if(page.url.startsWith(item.href)&&item.href!=='/') {
+        acc[item.key] = true;
+    }
+    return acc;
+}, {}));
 </script>
 <style>
     :root {
         --p-panelmenu-panel-background: transparent;
         --p-panelmenu-panel-border-color: transparent;
         --p-panelmenu-item-focus-background: #fff;
+        --p-panelmenu-panel-padding: 0 !important;
     }
     .active {
-        @apply bg-primary text-white;
+        @apply bg-green-100 ;
     }
 </style>

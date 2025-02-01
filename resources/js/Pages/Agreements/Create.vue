@@ -30,7 +30,7 @@
                         <span>Agreement amount (exclude tax)</span>
                         <InputNumber name="agreement_amount" />
                         <span>Tax amount</span>
-                        <InputNumber name="tax_amount" min-fraction-digits="2" max-fraction-digits="5"/>
+                        <InputNumber name="tax_amount" :min-fraction-digits="2" :max-fraction-digits="5"/>
                         <span>Payment schedule</span>
                         <Button label="Add payment schedule" />
                     </div>
@@ -42,6 +42,7 @@
                     </div>
                 </div>
             </div>
+            <PaymentSchedule class="mt-2"/>
         </Form>
     </GuestLayout>
 </template>
@@ -54,6 +55,7 @@ import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText } fro
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
 import { reactive } from 'vue';
+import PaymentSchedule from './PaymentSchedule.vue';
 const toast = useToast();
 const form = reactive({
     quotation_no: null,
