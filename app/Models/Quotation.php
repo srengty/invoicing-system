@@ -7,18 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Quotation extends Model
 {
-    /** @use HasFactory<\Database\Factories\QuotationFactory> */
     use HasFactory;
-    // protected $fillable = [
-    //     'quotation_no',
-    //     'quotation_date',
-    //     'address',
-    //     'quotation_doc',
-    //     'amount_no_tax',
-    //     'tax',
-    //     'status',
-    //     'customer_id',
-    // ];
+
     protected $fillable = [
         'quotation_no',
         'quotation_date',
@@ -32,11 +22,7 @@ class Quotation extends Model
         'status',
         'customer_status',
     ];
-    /**
-     * The attributes that should be cast to native types.
-     *
-    * @var array
-    */
+
     protected $casts = [
         'quotation_date' => 'datetime',
         'total' => 'double',
@@ -48,8 +34,13 @@ class Quotation extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-    public function product()
+
+    // Define a many-to-many relationship with Product
+    public function products()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsToMany(Product::class, 'quotation_product')
+                    ->withPivot('quantity')  // Add other pivot fields as needed
+                    ->withTimestamps();
     }
 }
+
