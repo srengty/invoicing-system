@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             AgreementSeeder::class,
             QuotationSeeder::class,
             ProductSeeder::class,
+            QuotationProductSeeder::class,
         ]);
     }
 }
