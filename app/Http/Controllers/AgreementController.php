@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agreement;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -23,7 +24,10 @@ class AgreementController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Agreements/Create');
+        return Inertia::render('Agreements/Create',[
+            'customers' => Customer::all(),
+            'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
+        ]);
     }
 
     /**
@@ -31,7 +35,16 @@ class AgreementController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'agreement_no' => 'required',
+            'date' => 'required',
+            'description' => 'required',
+            'start_date' => 'required',
+            'end_date' => 'required',
+            'customer_id' => 'required',
+        ]);
+        Agreement::create($request->all());
+        return to_route('agreements.index');
     }
 
     /**
