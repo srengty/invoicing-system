@@ -28,6 +28,7 @@ class Quotation extends Model
         'total' => 'double',
         'tax' => 'double',
         'grand_total' => 'double',
+        'quotation_date' => 'datetime:Y-m-d',
     ];
 
     public function customer()

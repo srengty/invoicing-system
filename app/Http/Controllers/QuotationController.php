@@ -8,6 +8,7 @@ use Carbon\Carbon; // Import Carbon for date manipulation
 use App\Models\Quotation; // Import Quotation model
 use App\Models\Product; // Import Product model
 use App\Models\Customer; // Import Customer model
+use App\Models\Agreement; // Import Customer model
 use Inertia\Inertia;
 class QuotationController extends Controller
 {
@@ -18,29 +19,25 @@ class QuotationController extends Controller
     {
         // Fetch all quotations with their associated customers
         $quotations = Quotation::with('customer')->get();
-
+        $agreements = Agreement::all();
+        $customers = Customer::all();
+        $products = Product::all();
         // Render the index page using Inertia
         return Inertia::render('Quotations/List', [
             'quotations' => $quotations,
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        $customers = Customer::select('name', 'id')->get(); // Fetch customer id and name`
+        $customers = Customer::all(); // Fetch customer id and name`
         $products = Product::select('name', 'unit', 'price', 'id')->get(); // Fetch customer id and name
         return inertia('Quotations/Create', [
-            'customers' => $customers, // Pass customers to the frontend
-            'products' => $products, // Pass customers to the frontend
+            'customers' => $customers, 
+            'products' => $products,   
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     // public function store(Request $request)
     // { 
     //     dd($request->all());
@@ -98,11 +95,12 @@ class QuotationController extends Controller
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
             'terms'          => 'nullable|string|max:255',
+            'tax'            => 'required|numeric',
             'products'       => 'nullable|array', // Make products optional
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
         ]);
-
+    
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
@@ -116,9 +114,9 @@ class QuotationController extends Controller
             $prod = Product::find($product['id']);
             $total += $prod->price * $product['quantity'];
         }
-
-        // Assuming tax is 10% of the total
-        $tax = 0.1 * $total;
+        // Calculate tax based on the provided percentage
+        $tax = $validated['tax'] / 100; 
+        $tax = $tax * $total;
         $grand_total = $total + $tax;
 
         // Create the quotation
