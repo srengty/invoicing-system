@@ -34,7 +34,7 @@ class QuotationController extends Controller
         $products = Product::select('name', 'unit', 'price', 'id')->get(); // Fetch customer id and name
         return inertia('Quotations/Create', [
             'customers' => $customers, 
-            'products' => $products,   
+            'products' => $products, 
         ]);
     }
 

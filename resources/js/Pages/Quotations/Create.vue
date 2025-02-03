@@ -78,9 +78,10 @@
                 />
               </div>
               <div class="w-60">
-                <Link :href="route('customers.create')">
+                <!-- <Link :href="route('customers.create')">
                   <Button icon="pi pi-plus" label="Add customer" rounded />
-                </Link>
+                </Link> -->
+                <Button icon="pi pi-plus" label="Add customer" rounded @click="isCreateCustomerVisible=true" />
               </div>
             </div>
     
@@ -97,9 +98,10 @@
                 />
               </div>
               <div class="w-60">
-                <Link :href="route('products.store')">
+                <!-- <Link :href="route('products.store')">
                   <Button icon="pi pi-plus" label="Add Item" rounded />
-                </Link>
+                </Link> -->
+                <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
               </div>
             </div>
           </div>
@@ -199,6 +201,12 @@
 
         </Form>
       </GuestLayout>
+    <Dialog v-model:visible="isCreateCustomerVisible" modal header="Add Customer" class="w-1/2">
+      <Customers redirect_route="quotations.create" @success="selectCustomer"></Customers>
+    </Dialog>
+    <Dialog v-model:visible="isCreateItemVisible" modal header="Add Item" class="w-1/2">
+      <Customers redirect_route="quotations.create"></Customers>
+    </Dialog>
   </template>
 
 <script setup>
@@ -213,11 +221,13 @@ import InputText from "primevue/inputtext";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
+import { Dialog } from "primevue";
 import { Form } from "@primevue/forms";
 import Toast from 'primevue/toast';
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import { useToast } from "primevue/usetoast";
+import Customers from '@/Components/Customers.vue';
 
   const props = defineProps({
     customers: Array,
@@ -347,5 +357,11 @@ import { useToast } from "primevue/usetoast";
    
   };
 
+  const isCreateCustomerVisible = ref(false);
+  const selectCustomer = () => {
+    isCreateCustomerVisible.value = false;
+    form.customer_id = props.customers[props.customers.length - 1].id;
+  };
 
+  const isCreateItemVisible = ref(false);
   </script>

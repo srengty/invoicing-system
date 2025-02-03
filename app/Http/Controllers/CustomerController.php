@@ -46,7 +46,7 @@ class CustomerController extends Controller
         Customer::create($validated);
 
         // Redirect to the customers index page with a success message
-        return redirect()->route('customers.index')->with('success', 'Customer created successfully!');
+        return redirect()->route($request['redirect_route']??'customers.index')->with('success', 'Customer created successfully!');
     }
 
     // Show customer details

@@ -7,22 +7,24 @@
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1">
                         <span>Quotation No.</span>
-                        <InputNumber name="quotation_no" :use-grouping="false"/>
+                        <InputNumber name="quotation_no" :use-grouping="false" class="w-full"/>
                         <span>Agreement No. {{ agreement_max }}</span>
                         <InputNumber name="agreement_no" :class="(errors.agreement_no?'p-invalid':'')" :use-grouping="false" :readonly="true" />
                         <Message v-if="errors.agreement_no" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_no }}</Message>
                         <span>Date</span>
                         <DatePicker date-format="dd/mm/yy" name="date" showIcon :show-on-focus="false"/>
-                        <Message v-if="errors.date" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.date.error }}</Message>
+                        <Message v-if="errors.date" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.date }}</Message>
                         <span>Customer</span>
-                        <Select filter name="customer_id" :options="customers" option-value="id" option-label="name" :virtualScrollerOptions="{ itemSize: 38 }"/>
-                        <Message v-if="errors.customer" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.customer.error }}</Message>
+                        <Select filter v-model="form.customer_id" :options="customers" option-value="id" option-label="name" :virtualScrollerOptions="{ itemSize: 38 }"/>
+                        <Message v-if="errors.customer_id" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.customer_id }}</Message>
                         <span>Address</span>
                         <InputText name="address" />
-                        <Message v-if="errors.address" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.address.error }}</Message>
+                        <Message v-if="errors.address" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.address }}</Message>
                         <span>Agreement doc</span>
-                        <FileUpload name="agreement_doc" />
-                        <Message v-if="errors.agreement_doc" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_doc.error }}</Message>
+                        <!-- <FileUpload name="agreement_doc" auto customUpload @select="onFileSelect" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/> -->
+                        <FileUpload name="agreement_doc" auto @before-upload="beforeUpload" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/>
+                        <Message v-if="errors.agreement_doc" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_doc }}</Message>
+                        <img :src="src" alt="Agreement doc" class="w-full col-span-2" />
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
@@ -58,12 +60,14 @@
 
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select } from 'primevue';
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, ref } from 'vue';
 import PaymentSchedule from './PaymentSchedule.vue';
+//import src from 'tailwindcss-primeui';
+const page = usePage();
 const props = defineProps({ errors: Object, customers: Array, agreement_max: Number });
 const toast = useToast();
 const form = reactive({
@@ -117,6 +121,53 @@ const submit = (e) => {
     //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
     // }
 }
+const onUpload = (e) => {
+    console.log(e);
+    toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded'+e.files[0], life: 3000 });
+    form.agreement_doc = e.xhr.responseText;
+    src.value = e.xhr.responseText;
+}
+const beforeUpload=(e)=>{
+    e.formData.enctype = 'multipart/form-data';
+    console.log('page.props.csrf_token',form);
+    e.formData.append('agreement_doc_old', form.agreement_doc);
+    e.formData.append('_token', page.props.csrf_token);
+}
+const src=ref(null);
+function onFileSelect(event) {
+    const file = event.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        src.value = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+    form.agreement_doc = file;
+    const csrfToken = page.props.csrf_token;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('_token', csrfToken);
+
+    fetch(route('agreements.upload'), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded', life: 3000 });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
+        }
+    })
+    .catch(error => {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
+    });
+}
 // const resolver = zodResolver(z.object({
 //     agreement_no: z.number(),
 //     date: z.date(),
@@ -141,5 +192,8 @@ const submit = (e) => {
 <style >
     span.p-invalid input {
         border-color: var(--p-inputtext-invalid-border-color);
+    }
+    .p-inputnumber-input {
+        width: 100%;
     }
 </style>

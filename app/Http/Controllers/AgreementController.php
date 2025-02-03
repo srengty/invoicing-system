@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agreement;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AgreementController extends Controller
@@ -27,6 +28,7 @@ class AgreementController extends Controller
         return Inertia::render('Agreements/Create',[
             'customers' => Customer::all(),
             'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
+            'csrf_token' => csrf_token(),
         ]);
     }
 
@@ -38,7 +40,6 @@ class AgreementController extends Controller
         $request->validate([
             'agreement_no' => 'required',
             'date' => 'required',
-            'description' => 'required',
             'start_date' => 'required',
             'end_date' => 'required',
             'customer_id' => 'required',
@@ -69,6 +70,16 @@ class AgreementController extends Controller
     public function update(Request $request, Agreement $agreement)
     {
         //
+    }
+    /**
+     * Upload the specified resource into storage.
+     */
+    public function upload(Request $request)
+    {
+        if($request->has('agreement_doc_old')){
+            Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
+        }
+        return Storage::url($request->file('agreement_doc')->storePublicly('agreements','public'));
     }
 
     /**

@@ -16,8 +16,9 @@
         <form @submit.prevent="submit">
             <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <div>
-                    <label for="name" class="block text-lg font-medium">Name</label>
+                    <label for="name" class="block text-lg font-medium required">Name</label>
                     <InputText id="name" v-model="form.name" class="w-full" placeholder="Enter Customer Name" />
+                    <Message v-if="form.errors.name" severity="error" size="small" variant="simple" class="col-span-2">{{ form.errors.name }}</Message>
                 </div>
                 <div>
                     <label for="code" class="block text-lg font-medium">Code</label>
@@ -69,10 +70,15 @@
 </template>
 
 <script setup>
-import { InputText, Button } from 'primevue';
-import { useForm } from '@inertiajs/vue3';
+import { InputText, Button, Message } from 'primevue';
+import { router, useForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 
+const props = defineProps({
+    errors: Object,
+    redirect_route: String,
+});
+const emit = defineEmits(['success']);
 // Create a form object using useForm hook from Inertia
 const form = useForm({
     name: '',
@@ -87,6 +93,7 @@ const form = useForm({
     bank_account_name: '',
     bank_account_number: '',
     bank_swift: '',
+    redirect_route: props.redirect_route?? 'customers.index',
 });
 
 // Submit form to create a new customer
@@ -95,6 +102,7 @@ const submit = () => {
         onSuccess: () => {
             // Optionally handle success, e.g., redirect to customers list page
             alert('Customer created successfully!');
+            emit('success');
         },
         onError: (errors) => {
             // Handle validation errors, e.g., show error messages

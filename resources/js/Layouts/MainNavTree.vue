@@ -95,7 +95,7 @@ const items = ref([
             {
                 label: 'Create Agreement',
                 href: '/agreements/create',
-                icon: 'pi pi-cog',
+                icon: 'pi pi-plus',
                 shortcut: '⌘+O'
             },
             {
@@ -136,13 +136,13 @@ const items = ref([
         items: [
         {
                 label: 'Customers',
-                href: '/customers',
+                href: '/settings/customers',
                 icon: 'pi pi-user',
                 shortcut: '⌘+W'
             },
             {
                 label: 'Products',
-                href: '/products',
+                href: '/settings/products',
                 icon: 'pi pi-box',
                 shortcut: '⌘+P'
             }

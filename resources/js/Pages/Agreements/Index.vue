@@ -1,16 +1,23 @@
 <template>
-    <Head title="Agreements" />
+    <Head title="Agreements" ></Head>
     <GuestLayout>
         <div class="agreements">
             <div class="flex justify-between items-center p-3">
                 <h1 class="text-2xl">Agreements</h1>
                 <div>
-                    <Button icon="pi pi-plus" label="New" rounded @click="openCreate" />
+                    <Button icon="pi pi-plus" label="New" rounded @click="openCreate" ></Button>
                     <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded/>
                 </div>
             </div>
-            <DataTable :value="agreements" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">
-            <Column v-for="col of showColumns" :key="col.field" :field="col.field" :header="col.header" sortable></Column>
+            <DataTable :value="agreements" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :stripedRows="true" :showGridlines="true">
+                <template v-for="col of showColumns" :key="col.field">
+                    <Column v-if="!['agreement_doc'].includes(col.field)" :field="col.field" :header="col.header" sortable></Column>
+                    <Column v-if="col.field==='agreement_doc'" :field="col.field" :header="col.header" sortable>
+                        <template #body="slotProps">
+                            <a v-if="slotProps.data[col.field]" :href="slotProps.data[col.field]" target="_blank">View</a>
+                        </template>
+                    </Column>
+                </template>
             </DataTable>
         </div>
     </GuestLayout>
@@ -21,6 +28,7 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { DataTable, Column, Button, Popover } from 'primevue';
 import { ref } from "vue";
+import moment from 'moment';
 
 defineProps({
     agreements: {
