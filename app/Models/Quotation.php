@@ -40,7 +40,7 @@ class Quotation extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'quotation_product')
-                    ->withPivot('quantity')  // Add other pivot fields as needed
+                    ->withPivot('quantity')
                     ->withTimestamps();
     }
 }

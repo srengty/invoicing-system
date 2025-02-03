@@ -20,7 +20,6 @@
                 <DataTable :value="quotations" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem">
                     <Column header="View Print-out" style="width: 20%">
                         <template #body="slotProps" >
-                            <!-- Add button inside the column body template -->
                             <div class="flex gap-4">
                                 <Button icon="pi pi-plus" label="View" rounded @click="viewQuotation(slotProps.data)" style="padding-left: 12px;padding-right: 18px;" />
                                 <Button icon="pi pi-plus" label="Print out" rounded style="padding-left: 12px;padding-right: 18px;" />
@@ -34,33 +33,37 @@
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
 
+                <!-- View Dialog display -->
                 <Dialog v-model:visible="isViewDialogVisible" header="Quotation Details" modal :style="{ width: '40rem'}">
                     <div v-if="selectedQuotation" class="flex text-lg flex-col gap-2 w-64">
                         <p><strong>ID:</strong> {{ selectedQuotation.id }}</p>
                         <p><strong>Quotation No.:</strong> {{ selectedQuotation.quotation_no }}</p>
                         <p><strong>Quotation Date:</strong> {{ selectedQuotation.quotation_date }}</p>
                         <p><strong>Customer ID:</strong> {{ selectedQuotation.customer_id }}</p>
-                        <!-- <p><strong>Customer Name:</strong> {{ selectedQuo_customer.name }}</p> -->
+                         <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || 'N/A' }}</p>  
                         <p><strong>address:</strong> {{ selectedQuotation.address }}</p>
                         <p><strong>Phone Number:</strong> {{ selectedQuotation.phone_number }}</p>
-                        <p><strong>Grand Total:</strong> {{ selectedQuotation.grand_total }}</p>
-                        
-                        <!-- <p><strong>Items:</strong> {{ selectedQuotation }}</p> -->
-                        <!-- <p><strong>Unit:</strong> {{ selectedQuotation.unit }}</p> -->
-                        <!-- <p><strong>Price:</strong> {{ selectedQuotation.price }}</p> -->
-                        <!-- <p><strong>Quantity:</strong> {{ selectedQuotation.quantity }}</p> -->
-                
+                        <!-- Loop through products -->
+                        <div v-if="selectedQuotation.products?.length" >
+                            <div v-for="product in selectedQuotation.products" :key="product.id">
+                                <!-- <p><strong>ITems Code:</strong> {{ product.id }}</p> -->
+                                <p><strong>Items:</strong> {{ product.name }}</p>                              
+                                <p><strong>Price:</strong> {{ product.price }}</p>
+                                <p><strong>Quantity:</strong> {{ product.pivot.quantity }}</p> <!-- Pivot quantity -->
+                            </div>
+                        </div><br>
+                        <p><strong>Grand Total:</strong> {{ selectedQuotation.grand_total }}</p>                                                   
                     </div>
                     <template #footer>
                         <Button label="Cancel" outlined severity="secondary" @click="isViewDialogVisible = false" autofocus />
                     </template>
-            </Dialog>
+                </Dialog>
             </div>
         </div>
     </GuestLayout>
 </template>
 
-<script setup>
+<script setup>``
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
@@ -115,7 +118,6 @@ const closeForm = () => {
 // Open view quotation dialog
 const viewQuotation = (quotations) => {
     selectedQuotation.value = quotations;
-    // selectedQuo_customer.value = customers;
     isViewDialogVisible.value = true;
 };
 const columns = [
