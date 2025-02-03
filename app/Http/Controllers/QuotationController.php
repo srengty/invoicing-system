@@ -17,14 +17,16 @@ class QuotationController extends Controller
      */
     public function list()
     {
-        // Fetch all quotations with their associated customers
-        $quotations = Quotation::with('customer')->get();
+        $quotations = Quotation::with('customer', 'products')->get();
         $agreements = Agreement::all();
         $customers = Customer::all();
         $products = Product::all();
-        // Render the index page using Inertia
-        return Inertia::render('Quotations/List', [
+        
+        return Inertia::render('Quotations/List', [ // Render the index page using Inertia
             'quotations' => $quotations,
+            'agreements' => $agreements,
+            'customers' => $customers,
+            'products' => $products,
         ]);
     }
 
@@ -38,59 +40,14 @@ class QuotationController extends Controller
         ]);
     }
 
-    // public function store(Request $request)
-    // { 
-    //     dd($request->all());
-  
-    //     $data = $request->validate([
-    //         'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
-    //         'quotation_date' => 'required|date',
-    //         'customer_id'    => 'required|exists:customers,id',
-    //         'address'        => 'nullable|string|max:255',
-    //         'phone_number'   => 'nullable|string|max:20',
-    //         'terms'          => 'nullable|string|max:255',
-    //         'total'          => 'required|numeric',
-    //         'tax'            => 'required|numeric',
-    //         'grand_total'    => 'required|numeric',
-    //         'products' => 'nullable|array', // Make products optional
-    //         'products.*.id' => 'required|exists:products,id', // Validate product IDs
-    //         'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
-    //         // 'items'          => 'required|array',
-    //         // 'items.*.id'     => 'required|exists:products,id',
-    //         // 'items.*.quantity' => 'required|integer|min:1',
-    //     ]);
-    
-    //     $quotation = Quotation::create([
-    //         'quotation_no'   => $data['quotation_no'],
-    //         'quotation_date' => $data['quotation_date'],
-    //         'customer_id'    => $data['customer_id'],
-    //         'address'        => $data['address'],
-    //         'phone_number'   => $data['phone_number'],
-    //         'terms'          => $data['terms'] ?? null,
-    //         'total'          => $data['total'],
-    //         'tax'            => $data['tax'],
-    //         'grand_total'    => $data['grand_total'],
-            
-    //     ]);
-    //     $quotation->status = $request->input('status') ?? 'pending'; // Default value for status
-    //     $quotation->customer_status = $request->input('customer_status') ?? 'active'; // Default value for customer_status
-    //     foreach ($data['products'] as $product) {
-    //         $quotation->products()->attach($product['id'], [
-    //             'quantity' => $product['quantity'],
-    //         ]);
-    //     }
-
-    
-    //     // Optionally, redirect or return a response
-    //     return redirect()->route('quotations.list')
-    //                      ->with('success', 'Quotation created successfully!');
-    // }
     public function store(Request $request)
     {
+        
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
             'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
-            'quotation_date' => 'required|date',
+            // 'quotation_date' => 'required|date',
+            'quotation_date' => 'required|date_format:Y-m-d\TH:i:s.v\Z',
             'customer_id'    => 'required|exists:customers,id',
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
@@ -119,10 +76,12 @@ class QuotationController extends Controller
         $tax = $tax * $total;
         $grand_total = $total + $tax;
 
+        // Format the datetime value
+        $quotationDate = Carbon::parse($request->quotation_date)->format('Y-m-d H:i:s');
         // Create the quotation
         $quotation = Quotation::create([
             'quotation_no'   => $validated['quotation_no'],
-            'quotation_date' => $validated['quotation_date'],
+            'quotation_date' => $quotationDate,
             'customer_id'    => $validated['customer_id'],
             'address'        => $validated['address'] ?? null,
             'phone_number'   => $validated['phone_number'] ?? null,
