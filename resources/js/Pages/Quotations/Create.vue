@@ -7,12 +7,11 @@
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
         <Form @submit.prevent="submit">
           <!-- Quotation Info -->
-          <div class="p-4 grid md:grid-cols-2 gap-0 w-2/3">
-        
-            <div class="p-4 grid md:grid-rows-2 gap-4">
+          <div class="p-4 grid md:grid-cols-2 gap-0 w-full">
+            <div class="p-4 grid grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
                 <label for="quotation_no">Quotation No:</label>
-                <InputText
+                <InputText :disabled="true"
                   id="quotation_no"
                   v-model="form.quotation_no"
                   placeholder="Input"
@@ -21,7 +20,7 @@
               </div>
               <div class="flex flex-col gap-2">
                 <label for="quotation_date">Date:</label>
-                <DatePicker
+                <DatePicker :disabled="true"
                   v-model="form.quotation_date"
                   showIcon
                   fluid
@@ -31,9 +30,6 @@
                   class="w-full md:w-60"
                 />
               </div>
-            </div>
-      
-            <div class="p-4 grid md:grid-rows-2 gap-4">
               <div class="flex flex-col gap-2">
                 <label for="address">Address</label>
                 <IconField class="w-full md:w-60">
@@ -46,6 +42,7 @@
                   <InputIcon class="pi pi-times-circle" />
                 </IconField>
               </div>
+              
               <div class="flex flex-col gap-2">
                 <label for="phone_number">Contact</label>
                 <IconField class="w-full md:w-60">
@@ -59,6 +56,10 @@
                 </IconField>
               </div>
             </div>
+      
+            <div class="p-4 grid md:grid-rows-2 gap-4">
+              
+            </div>
           </div>
     
           <!-- Customer & Product Selection -->
@@ -67,7 +68,7 @@
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-col gap-2 w-full">
                 <label for="customer_id">Customer/Organization</label>
-                <Select
+                <Select :filter="true"
                   v-model="form.customer_id"
                   :options="formattedCustomers"
                   optionLabel="label"
@@ -97,11 +98,19 @@
                   class="w-full md:w-65"
                 />
               </div>
-              <div class="w-60">
-                <!-- <Link :href="route('products.store')">
-                  <Button icon="pi pi-plus" label="Add Item" rounded />
-                </Link> -->
+              <!-- <div class="w-full">
+                <Link :href="route('products.store')">
+                  <Button icon="pi pi-plus" label="Choose Item" rounded />
+                </Link>
                 <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
+              </div> -->
+            </div>
+            <div class="flex flex-row gap-4 items-end w-1/3">
+              <div class="flex flex-row gap-2 w-full">
+                <label for="p_name">Khmer/English</label>
+                <ToggleSwitch v-model="checked" />
+              </div>
+              <div class="w-60">
               </div>
             </div>
           </div>
@@ -121,7 +130,11 @@
                 :key="col.field"
                 :field="col.field"
                 :header="col.header"
-              />
+              >
+              <template #body="slotProps">
+                <span>{{ slotProps.data[col.field] }}</span>
+              </template>
+              </Column>
               <!-- Quantity Column with an input -->
               <Column field="quantity" header="Qty">
                 <template #body="slotProps">
@@ -135,7 +148,7 @@
               <!-- Subtotal Column -->
               <Column field="subTotal" header="SUB-TOTAL">
                 <template #body="slotProps">
-                  <span>{{ slotProps.data.subTotal.toFixed(2) }}</span>
+                  <span class="block w-full text-right">{{ slotProps.data.subTotal.toFixed(2) }}</span>
                 </template>
               </Column>
               <!-- Actions Column (Edit/Remove) -->
@@ -158,12 +171,16 @@
             <!-- Totals Summary -->
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
-                <p class="font-bold">Total</p>
+                <p class="font-bold">Total KHR</p>
                 <p class="font-bold">{{ calculateTotal.toFixed(2) }}</p>
               </div>
+              <div class="total-container mt-4 flex justify-between">
+                <p class="font-bold">Total USD</p>
+                <p class="font-bold"><InputNumber v-model="calculateTotalUSD" class="text-right"></InputNumber></p>
+              </div>
               <div class="grand-total-container flex justify-between">
-                  <p class="font-bold text-lg">Grand Total</p>
-                  <p class="font-bold text-lg">{{ calculateGrandTotal.toFixed(2) }}</p>
+                  <p class="font-bold text-lg">Exchange rate</p>
+                  <p class="font-bold text-lg">{{ calculateExchangeRate }}</p>
                 </div>
               <div class="mt-2 flex justify-between items-center">
                 <!-- Tax -->
@@ -218,10 +235,11 @@ import Select from "primevue/select";
 import MultiSelect from "primevue/multiselect";
 import DatePicker from "primevue/datepicker";
 import InputText from "primevue/inputtext";
+import InputNumber from "primevue/inputnumber";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
-import { Dialog } from "primevue";
+import { Dialog, ToggleSwitch } from "primevue";
 import { Form } from "@primevue/forms";
 import Toast from 'primevue/toast';
 import DataTable from "primevue/datatable";
@@ -233,13 +251,14 @@ import Customers from '@/Components/Customers.vue';
     customers: Array,
     products: Array,
   });
+  const checked = ref(true);
   
   // Toast for notifications
   const toast = useToast();
 
   // Define the Inertia form
   const form = useForm({
-    quotation_no: "",
+    quotation_no: "1",
     quotation_date: "",
     address: "",
     phone_number: "",
@@ -290,7 +309,12 @@ import Customers from '@/Components/Customers.vue';
   const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
   };
- 
+  const calculateTotalUSD = ref(null);
+  const calculateExchangeRate = computed(() => {
+    if(calculateTotalUSD.value == null) return '';
+    const exchangeRate =  calculateTotal.value/calculateTotalUSD.value;
+    return exchangeRate.toFixed(2);
+  });
   const calculateTotal = computed(() => {
     return selectedProductsData.value.reduce(
       (sum, prod) => sum + prod.subTotal,
@@ -324,7 +348,7 @@ import Customers from '@/Components/Customers.vue';
     event.preventDefault(); // Ensure the event exists before calling preventDefault
   }
     // Basic validation: all required fields must be filled and at least one product selected.
-    if (!form.quotation_no || !form.quotation_date || !form.address || !form.phone_number || !form.customer_id || selectedProductsData.value.length === 0)  
+    if ( !form.address || !form.phone_number || !form.customer_id || selectedProductsData.value.length === 0)  
     {
       toast.add({
         severity: "error",

@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Agreement;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Quotation;
 use Illuminate\Database\Seeder;
 
 class InvoiceSeeder extends Seeder
@@ -18,14 +20,14 @@ class InvoiceSeeder extends Seeder
     public function run()
     {
         Invoice::create([
-            'invoice_no' => '1',
+            'invoice_no' => '25000001',
             'customer_id' => 1, // Reference a customer
-            'agreement_no' => '87783', // Reference an agreement
+            'agreement_no' => Quotation::all(['id'])->first()->id, // Reference an agreement
             'quotation_no' => '160731', // Reference a quotation
             'address' => '123 Customer St.',
             'phone' => '1234567890',
-            'start_date' => now(),
-            'end_date' => now()->addMonth(),
+            'date' => now(),
+            'due_date' => now()->addMonth(),
             'sub_total' => 100.0,
         ]);
         // Add more invoices as needed

@@ -89,8 +89,8 @@ class QuotationController extends Controller
     {
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
-            'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
-            'quotation_date' => 'required|date',
+            'quotation_no'   => 'nullable|integer|unique:quotations,quotation_no',
+            'quotation_date' => 'nullable|date',
             'customer_id'    => 'required|exists:customers,id',
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',

@@ -11,6 +11,14 @@
                 <InputText v-model="data[field]" fluid />
             </template>
         </Column>
+        <!-- <Column field="percentage" header="Percentage">
+            <template #body="slotProps">
+                {{ slotProps.data['percentage'] }} %
+            </template>
+            <template #editor="{ data, field }">
+                <InputNumber v-model="data[field]" fluid />%
+            </template>
+        </Column> -->
         <Column field="amount" header="Amount">
             <template #body="slotProps">
                 {{ priceTemplate(slotProps.data) }}
@@ -19,7 +27,15 @@
                 <InputNumber v-model="data[field]" fluid />
             </template>
         </Column>
-        <Column header="Action" :exportable="false" :rowEditor="true"></Column>
+        <Column header="Action" :exportable="false" :rowEditor="true" v-if="!readonly"></Column>
+        <Column header="Invoice" :exportable="false" v-if="!readonly">
+            <template #body="slotProps">
+                <Button icon="pi pi-file-pdf" class="p-button-rounded p-button-success p-button-outlined" label="Generate invoice" />
+            </template>
+        </Column>
+        <template #footer>
+            In total $ {{ '10,000' }} 
+        </template>
     </DataTable>
 </template>
 
@@ -31,6 +47,7 @@ const items = defineModel({default:[
         id: 1,
         due_date: "28/01/2025",
         short_description: "Item description",
+        percentage: 50,
         remark: "Additional remark",
         amount: 2000,
     },
@@ -38,6 +55,7 @@ const items = defineModel({default:[
         id: 2,
         due_date: "04/01/2025",
         short_description: "Item description",
+        percentage: 50,
         remark: "Additional remark",
         amount: 5000,
     },
@@ -45,17 +63,22 @@ const items = defineModel({default:[
         id: 3,
         due_date: "11/01/2025",
         short_description: "Item description",
+        percentage: 50,
         remark: "Additional remark",
         amount: 3000,
     },
 ]});
+const props = defineProps({
+    currency: String,
+    readonly: Boolean,
+});
 const editingRows = ref([]);
 const onRowEditSave = (event) => {
     let { newData, index } = event;
 
     items.value[index] = newData;
 };
-const priceTemplate = (data) => `$ ${data.amount.toLocaleString()}`;
+const priceTemplate = (data) => `${props.currency??'$'} ${data.amount.toLocaleString()}`;
 </script>
 
 <style lang="scss" scoped></style>

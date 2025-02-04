@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Agreement;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,7 +19,7 @@ class AgreementFactory extends Factory
     public function definition(): array
     {
         return [
-            'agreement_no' => $this->faker->randomNumber(5),
+            'agreement_no' => date('y').str_pad(Agreement::count() + 1, 6, '0', STR_PAD_LEFT),
             'agreement_ref_no' => $this->faker->randomNumber(5),
             'agreement_date' => $this->faker->dateTimeThisYear(),
             'address' => $this->faker->address(),

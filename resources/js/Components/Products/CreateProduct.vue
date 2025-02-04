@@ -41,6 +41,10 @@
                         <InputText id="name" v-model="productForm.name" class="w-full" required />
                     </div>
                     <div class="field">
+                        <label for="name_kh">Name (KH)</label>
+                        <InputText id="name" v-model="productForm.name" class="w-full" required />
+                    </div>
+                    <div class="field">
                         <label for="price">Price</label>
                         <InputNumber id="price" v-model="productForm.price" class="w-full" required />
                     </div>
@@ -79,6 +83,7 @@ const columns = [
     { field: 'id', header: 'ID' },
     { field: 'code', header: 'Code' },
     { field: 'name', header: 'Name' },
+    { field: 'name_kh', header: 'Name KH' },
     { field: 'price', header: 'Price' },
     { field: 'stock', header: 'Stock' },
     { field: 'category', header: 'Category' },

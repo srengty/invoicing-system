@@ -35,23 +35,13 @@
       <form @submit.prevent="submitInvoice">
         <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
           <div>
-            <label for="invoice_no" class="block text-lg font-medium">Invoice No</label>
-            <InputText
-              id="invoice_no"
-              v-model="form.invoice_no"
-              class="w-full"
-              placeholder="Enter invoice number"
-              required
-            />
-          </div>
-          <div>
-            <label for="customer_id" class="block text-lg font-medium">Customer</label>
+            <label for="quotation_no" class="block text-lg font-medium">Quotation No</label>
             <Select
-              v-model="form.customer_id"
-              :options="customers"
-              optionLabel="name"
+              v-model="form.quotation_no"
+              :options="quotations"
+              optionLabel="quotation_no"
               optionValue="id"
-              placeholder="Select Customer"
+              placeholder="Select Quotation"
               class="w-full"
               required
             />
@@ -68,18 +58,40 @@
               required
             />
           </div>
+          <!-- <div>
+            <label for="invoice_no" class="block text-lg font-medium">Invoice No</label>
+            <InputText
+              id="invoice_no"
+              v-model="form.invoice_no"
+              class="w-full"
+              placeholder="Enter invoice number"
+              required
+            />
+          </div> -->
           <div>
-            <label for="quotation_no" class="block text-lg font-medium">Quotation No</label>
+            <label for="deposit_no" class="block text-lg font-medium">Receipt No (for deposit)</label>
+            <InputText v-tooltip="'ប្រាក់កក់មុន'"
+              id="deposit_no"
+              v-model="form.deposit_no"
+              class="w-1/2"
+              placeholder="Enter deposit number"
+              required
+            />
+            <Button class="w-1/2">Add Receipt</Button>
+          </div>
+          <div>
+            <label for="customer_id" class="block text-lg font-medium">Customer</label>
             <Select
-              v-model="form.quotation_no"
-              :options="quotations"
-              optionLabel="quotation_no"
+              v-model="form.customer_id"
+              :options="customers"
+              optionLabel="name"
               optionValue="id"
-              placeholder="Select Quotation"
+              placeholder="Select Customer"
               class="w-full"
               required
             />
           </div>
+          
           <div>
             <label for="status" class="block text-lg font-medium">Status</label>
             <Select
@@ -111,12 +123,12 @@
             />
           </div>
           <div>
-            <label for="start_date" class="block text-lg font-medium">Start Date</label>
-            <DatePicker id="start_date" v-model="form.start_date" class="w-full" placeholder="Select start date" />
+            <label for="start_date" class="block text-lg font-medium">Date</label>
+            <DatePicker id="start_date" v-model="form.start_date" class="w-full" placeholder="Select date" />
           </div>
           <div>
-            <label for="end_date" class="block text-lg font-medium">End Date</label>
-            <DatePicker id="end_date" v-model="form.end_date" class="w-full" placeholder="Select end date" />
+            <label for="end_date" class="block text-lg font-medium">Due Date</label>
+            <DatePicker id="end_date" v-model="form.end_date" class="w-full" placeholder="Select due date" />
           </div>
         </div>
       </form>
@@ -210,6 +222,7 @@ const form = useForm({
   invoice_no: '',
   agreement_no: '',
   quotation_no: '',
+  deposit_no: '',
   customer_id: '',
   address: '',
   phone: '',

@@ -145,6 +145,12 @@ const items = ref([
                 href: '/settings/products',
                 icon: 'pi pi-box',
                 shortcut: '⌘+P'
+            },
+            {
+                label: 'Categories',
+                href: '/settings/categories',
+                icon: 'pi pi-box',
+                shortcut: '⌘+P'
             }
         ]
     }

@@ -10,6 +10,8 @@ import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
 import { ToastService } from 'primevue';
 import Ripple from 'primevue/ripple'; // Import the Ripple directive
+import Tooltip from 'primevue/tooltip';
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 
@@ -30,6 +32,7 @@ createInertiaApp({
                 }
             })
             .directive('ripple', Ripple) // Register the Ripple directive
+            .directive('tooltip', Tooltip)
             .use(ToastService)
             .mount(el);
     },

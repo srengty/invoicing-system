@@ -45,6 +45,7 @@
                     <p><strong>ID:</strong> {{ selectedProduct.id }}</p>
                     <p><strong>Code:</strong> {{ selectedProduct.code }}</p>
                     <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
+                    <p><strong>Name (KH):</strong> {{ selectedProduct.name_kh }}</p>
                     <p><strong>Unit:</strong> {{ selectedProduct.unit }}</p>
                     <p><strong>Price:</strong> {{ selectedProduct.price }}</p>
                     <p><strong>Quantity:</strong> {{ selectedProduct.quantity }}</p>
@@ -58,6 +59,14 @@
             <!-- Product Form Dialog -->
             <Dialog v-model:visible="isFormVisible" header="Product Form" :modal="true">
                 <form @submit.prevent="submitForm">
+                    <div class="field bg-red-300">
+                        <label for="code">Division</label>
+                        <Select id="code" v-model="form.division_id" option-label="name" option-value="id" :options="[{id:1,name:'GIC'},{id:2,name:'GCA'},{id:3,name:'GIC'}]" class="w-full" required ></Select>
+                    </div>
+                    <div class="field bg-red-300">
+                        <label for="category">Category</label>
+                        <Select id="category" :options="categoryOptions" optionValue="name" optionLabel="name" v-model="form.category" class="w-full" ></Select>
+                    </div>
                     <div class="field">
                         <label for="code">Code</label>
                         <InputText id="code" v-model="form.code" class="w-full" required />
@@ -67,20 +76,32 @@
                         <InputText id="name" v-model="form.name" class="w-full" required />
                     </div>
                     <div class="field">
+                        <label for="name_kh">Name (KH)</label>
+                        <InputText id="name_kh" v-model="form.name_kh" class="w-full" required />
+                    </div>
+                    <div class="field">
+                        <label for="desc">Description</label>
+                        <InputText v-model="form.desc" class="w-full" required />
+                    </div>
+                    <div class="field">
+                        <label for="desc_kh">Description (KH)</label>
+                        <InputText v-model="form.desc_kh" class="w-full" required />
+                    </div>
+                    <div class="field">
                         <label for="unit">Unit</label>
                         <InputText id="unit" v-model="form.unit" class="w-full" required />
                     </div>
                     <div class="field">
-                        <label for="price">Price</label>
+                        <label for="price">Price in KHR</label>
                         <InputNumber id="price" v-model="form.price" class="w-full" required />
+                    </div>
+                    <div class="field bg-red-300">
+                        <label for="price" class="required">Account code</label>
+                        <InputText v-model="form.account_code" class="w-full" required  />
                     </div>
                     <div class="field">
                         <label for="quantity">Quantity</label>
                         <InputNumber id="quantity" v-model="form.quantity" class="w-full" required />
-                    </div>
-                    <div class="field">
-                        <label for="category">Category</label>
-                        <InputText id="category" v-model="form.category" class="w-full" />
                     </div>
                     <div class="flex justify-end gap-2 mt-4">
                         <Button label="Cancel" class="p-button-secondary" @click="closeForm" />
@@ -95,7 +116,7 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import { DataTable, Column, Button, Dialog, InputText, InputNumber } from 'primevue';
+import { DataTable, Column, Button, Dialog, InputText, InputNumber, Select } from 'primevue';
 import { ref } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
@@ -106,12 +127,16 @@ defineProps({
         required: true,
     },
 });
+const categoryOptions=[
+{id:'R1', name:'Rental Service'}, {id:'T1', name:'Training Service'}, {id:'C1', name:'Consultation Service'}
+]
 
 // Define columns for DataTable
 const columns = [
     { field: 'id', header: 'ID' },
     { field: 'code', header: 'Code' },
     { field: 'name', header: 'Name' },
+    { field: 'name_kh', header: 'Name (KH)' },
     { field: 'unit', header: 'Unit' },
     { field: 'price', header: 'Price' },
     { field: 'quantity', header: 'Quantity' },
@@ -126,8 +151,12 @@ const selectedProduct = ref(null);
 // Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
+    division_id: null,
     code: '',
+    account_code: '73048 ផលពីសេវាផ្សេងៗ',
     name: '',
+    desc: '',
+    desc_kh: '',
     unit: '',
     price: null,
     quantity: null,

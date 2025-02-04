@@ -25,7 +25,7 @@ class QuotationFactory extends Factory
     public function definition(): array
     {
         return [
-            'quotation_no' => $this->faker->unique()->randomNumber(6),
+            'quotation_no' => date('y').str_pad(Quotation::count() + 1, 6, '0', STR_PAD_LEFT),
             'quotation_date' => $this->faker->dateTimeThisYear(),
             // 'customer_id' => Customer::factory(), // Assumes a Customer factory exists
             'customer_id' => $this->faker->randomElement(Customer::pluck('id')->toArray()),

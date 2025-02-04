@@ -7,7 +7,7 @@
             <div class="flex flex-col gap-1">
                 <div>
                     <span class="font-medium block mb-2">Team Members</span>
-                    <Listbox v-model="model" :options="columns" multiple optionLabel="header" scrollHeight="24rem" checkmark="" />
+                    <Listbox v-model="model" :options="columns" :optionDisabled="excluded" multiple optionLabel="header" scrollHeight="24rem" checkmark="" ></Listbox>
                 </div>
                 <Button label="Apply" class="mt-2" @click="selectColumns()"/>
             </div>

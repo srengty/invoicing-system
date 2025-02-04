@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Invoice;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -24,6 +25,7 @@ class DatabaseSeeder extends Seeder
             AgreementSeeder::class,
             QuotationSeeder::class,
             ProductSeeder::class,
+            InvoiceSeeder::class,
             QuotationProductSeeder::class,
         ]);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agreement;
 use App\Models\Customer;
+use App\Models\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -29,6 +30,7 @@ class AgreementController extends Controller
             'customers' => Customer::all(),
             'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
             'csrf_token' => csrf_token(),
+            'quotations' => Quotation::all(),
         ]);
     }
 
@@ -51,9 +53,11 @@ class AgreementController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Agreement $agreement)
+    public function show(int $id)
     {
-        //
+        return Inertia::render('Agreements/Show', [
+            'agreement' => Agreement::with('customer')->find($id),
+        ]);
     }
 
     /**

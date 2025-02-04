@@ -21,10 +21,12 @@ return new class extends Migration
             $table->unsignedBigInteger('customer_id'); // Foreign key to customer
             $table->string('address');
             $table->string('phone');
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->decimal('sub_total', 10, 2);
+            $table->date('date');
+            $table->date('due_date');
             $table->enum('status', ['Pending', 'Paid', 'Cancelled'])->default('Pending');
+            $table->decimal('sub_total', 10, 2);
+            $table->decimal('grand_total', 10, 2)->nullable();
+            $table->json('products')->nullable(); // Add the products column
             $table->timestamps(); // Created_at and updated_at
 
             // Foreign key constraints

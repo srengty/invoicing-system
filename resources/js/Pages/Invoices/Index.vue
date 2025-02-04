@@ -10,6 +10,16 @@
           <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded />
         </div>
       </div>
+      <div>
+        <h1>Filter</h1>
+        <div class="flex gap-2">
+          <DatePicker v-model="filters.dates" placeholder="Date" />
+          <InputText v-model="filters.invoice_no" placeholder="Invoice No" />
+          <InputText v-model="filters.customer" placeholder="Customer" />
+          <InputText v-model="filters.status" placeholder="Status" />
+          <Button label="Search" icon="pi pi-search" @click="searchInvoices" />
+          </div>
+      </div>
       <DataTable :value="invoices.data" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">
         <!-- Dynamic Columns -->
         <Column
@@ -55,7 +65,7 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { Button, DataTable, Column } from 'primevue';
+import { Button, DataTable, Column, DatePicker, InputText } from 'primevue';
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import { ref } from 'vue';
 import { Inertia } from '@inertiajs/inertia'; // Ensure Inertia is correctly imported
@@ -67,13 +77,24 @@ defineProps({
     required: true,
   },
 });
+const filters = ref({
+  dates: null,
+  invoice_no: null,
+  customer: null,
+  status: null,
+});
 
 // Columns configuration
 const columns = [
   { field: 'id', header: 'ID' },
-  { field: 'invoice_no', header: 'Invoice No' },
+  { field: 'date', header: 'Date' },
+  { field: 'due_date', header: 'Due Date' },
   { field: 'customer.name', header: 'Customer' },
-  { field: 'grand_total', header: 'Grand total' },
+  { field: 'grand_total', header: 'Amount' },
+  { field: 'amount_paid', header: 'Amount Paid' },
+  { field: 'amount_due', header: 'Amount Due' },
+  { field: 'invoice_no', header: 'Invoice No' },
+  { field: 'over_due', header: 'Over due (days)' },
   { field: 'status', header: 'Status' },
 ];
 

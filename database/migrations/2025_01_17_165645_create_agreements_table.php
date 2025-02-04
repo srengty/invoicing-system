@@ -30,7 +30,7 @@ return new class extends Migration
         });
         Schema::create('quotations', function (Blueprint $table) {
             $table->id();
-            $table->integer('quotation_no');
+            $table->integer('quotation_no')->unique('quotation_no_unique');
             $table->timestamp('quotation_date')->useCurrent();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->string('address', 255)->nullable();
@@ -45,8 +45,8 @@ return new class extends Migration
         });
         Schema::create('agreements', function (Blueprint $table) {
             $table->id();
-            $table->integer('agreement_no');
-            $table->bigInteger('agreement_ref_no')->unsigned()->nullable();
+            $table->integer('agreement_no')->unique('quotation_no_unique');
+            $table->string('agreement_ref_no')->nullable();
             $table->timestamp('agreement_date')->useCurrent();
             $table->string('address', 255)->nullable();
             $table->string('agreement_doc', 250)->nullable();
@@ -54,9 +54,13 @@ return new class extends Migration
             $table->timestamp('end_date')->useCurrent();
             $table->double('amount_no_tax')->default(0)->comment('amount exclude tax');
             $table->double('tax')->default(0)->comment('tax in amount $');
-            $table->string('status', 20)->default('Pending')->comment('Open, Closed');
-            $table->foreignId('quotation_no')->nullable()->constrained('quotations');
+            $table->string('status', 20)->default('Open')->comment('Open, Closed, Abnormal Closed');
+            $table->string('close_reason', 255)->nullable()->comment('Abnormal Closed reason');
+            $table->foreignId('quotation_id')->nullable()->constrained('quotations')->nullOnDelete();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->double('due_payment')->default(0)->comment('total amount invoice not paid');
+            $table->double('total_progress_payment')->default(0)->comment('total amount invoice paid');
+            $table->double('total_progress_payment_percentage')->default(0)->comment('percentage of total amount invoice paid');
             $table->timestamps();
         });
     }

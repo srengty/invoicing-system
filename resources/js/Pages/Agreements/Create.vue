@@ -6,7 +6,7 @@
             <div class="create-agreement flex flex-row gap-4">
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1">
-                        <span>Quotation No.</span>
+                        <span v-tooltip="'must be approved and no agreement attached'">Quotation No.</span>
                         <InputNumber name="quotation_no" :use-grouping="false" class="w-full"/>
                         <span>Agreement No. {{ agreement_max }}</span>
                         <InputNumber name="agreement_no" :class="(errors.agreement_no?'p-invalid':'')" :use-grouping="false" :readonly="true" />
@@ -36,11 +36,16 @@
                         <span>End date</span>
                         <DatePicker date-format="dd/mm/yy" name="end_date"/>
                         <Message v-if="errors.end_date" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.end_date }}</Message>
-                        <span>Agreement amount (exclude tax)</span>
-                        <InputNumber name="agreement_amount" />
+                        <span>Agreement amount</span>
+                        <InputGroup>
+                            <InputGroupAddon>{{ currencies[riels==true?0:1].sign }}</InputGroupAddon>
+                            <InputNumber name="agreement_amount" />
+                        </InputGroup>
+                        <span>{{ currencies[riels==true?0:1].name }}</span>
+                        <ToggleSwitch v-model="riels" onLabel="Riels" offLabel="USD" offIcon="pi pi-dollar" onIcon="pi pi-dollar" />
                         <Message v-if="errors.agreement_amount" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_amount }}</Message>
-                        <span>Tax amount</span>
-                        <InputNumber name="tax_amount" :min-fraction-digits="2" :max-fraction-digits="5"/>
+                        <span>Short description</span>
+                        <Textarea name="short_description" rows="2" />
                         <span>Payment schedule</span>
                         <Button label="Add payment schedule" />
                     </div>
@@ -52,8 +57,8 @@
                     </div>
                 </div>
             </div>
-            <PaymentSchedule class="mt-2" v-model="form.payment_schedule"/>
-            <Button label="Submit" type="submit" />
+            <PaymentSchedule class="mt-2" v-model="form.payment_schedule" :currency="currencies[riels==true?0:1].sign"/>
+            <Button label="Save" type="submit" />
         </Form>
     </GuestLayout>
 </template>
@@ -61,15 +66,19 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select } from 'primevue';
+import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup,InputGroupAddon } from 'primevue';
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
 import { reactive, onMounted, ref } from 'vue';
 import PaymentSchedule from './PaymentSchedule.vue';
+import Textarea from 'primevue/textarea';
+
 //import src from 'tailwindcss-primeui';
 const page = usePage();
 const props = defineProps({ errors: Object, customers: Array, agreement_max: Number });
 const toast = useToast();
+const riels = ref(true);
+const currencies= ref([{name: 'Riels', value: 'riel', sign: '៛'},{name: 'USD', value: 'usd', sign: '$'}]);
 const form = reactive({
     quotation_no: null,
     agreement_no: null,
@@ -81,13 +90,14 @@ const form = reactive({
     start_date: '01/21/2025',
     end_date: '01/21/2025',
     agreement_amount: 0,
-    tax_amount: 0,
+    short_description: "",
     attachment: null,
     payment_schedule: [
     {
         id: 1,
         due_date: "28/01/2025",
         short_description: "Item description",
+        percentage: 10,
         remark: "Additional remark",
         amount: 2000,
     },
@@ -95,6 +105,7 @@ const form = reactive({
         id: 2,
         due_date: "04/02/2025",
         short_description: "Item description",
+        percentage: 20,
         remark: "Additional remark",
         amount: 5000,
     },
@@ -102,6 +113,7 @@ const form = reactive({
         id: 3,
         due_date: "11/02/2025",
         short_description: "Item description",
+        percentage: 30,
         remark: "Additional remark",
         amount: 3000,
     },
