@@ -9,33 +9,35 @@
                 Quotations are proposed to customer to bid for a project.
             </div>
             <div class="flex justify-end p-4 gap-4">
-                <div><Link :href="route('quotations.create')">
-                    <Button label="Issue Quotation" rounded/>
-                </Link></div>
+                <div>
+                    <Link :href="route('quotations.create')">
+                        <Button label="Issue Quotation" rounded/>
+                    </Link>
+                </div>
                 <Button label="Issue Invoice" rounded/>
                 <Button label="Record Agreement" rounded/>
             </div>
 
             <div>
                 <DataTable :value="quotations" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" tableStyle="min-width: 50rem">
-                    <Column header="View Print-out" style="width: 20%">
-                        <template #body="slotProps" >
+                    <Column header="View / Print-out" style="width: 20%">
+                        <template #body="slotProps">
                             <div class="flex gap-4">
                                 <Button icon="pi pi-plus" label="View" rounded @click="viewQuotation(slotProps.data)" style="padding-left: 12px;padding-right: 18px;" />
-                                <Button icon="pi pi-plus" label="Print out" rounded style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-plus" label="Print out" @click="printQuotation(slotProps.data.id)" rounded style="padding-left: 12px;padding-right: 18px;" />
                             </div>
                         </template>
                     </Column>
-                    <Column field="id" header="ID" style="width: 10%" />
-                    <Column field="customer.name" header="Customer/Organization Name" style="width: 25%" />
+                    <Column field="id" header="ID" style="width: 10%;" />
+                    <Column field="customer.name" header="Customer/Organization Name" style="width: 25%;" />
                     <Column field="grand_total" header="Total" style="width: 10%" />
                     <Column field="status" header="Status" style="width: 15%" />
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
-
+                
                 <!-- View Dialog display -->
-                <Dialog v-model:visible="isViewDialogVisible" header="Quotation Details" modal :style="{ width: '40rem'}">
-                    <div v-if="selectedQuotation" class="flex text-lg flex-col gap-2 w-64">
+                <Dialog v-model:visible="isViewDialogVisible" header="Quotation Details" modal :style="{ width: '40rem', high: '200rem'}">
+                    <div v-if="selectedQuotation" class="flex text-lg flex-col gap-2 w-2/2 pl-6">
                         <p><strong>ID:</strong> {{ selectedQuotation.id }}</p>
                         <p><strong>Quotation No.:</strong> {{ selectedQuotation.quotation_no }}</p>
                         <p><strong>Quotation Date:</strong> {{ selectedQuotation.quotation_date }}</p>
@@ -44,14 +46,24 @@
                         <p><strong>address:</strong> {{ selectedQuotation.address }}</p>
                         <p><strong>Phone Number:</strong> {{ selectedQuotation.phone_number }}</p>
                         <!-- Loop through products -->
+                        <span class="font-bold block mb-2 text-center">Items</span>
                         <div v-if="selectedQuotation.products?.length" >
-                            <div v-for="product in selectedQuotation.products" :key="product.id">
-                                <!-- <p><strong>ITems Code:</strong> {{ product.id }}</p> -->
-                                <p><strong>Items:</strong> {{ product.name }}</p>                              
-                                <p><strong>Price:</strong> {{ product.price }}</p>
-                                <p><strong>Quantity:</strong> {{ product.pivot.quantity }}</p> <!-- Pivot quantity -->
-                            </div>
-                        </div><br>
+
+                            <VirtualScroller 
+                                :items="selectedQuotation.products" 
+                                :itemSize="50" 
+                                class="border border-surface-200 dark:border-surface-700 rounded w-full " style="height: 100px">
+                                
+                                <template v-slot:item="{ item, options }">
+                                    <div :class="['flex items-center justify-between p-2', { 'bg-surface-100 dark:bg-surface-700': options.odd }]" >
+                                        <p><strong>Item:</strong> {{ item.name }} <strong> , QTY:</strong> {{ item.pivot.quantity }}</p>                              
+                                    </div>
+                                </template>
+
+                            </VirtualScroller>
+                        </div>
+
+                        <br>                    
                         <p><strong>Grand Total:</strong> {{ selectedQuotation.grand_total }}</p>                                                   
                     </div>
                     <template #footer>
@@ -73,7 +85,8 @@ import Column from 'primevue/column';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { useForm } from "@inertiajs/vue3";
- 
+import VirtualScroller from 'primevue/virtualscroller';
+
 const isViewDialogVisible = ref(false);
 const selectedQuotation = ref([]);
 const selectedQuo_customer = ref([]);
@@ -120,6 +133,8 @@ const viewQuotation = (quotations) => {
     selectedQuotation.value = quotations;
     isViewDialogVisible.value = true;
 };
+
+
 const columns = [
     { field: 'id', header: 'No.' },
     { field: 'quotation_no', header: 'Quotation No.' },
@@ -134,6 +149,16 @@ const columns = [
     { field: 'status', header: 'Status' },
     { field: 'customer_status', header: 'Customer Status' },
 ];
+
+// Printing quotations
+const printQuotation = (id) => {
+    const quotUrl = `/quotations/${id}`;
+    const printWindow = window.open(quotUrl, '_blank'); //create new tab
+
+    printWindow.onload = () => {
+        printWindow.print();
+    }
+}
 
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);

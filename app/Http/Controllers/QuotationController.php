@@ -12,9 +12,6 @@ use App\Models\Agreement; // Import Customer model
 use Inertia\Inertia;
 class QuotationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function list()
     {
         $quotations = Quotation::with('customer', 'products')->get();
@@ -46,7 +43,6 @@ class QuotationController extends Controller
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
             'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
-            // 'quotation_date' => 'required|date',
             'quotation_date' => 'required|date_format:Y-m-d\TH:i:s.v\Z',
             'customer_id'    => 'required|exists:customers,id',
             'address'        => 'nullable|string|max:255',
@@ -106,13 +102,15 @@ class QuotationController extends Controller
     }
     
     /**
-     * Display the specified resource.
+     * Display for print quotations.
      */
-    public function show(Quotation $quotation)
+    public function show($id)
     {
-        // Show details of a single quotation
-        return Inertia::render('Quotations/Show', [
-            'quotation' => $quotation->load('customer'),
+        $quotation = Quotation::with(['customer', 'products'])->findOrFail($id);
+
+        return Inertia::render('Quotations/Print', [
+            'quotation' => $quotation,
+            'products' => $quotation->products,
         ]);
     }
 
