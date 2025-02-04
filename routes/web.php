@@ -1,14 +1,9 @@
 <?php
-
 use App\Http\Controllers\AgreementController;
-
 use App\Http\Controllers\CustomerController;
- 
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
- 
 use App\Http\Controllers\QuotationController;
- 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Models\Customer;
@@ -27,12 +22,13 @@ Route::get('/', function () {
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 
-Route::resource('invoices', InvoiceController::class);
- 
+Route::resource('quotations', QuotationController::class);
+Route::get('/quotations', [QuotationController::class, 'list']);
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
 Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
 
+Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 
 Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
