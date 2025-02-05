@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\CustomerCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,12 +19,17 @@ class CustomerFactory extends Factory
     {
         return [
             'name' => $this->faker->name(),
+            'customer_category_id' => $this->faker->randomElement(CustomerCategory::pluck('id')->toArray()),
             'code' => $this->faker->randomNumber(5),
+            'credit_period' => 15,
             'address' => $this->faker->address(),
+            'website' => $this->faker->url(),
+            // ------------------------------------------
+            'contact_person' => $this->faker->name(),
             'email' => $this->faker->email(),
             'phone_number' => $this->faker->phoneNumber(),
             'telegram_number' => $this->faker->phoneNumber(),
-            'website' => $this->faker->url(),
+            // ------------------------------------------
             'bank_name' => $this->faker->word(),
             'bank_address' => $this->faker->address(),
             'bank_account_name' => $this->faker->name(),

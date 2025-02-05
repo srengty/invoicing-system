@@ -14,6 +14,7 @@ class InvoiceProductSeeder extends Seeder
      */
     public function run()
     {
+        InvoiceProduct::factory(10)->create();
         // Ensure the invoice and product exist, or create them dynamically.
         // Here, we are assuming invoices and products with IDs 1 and 2 already exist.
 
@@ -38,7 +39,7 @@ class InvoiceProductSeeder extends Seeder
         // ]);
 
         // Add invoice-product associations.
-        InvoiceProduct::create([
+        /* InvoiceProduct::create([
             'invoice_id' => 1, // Reference an existing invoice
             'product_id' => 1, // Reference an existing product
             'quantity' => 2,
@@ -48,7 +49,7 @@ class InvoiceProductSeeder extends Seeder
             'invoice_id' => 1, // Reference another invoice
             'product_id' => 2, // Reference another product
             'quantity' => 1,
-        ]);
+        ]); */
 
         // Add more invoice-product associations as needed
     }

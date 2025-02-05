@@ -14,11 +14,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('invoices', function (Blueprint $table) {
-            $table->id(); // Primary key
-            $table->string('invoice_no')->unique();
-            $table->unsignedBigInteger('agreement_no')->nullable();  // Changed to agreement_id for the foreign key
-            $table->unsignedBigInteger('quotation_no')->nullable();  // Changed to quotation_id for the foreign key
-            $table->unsignedBigInteger('customer_id'); // Foreign key to customer
+            $table->unsignedBigInteger('invoice_no')->primary();
+            $table->foreignId('agreement_no')->nullable()->constrained('agreements','agreement_no')->nullOnDelete();  // Changed to agreement_id for the foreign key
+            $table->foreignId('quotation_no')->nullable()->constrained('quotations','quotation_no')->nullOnDelete();  // Changed to quotation_id for the foreign key
+            $table->foreignId('customer_id')->constrained()->cascadeOnDelete(); // Foreign key to customer
             $table->string('address');
             $table->string('phone');
             $table->date('date');
@@ -28,11 +27,6 @@ return new class extends Migration
             $table->decimal('grand_total', 10, 2)->nullable();
             $table->json('products')->nullable(); // Add the products column
             $table->timestamps(); // Created_at and updated_at
-
-            // Foreign key constraints
-            $table->foreign('agreement_no')->references('id')->on('agreements')->onDelete('set null');
-            $table->foreign('quotation_no')->references('id')->on('quotations')->onDelete('set null');
-            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');  // Assuming cascading delete for customer
         });
     }
 

@@ -11,6 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('categories', function (Blueprint $table) {
+            $table->id();
+            $table->string('category_code')->comment('R1, T1, C1');
+            $table->string('category_name_khmer');
+            $table->string('category_name_english');
+            $table->string('description_khmer');
+            $table->string('description_english');
+            $table->timestamps();
+        });
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('code')->nullable(); // Ensure this line exists
@@ -18,7 +27,7 @@ return new class extends Migration
             $table->string('unit');
             $table->decimal('price', 8, 2);
             $table->integer('quantity');
-            $table->string('category')->nullable();
+            $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
     }
@@ -29,5 +38,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('products');
+        Schema::dropIfExists('categories');
     }
 };

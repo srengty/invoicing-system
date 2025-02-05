@@ -13,12 +13,13 @@ return new class extends Migration
     {
         Schema::create('payment_schedules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('agreement_id')->constrained()->onDelete('cascade');
+            $table->foreignId('agreement_no')->constrained('agreements','agreement_no')->onDelete('cascade');
             $table->date('due_date');
             $table->string('short_description');
             $table->decimal('percentage', 10, 2);
             $table->decimal('amount', 10, 2);
             $table->string('currency')->default('KHR');
+            $table->enum('status', ['Pending', 'Paid', 'Cancelled'])->default('Pending');
             $table->timestamps();
         });
     }

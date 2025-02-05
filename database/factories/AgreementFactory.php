@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Agreement;
 use App\Models\Customer;
+use App\Models\Quotation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,18 +19,26 @@ class AgreementFactory extends Factory
      */
     public function definition(): array
     {
+        static $count = Agreement::where('agreement_no','>',date('y'))->count() + 1;
+        $status = $this->faker->randomElement(['Open', 'Closed', 'Abnormal Closed']);
         return [
-            'agreement_no' => date('y').str_pad(Agreement::count() + 1, 6, '0', STR_PAD_LEFT),
+            'quotation_no' => $this->faker->randomElement(Quotation::pluck('quotation_no')->toArray()),
+            'agreement_no' => date('y').str_pad($count++, 6, '0', STR_PAD_LEFT),
             'agreement_ref_no' => $this->faker->randomNumber(5),
             'agreement_date' => $this->faker->dateTimeThisYear(),
             'address' => $this->faker->address(),
             'agreement_doc' => $this->faker->word(),
+            'attachments' => json_encode(['file1', 'file2']),
             'start_date' => $this->faker->dateTimeThisYear(),
             'end_date' => $this->faker->dateTimeThisYear(),
-            'amount_no_tax' => $this->faker->randomFloat(2, 0, 1000),
-            'tax' => $this->faker->randomFloat(2, 0, 1000),
-            'status' => $this->faker->randomElement(['Pending', 'Open', 'Closed']),
+            'amount' => $this->faker->randomFloat(2, 0, 1000),
+            'status' => $status,
+            'short_description' => $this->faker->sentence(),
+            'close_reason' => $status=='Abnormal Closed'?$this->faker->sentence():null,
             'customer_id' => $this->faker->randomElement(Customer::pluck('id')->toArray()),
+            'due_payment' => $this->faker->randomFloat(2, 0, 1000),
+            'total_progress_payment' => $this->faker->randomFloat(2, 0, 1000),
+            'total_progress_payment_percentage' => $this->faker->randomFloat(2, 0, 100),
         ];
     }
 }

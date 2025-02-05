@@ -22,11 +22,13 @@ class DatabaseSeeder extends Seeder
         ]);
         $this->call([
             CustomerSeeder::class,
-            AgreementSeeder::class,
             QuotationSeeder::class,
+            AgreementSeeder::class,
             ProductSeeder::class,
             InvoiceSeeder::class,
             QuotationProductSeeder::class,
+            InvoiceProductSeeder::class,
+            PaymentScheduleSeeder::class,
         ]);
     }
 }

@@ -19,7 +19,8 @@ class InvoiceSeeder extends Seeder
 
     public function run()
     {
-        Invoice::create([
+        Invoice::factory(10)->create();
+        /* Invoice::create([
             'invoice_no' => '25000001',
             'customer_id' => 1, // Reference a customer
             'agreement_no' => Quotation::all(['id'])->first()->id, // Reference an agreement
@@ -29,7 +30,7 @@ class InvoiceSeeder extends Seeder
             'date' => now(),
             'due_date' => now()->addMonth(),
             'sub_total' => 100.0,
-        ]);
+        ]); */
         // Add more invoices as needed
     }
 
