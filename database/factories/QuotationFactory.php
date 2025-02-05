@@ -17,6 +17,7 @@ class QuotationFactory extends Factory
      * @var string
      */
     protected $model = Quotation::class;
+
     /**
      * Define the model's default state.
      *
@@ -24,11 +25,14 @@ class QuotationFactory extends Factory
      */
     public function definition(): array
     {
-        static $number = Quotation::where('quotation_no','>',date('y'))->count() + 1;
+        static $counter = 1; // Static counter to keep track of the sequence
+        $year = date('y');
+
+        // Ensure the quotation number is unique within the seeding process
         return [
-            'quotation_no' => date('y').str_pad($number++, 6, '0', STR_PAD_LEFT),
-            'quotation_date' => $this->faker->dateTimeThisYear(),
-            'customer_id' => $this->faker->randomElement(Customer::pluck('id')->toArray()),
+            'quotation_no' => $year . str_pad($counter++, 6, '0', STR_PAD_LEFT),
+            'quotation_date' => $this->faker->dateTimeThisYear()->format('Y-m-d'),
+            'customer_id' => Customer::inRandomOrder()->value('id') ?? Customer::factory(),
             'address' => $this->faker->address,
             'phone_number' => $this->faker->phoneNumber,
             'terms' => $this->faker->sentence(10),

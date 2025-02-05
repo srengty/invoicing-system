@@ -19,10 +19,13 @@ class AgreementFactory extends Factory
      */
     public function definition(): array
     {
-        static $count = Agreement::where('agreement_no','>',date('y'))->count() + 1;
+        static $count = 1; // Fixed: No more invalid database query in static
+        $year = date('y');
+
         $status = $this->faker->randomElement(['Open', 'Closed', 'Abnormal Closed']);
+
         return [
-            'quotation_no' => $this->faker->randomElement(Quotation::pluck('quotation_no')->toArray()),
+            'quotation_no' => Quotation::inRandomOrder()->value('quotation_no') ?? null, // Fixed: More efficient
             'agreement_no' => date('y').str_pad($count++, 6, '0', STR_PAD_LEFT),
             'agreement_ref_no' => $this->faker->randomNumber(5),
             'agreement_date' => $this->faker->dateTimeThisYear(),

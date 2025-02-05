@@ -20,13 +20,15 @@ class InvoiceFactory extends Factory
      */
     public function definition(): array
     {
-        static $count = Invoice::where('invoice_no','>',date('y'))->count() + 1;
+        static $count = 1;  
+        $year = date('y');
         $subtotal = $this->faker->randomFloat(2, 100, 1000);
+
         return [
-            'invoice_no' => date('y').str_pad($count++, 6, '0', STR_PAD_LEFT),
-            'agreement_no' => $this->faker->randomElement(Agreement::pluck('agreement_no')->toArray()),
-            'quotation_no' => $this->faker->randomElement(Quotation::pluck('quotation_no')->toArray()),
-            'customer_id' => $this->faker->randomElement(Customer::pluck('id')->toArray()),
+            'invoice_no' => $year . str_pad($count++, 6, '0', STR_PAD_LEFT),
+            'agreement_no' => Agreement::inRandomOrder()->value('agreement_no') ?? null, // FIXED 
+            'quotation_no' => Quotation::inRandomOrder()->value('quotation_no') ?? null, // FIXED
+            'customer_id' => Customer::inRandomOrder()->value('id') ?? null, // FIXED 
             'address' => $this->faker->address,
             'phone' => $this->faker->phoneNumber,
             'date' => $this->faker->dateTimeThisYear(),
