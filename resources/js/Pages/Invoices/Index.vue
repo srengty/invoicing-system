@@ -37,21 +37,21 @@
                 icon="pi pi-print"
                 class="p-button-info"
                 :label="'Print'"
-                @click="printInvoice(data.id)"
+                @click="printInvoice(data.invoice_no)"
                 rounded
               />
               <Button
                 icon="pi pi-pencil"
                 class="p-button-warning"
                 :label="'Edit'"
-                @click="editInvoice(data.id)"
+                @click="editInvoice(data.invoice_no)"
                 rounded
               />
               <Button
                 icon="pi pi-trash"
                 class="p-button-danger"
                 :label="'Delete'"
-                @click="deleteInvoice(data.id)"
+                @click="deleteInvoice(data.invoice_no)"
                 rounded
               />
             </div>

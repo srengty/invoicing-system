@@ -19,7 +19,7 @@
                     </Column>
                     <Column v-if="col.field==='actions'" :field="col.field" :header="col.header" sortable>
                         <template #body="slotProps">
-                            <a :href="route('agreements.show',{'id':slotProps.data.id})" target="_blank">View</a>
+                            <a :href="route('agreements.show',{'id':slotProps.data.agreement_no})" target="_blank">View</a>
                         </template>
                     </Column>
                 </template>
@@ -52,8 +52,7 @@ const columns = [
     { field: 'end_date', header: 'End Date' },
     { field: 'due_payment', header: 'Due Payment' },
     { field: 'total_progress_payment', header: 'Total Progress Payment' },//sum of all recipes amount
-    { field: 'amount_no_tax', header: 'Amount' },
-    { field: 'tax', header: 'Tax' },
+    { field: 'amount', header: 'Amount' },
     { field: 'status', header: 'Status' },
     { field: 'customer_id', header: 'Customer ID' },
 ];

@@ -11,6 +11,7 @@ class Agreement extends Model
 {
     /** @use HasFactory<\Database\Factories\AgreementFactory> */
     use HasFactory;
+    protected $pimaryKey  = 'agreement_no';
     protected $fillable = [
         'agreement_no',
         'agreement_ref_no',

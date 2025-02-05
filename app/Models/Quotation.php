@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Quotation extends Model
 {
     use HasFactory;
-
+    protected $primaryKey = 'quotation_no';
     protected $fillable = [
         'quotation_no',
         'quotation_date',
@@ -39,7 +39,7 @@ class Quotation extends Model
     // Define a many-to-many relationship with Product
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'quotation_product')
+        return $this->belongsToMany(Product::class, 'product_quotation')
                     ->withPivot('quantity')
                     ->withTimestamps();
     }
