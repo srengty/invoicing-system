@@ -39,7 +39,7 @@ class Quotation extends Model
     // Define a many-to-many relationship with Product
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'product_quotation')
+        return $this->belongsToMany(Product::class, 'product_quotation', 'quotation_no', 'product_id')
                     ->withPivot('quantity')
                     ->withTimestamps();
     }

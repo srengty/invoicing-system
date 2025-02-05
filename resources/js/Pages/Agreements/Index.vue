@@ -9,9 +9,15 @@
                     <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded />
                 </div>
             </div>
-            <DataTable :value="agreements" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :stripedRows="true" :showGridlines="true">
+            <DataTable :value="agreements" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" :stripedRows="true" 
+                :showGridlines="true" resizableColumns columnResizeMode="fit">
                 <template v-for="col of showColumns" :key="col.field">
-                    <Column v-if="!['agreement_doc','actions'].includes(col.field)" :field="col.field" :header="col.header" sortable></Column>
+                    <Column v-if="!['agreement_doc','actions','agreement_date','start_date','end_date'].includes(col.field)" :field="col.field" :header="col.header" sortable></Column>
+                    <Column v-if="['agreement_date','start_date','end_date'].includes(col.field)" :field="col.field" :header="col.header" sortable>
+                        <template #body="slotProps">
+                            {{momentDate(slotProps.data[col.field])}}
+                        </template>
+                    </Column>
                     <Column v-if="col.field==='agreement_doc'" :field="col.field" :header="col.header" sortable>
                         <template #body="slotProps">
                             <a v-if="slotProps.data[col.field]" :href="slotProps.data[col.field]" target="_blank">View doc</a>
@@ -33,6 +39,7 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { DataTable, Column, Button, Popover } from 'primevue';
 import { ref } from "vue";
+import moment from 'moment';
 
 defineProps({
     agreements: {
@@ -54,14 +61,18 @@ const columns = [
     { field: 'total_progress_payment', header: 'Total Progress Payment' },//sum of all recipes amount
     { field: 'amount', header: 'Amount' },
     { field: 'status', header: 'Status' },
-    { field: 'customer_id', header: 'Customer ID' },
+    { field: 'customer.name', header: 'Customer ID' },
 ];
-const selectedColumns = ref(columns);
-const showColumns = ref(columns);
+const defaultColumns = columns.filter(col => !['agreement_doc','total_progress_payment','address','agreement_ref_no'].includes(col.field));
+const selectedColumns = ref(defaultColumns);
+const showColumns = ref(defaultColumns);
 const updateColumns = (columns) => {
     showColumns.value = selectedColumns.value;
 }
 const openCreate = () => {
     router.get(route("agreements.create"));
+}
+const momentDate = (date) => {
+    return moment(date,'DD/MM/YYYY').fromNow();
 }
 </script>

@@ -8,27 +8,32 @@
         <Column field="due_date" header="Due Date"></Column>
         <Column field="short_description" header="Short Description">
             <template #editor="{ data, field }">
-                <InputText v-model="data[field]" fluid />
+                <DatePicker v-model="data[field]" fluid date-format="dd/mm/yy" />
             </template>
         </Column>
-        <!-- <Column field="percentage" header="Percentage">
+        <Column field="percentage" header="Percentage">
             <template #body="slotProps">
                 {{ slotProps.data['percentage'] }} %
             </template>
             <template #editor="{ data, field }">
-                <InputNumber v-model="data[field]" fluid />%
+                <InputGroup>
+                    <InputNumber v-model="data[field]" fluid />
+                    <InputGroupAddon append>%</InputGroupAddon>
+                </InputGroup>
             </template>
-        </Column> -->
+        </Column>
         <Column field="amount" header="Amount">
             <template #body="slotProps">
                 {{ priceTemplate(slotProps.data) }}
             </template>
             <template #editor="{ data, field }">
-                <InputNumber v-model="data[field]" fluid />
+                <InputGroup>
+                    <InputGroupAddon append>{{ props.currency??'$' }}</InputGroupAddon>
+                    <InputNumber v-model="data[field]" fluid />
+                </InputGroup>
             </template>
         </Column>
-        <Column header="Action" :exportable="false" :rowEditor="true" v-if="!readonly"></Column>
-        <Column header="Invoice" :exportable="false" v-if="!readonly">
+        <Column header="Action" :exportable="false" :rowEditor="true" v-if="!readonly">
             <template #body="slotProps">
                 <Button icon="pi pi-file-pdf" class="p-button-rounded p-button-success p-button-outlined" label="Generate invoice" />
             </template>
@@ -41,7 +46,8 @@
 
 <script setup>
 import { ref, defineModel } from "vue";
-import { DataTable, Column, Button, InputNumber, InputText } from "primevue";
+import { DataTable, Column, Button, InputNumber, InputText, InputGroup, InputGroupAddon, DatePicker } from "primevue";
+
 const items = defineModel({default:[
     {
         id: 1,

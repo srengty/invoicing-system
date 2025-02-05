@@ -1,4 +1,5 @@
 <template>
+
     <Head title="Create Agreement" />
     <GuestLayout>
         <h1>Create Agreement</h1>
@@ -7,47 +8,63 @@
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1">
                         <span v-tooltip="'must be approved and no agreement attached'">Quotation No.</span>
-                        <InputNumber name="quotation_no" :use-grouping="false" class="w-full"/>
+                        <InputNumber name="quotation_no" :use-grouping="false" class="w-full" />
                         <span>Agreement No. {{ agreement_max }}</span>
-                        <InputNumber name="agreement_no" :class="(errors.agreement_no?'p-invalid':'')" :use-grouping="false" :readonly="true" />
-                        <Message v-if="errors.agreement_no" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_no }}</Message>
+                        <InputNumber name="agreement_no" :class="(errors.agreement_no ? 'p-invalid' : '')"
+                            :use-grouping="false" :readonly="true" />
+                        <Message v-if="errors.agreement_no" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.agreement_no }}</Message>
                         <span>Date</span>
-                        <DatePicker date-format="dd/mm/yy" name="date" showIcon :show-on-focus="false"/>
-                        <Message v-if="errors.date" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.date }}</Message>
+                        <DatePicker date-format="dd/mm/yy" name="date" showIcon :show-on-focus="false" />
+                        <Message v-if="errors.date" severity="error" size="small" variant="simple" class="col-span-2">{{
+                            errors.date }}</Message>
                         <span>Customer</span>
-                        <Select filter v-model="form.customer_id" :options="customers" option-value="id" option-label="name" :virtualScrollerOptions="{ itemSize: 38 }"/>
-                        <Message v-if="errors.customer_id" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.customer_id }}</Message>
+                        <Select filter v-model="form.customer_id" :options="customers" option-value="id"
+                            option-label="name" :virtualScrollerOptions="{ itemSize: 38 }" />
+                        <Message v-if="errors.customer_id" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.customer_id }}</Message>
                         <span>Address</span>
                         <InputText name="address" />
-                        <Message v-if="errors.address" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.address }}</Message>
+                        <Message v-if="errors.address" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.address }}</Message>
                         <span>Agreement doc</span>
                         <!-- <FileUpload name="agreement_doc" auto customUpload @select="onFileSelect" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/> -->
-                        <FileUpload name="agreement_doc" auto @before-upload="beforeUpload" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/>
-                        <Message v-if="errors.agreement_doc" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_doc }}</Message>
-                        <img :src="src" alt="Agreement doc" class="w-full col-span-2" />
+                        <FileUpload name="agreement_doc" auto @before-upload="beforeUpload" mode="basic"
+                            :url="route('agreements.upload')" accept="application/pdf" :maxFileSize="1000000"
+                            @upload="onUpload" />
+                        <Message v-if="errors.agreement_doc" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.agreement_doc }}</Message>
+                        <span alt="Agreement doc" class="w-full col-span-2">
+                            <a class="underline hover:text-red-800" v-if="src" :href="src" target="_blank"><i
+                                    class="pi pi-file-pdf"></i> {{ src.split('/').pop() }}</a>
+                        </span>
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1">
                         <span class="col-span-2 text-xl mb-5">Agreement summary</span>
                         <span>Start date</span>
-                        <DatePicker date-format="dd/mm/yy" name="start_date"/>
-                        <Message v-if="errors.start_date" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.start_date }}</Message>
+                        <DatePicker date-format="dd/mm/yy" name="start_date" />
+                        <Message v-if="errors.start_date" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.start_date }}</Message>
                         <span>End date</span>
-                        <DatePicker date-format="dd/mm/yy" name="end_date"/>
-                        <Message v-if="errors.end_date" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.end_date }}</Message>
-                        <span>Agreement amount</span>
+                        <DatePicker date-format="dd/mm/yy" name="end_date" />
+                        <Message v-if="errors.end_date" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.end_date }}</Message>
+                        <span>Agreement amount ({{ currencies[riels == true ? 0 : 1].name }})</span>
                         <InputGroup>
-                            <InputGroupAddon>{{ currencies[riels==true?0:1].sign }}</InputGroupAddon>
+                            <InputGroupAddon>
+                                <ToggleSwitch v-model="riels" onLabel="Riels" offLabel="USD" offIcon="pi pi-dollar"
+                                    onIcon="pi pi-dollar" />
+                            </InputGroupAddon>
                             <InputNumber name="agreement_amount" />
                         </InputGroup>
-                        <span>{{ currencies[riels==true?0:1].name }}</span>
-                        <ToggleSwitch v-model="riels" onLabel="Riels" offLabel="USD" offIcon="pi pi-dollar" onIcon="pi pi-dollar" />
-                        <Message v-if="errors.agreement_amount" severity="error" size="small" variant="simple" class="col-span-2">{{ errors.agreement_amount }}</Message>
+                        <Message v-if="errors.agreement_amount" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.agreement_amount }}</Message>
                         <span>Short description</span>
                         <Textarea name="short_description" rows="2" />
                         <span>Payment schedule</span>
-                        <Button label="Add payment schedule" />
+                        <PopupAddPaymentSchedule v-model="schedule" @save="doSave" />
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4">
@@ -57,7 +74,8 @@
                     </div>
                 </div>
             </div>
-            <PaymentSchedule class="mt-2" v-model="form.payment_schedule" :currency="currencies[riels==true?0:1].sign"/>
+            <PaymentSchedule class="mt-2" v-model="form.payment_schedule"
+                :currency="currencies[riels == true ? 0 : 1].sign" />
             <Button label="Save" type="submit" />
         </Form>
     </GuestLayout>
@@ -66,19 +84,21 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup,InputGroupAddon } from 'primevue';
+import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon } from 'primevue';
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
 import { reactive, onMounted, ref } from 'vue';
 import PaymentSchedule from './PaymentSchedule.vue';
 import Textarea from 'primevue/textarea';
+import PopupAddPaymentSchedule from './PopupAddPaymentSchedule.vue';
+import moment from 'moment';
 
 //import src from 'tailwindcss-primeui';
 const page = usePage();
 const props = defineProps({ errors: Object, customers: Array, agreement_max: Number });
 const toast = useToast();
 const riels = ref(true);
-const currencies= ref([{name: 'Riels', value: 'riel', sign: '៛'},{name: 'USD', value: 'usd', sign: '$'}]);
+const currencies = ref([{ name: 'Riels', value: 'riel', sign: '៛' }, { name: 'USD', value: 'usd', sign: '$' }]);
 const form = reactive({
     quotation_no: null,
     agreement_no: null,
@@ -93,32 +113,41 @@ const form = reactive({
     short_description: "",
     attachment: null,
     payment_schedule: [
-    {
-        id: 1,
-        due_date: "28/01/2025",
-        short_description: "Item description",
-        percentage: 10,
-        remark: "Additional remark",
-        amount: 2000,
-    },
-    {
-        id: 2,
-        due_date: "04/02/2025",
-        short_description: "Item description",
-        percentage: 20,
-        remark: "Additional remark",
-        amount: 5000,
-    },
-    {
-        id: 3,
-        due_date: "11/02/2025",
-        short_description: "Item description",
-        percentage: 30,
-        remark: "Additional remark",
-        amount: 3000,
-    },
+        {
+            id: 1,
+            due_date: "28/01/2025",
+            short_description: "Item description",
+            percentage: 10,
+            remark: "Additional remark",
+            amount: 2000,
+        },
+        {
+            id: 2,
+            due_date: "04/02/2025",
+            short_description: "Item description",
+            percentage: 20,
+            remark: "Additional remark",
+            amount: 5000,
+        },
+        {
+            id: 3,
+            due_date: "11/02/2025",
+            short_description: "Item description",
+            percentage: 30,
+            remark: "Additional remark",
+            amount: 3000,
+        },
     ],
     attachment: null,
+});
+const schedule = ref({
+    agreement_amount: 1000,
+    due_date: new Date(),
+    short_description: "Item description",
+    percentage: 10,
+    remark: "Additional remark",
+    amount: 2000,
+    currency: 'KHR'
 });
 onMounted(() => {
     form.agreement_no = props.agreement_max;
@@ -135,17 +164,17 @@ const submit = (e) => {
 }
 const onUpload = (e) => {
     console.log(e);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded'+e.files[0], life: 3000 });
+    toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded' + e.files[0], life: 3000 });
     form.agreement_doc = e.xhr.responseText;
     src.value = e.xhr.responseText;
 }
-const beforeUpload=(e)=>{
+const beforeUpload = (e) => {
     e.formData.enctype = 'multipart/form-data';
-    console.log('page.props.csrf_token',form);
+    console.log('page.props.csrf_token', form);
     e.formData.append('agreement_doc_old', form.agreement_doc);
     e.formData.append('_token', page.props.csrf_token);
 }
-const src=ref(null);
+const src = ref(null);
 function onFileSelect(event) {
     const file = event.files[0];
     const reader = new FileReader();
@@ -168,16 +197,26 @@ function onFileSelect(event) {
             'X-CSRF-TOKEN': csrfToken
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded', life: 3000 });
-        } else {
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded', life: 3000 });
+            } else {
+                toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
+            }
+        })
+        .catch(error => {
             toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
-        }
-    })
-    .catch(error => {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
+        });
+}
+const doSave = (e) => {
+    form.payment_schedule.push({
+        id: form.payment_schedule.length + 1,
+        due_date: moment(e.due_date).format('DD/MM/YYYY'),
+        short_description: e.short_description,
+        percentage: e.percentage,
+        remark: e.remark,
+        amount: e.amount,
     });
 }
 // const resolver = zodResolver(z.object({
@@ -201,11 +240,12 @@ function onFileSelect(event) {
 // }));
 </script>
 
-<style >
-    span.p-invalid input {
-        border-color: var(--p-inputtext-invalid-border-color);
-    }
-    .p-inputnumber-input {
-        width: 100%;
-    }
+<style>
+span.p-invalid input {
+    border-color: var(--p-inputtext-invalid-border-color);
+}
+
+.p-inputnumber-input {
+    width: 100%;
+}
 </style>
