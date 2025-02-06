@@ -17,7 +17,7 @@
 
         <FloatLabel variant="on">
             <InputGroup id="percentage">
-                <InputNumber v-model="model.percentage" fluid />
+                <InputNumber v-model="amountPercentage.percentage" fluid @input="doPercentageChange" :min="0" :max="maxPercentage" :maxFractionDigits="2" />
                 <InputGroupAddon append>%</InputGroupAddon>
             </InputGroup>
             <label for="percentage" class="required z-10">Percentage</label>
@@ -26,7 +26,7 @@
         <FloatLabel variant="on">
             <InputGroup id="amount">
                 <InputGroupAddon>{{ model.currency=='USD'?'$':'៛' }}</InputGroupAddon>
-                <InputNumber v-model="model.amount" fluid />
+                <InputNumber v-model="amountPercentage.amount" fluid @input="doAmountChange" :maxFractionDigits="2" />
             </InputGroup>
             <label for="amount" class="required z-10">Amount</label>
         </FloatLabel>
@@ -44,7 +44,7 @@
             </RadioButtonGroup>
         </div>
         <div class="flex justify-end gap-2">
-            <Button label="Save" class="grow" @click="emit('save')"/>
+            <Button label="Save" class="grow" @click="doSave"/>
             <Button label="Cancel" severity="secondary" @click="emit('cancel')" />
         </div>
     </div>
@@ -52,10 +52,33 @@
 
 <script setup>
 import { FloatLabel, InputText, Button, DatePicker, Textarea, RadioButtonGroup, RadioButton, InputGroup, InputGroupAddon, InputNumber } from 'primevue';
+import { onMounted, ref } from 'vue';
+const maxPercentage = ref(100);
 const emit = defineEmits(['cancel', 'save']);
 const model = defineModel({
     type: Object,
 });
+const amountPercentage = ref({
+    amount: 0,
+    percentage: 0,
+});
+onMounted(()=>{
+    console.log('onMounted', model.value);
+    amountPercentage.value.amount = model?.value.amount??0;
+    amountPercentage.value.percentage = model?.value.percentage??0;
+    maxPercentage.value = model?.value.percentage??100;
+});
+const doAmountChange = (e) => {
+    amountPercentage.value.percentage = Math.round(((e.value?e.value:model.value.amount)/model.value.agreement_amount)*10000)/100;
+}
+const doPercentageChange = (e) => {
+    amountPercentage.value.amount = Math.round(((e.value?e.value:model.value.percentage)/100)*model.value.agreement_amount*100)/100;
+}
+const doSave = () => {
+    model.value.amount = amountPercentage.value.amount;
+    model.value.percentage = amountPercentage.value.percentage;
+    emit('save');
+}
 </script>
 
 <style lang="scss" scoped></style>

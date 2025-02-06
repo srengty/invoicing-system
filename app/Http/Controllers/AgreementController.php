@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agreement;
 use App\Models\Customer;
+use App\Models\PaymentSchedule;
 use App\Models\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -46,7 +47,22 @@ class AgreementController extends Controller
             'end_date' => 'required',
             'customer_id' => 'required',
         ]);
-        Agreement::create($request->all());
+        $data = $request->all();
+        $agreement = Agreement::create($request->except('payment_schedule'));
+        foreach($request->payment_schedule as $key => $value){
+            unset($value['id']);
+            $schedule = new PaymentSchedule([
+                'agreement_no' => $request->agreement_no,
+                'due_date' => $value['due_date'],
+                'amount' => $value['amount'],
+                'status' => 'Pending',
+                'percentage' => $value['percentage'],
+                'short_description' => $value['short_description'],
+                'currency' => 'USD',
+            ]);
+            $schedule->save();
+            // $value['agreement_no'] = $request->agreement_no;
+        }
         return to_route('agreements.index');
     }
 
@@ -63,9 +79,16 @@ class AgreementController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Agreement $agreement)
+    public function edit(int $agreement_no)
     {
-        //
+        return Inertia::render('Agreements/Create',[
+            'customers' => Customer::all(),
+            'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
+            'csrf_token' => csrf_token(),
+            'quotations' => Quotation::all(),
+            'agreement' => Agreement::with('paymentSchedules')->find($agreement_no),
+            'edit' => true,
+        ]);
     }
 
     /**

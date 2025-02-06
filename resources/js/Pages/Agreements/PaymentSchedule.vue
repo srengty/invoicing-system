@@ -22,7 +22,7 @@
                 </InputGroup>
             </template>
         </Column>
-        <Column field="amount" header="Amount">
+        <Column field="amount" header="Amount" style="text-align: right;">
             <template #body="slotProps">
                 {{ priceTemplate(slotProps.data) }}
             </template>
@@ -38,15 +38,19 @@
                 <Button icon="pi pi-file-pdf" class="p-button-rounded p-button-success p-button-outlined" label="Generate invoice" />
             </template>
         </Column>
-        <template #footer>
-            In total $ {{ '10,000' }} 
-        </template>
+        <ColumnGroup type="footer">
+            <Row>
+                <Column footer="Total:" footerStyle="text-align:right" :colspan="4" style="text-align:right"></Column>
+                <Column :footer="`${props.currency??'$'} ${totalAmount.toLocaleString()}`" style="text-align: right;"></Column>
+                <Column footer=""></Column>
+            </Row>
+        </ColumnGroup>
     </DataTable>
 </template>
 
 <script setup>
-import { ref, defineModel } from "vue";
-import { DataTable, Column, Button, InputNumber, InputText, InputGroup, InputGroupAddon, DatePicker } from "primevue";
+import { ref, defineModel, computed } from "vue";
+import { DataTable, Column, Button, InputNumber, InputGroup, InputGroupAddon, DatePicker, Row, ColumnGroup } from "primevue";
 
 const items = defineModel({default:[
     {
@@ -85,6 +89,7 @@ const onRowEditSave = (event) => {
     items.value[index] = newData;
 };
 const priceTemplate = (data) => `${props.currency??'$'} ${data.amount.toLocaleString()}`;
+const totalAmount = computed(()=>items.value.reduce((acc, item) => acc + item.amount, 0));
 </script>
 
 <style lang="scss" scoped></style>

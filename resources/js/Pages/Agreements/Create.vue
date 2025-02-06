@@ -6,7 +6,7 @@
         <Form @submit="submit" :action="route('agreements.store')" v-slot="$form" :initial-values="form">
             <div class="create-agreement flex flex-row gap-4">
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
-                    <div class="grid grid-cols-2 gap-1">
+                    <div class="grid grid-cols-2 gap-1 items-center">
                         <span v-tooltip="'must be approved and no agreement attached'">Quotation No.</span>
                         <InputNumber name="quotation_no" :use-grouping="false" class="w-full" />
                         <span>Agreement No. {{ agreement_max }}</span>
@@ -41,7 +41,7 @@
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
-                    <div class="grid grid-cols-2 gap-1">
+                    <div class="grid grid-cols-2 gap-1 items-center">
                         <span class="col-span-2 text-xl mb-5">Agreement summary</span>
                         <span>Start date</span>
                         <DatePicker date-format="dd/mm/yy" name="start_date" />
@@ -57,14 +57,14 @@
                                 <ToggleSwitch v-model="riels" onLabel="Riels" offLabel="USD" offIcon="pi pi-dollar"
                                     onIcon="pi pi-dollar" />
                             </InputGroupAddon>
-                            <InputNumber name="agreement_amount" />
+                            <InputNumber v-model="schedule.agreement_amount" />
                         </InputGroup>
                         <Message v-if="errors.agreement_amount" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.agreement_amount }}</Message>
                         <span>Short description</span>
                         <Textarea name="short_description" rows="2" />
                         <span>Payment schedule</span>
-                        <PopupAddPaymentSchedule v-model="schedule" @save="doSave" />
+                        <PopupAddPaymentSchedule v-model="schedule" @save="doSave" @update="beforeUpdate"/>
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4">
@@ -76,7 +76,7 @@
             </div>
             <PaymentSchedule class="mt-2" v-model="form.payment_schedule"
                 :currency="currencies[riels == true ? 0 : 1].sign" />
-            <Button label="Save" type="submit" />
+            <Button label="Save" type="submit" :disabled="isStoringAgreement" />
         </Form>
     </GuestLayout>
 </template>
@@ -87,7 +87,7 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon } from 'primevue';
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
-import { reactive, onMounted, ref } from 'vue';
+import { reactive, onMounted, ref, computed } from 'vue';
 import PaymentSchedule from './PaymentSchedule.vue';
 import Textarea from 'primevue/textarea';
 import PopupAddPaymentSchedule from './PopupAddPaymentSchedule.vue';
@@ -95,25 +95,25 @@ import moment from 'moment';
 
 //import src from 'tailwindcss-primeui';
 const page = usePage();
-const props = defineProps({ errors: Object, customers: Array, agreement_max: Number });
+const props = defineProps({ errors: Object, customers: Array, agreement_max: Number, agreement: Object, edit: Boolean });
 const toast = useToast();
 const riels = ref(true);
 const currencies = ref([{ name: 'Riels', value: 'riel', sign: '៛' }, { name: 'USD', value: 'usd', sign: '$' }]);
 const form = reactive({
     quotation_no: null,
     agreement_no: null,
-    date: new Date('01/20/2025'),
+    date: new Date(),
     customer_id: null,
     address: null,
     agreement_doc: null,
     progress: null,
-    start_date: '01/21/2025',
-    end_date: '01/21/2025',
+    start_date: new Date(),
+    end_date: new Date(),
     agreement_amount: 0,
     short_description: "",
     attachment: null,
     payment_schedule: [
-        {
+        /* {
             id: 1,
             due_date: "28/01/2025",
             short_description: "Item description",
@@ -136,24 +136,47 @@ const form = reactive({
             percentage: 30,
             remark: "Additional remark",
             amount: 3000,
-        },
+        }, */
     ],
     attachment: null,
 });
 const schedule = ref({
-    agreement_amount: 1000,
+    agreement_amount: form.agreement_amount,
     due_date: new Date(),
     short_description: "Item description",
-    percentage: 10,
+    percentage: 100,
     remark: "Additional remark",
     amount: 2000,
     currency: 'KHR'
 });
+const remainingAmount = computed(() => {
+    return schedule.value.agreement_amount - form.payment_schedule.reduce((acc, item) => acc + item.amount, 0);
+});
+const remainingPercentage = computed(() => {
+    return 100 - form.payment_schedule.reduce((acc, item) => acc + item.percentage, 0);
+});
+const isStoringAgreement = ref(false);
 onMounted(() => {
     form.agreement_no = props.agreement_max;
+    if(props.edit){
+        form.quotation_no = props.agreement.quotation_no;
+        form.agreement_no = props.agreement.agreement_no;
+        form.date = moment(props.agreement.date).toDate();
+        form.customer_id = props.agreement.customer_id;
+        form.address = props.agreement.address;
+        form.agreement_doc = props.agreement.agreement_doc;
+        form.start_date = moment(props.agreement.start_date).toDate();
+        form.end_date = moment(props.agreement.end_date).toDate();
+        form.agreement_amount = props.agreement.agreement_amount;
+        form.short_description = props.agreement.short_description;
+        form.payment_schedule = props.agreement.payment_schedules;
+        form.attachment = props.agreement.attachment;
+    }
 })
 const submit = (e) => {
+    isStoringAgreement.value = true;
     router.post(route('agreements.store'), form);
+    isStoringAgreement.value = false;
     //form.post(route('agreements.store'));
     // if(e.valid){
     //     router.push(route('agreements.store'), form);
@@ -212,12 +235,16 @@ function onFileSelect(event) {
 const doSave = (e) => {
     form.payment_schedule.push({
         id: form.payment_schedule.length + 1,
-        due_date: moment(e.due_date).format('DD/MM/YYYY'),
+        due_date: e.due_date,
         short_description: e.short_description,
         percentage: e.percentage,
         remark: e.remark,
         amount: e.amount,
     });
+}
+const beforeUpdate = (e) => {
+    schedule.value.amount = remainingAmount.value;
+    schedule.value.percentage = remainingPercentage.value;
 }
 // const resolver = zodResolver(z.object({
 //     agreement_no: z.number(),
