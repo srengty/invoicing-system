@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Quotation extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'quotation_no';
+    protected $primaryKey = 'quotation_no'; // Explicitly set the primary key
+    public $incrementing = false;  // Since we're manually generating the ID
+    protected $keyType = 'int'; // Ensure it's an integer
     protected $fillable = [
         'quotation_no',
         'quotation_date',
@@ -17,18 +19,13 @@ class Quotation extends Model
         'phone_number',
         'terms',
         'total',
-        'tax',
-        'grand_total',
         'status',
-        'customer_status',
     ];
 
     protected $casts = [
         'quotation_date' => 'datetime',
         'total' => 'double',
-        'tax' => 'double',
-        'grand_total' => 'double',
-        'quotation_date' => 'datetime:Y-m-d',
+        'quotation_date' => 'datetime:Y-m-d',    
     ];
 
     public function customer()
@@ -37,10 +34,16 @@ class Quotation extends Model
     }
 
     // Define a many-to-many relationship with Product
+    // public function products()
+    // {
+    //     return $this->belongsToMany(Product::class, 'product_quotation', 'quotation_no', 'product_id')
+    //                 ->withPivot('quantity')
+    //                 ->withTimestamps();
+    // }
     public function products()
     {
         return $this->belongsToMany(Product::class, 'product_quotation', 'quotation_no', 'product_id')
-                    ->withPivot('quantity')
+                    ->withPivot('quantity', 'price')
                     ->withTimestamps();
     }
 }
