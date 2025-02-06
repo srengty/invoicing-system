@@ -11,7 +11,7 @@
             <div class="p-4 grid grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
                 <label for="quotation_no">Quotation No:</label>
-                <InputText :disabled="true"
+                <InputText :disabled="false"
                   id="quotation_no"
                   v-model="form.quotation_no"
                   placeholder="Input"
@@ -20,7 +20,7 @@
               </div>
               <div class="flex flex-col gap-2">
                 <label for="quotation_date">Date:</label>
-                <DatePicker :disabled="true"
+                <DatePicker :disabled="false"
                   v-model="form.quotation_date"
                   showIcon
                   fluid

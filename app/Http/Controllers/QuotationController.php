@@ -9,6 +9,7 @@ use App\Models\Quotation; // Import Quotation model
 use App\Models\Product; // Import Product model
 use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
+use App\Models\ProductQuotation;
 use Inertia\Inertia;
 class QuotationController extends Controller
 {
@@ -48,7 +49,7 @@ class QuotationController extends Controller
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
             'terms'          => 'nullable|string|max:255',
-            'tax'            => 'required|numeric',
+            // 'tax'            => 'required|numeric',
             'products'       => 'nullable|array', // Make products optional
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
@@ -68,38 +69,42 @@ class QuotationController extends Controller
             $total += $prod->price * $product['quantity'];
         }
         // Calculate tax based on the provided percentage
-        $tax = $validated['tax'] / 100; 
-        $tax = $tax * $total;
-        $grand_total = $total + $tax;
-
-        // Format the datetime value
+        // $tax = $validated['tax'] / 100; 
+        // $tax = $tax * $total;
+        // $grand_total = $total + $tax;
+        // $grand_total = $total;
+       
         $quotationDate = Carbon::parse($request->quotation_date)->format('Y-m-d H:i:s');
+
+        // Get the last used quotation_no and increment it
+        $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
+        $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;  // Start from a default value if none exists
+
         // Create the quotation
         $quotation = Quotation::create([
-            'quotation_no'   => $validated['quotation_no'],
+            'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
             'quotation_date' => $quotationDate,
             'customer_id'    => $validated['customer_id'],
             'address'        => $validated['address'] ?? null,
             'phone_number'   => $validated['phone_number'] ?? null,
             'terms'          => $validated['terms'] ?? null,
             'total'          => $total,
-            'tax'            => $tax,
-            'grand_total'    => $grand_total,
         ]);
 
-        // Set default values for status and customer_status
-        $quotation->status = $request->input('status') ?? 'pending'; // Default value for status
-        $quotation->customer_status = $request->input('customer_status') ?? 'active'; // Default value for customer_status
         $quotation->save();
-
-        // Attach the selected products with their quantities to the quotation
-        foreach ($validated['products'] as $product) {
-            $quotation->products()->attach($product['id'], ['quantity' => $product['quantity']]);
-        }
-
-        // Redirect with a success message
-        return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
+    
+    // Attach products to the quotation
+    foreach ($validated['products'] as $product) {
+        $quotation->products()->attach($product['id'], [ 
+            'quantity' => $product['quantity'],
+            'price' => $product['price'] ?? 0,  
+        ]);
     }
+    
+
+    // Redirect with a success message
+    return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
+}
     
     /**
      * Display for print quotations.
@@ -139,10 +144,10 @@ class QuotationController extends Controller
             'phone_number' => 'nullable|string|max:20',
             'terms' => 'nullable|string|max:255',
             'total' => 'required|numeric|min:0',
-            'tax' => 'required|numeric|min:0',
-            'grand_total' => 'required|numeric|min:0',
+            // 'tax' => 'required|numeric|min:0',
+            // 'grand_total' => 'required|numeric|min:0',
             'status' => 'required|string|max:20',
-            'customer_status' => 'required|string|max:20',
+            'status' => 'required|string|max:20',
         ]);
 
         $quotation->update($validated);
