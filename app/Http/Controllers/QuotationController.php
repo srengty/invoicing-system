@@ -54,7 +54,7 @@ class QuotationController extends Controller
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
         ]);
-    
+        
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
@@ -62,7 +62,7 @@ class QuotationController extends Controller
         // Get validated data
         $validated = $validated->validated();
 
-        // Calculate the total, tax, and grand total
+        // Calculate the total
         $total = 0;
         foreach ($validated['products'] as $product) {
             $prod = Product::find($product['id']);
@@ -92,15 +92,15 @@ class QuotationController extends Controller
         ]);
 
         $quotation->save();
-    
-    // Attach products to the quotation
-    foreach ($validated['products'] as $product) {
-        $quotation->products()->attach($product['id'], [ 
-            'quantity' => $product['quantity'],
-            'price' => $product['price'] ?? 0,  
-        ]);
-    }
-    
+        
+        // Attach products to the quotation
+        foreach ($validated['products'] as $product) {
+            $prod = Product::find($product['id']);
+            $quotation->products()->attach($prod->id, [
+                'quantity' => $product['quantity'],
+                'price' => $prod->price * $product['quantity'],  
+            ]);
+        }
 
     // Redirect with a success message
     return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
