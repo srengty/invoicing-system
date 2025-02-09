@@ -1,7 +1,7 @@
 <template>
     <div>
         <Button label="Add payment schedule" @click="doShow" />
-        <Dialog v-model="isShowing" header="Add payment schedule" :visible="isShowing" @update:visible="isShowing = $event">
+        <Dialog v-model="isShowing" header="Add payment schedule" :visible="isShowing" @update:visible="isShowing = $event" modal>
             <AddPayment v-model="model" @cancel="doCancel" @save="doSave"/>
         </Dialog>
     </div>

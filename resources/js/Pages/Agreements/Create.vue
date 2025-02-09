@@ -74,9 +74,12 @@
                     </div>
                 </div>
             </div>
-            <PaymentSchedule class="mt-2" v-model="form.payment_schedule"
-                :currency="currencies[riels == true ? 0 : 1].sign" />
-            <Button label="Save" type="submit" :disabled="isStoringAgreement" />
+            <PaymentSchedule class="mt-2" v-model="form.payment_schedule" :currency="form.currency" :agreement_amount="schedule.agreement_amount" />
+            <div class="flex justify-end items-center gap-2 my-2 px-24" v-if="hasManyCurrencies">
+                <label for="agreement_exchange_rate" class="required">Exchange rate</label>
+                <InputText id="agreement_exchange_rate" v-model="schedule.exchange_rate"></InputText>
+            </div>
+            <Button label="Save" type="submit" :disabled="isStoringAgreement"></Button>
         </Form>
     </GuestLayout>
 </template>
@@ -92,13 +95,19 @@ import PaymentSchedule from './PaymentSchedule.vue';
 import Textarea from 'primevue/textarea';
 import PopupAddPaymentSchedule from './PopupAddPaymentSchedule.vue';
 import moment from 'moment';
+import { currencies } from '@/constants';
 
 //import src from 'tailwindcss-primeui';
 const page = usePage();
 const props = defineProps({ errors: Object, customers: Array, agreement_max: Number, agreement: Object, edit: Boolean });
 const toast = useToast();
-const riels = ref(true);
-const currencies = ref([{ name: 'Riels', value: 'riel', sign: '៛' }, { name: 'USD', value: 'usd', sign: '$' }]);
+const riels = computed({
+    get: () => form.currency == 'KHR',
+    set: (value) =>{
+        form.currency = value ? 'KHR' : 'USD';
+        schedule.value.agreement_currency = form.currency;
+    }
+});
 const form = reactive({
     quotation_no: null,
     agreement_no: null,
@@ -139,6 +148,7 @@ const form = reactive({
         }, */
     ],
     attachment: null,
+    currency: 'KHR'
 });
 const schedule = ref({
     agreement_amount: form.agreement_amount,
@@ -147,7 +157,9 @@ const schedule = ref({
     percentage: 100,
     remark: "Additional remark",
     amount: 2000,
-    currency: 'KHR'
+    currency: 'KHR',
+    agreement_currency: 'KHR',
+    exchange_rate: 4200,
 });
 const remainingAmount = computed(() => {
     return schedule.value.agreement_amount - form.payment_schedule.reduce((acc, item) => acc + item.amount, 0);
@@ -156,6 +168,9 @@ const remainingPercentage = computed(() => {
     return 100 - form.payment_schedule.reduce((acc, item) => acc + item.percentage, 0);
 });
 const isStoringAgreement = ref(false);
+const hasManyCurrencies = computed(() => {
+    return form.payment_schedule.some(v => v.currency != form.currency);
+});
 onMounted(() => {
     form.agreement_no = props.agreement_max;
     if(props.edit){
@@ -171,6 +186,9 @@ onMounted(() => {
         form.short_description = props.agreement.short_description;
         form.payment_schedule = props.agreement.payment_schedules;
         form.attachment = props.agreement.attachment;
+        form.currency = props.agreement.currency;
+        riels = props.agreement.currency == 'KHR' ? true : false;
+        
     }
 })
 const submit = (e) => {
@@ -193,7 +211,7 @@ const onUpload = (e) => {
 }
 const beforeUpload = (e) => {
     e.formData.enctype = 'multipart/form-data';
-    console.log('page.props.csrf_token', form);
+    //console.log('page.props.csrf_token', form);
     e.formData.append('agreement_doc_old', form.agreement_doc);
     e.formData.append('_token', page.props.csrf_token);
 }
@@ -233,11 +251,13 @@ function onFileSelect(event) {
         });
 }
 const doSave = (e) => {
+    schedule.value.currency = e.currency;
     form.payment_schedule.push({
         id: form.payment_schedule.length + 1,
         due_date: e.due_date,
         short_description: e.short_description,
         percentage: e.percentage,
+        currency: e.currency,
         remark: e.remark,
         amount: e.amount,
     });

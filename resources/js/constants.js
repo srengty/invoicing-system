@@ -1,0 +1,1 @@
+export const currencies = [{ name: 'Riels', value: 'KHR', sign: '៛' }, { name: 'USD', value: 'USD', sign: '$' }];
