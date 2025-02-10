@@ -28,9 +28,9 @@
                             </div>
                         </template>
                     </Column>
-                    <Column field="id" header="ID" style="width: 10%;" />
+                    <Column field="quotation_no" header="No." style="width: 10%;" />
                     <Column field="customer.name" header="Customer/Organization Name" style="width: 25%;" />
-                    <Column field="grand_total" header="Total" style="width: 10%" />
+                    <Column field="total" header="Total" style="width: 10%" />
                     <Column field="status" header="Status" style="width: 15%" />
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
@@ -64,7 +64,7 @@
                         </div>
 
                         <br>                    
-                        <p><strong>Grand Total:</strong> {{ selectedQuotation.grand_total }}</p>                                                   
+                        <p><strong>Total:</strong> {{ selectedQuotation.total }}</p>                                                   
                     </div>
                     <template #footer>
                         <Button label="Cancel" outlined severity="secondary" @click="isViewDialogVisible = false" autofocus />
@@ -105,7 +105,7 @@ const form = useForm({
     customer_id: "",
     total: 0,
     tax: 0,
-    grand_total: 0,
+    // grand_total: 0,
     products: [],
 });
   
@@ -116,7 +116,7 @@ const openForm = (quotations = null) => {
         form.address = quotations.address;
         form.phone_number = quotations.phone_number;
         form.customer_id = quotations.customer_id;
-        form.grand_total = quotations.grand_total;  
+        // form.grand_total = quotations.grand_total;  
     } else {
         form.reset();
     }
@@ -136,7 +136,7 @@ const viewQuotation = (quotations) => {
 
 
 const columns = [
-    { field: 'id', header: 'No.' },
+
     { field: 'quotation_no', header: 'Quotation No.' },
     { field: 'quotation_date', header: 'Quotation Date' },
     { field: 'customer.name', header: 'Customer/Organization Name' },
@@ -145,7 +145,7 @@ const columns = [
     { field: 'terms', header: 'Terms' },
     { field: 'total', header: 'Total' },
     { field: 'tax', header: 'Tax' },
-    { field: 'grand_total', header: 'Grand Total' },
+    // { field: 'grand_total', header: 'Grand Total' },
     { field: 'status', header: 'Status' },
     { field: 'customer_status', header: 'Customer Status' },
 ];

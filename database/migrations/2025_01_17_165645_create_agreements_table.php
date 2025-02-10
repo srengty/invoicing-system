@@ -42,7 +42,8 @@ return new class extends Migration
             $table->timestamps();
         });
         Schema::create('quotations', function (Blueprint $table) {
-            $table->unsignedBigInteger('quotation_no')->primary()->comment('25000001:year 2025, quotation no 1');
+            // $table->unsignedBigInteger('quotation_no')->primary()->comment('25000001:year 2025, quotation no 1');
+            $table->unsignedBigInteger('quotation_no')->primary();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->timestamp('quotation_date')->useCurrent();
             $table->string('address', 255)->nullable();
@@ -59,7 +60,11 @@ return new class extends Migration
             $table->timestamp('agreement_date')->useCurrent();
             $table->string('address', 255)->nullable();
             $table->string('agreement_doc', 255)->nullable()->comment('agreement document in PDF');
+<<<<<<< HEAD
             $table->json('attachments')->nullable()->comment('attachment files');
+=======
+            $table->json('attachments')->comment('attachment files');
+>>>>>>> b97c6ea758ef4faa6e2abf83f2fc039af62147ac
             // ------- Agreement Summary ------------
             $table->timestamp('start_date')->useCurrent();
             $table->timestamp('end_date')->useCurrent();

@@ -77,12 +77,12 @@ const items = ref([
                 icon: 'pi pi-chart-line',
                 badge: 0
             },
-            {
-                label: 'Products',
-                href: '/products',
-                icon: 'pi pi-box',
-                shortcut: '⌘+P'
-            }
+            // {
+            //     label: 'Products',
+            //     href: '/products',
+            //     icon: 'pi pi-box',
+            //     shortcut: '⌘+P'
+            // }
         ]
     },
     {

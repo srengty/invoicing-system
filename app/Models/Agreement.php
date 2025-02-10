@@ -6,12 +6,13 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Agreement extends Model
 {
     /** @use HasFactory<\Database\Factories\AgreementFactory> */
     use HasFactory;
-    protected $pimaryKey  = 'agreement_no';
+    protected $primaryKey  = 'agreement_no';
     protected $fillable = [
         'agreement_no',
         'agreement_ref_no',
@@ -20,11 +21,14 @@ class Agreement extends Model
         'agreement_doc',
         'start_date',
         'end_date',
-        'amount_no_tax',
-        'tax',
+        'amount',
         'status',
         'customer_id',
         'quotation_no',
+        'payment_schedules',
+        'short_description',
+        'currency',
+        'attachments',
     ];
     public function customer()
     {
@@ -34,7 +38,7 @@ class Agreement extends Model
     {
         return $this->belongsTo(Quotation::class);
     }
-    //protected $dateFormat = 'd/m/Y';
+    // protected $dateFormat = 'Y-m-d';
     protected function casts(){
         return [
             'agreement_date' => 'date',
@@ -44,14 +48,22 @@ class Agreement extends Model
     }
     protected function agreementDate():Attribute
     {
-        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'));
+        return Attribute::make(
+            get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
+            set:fn($value)=>(Carbon::createFromFormat('d/m/Y',$value)));
     }
     protected function startDate():Attribute
     {
-        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'));
+        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
+            set:fn($value)=>(Carbon::createFromFormat('d/m/Y',$value)));
     }
     protected function endDate():Attribute
     {
-        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'));
+        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
+            set:fn($value)=>(Carbon::createFromFormat('d/m/Y',$value)));
+    }
+    public function paymentSchedules():HasMany
+    {
+        return $this->hasMany(PaymentSchedule::class, 'agreement_no');
     }
 }
