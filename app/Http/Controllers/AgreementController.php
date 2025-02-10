@@ -30,7 +30,7 @@ class AgreementController extends Controller
         return Inertia::render('Agreements/Create',[
             'customers' => Customer::all(),
             'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
-            'csrf_token' => csrf_token(),
+            'csrf_token' => csrf_token(),  
             'quotations' => Quotation::all(),
         ]);
     }
