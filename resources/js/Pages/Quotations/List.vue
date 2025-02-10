@@ -3,19 +3,17 @@
     <GuestLayout>
         <div class="quotations">
             <div class="flex justify-between items-center p-4">
-                <h1 class="text-2xl">Quotations list (Staff)</h1>
+                <h1 class="text-2xl">Quotations list</h1>
             </div>
             <div class="flex justify-between items-center p-4">
                 Quotations are proposed to customer to bid for a project.
             </div>
             <div class="flex justify-end p-4 gap-4">
                 <div>
-                    <Link :href="route('quotations.create')">
-                        <Button label="Issue Quotation" rounded/>
-                    </Link>
+                    <Link :href="route('quotations.create')"><Button label="Issue Quotation" rounded/></Link>                  
                 </div>
-                <Button label="Issue Invoice" rounded/>
-                <Button label="Record Agreement" rounded/>
+                <Link :href="route('invoices.create')"><Button label="Issue Invoice" rounded/></Link>
+                <Link :href="route('agreements.create')"><Button label="Record Agreement" rounded/></Link>
             </div>
 
             <div>
@@ -24,14 +22,20 @@
                         <template #body="slotProps">
                             <div class="flex gap-4">
                                 <Button icon="pi pi-plus" label="View" rounded @click="viewQuotation(slotProps.data)" style="padding-left: 12px;padding-right: 18px;" />
-                                <Button icon="pi pi-plus" label="Print out" @click="printQuotation(slotProps.data.id)" rounded style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-plus" label="Print out"  @click="printQuotation(slotProps.data.quotation_no)"  rounded style="padding-left: 12px;padding-right: 18px;" />
                             </div>
                         </template>
                     </Column>
                     <Column field="quotation_no" header="No." style="width: 10%;" />
                     <Column field="customer.name" header="Customer/Organization Name" style="width: 25%;" />
                     <Column field="total" header="Total" style="width: 10%" />
-                    <Column field="status" header="Status" style="width: 15%" />
+                    <Column field="status" header="Status" style="width: 10%">
+                        <template #body="slotProps">
+                            <div class="card flex justify-content-center">
+                                <Dropdown v-model="selectedStatus" :options="Status" optionLabel="name" placeholder="Status" class="w-full md:w-14rem" />
+                            </div>
+                        </template>
+                    </Column>
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
                 
@@ -86,6 +90,9 @@ import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import { useForm } from "@inertiajs/vue3";
 import VirtualScroller from 'primevue/virtualscroller';
+import moment from 'moment';
+import Dropdown from 'primevue/dropdown';
+import { router } from "@inertiajs/vue3"; // for printing
 
 const isViewDialogVisible = ref(false);
 const selectedQuotation = ref([]);
@@ -151,19 +158,26 @@ const columns = [
 ];
 
 // Printing quotations
-const printQuotation = (id) => {
-    const quotUrl = `/quotations/${id}`;
+const printQuotation = (quotation_no) => {
+    const quotUrl = `/quotations/${quotation_no}`;
     const printWindow = window.open(quotUrl, '_blank'); //create new tab
 
     printWindow.onload = () => {
         printWindow.print();
     }
 }
-
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 const updateColumns = (columns) => {
     showColumns.value = selectedColumns.value;
 }
+
+// quotations status
+const selectedStatus = ref();
+const Status = ref([
+    { name: 'Pending', code: 'Pending' },
+    { name: 'Approved', code: 'Approved' },
+    { name: 'Revise', code: 'Revise' },
+]);
 </script>
 

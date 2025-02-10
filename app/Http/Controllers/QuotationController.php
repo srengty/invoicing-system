@@ -107,11 +107,11 @@ class QuotationController extends Controller
 }
     
     /**
-     * Display for print quotations.
+     * For printing quotations.
      */
-    public function show($id)
+    public function show($quotation_no)
     {
-        $quotation = Quotation::with(['customer', 'products'])->findOrFail($id);
+        $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
 
         return Inertia::render('Quotations/Print', [
             'quotation' => $quotation,
@@ -146,7 +146,6 @@ class QuotationController extends Controller
             'total' => 'required|numeric|min:0',
             // 'tax' => 'required|numeric|min:0',
             // 'grand_total' => 'required|numeric|min:0',
-            'status' => 'required|string|max:20',
             'status' => 'required|string|max:20',
         ]);
 

@@ -33,6 +33,7 @@ Route::get('/quotations', [QuotationController::class, 'list']);
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
 Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
+Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
 
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
