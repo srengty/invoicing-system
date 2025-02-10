@@ -26,8 +26,10 @@ class QuotationFactory extends Factory
     public function definition(): array
     {
         static $counter = 1; // Static counter to keep track of the sequence
+        if(Quotation::count() > 0) {
+            $counter = Quotation::count() + 1;
+        }
         $year = date('y');
-
         // Ensure the quotation number is unique within the seeding process
         return [
             'quotation_no' => $year . str_pad($counter++, 6, '0', STR_PAD_LEFT),

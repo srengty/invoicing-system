@@ -21,6 +21,9 @@ class InvoiceFactory extends Factory
     public function definition(): array
     {
         static $count = 1;  
+        if(Invoice::count() > 0) {
+            $count = Invoice::count() + 1;
+        }
         $year = date('y');
         $subtotal = $this->faker->randomFloat(2, 100, 1000);
 

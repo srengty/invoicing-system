@@ -20,6 +20,9 @@ class AgreementFactory extends Factory
     public function definition(): array
     {
         static $count = 1; // Fixed: No more invalid database query in static
+        if(Agreement::count() > 0) {
+            $count = Agreement::count() + 1;
+        }
         $year = date('y');
 
         $status = $this->faker->randomElement(['Open', 'Closed', 'Abnormal Closed']);
