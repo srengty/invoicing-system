@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-3 py-2">
         <FloatLabel variant="on">
             <InputText id="total-agreement-amount" v-model="model.agreement_amount" fluid readonly />
-            <label for="total-agreement-amount required">Total agreement amount</label>
+            <label for="total-agreement-amount" class="required">Total agreement amount</label>
         </FloatLabel>
 
         <FloatLabel variant="on">

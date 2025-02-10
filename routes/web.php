@@ -26,6 +26,7 @@ Route::get('/agreements/show/{id}', [AgreementController::class, 'show'])->name(
 Route::post('/agreements/store', [AgreementController::class, 'store'])->name('agreements.store');
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
 Route::get('/agreements/edit/{agreement_no}', [AgreementController::class, 'edit'])->name('agreements.edit');
+Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 
 Route::resource('quotations', QuotationController::class);
 Route::get('/quotations', [QuotationController::class, 'list']);

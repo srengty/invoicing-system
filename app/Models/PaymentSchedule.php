@@ -33,6 +33,7 @@ class PaymentSchedule extends Model
     }
     protected function dueDate():Attribute
     {
-        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'));
+        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
+            set:fn($value)=>(Carbon::createFromFormat('d/m/Y',$value)));
     }
 }

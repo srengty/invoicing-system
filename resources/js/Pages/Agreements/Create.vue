@@ -8,14 +8,14 @@
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1 items-center">
                         <span v-tooltip="'must be approved and no agreement attached'">Quotation No.</span>
-                        <InputNumber name="quotation_no" :use-grouping="false" class="w-full" />
+                        <InputNumber v-model="form.quotation_no" name="quotation_no" :use-grouping="false" class="w-full" />
                         <span>Agreement No. {{ agreement_max }}</span>
-                        <InputNumber name="agreement_no" :class="(errors.agreement_no ? 'p-invalid' : '')"
+                        <InputNumber v-model="form.agreement_no" name="agreement_no" :class="(errors.agreement_no ? 'p-invalid' : '')"
                             :use-grouping="false" :readonly="true" />
                         <Message v-if="errors.agreement_no" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.agreement_no }}</Message>
                         <span>Date</span>
-                        <DatePicker date-format="dd/mm/yy" name="date" showIcon :show-on-focus="false" />
+                        <DatePicker date-format="dd/mm/yy" v-model="form.agreement_date" name="agreement_date" showIcon />
                         <Message v-if="errors.date" severity="error" size="small" variant="simple" class="col-span-2">{{
                             errors.date }}</Message>
                         <span>Customer</span>
@@ -24,7 +24,7 @@
                         <Message v-if="errors.customer_id" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.customer_id }}</Message>
                         <span>Address</span>
-                        <InputText name="address" />
+                        <InputText name="address" v-model="form.address" />
                         <Message v-if="errors.address" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.address }}</Message>
                         <span>Agreement doc</span>
@@ -44,25 +44,24 @@
                     <div class="grid grid-cols-2 gap-1 items-center">
                         <span class="col-span-2 text-xl mb-5">Agreement summary</span>
                         <span>Start date</span>
-                        <DatePicker date-format="dd/mm/yy" name="start_date" />
+                        <DatePicker date-format="dd/mm/yy" name="start_date" v-model="form.start_date" showIcon />
                         <Message v-if="errors.start_date" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.start_date }}</Message>
                         <span>End date</span>
-                        <DatePicker date-format="dd/mm/yy" name="end_date" />
+                        <DatePicker date-format="dd/mm/yy" name="end_date" v-model="form.end_date" showIcon />
                         <Message v-if="errors.end_date" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.end_date }}</Message>
                         <span>Agreement amount ({{ currencies[riels == true ? 0 : 1].name }})</span>
                         <InputGroup>
                             <InputGroupAddon>
-                                <ToggleSwitch v-model="riels" onLabel="Riels" offLabel="USD" offIcon="pi pi-dollar"
-                                    onIcon="pi pi-dollar" />
+                                <ToggleSwitch v-model="riels" />
                             </InputGroupAddon>
                             <InputNumber v-model="schedule.agreement_amount" />
                         </InputGroup>
                         <Message v-if="errors.agreement_amount" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.agreement_amount }}</Message>
                         <span>Short description</span>
-                        <Textarea name="short_description" rows="2" />
+                        <Textarea name="short_description" rows="2" v-model="form.short_description" ></Textarea>
                         <span>Payment schedule</span>
                         <PopupAddPaymentSchedule v-model="schedule" @save="doSave" @update="beforeUpdate"/>
                     </div>
@@ -70,7 +69,8 @@
                 <div class="border border-gray-200 rounded-lg p-4">
                     <div class="grid grid-cols-1 gap-1">
                         <span>Attachment</span>
-                        <FileUpload name="attachment[]" />
+                        <FileUpload name="attachments" :url="route('agreements.upload')" 
+                        auto accept="application/pdf" @before-upload="beforeUploadAttachment" @upload="onUploadAttachments" />
                     </div>
                 </div>
             </div>
@@ -87,7 +87,7 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { Button, DatePicker, FileUpload, InputMask, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon } from 'primevue';
+import { Button, DatePicker, FileUpload, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon } from 'primevue';
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
 import { reactive, onMounted, ref, computed } from 'vue';
@@ -97,7 +97,6 @@ import PopupAddPaymentSchedule from './PopupAddPaymentSchedule.vue';
 import moment from 'moment';
 import { currencies } from '@/constants';
 
-//import src from 'tailwindcss-primeui';
 const page = usePage();
 const props = defineProps({ errors: Object, customers: Array, agreement_max: Number, agreement: Object, edit: Boolean });
 const toast = useToast();
@@ -111,7 +110,7 @@ const riels = computed({
 const form = reactive({
     quotation_no: null,
     agreement_no: null,
-    date: new Date(),
+    agreement_date: new Date(),
     customer_id: null,
     address: null,
     agreement_doc: null,
@@ -120,34 +119,9 @@ const form = reactive({
     end_date: new Date(),
     agreement_amount: 0,
     short_description: "",
-    attachment: null,
-    payment_schedule: [
-        /* {
-            id: 1,
-            due_date: "28/01/2025",
-            short_description: "Item description",
-            percentage: 10,
-            remark: "Additional remark",
-            amount: 2000,
-        },
-        {
-            id: 2,
-            due_date: "04/02/2025",
-            short_description: "Item description",
-            percentage: 20,
-            remark: "Additional remark",
-            amount: 5000,
-        },
-        {
-            id: 3,
-            due_date: "11/02/2025",
-            short_description: "Item description",
-            percentage: 30,
-            remark: "Additional remark",
-            amount: 3000,
-        }, */
-    ],
-    attachment: null,
+    attachments: [],
+    payment_schedule: [ ],
+    attachments: null,
     currency: 'KHR'
 });
 const schedule = ref({
@@ -174,26 +148,34 @@ const hasManyCurrencies = computed(() => {
 onMounted(() => {
     form.agreement_no = props.agreement_max;
     if(props.edit){
+        console.log('edit', props.agreement);
         form.quotation_no = props.agreement.quotation_no;
         form.agreement_no = props.agreement.agreement_no;
-        form.date = moment(props.agreement.date).toDate();
+        form.agreement_date = moment(props.agreement.agreement_date, 'DD/MM/YYYY').toDate();
         form.customer_id = props.agreement.customer_id;
         form.address = props.agreement.address;
         form.agreement_doc = props.agreement.agreement_doc;
-        form.start_date = moment(props.agreement.start_date).toDate();
-        form.end_date = moment(props.agreement.end_date).toDate();
-        form.agreement_amount = props.agreement.agreement_amount;
+        form.start_date = moment(props.agreement.start_date, 'DD/MM/YYYY').toDate();
+        form.end_date = moment(props.agreement.end_date, 'DD/MM/YYYY').toDate();
+        form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
         form.payment_schedule = props.agreement.payment_schedules;
-        form.attachment = props.agreement.attachment;
+        form.attachments = JSON.parse(props.agreement.attachments??'[]');
         form.currency = props.agreement.currency;
-        riels = props.agreement.currency == 'KHR' ? true : false;
-        
+        riels.value = (props.agreement.currency == 'KHR' ? true : false);
+        schedule.value.agreement_amount = props.agreement.amount;
     }
 })
-const submit = (e) => {
+const submit = ({states,valid}) => {
     isStoringAgreement.value = true;
-    router.post(route('agreements.store'), form);
+    form.agreement_amount = schedule.value.agreement_amount;
+    console.log('submit', states, valid);
+    if(props.edit){
+        form._method = 'PUT';
+        router.put(route('agreements.update', props.agreement.agreement_no), form);
+    }else{
+        router.post(route('agreements.store'), form);
+    }
     isStoringAgreement.value = false;
     //form.post(route('agreements.store'));
     // if(e.valid){
@@ -209,47 +191,22 @@ const onUpload = (e) => {
     form.agreement_doc = e.xhr.responseText;
     src.value = e.xhr.responseText;
 }
+const onUploadAttachments = (e) => {
+    console.log(e);
+    toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded' + e.files[0], life: 3000 });
+    if(!form.attachments) form.attachments = [];
+    form.attachments.push(e.xhr.responseText);
+}
 const beforeUpload = (e) => {
     e.formData.enctype = 'multipart/form-data';
-    //console.log('page.props.csrf_token', form);
     e.formData.append('agreement_doc_old', form.agreement_doc);
     e.formData.append('_token', page.props.csrf_token);
 }
-const src = ref(null);
-function onFileSelect(event) {
-    const file = event.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-        src.value = e.target.result;
-    };
-
-    reader.readAsDataURL(file);
-    form.agreement_doc = file;
-    const csrfToken = page.props.csrf_token;
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('_token', csrfToken);
-
-    fetch(route('agreements.upload'), {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRF-TOKEN': csrfToken
-        }
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded', life: 3000 });
-            } else {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
-            }
-        })
-        .catch(error => {
-            toast.add({ severity: 'error', summary: 'Error', detail: 'File Upload Failed', life: 3000 });
-        });
+const beforeUploadAttachment = (e) => {
+    e.formData.enctype = 'multipart/form-data';
+    e.formData.append('_token', page.props.csrf_token);
 }
+const src = ref(null);
 const doSave = (e) => {
     schedule.value.currency = e.currency;
     form.payment_schedule.push({

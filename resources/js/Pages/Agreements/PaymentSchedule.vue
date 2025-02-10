@@ -1,57 +1,60 @@
 <template>
-    <DataTable v-model:editingRows="editingRows" editMode="row" dataKey="id" @row-edit-save="onRowEditSave" :value="items" class="p-datatable-striped" responsiveLayout="scroll" :show-gridlines="true">
-        <Column field="index" header="No.">
-            <template #body="slotProps">
-                {{ slotProps.index + 1 }}
-            </template>
-        </Column>
-        <Column field="due_date" header="Due Date"></Column>
-        <Column field="short_description" header="Short Description">
-            <template #editor="{ data, field }">
-                <DatePicker v-model="data[field]" fluid date-format="dd/mm/yy" />
-            </template>
-        </Column>
-        <Column field="percentage" header="Percentage">
-            <template #body="slotProps">
-                {{ slotProps.data['percentage'] }} %
-            </template>
-            <template #editor="{ data, field }">
-                <InputGroup>
-                    <InputNumber v-model="data[field]" fluid />
-                    <InputGroupAddon append>%</InputGroupAddon>
-                </InputGroup>
-            </template>
-        </Column>
-        <Column field="amount" header="Amount" style="text-align: right;">
-            <template #body="slotProps">
-                {{ priceTemplate(slotProps.data) }}
-            </template>
-            <template #editor="{ data, field }">
-                <InputGroup>
-                    <InputGroupAddon append>{{ props.currency??'$' }}</InputGroupAddon>
-                    <InputNumber v-model="data[field]" fluid />
-                </InputGroup>
-            </template>
-        </Column>
-        <Column header="Action" :exportable="false" v-if="!readonly">
-            <template #body="slotProps">
-                <div class="flex items-center gap-2">
-                    <Button icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-outlined" label="Edit" @click="doEditPaymenSchedule({...slotProps.data})" />
-                    <Button icon="pi pi-file-pdf" class="p-button-rounded p-button-success p-button-outlined" label="Generate invoice" />
-                </div>
-            </template>
-        </Column>
-        <ColumnGroup type="footer">
-            <Row>
-                <Column footer="Total:" footerStyle="text-align:right" :colspan="4" style="text-align:right"></Column>
-                <Column :footer="`${currencySign} ${totalAmount.toLocaleString()}`" style="text-align: right;"></Column>
-                <Column footer=""></Column>
-            </Row>
-        </ColumnGroup>
-    </DataTable>
-    <Dialog v-model="isShowing" header="Update payment schedule" :visible="isShowing" @update:visible="isShowing = $event" modal>
-        <AddPayment v-model="editingSchedule" @cancel="doCancel" @save="doSave"/>
-    </Dialog>
+    <div>
+        <DataTable v-model:editingRows="editingRows" editMode="row" dataKey="id" @row-edit-save="onRowEditSave" :value="items" class="p-datatable-striped" responsiveLayout="scroll" :show-gridlines="true">
+            <Column field="index" header="No.">
+                <template #body="slotProps">
+                    {{ slotProps.index + 1 }}
+                </template>
+            </Column>
+            <Column field="due_date" header="Due Date"></Column>
+            <Column field="short_description" header="Short Description">
+                <template #editor="{ data, field }">
+                    <DatePicker v-model="data[field]" fluid date-format="dd/mm/yy" />
+                </template>
+            </Column>
+            <Column field="percentage" header="Percentage">
+                <template #body="slotProps">
+                    {{ slotProps.data['percentage'] }} %
+                </template>
+                <template #editor="{ data, field }">
+                    <InputGroup>
+                        <InputNumber v-model="data[field]" fluid />
+                        <InputGroupAddon append>%</InputGroupAddon>
+                    </InputGroup>
+                </template>
+            </Column>
+            <Column field="amount" header="Amount" style="text-align: right;">
+                <template #body="slotProps">
+                    {{ priceTemplate(slotProps.data) }}
+                </template>
+                <template #editor="{ data, field }">
+                    <InputGroup>
+                        <InputGroupAddon append>{{ props.currency??'$' }}</InputGroupAddon>
+                        <InputNumber v-model="data[field]" fluid />
+                    </InputGroup>
+                </template>
+            </Column>
+            <Column header="Action" :exportable="false" v-if="!readonly">
+                <template #body="slotProps">
+                    <div class="flex items-center gap-2">
+                        <Button icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-outlined" label="Edit" @click="doEditPaymentSchedule({...slotProps.data})" />
+                        <Button icon="pi pi-trash" class="p-button-rounded p-button-success p-button-outlined" label="" @click="doDeletePaymentSchedule({...slotProps.data})" />
+                        <Button icon="pi pi-file-pdf" class="p-button-rounded p-button-success p-button-outlined" label="Generate invoice" />
+                    </div>
+                </template>
+            </Column>
+            <ColumnGroup type="footer">
+                <Row>
+                    <Column footer="Total:" footerStyle="text-align:right" :colspan="4" style="text-align:right"></Column>
+                    <Column :footer="`${currencySign} ${totalAmount.toLocaleString()}`" style="text-align: right;"></Column>
+                    <Column footer=""></Column>
+                </Row>
+            </ColumnGroup>
+        </DataTable>
+        <Dialog v-model="isShowing" header="Update payment schedule" :visible="isShowing" @update:visible="isShowing = $event" modal>
+            <AddPayment v-model="editingSchedule" @cancel="doCancel" @save="doSave"/>
+        </Dialog>
+    </div>
 </template>
 
 <script setup>
@@ -120,12 +123,18 @@ const editingSchedule = ref({
     agreement_currency: 'KHR',
     exchange_rate: 4200,
 });
-const doEditPaymenSchedule = (data) => {
+const doEditPaymentSchedule = (data) => {
     Object.assign(editingSchedule.value, data );
     editingSchedule.value.agreement_currency = data.currency;
     editingSchedule.value.agreement_amount = props.agreement_amount??2000;
     console.log(props.agreement_amount);
     isShowing.value = true;
+};
+const doDeletePaymentSchedule = (data) => {
+    const index = items.value.findIndex(v=>v.id==data.id);
+    if(index>=0){
+        items.value.splice(index, 1);
+    }
 };
 const doCancel = () => {
     isShowing.value = false;
