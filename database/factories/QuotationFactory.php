@@ -24,11 +24,13 @@ class QuotationFactory extends Factory
      */
     public function definition(): array
     {
-        static $number = Quotation::where('quotation_no','>',date('y'))->count() + 1;
+        // Get the current count of quotations for the current year dynamically
+        $count = Quotation::where('quotation_no', 'like', date('y') . '%')->count() + 1;
+
         return [
-            'quotation_no' => date('y').str_pad($number++, 6, '0', STR_PAD_LEFT),
+            'quotation_no' => date('y') . str_pad($count, 6, '0', STR_PAD_LEFT),
             'quotation_date' => $this->faker->dateTimeThisYear(),
-            'customer_id' => $this->faker->randomElement(Customer::pluck('id')->toArray()),
+            'customer_id' => Customer::inRandomOrder()->first()->id ?? null, // Avoids empty pluck issue
             'address' => $this->faker->address,
             'phone_number' => $this->faker->phoneNumber,
             'terms' => $this->faker->sentence(10),

@@ -59,7 +59,7 @@ return new class extends Migration
             $table->timestamp('agreement_date')->useCurrent();
             $table->string('address', 255)->nullable();
             $table->string('agreement_doc', 255)->nullable()->comment('agreement document in PDF');
-            $table->json('attachments')->default('[]')->comment('attachment files');
+            $table->json('attachments')->nullable()->comment('attachment files');
             // ------- Agreement Summary ------------
             $table->timestamp('start_date')->useCurrent();
             $table->timestamp('end_date')->useCurrent();
