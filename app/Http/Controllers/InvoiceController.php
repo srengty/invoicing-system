@@ -95,13 +95,48 @@ class InvoiceController extends Controller
     }
 
     // Show the list of invoices
-    public function index()
+    public function index(Request $request)
     {
-        $invoices = Invoice::with('customer', 'agreement', 'quotation', 'products')->paginate(5);  // Make sure to paginate the data
+        // Initialize the query builder for the invoices
+        $query = Invoice::with('customer', 'agreement', 'quotation', 'products');
+        
+        // Apply the filters from the request, if any
+        
+        // Filter by invoice number (if provided)
+        if ($request->has('invoice_no') && $request->invoice_no) {
+            $query->where('invoice_no', 'like', '%' . $request->invoice_no . '%');
+        }
+
+        // Filter by customer name (if provided)
+        if ($request->has('customer') && $request->customer) {
+            $query->whereHas('customer', function($query) use ($request) {
+                $query->where('name', 'like', '%' . $request->customer . '%');
+            });
+        }
+
+        // Filter by status (if provided)
+        if ($request->has('status') && $request->status) {
+            $query->where('status', 'like', '%' . $request->status . '%');
+        }
+
+        // Filter by start date
+        if ($request->has('start_date') && $request->start_date) {
+            $query->where('date', '>=', $request->start_date);
+        }
+
+        // Filter by end date
+        if ($request->has('end_date') && $request->end_date) {
+            $query->where('date', '<=', $request->end_date);
+        }
+
+        // Paginate the results (you can adjust the pagination per page)
+        $invoices = $query->paginate();  // Adjust the pagination limit if needed
+
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
         ]);
     }
+
 
     // Show the edit page for an existing invoice
     public function edit($id)

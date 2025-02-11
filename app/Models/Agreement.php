@@ -34,10 +34,12 @@ class Agreement extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+    
     public function quotation()
     {
         return $this->belongsTo(Quotation::class);
     }
+
     // protected $dateFormat = 'Y-m-d';
     protected function casts(){
         return [

@@ -31,13 +31,12 @@ class Invoice extends Model
     // Relationship with Agreement
     public function agreement()
     {
-        return $this->belongsTo(Agreement::class); // Assuming one-to-one relationship with Agreement
+        return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
     }
 
-    // Relationship with Quotation
     public function quotation()
     {
-        return $this->belongsTo(Quotation::class); // Assuming one-to-one relationship with Quotation
+        return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
     }
 
     // Relationship with Products (many-to-many with pivot table for quantities)
