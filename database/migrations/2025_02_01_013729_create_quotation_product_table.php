@@ -14,8 +14,7 @@ class CreateQuotationProductTable extends Migration
             $table->unsignedBigInteger('product_id'); // Assuming products have an ID
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
-            $table->timestamps();
-        
+            $table->timestamps();     
             // Foreign keys
             $table->foreign('quotation_no')->references('quotation_no')->on('quotations')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
