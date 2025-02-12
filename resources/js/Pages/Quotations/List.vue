@@ -31,11 +31,18 @@
                     <Column field="total" header="Total" style="width: 10%" />
                     <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
-                            <div class="card flex justify-content-center">
-                                <Dropdown v-model="selectedStatus" :options="Status" optionLabel="name" placeholder="Status" class="w-full md:w-14rem" />
-                            </div>
+                            <Dropdown
+                                v-model="slotProps.data.status"
+                                :options="StatusOptions"
+                                optionLabel="name"
+                                optionValue="code"
+                                placeholder="Select Status"
+                                class="w-full md:w-14rem"
+                                @change="updateQuotationStatus(slotProps.data)"
+                            />
                         </template>
                     </Column>
+
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
 
@@ -97,6 +104,7 @@ import { router } from "@inertiajs/vue3"; // for printing
 const isViewDialogVisible = ref(false);
 const selectedQuotation = ref([]);
 const selectedQuo_customer = ref([]);
+const userRole = ref("manager");
 
 const props = defineProps({
     customers: Array,
@@ -184,10 +192,25 @@ const updateColumns = (columns) => {
 
 // quotations status
 const selectedStatus = ref();
-const Status = ref([
+const StatusOptions = ref([
     { name: 'Pending', code: 'Pending' },
     { name: 'Approved', code: 'Approved' },
     { name: 'Revise', code: 'Revise' },
 ]);
+
+const updateQuotationStatus = (quotation) => {
+    router.put(`/quotations/${quotation.id}/update-status`, {
+        status: quotation.status,  // Send selected status to backend
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            console.log("Quotation status updated successfully!");
+        },
+        onError: (err) => {
+            console.error("Error updating quotation status:", err);
+        }
+    });
+};
+
 </script>
 

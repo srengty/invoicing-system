@@ -38,6 +38,14 @@ class QuotationController extends Controller
         ]);
     }
 
+    public function updateStatus(Request $request, $id) {
+        $quotation = Quotation::findOrFail($id);
+        $quotation->status = $request->status;  // Ensure correct data is saved
+        $quotation->save();
+
+        return response()->json(['message' => 'Quotation status updated successfully!']);
+    }
+
     public function store(Request $request)
     {
 
