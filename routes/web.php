@@ -33,6 +33,7 @@ Route::get('/quotations', [QuotationController::class, 'list']);
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
 Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
 Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
+Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updateStatus']);
 Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
 
 Route::resource('invoices', InvoiceController::class);
@@ -47,11 +48,11 @@ Route::get('/settings/customers/{customer}/edit', [CustomerController::class, 'e
 Route::delete('/settings/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
 
 Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create'); 
-Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store'); 
-Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit'); 
-Route::put('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update'); 
-Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy'); 
+Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
+Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
+Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+Route::put('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
+Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 

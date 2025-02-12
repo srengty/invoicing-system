@@ -19,13 +19,15 @@ class QuotationController extends Controller
         $agreements = Agreement::all();
         $customers = Customer::all();
         $products = Product::all();
-        
+
         return Inertia::render('Quotations/List', [ // Render the index page using Inertia
             'quotations' => $quotations,
             'agreements' => $agreements,
             'customers' => $customers,
             'products' => $products,
+
         ]);
+
     }
 
     public function create()
@@ -33,14 +35,22 @@ class QuotationController extends Controller
         $customers = Customer::all(); // Fetch customer id and name`
         $products = Product::select('name', 'unit', 'price', 'id')->get(); // Fetch customer id and name
         return inertia('Quotations/Create', [
-            'customers' => $customers, 
-            'products' => $products, 
+            'customers' => $customers,
+            'products' => $products,
         ]);
+    }
+
+    public function updateStatus(Request $request, $id) {
+        $quotation = Quotation::findOrFail($id);
+        $quotation->status = $request->status;  // Ensure correct data is saved
+        $quotation->save();
+
+        return response()->json(['message' => 'Quotation status updated successfully!']);
     }
 
     public function store(Request $request)
     {
-        
+
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
             'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
@@ -54,7 +64,7 @@ class QuotationController extends Controller
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
         ]);
-        
+
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
@@ -69,11 +79,11 @@ class QuotationController extends Controller
             $total += $prod->price * $product['quantity'];
         }
         // Calculate tax based on the provided percentage
-        // $tax = $validated['tax'] / 100; 
+        // $tax = $validated['tax'] / 100;
         // $tax = $tax * $total;
         // $grand_total = $total + $tax;
         // $grand_total = $total;
-       
+
         $quotationDate = Carbon::parse($request->quotation_date)->format('Y-m-d H:i:s');
 
         // Get the last used quotation_no and increment it
@@ -92,20 +102,20 @@ class QuotationController extends Controller
         ]);
 
         $quotation->save();
-        
+
         // Attach products to the quotation
         foreach ($validated['products'] as $product) {
             $prod = Product::find($product['id']);
             $quotation->products()->attach($prod->id, [
                 'quantity' => $product['quantity'],
-                'price' => $prod->price * $product['quantity'],  
+                'price' => $prod->price * $product['quantity'],
             ]);
         }
 
     // Redirect with a success message
     return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
 }
-    
+
     /**
      * For printing quotations.
      */
@@ -125,7 +135,7 @@ class QuotationController extends Controller
     public function edit(Quotation $quotation)
     {
         // Render a form for editing an existing quotation
-        return Inertia::render('Quotations/Edit', [         
+        return Inertia::render('Quotations/Edit', [
             'quotation' => $quotation,
         ]);
     }
