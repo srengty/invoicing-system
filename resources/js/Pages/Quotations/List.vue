@@ -53,9 +53,10 @@
                         <p><strong>Quotation No.:</strong> {{ selectedQuotation.quotation_no }}</p>
                         <p><strong>Quotation Date:</strong> {{ selectedQuotation.quotation_date }}</p>
                         <p><strong>Customer ID:</strong> {{ selectedQuotation.customer_id }}</p>
-                         <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || 'N/A' }}</p>
+                        <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || 'N/A' }}</p>
                         <p><strong>address:</strong> {{ selectedQuotation.address }}</p>
                         <p><strong>Phone Number:</strong> {{ selectedQuotation.phone_number }}</p>
+<!--                        <p><strong>Terms:</strong> {{ selectedQuotation.terms }}</p>-->
                         <!-- Loop through products -->
                         <span class="font-bold block mb-2 text-center">Items</span>
                         <div v-if="selectedQuotation.products?.length" >

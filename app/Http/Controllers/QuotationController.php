@@ -25,7 +25,9 @@ class QuotationController extends Controller
             'agreements' => $agreements,
             'customers' => $customers,
             'products' => $products,
+
         ]);
+
     }
 
     public function create()

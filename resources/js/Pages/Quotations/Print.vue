@@ -44,7 +44,9 @@
           <!-- Terms and Conditions -->
           <div class="mt-6">
               <p class="font-bold">Terms and Conditions</p>
-              <Textarea v-model="quotation.terms_conditions" rows="1" class="w-full border rounded-md p-2 text-sm" readonly />
+              <div class="w-full border rounded-md p-3 text-sm bg-gray-100 text-gray-800 overflow-y-auto max-h-32">
+                  {{ quotation.terms }}
+              </div>
           </div>
 
           <!-- Customer Acceptance & Authorization -->
