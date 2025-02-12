@@ -16,31 +16,56 @@
         <p><strong>Quotation Date:</strong> {{ quotation.quotation_date }}</p>
       </div>
     </div>
+      <!-- Print Section -->
+      <div ref="printTable" class="print-area">
+          <DataTable v-if="quotation.products && quotation.products.length > 0" :value="quotation.products">
+              <Column header="Order No.">
+                  <template #body="slotProps">
+                      {{ slotProps.index + 1 }}
+                  </template>
+              </Column>
+              <Column field="name" header="ITEM" />
+              <Column field="pivot.quantity" header="QTY" />
+              <Column field="price" header="Unit Price">
+                  <template #body="slotProps">
+                      ${{ parseFloat(slotProps.data.price).toFixed(2) }}
+                  </template>
+              </Column>
+              <Column header="Sub-Total">
+                  <template #body="slotProps">
+                      ${{ (parseFloat(slotProps.data.price) * slotProps.data.pivot.quantity).toFixed(2) }}
+                  </template>
+              </Column>
+          </DataTable>
 
+          <!-- Total Amount -->
+          <p class="pt-6 flex justify-end">Total (USD/KHR): ${{ parseFloat(quotation.total).toFixed(2) }}</p>
 
-    <DataTable v-if="quotation.products && quotation.products.length > 0" :value="quotation.products" class="">
-      <Column header="Order No.">
-        <template #body="slotProps">
-          {{ slotProps.index + 1 }}
-        </template>
-      </Column>
-      <Column field="name" header="ITEM" />
-      <Column field="pivot.quantity" header="QTY" />
-      <Column field="price" header="Unit Price">
-        <template #body="slotProps">
-          ${{ parseFloat(slotProps.data.price).toFixed(2) }}
-        </template>
-      </Column>
-      <Column header="Sub-Total">
-        <template #body="slotProps">
-          ${{ (parseFloat(slotProps.data.price) * slotProps.data.pivot.quantity).toFixed(2) }}
-        </template>
-      </Column>
-    </DataTable> 
+          <!-- Terms and Conditions -->
+          <div class="mt-6">
+              <p class="font-bold">Terms and Conditions</p>
+              <Textarea v-model="quotation.terms_conditions" rows="1" class="w-full border rounded-md p-2 text-sm" readonly />
+          </div>
 
-    <p class="pt-6"><strong>Total: </strong>${{ parseFloat(quotation.total).toFixed(2) }}</p>  
+          <!-- Customer Acceptance & Authorization -->
+          <div class="mt-6 flex justify-between text-sm">
+              <div>
+                  <p class="font-bold">Customer Acceptance</p>
+                  <p class="text-xs italic">I hereby accept the quotation and agree on Terms and Conditions.</p>
+                  <div class="mt-3">
+                      <p><strong>Date:</strong> {{ quotation.quotation_date || '___________' }}</p>
+                  </div>
+              </div>
+              <div class="text-right">
+                  <p class="font-bold">Authorized by</p>
+                  <div class="mt-5">
+                      <p> {{ quotation.customer?.name || '___________' }}</p>
+                  </div>
+              </div>
+          </div>
+      </div>
   </div>
-  
+    <!-- Print Button -->
   <div class="flex flex-row justify-center"><Button label="Print" icon="pi pi-print" @click="printPage" class="mt-4"/></div>
 </template>
 
@@ -48,13 +73,16 @@
 import { ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { usePage } from "@inertiajs/vue3";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
 import Button from "primevue/button";
 import Image from 'primevue/image';
 
 const { props } = usePage();
 const quotation = ref(props.quotation);
+const printTable = ref(null);
+const printArea = ref(null);
+
 
 // Store the original title
 const originalTitle = ref(document.title);
@@ -62,21 +90,20 @@ const originalTitle = ref(document.title);
 // Print Page function
 const printPage = () => {
   window.print();
-  
+
 };
+
 </script>
 
 <style scoped>
 .print-container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
+    padding: 20px;
+    font-family: Arial, sans-serif;
 }
 
 @media print {
-  .mt-4 {
-    display: none; /* Hide the Print button when printing */
-  }
+    .mt-4 {
+        display: none; /* Hide the Print button when printing */
+    }
 }
-
-
 </style>

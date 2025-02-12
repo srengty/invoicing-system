@@ -10,7 +10,7 @@
             </div>
             <div class="flex justify-end p-4 gap-4">
                 <div>
-                    <Link :href="route('quotations.create')"><Button label="Issue Quotation" rounded/></Link>                  
+                    <Link :href="route('quotations.create')"><Button label="Issue Quotation" rounded/></Link>
                 </div>
                 <Link :href="route('invoices.create')"><Button label="Issue Invoice" rounded/></Link>
                 <Link :href="route('agreements.create')"><Button label="Record Agreement" rounded/></Link>
@@ -38,7 +38,7 @@
                     </Column>
                     <Column field="customer_status" header="Customer Status" style="width: 20%" />
                 </DataTable>
-                
+
                 <!-- View Dialog display -->
                 <Dialog v-model:visible="isViewDialogVisible" header="Quotation Details" modal :style="{ width: '40rem', high: '200rem'}">
                     <div v-if="selectedQuotation" class="flex text-lg flex-col gap-2 w-2/2 pl-6">
@@ -46,29 +46,29 @@
                         <p><strong>Quotation No.:</strong> {{ selectedQuotation.quotation_no }}</p>
                         <p><strong>Quotation Date:</strong> {{ selectedQuotation.quotation_date }}</p>
                         <p><strong>Customer ID:</strong> {{ selectedQuotation.customer_id }}</p>
-                         <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || 'N/A' }}</p>  
+                         <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || 'N/A' }}</p>
                         <p><strong>address:</strong> {{ selectedQuotation.address }}</p>
                         <p><strong>Phone Number:</strong> {{ selectedQuotation.phone_number }}</p>
                         <!-- Loop through products -->
                         <span class="font-bold block mb-2 text-center">Items</span>
                         <div v-if="selectedQuotation.products?.length" >
 
-                            <VirtualScroller 
-                                :items="selectedQuotation.products" 
-                                :itemSize="50" 
+                            <VirtualScroller
+                                :items="selectedQuotation.products"
+                                :itemSize="50"
                                 class="border border-surface-200 dark:border-surface-700 rounded w-full " style="height: 100px">
-                                
+
                                 <template v-slot:item="{ item, options }">
                                     <div :class="['flex items-center justify-between p-2', { 'bg-surface-100 dark:bg-surface-700': options.odd }]" >
-                                        <p><strong>Item:</strong> {{ item.name }} <strong> , QTY:</strong> {{ item.pivot.quantity }}</p>                              
+                                        <p><strong>Item:</strong> {{ item.name }} <strong> , QTY:</strong> {{ item.pivot.quantity }}</p>
                                     </div>
                                 </template>
 
                             </VirtualScroller>
                         </div>
 
-                        <br>                    
-                        <p><strong>Total:</strong> {{ selectedQuotation.total }}</p>                                                   
+                        <br>
+                        <p><strong>Total:</strong> {{ selectedQuotation.total }}</p>
                     </div>
                     <template #footer>
                         <Button label="Cancel" outlined severity="secondary" @click="isViewDialogVisible = false" autofocus />
@@ -115,7 +115,7 @@ const form = useForm({
     // grand_total: 0,
     products: [],
 });
-  
+
 const openForm = (quotations = null) => {
     if (quotations) {
         form.quotation_no = quotations.id;
@@ -123,7 +123,7 @@ const openForm = (quotations = null) => {
         form.address = quotations.address;
         form.phone_number = quotations.phone_number;
         form.customer_id = quotations.customer_id;
-        // form.grand_total = quotations.grand_total;  
+        // form.grand_total = quotations.grand_total;
     } else {
         form.reset();
     }
@@ -165,6 +165,16 @@ const printQuotation = (quotation_no) => {
     printWindow.onload = () => {
         printWindow.print();
     }
+    // if (printWindow) {
+    //     printWindow.onload = () => {
+    //         setTimeout(() => {
+    //             printWindow.print();
+    //             printWindow.close();
+    //         }, 1000); // Add delay to ensure full load
+    //     };
+    // } else {
+    //     alert('Popup blocked! Please allow popups for this website.');
+    // }
 }
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);
