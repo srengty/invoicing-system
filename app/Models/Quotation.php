@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Quotation extends Model
 {
@@ -38,6 +40,14 @@ class Quotation extends Model
         return $this->belongsToMany(Product::class, 'product_quotation', 'quotation_no', 'product_id')
                     ->withPivot('quantity', 'price')
                     ->withTimestamps();
+    }
+    public function invoices():HasMany
+    {
+        return $this->hasMany(Invoice::class, 'quotation_no', 'quotation_no');
+    }
+    public function agreement():HasOne
+    {
+        return $this->hasOne(Agreement::class, 'quotation_no', 'quotation_no');
     }
 }
 
