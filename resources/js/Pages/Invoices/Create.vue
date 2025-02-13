@@ -40,7 +40,7 @@
               v-model="form.quotation_no"
               :options="quotations"
               optionLabel="quotation_no"
-              optionValue="id"
+              optionValue="quotation_no"
               placeholder="Select Quotation"
               class="w-full"
               required
@@ -58,16 +58,6 @@
               required
             />
           </div>
-          <!-- <div>
-            <label for="invoice_no" class="block text-lg font-medium">Invoice No</label>
-            <InputText
-              id="invoice_no"
-              v-model="form.invoice_no"
-              class="w-full"
-              placeholder="Enter invoice number"
-              required
-            />
-          </div> -->
           <div>
             <label for="deposit_no" class="block text-lg font-medium">Receipt No (for deposit)</label>
             <InputText v-tooltip="'ប្រាក់កក់មុន'"
@@ -77,7 +67,7 @@
               placeholder="Enter deposit number"
               required
             />
-            <Button class="w-1/2">Add Receipt</Button>
+            <Button class="w-1/3 ml-4 p-button-info" rounded >Add Receipt</Button>
           </div>
           <div>
             <label for="customer_id" class="block text-lg font-medium">Customer</label>
@@ -158,6 +148,12 @@
           <p class="font-bold text-lg">{{ calculateGrandTotal }}</p>
         </div>
 
+        <!-- Instalment Paid Section -->
+        <div class="flex justify-between mt-4">
+          <p class="font-bold">Instalment Paid</p>
+          <p class="font-bold">{{ form.instalmentPaid }}</p>
+        </div>
+
         <!-- Terms and Conditions -->
         <div class="terms mt-4">
           <h3 class="text-lg">Terms and Conditions</h3>
@@ -208,7 +204,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select } from 'primevue';
 import { usePage } from '@inertiajs/vue3';
@@ -228,76 +224,159 @@ const form = useForm({
   phone: '',
   start_date: '',
   end_date: '',
-  grand_total: 0,  // Ensure grand_total is initialized as 0 (number)
+  grand_total: 0, // Initialize grand_total as 0
+  instalmentPaid: 0, // Store instalment paid
   status: '',
-  products:[],
+  products: [], // Empty products array
 });
 
 const statusOptions = [
-  { label: 'Pending', value: 'pending' },
-  { label: 'Paid', value: 'paid' },
-  { label: 'Cancelled', value: 'cancelled' },
+  { label: 'Pending', value: 'Pending' },
+  { label: 'Approved', value: 'Approved' },
+  { label: 'Revise', value: 'Revise' },
 ];
 
-const submitInvoiceAndRedirect = () => {
-  submitInvoice(); // Call the existing submitInvoice logic
-  Inertia.visit('/invoices'); // Redirect to the invoice index page
-};
-
-const productsList = ref([]);
+const productsList = ref([]); // The list of products to display in the table
 const showProductModal = ref(false);
 
 const openProductModal = () => {
   showProductModal.value = true;
 };
 
+watch(() => form.quotation_no, async (newQuotationId) => {
+  console.log('Selected Quotation ID:', newQuotationId);  // Debugging log
+  if (newQuotationId) {
+    const selectedQuotation = quotations.find(q => q.quotation_no === newQuotationId);
+    if (selectedQuotation) {
+      console.log('Selected Quotation:', selectedQuotation);  // Debugging log
+      // Auto-fill fields
+      form.customer_id = selectedQuotation.customer_id;
+      form.address = selectedQuotation.address;
+      form.phone = selectedQuotation.phone_number;
+      form.status = selectedQuotation.status;
+
+      // Ensure products is an array before using .map()
+      if (Array.isArray(selectedQuotation.products)) {
+        productsList.value = selectedQuotation.products.map(product => ({
+          id: product.id,
+          product: product.name,
+          qty: product.qty,
+          unit: product.unit,
+          unitPrice: product.price,
+          subTotal: product.qty * product.price,
+        }));
+      } else {
+        console.error('No products found for the selected quotation');
+      }
+
+      // Fetch the related Agreement for the selected quotation
+      try {
+        const agreement = await fetchAgreementForQuotation(newQuotationId);
+        if (agreement) {
+          form.agreement_no = agreement.agreement_no || '';
+          form.start_date = agreement.start_date;
+          form.end_date = agreement.end_date;
+        }
+      } catch (error) {
+        console.error('Error fetching agreement:', error);
+      }
+
+      // Calculate total (Now accessing the computed property value)
+      const total = calculateTotal.value;
+
+      // Get instalment paid (sum of paid invoices for the quotation)
+      try {
+        const paidInvoices = await fetchPaidInvoices(newQuotationId);
+        const instalmentPaid = paidInvoices.reduce((sum, invoice) => sum + invoice.amount_paid, 0);
+
+        console.log('Instalment Paid:', instalmentPaid);  // Debugging log
+        form.instalmentPaid = instalmentPaid;
+        form.grand_total = total - instalmentPaid; // Update grand total
+      } catch (error) {
+        console.error('Error fetching paid invoices:', error);  // Error logging
+      }
+    }
+  }
+});
+
+// Function to fetch the related agreement based on the selected quotation
+const fetchAgreementForQuotation = async (quotationId) => {
+  try {
+    const response = await fetch(`/quotations/${quotationId}/agreement`);
+    const data = await response.json();
+    console.log('Agreement data:', data);  // Debugging log
+    return data;  // Return the agreement data
+  } catch (error) {
+    console.error('Error fetching agreement:', error);
+    return null;  // Return null if error
+  }
+};
+
+
+const fetchPaidInvoices = async (quotationId) => {
+  try {
+    const response = await fetch(`/quotations/${quotationId}/invoices?status=paid`);
+    const data = await response.json();
+    console.log('Paid Invoices:', data);  // Debugging log
+    return data;
+  } catch (error) {
+    console.error('Error fetching paid invoices:', error);
+    return [];  // Return empty array in case of error
+  }
+};
+
+// Index template to show row numbers
 const indexTemplate = (data, options) => options.rowIndex + 1;
 
+// Action template for removing products
 const actionTemplate = (data) => {
   return `<Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />`;
 };
 
+// Add product to the products list
 const addProduct = (productId) => {
   const product = products.find((prod) => prod.id === productId);
   if (product) {
     const newProduct = {
-      id: product.id,            // Ensure the ID is set correctly
-      product: product.name,      // Use the correct product properties
-      qty: 1,                     // Set the quantity properly
+      id: product.id,
+      product: product.name,
+      qty: 1,
       unit: product.unit,
       unitPrice: product.price,
       subTotal: 1 * product.price,
     };
     productsList.value.push(newProduct);
     showProductModal.value = false;
-  } else {
-    console.log('Product not found:', productId);
   }
 };
 
+// Remove product from the products list
 const removeProduct = (productId) => {
   productsList.value = productsList.value.filter((product) => product.id !== productId);
 };
 
+// Calculate the total of all products
 const calculateTotal = computed(() => {
   return productsList.value.reduce((total, product) => total + product.subTotal, 0);
 });
 
+// Calculate the grand total, subtracting any instalment paid
 const calculateGrandTotal = computed(() => {
-  return calculateTotal.value;
+  return calculateTotal.value - form.instalmentPaid;
 });
 
+// Update product subtotal when quantity is changed
 const updateProductSubtotal = (product) => {
   product.subTotal = product.qty * product.unitPrice;
 };
 
+// Submit the invoice
 const submitInvoice = () => {
   if (productsList.value.length === 0) {
     alert('Please add at least one product.');
     return;
   }
 
-  // Explicitly calculate grand_total
   const grandTotal = productsList.value.reduce((total, product) => total + product.subTotal, 0);
 
   const invoiceData = {
@@ -309,11 +388,11 @@ const submitInvoice = () => {
     phone: form.phone,
     start_date: new Date(form.start_date).toISOString(),
     end_date: new Date(form.end_date).toISOString(),
-    grand_total: grandTotal, // Explicitly set grand_total
+    grand_total: grandTotal,
     status: form.status,
     products: productsList.value.map(product => ({
-      id: product.id,        // Map product ID
-      quantity: product.qty, // Map product quantity
+      id: product.id,
+      quantity: product.qty,
     })),
   };
 
@@ -324,11 +403,18 @@ const submitInvoice = () => {
     body: JSON.stringify(invoiceData),
     headers: {
       'X-CSRF-TOKEN': csrfToken,
-      "Content-type": "application/json"
-    }
-  })
+      "Content-type": "application/json",
+    },
+  });
 };
 
+// Submit invoice and redirect
+const submitInvoiceAndRedirect = () => {
+  submitInvoice();
+  Inertia.visit('/invoices');
+};
+
+// Cancel the form
 const cancel = () => {
   form.reset();
   productsList.value = [];
