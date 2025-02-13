@@ -10,10 +10,10 @@
             </div>
             <div class="flex justify-end p-4 gap-4">
                 <div>
-                    <Link :href="route('quotations.create')"><Button label="Issue Quotation" rounded/></Link>
+                    <Link :href="route('quotations.create')"><Button icon="pi pi-plus" label="Issue Quotation" rounded/></Link>
                 </div>
-                <Link :href="route('invoices.create')"><Button label="Issue Invoice" rounded/></Link>
-                <Link :href="route('agreements.create')"><Button label="Record Agreement" rounded/></Link>
+                <Link :href="route('invoices.create')"><Button icon="pi pi-plus" label="Issue Invoice" rounded/></Link>
+                <Link :href="route('agreements.create')"><Button icon="pi pi-plus" label="Record Agreement" rounded/></Link>
             </div>
 
             <div>
@@ -21,8 +21,8 @@
                     <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
-                                <Button icon="pi pi-plus" label="View" rounded @click="viewQuotation(slotProps.data)" style="padding-left: 12px;padding-right: 18px;" />
-                                <Button icon="pi pi-plus" label="Print out"  @click="printQuotation(slotProps.data.quotation_no)"  rounded style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-eye" label="View" severity="info" rounded @click="viewQuotation(slotProps.data)" style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-print" label="Print out"  @click="printQuotation(slotProps.data.quotation_no)"  rounded style="padding-left: 12px;padding-right: 18px;" />
                             </div>
                         </template>
                     </Column>
