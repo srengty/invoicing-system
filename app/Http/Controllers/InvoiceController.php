@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agreement;
+use App\Models\CustomerCategory;
 use App\Models\Quotation;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -98,13 +99,17 @@ class InvoiceController extends Controller
     public function index(Request $request)
     {
         // Initialize the query builder for the invoices
-        $query = Invoice::with('customer', 'agreement', 'quotation', 'products');
+        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category');
         
         // Apply the filters from the request, if any
         
         // Filter by invoice number (if provided)
-        if ($request->has('invoice_no') && $request->invoice_no) {
-            $query->where('invoice_no', 'like', '%' . $request->invoice_no . '%');
+        if ($request->has('invoice_no_start') && $request->invoice_no_start) {
+            $query->where('invoice_no', '>=', $request->invoice_no_start);
+        }
+
+        if ($request->has('invoice_no_end') && $request->invoice_no_end) {
+            $query->where('invoice_no', '<=', $request->invoice_no_end);
         }
 
         // Filter by customer name (if provided)
@@ -129,11 +134,25 @@ class InvoiceController extends Controller
             $query->where('date', '<=', $request->end_date);
         }
 
+        if ($request->has('category_name_english') && $request->category_name_english) {
+            $query->whereHas('customer.customerCategory', function ($query) use ($request) {
+                $query->where('category_name_english', 'like', '%' . $request->category_name_english . '%');
+            });
+        }        
+        
+        // Filter by currency
+        if ($request->has('currency') && $request->currency) {
+            $query->where('currency', $request->currency);
+        }
+
         // Paginate the results (you can adjust the pagination per page)
         $invoices = $query->paginate();  // Adjust the pagination limit if needed
 
+        $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency']);
+
         return Inertia::render('Invoices/Index', [
             'invoices' => $invoices,
+            'filters' => $filters,
         ]);
     }
 

@@ -4,35 +4,66 @@
     <div class="invoices">
       <div class="flex justify-between items-center p-3">
         <h1 class="text-2xl">Invoices</h1>
-        <div>
+        <div class="flex gap-2">
           <Button icon="pi pi-plus" label="Create Invoice" rounded @click="navigateToCreate" />
           <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded />
         </div>
       </div>
 
       <!-- Filters -->
-      <div class="mb-8 pl-3 ">
+      <div class="mb-8 pl-3">
         <div class="text-xl mb-3">Filter by</div>
-        <div class="flex gap-2 w-full">
-          <DatePicker v-model="filters.start_date" placeholder="Start Date" />
-          <DatePicker v-model="filters.end_date" placeholder="End Date" />
-          <InputText v-model="filters.invoice_no" placeholder="Invoice No" />
-          <InputText v-model="filters.customer" placeholder="Customer" />
-          <Dropdown 
-            v-model="filters.status" 
-            :options="statusOptions" 
-            placeholder="Select Status" 
-            optionLabel="label" 
-            optionValue="value" 
-          />
-          <Button label="Search" icon="pi pi-search" @click="searchInvoices" />
-          <Button label="Clear Filters" icon="pi pi-times" class="p-button-secondary" @click="clearFilters" />
+        <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
+          <div class="grid grid-cols-2 ">
+            <label class="grid content-center" for="status">Invoice No. Start:</label>
+            <InputText v-model="filters.invoice_no_start" placeholder="Input Invoice No Start" />
+          </div>
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Invoice No. End:</label>
+            <InputText v-model="filters.invoice_no_end" placeholder="Input Invoice No End" />
+          </div>
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Currency:</label>
+            <Dropdown v-model="filters.currency" :options="currencyOptions" placeholder="Select Currency" optionLabel="label" optionValue="value" />
+          </div>
+        </div>
+        <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Start Date:</label>
+            <DatePicker v-model="filters.start_date" placeholder="Pick Start Date"/>
+          </div>
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">End Date:</label>
+            <DatePicker v-model="filters.end_date" placeholder="Pick End Date" />
+          </div>
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Payment Status:</label>
+            <Dropdown v-model="filters.status" :options="statusOptions" placeholder="select Status" optionLabel="label" optionValue="value" />
+          </div>
+        </div>
+        <div class="grid gap-10 w-full grid-cols-4 text-lg">
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Customer:</label>
+            <InputText v-model="filters.customer" placeholder="Input Customer Name" />
+          </div>
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Customer Type:</label>
+            <Dropdown v-model="filters.category_name_english" :options="customerTypeOptions" placeholder="Select Customer Type" optionLabel="label" optionValue="value" />
+          </div>
+          <div class="grid grid-cols-2">
+            <label class="grid content-center" for="status">Income Type:</label>
+            <Dropdown placeholder="Select Income Type" optionLabel="label" optionValue="value" />
+          </div>
+          <div class="grid gap-4 grid-cols-2">
+            <Button label="Search" icon="pi pi-search" @click="searchInvoices" rounded/>
+            <Button label="Clear" icon="pi pi-times" class="p-button-secondary" @click="clearFilters" rounded/>
+          </div>
         </div>
       </div>
 
       <!-- Data Table -->
       <DataTable :value="invoices.data" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">
-        <Column v-for="col in showColumns" :key="col.field" :field="col.field" :header="col.header" sortable />
+        <Column class="" v-for="col in showColumns" :key="col.field" :field="col.field" :header="col.header" sortable />
 
         <Column header="Amount Due">
           <template #body="{ data }">
@@ -40,12 +71,12 @@
               {{ computeAmountDue(data) }}
             </template>
             <template v-else>
-              Not pass due
+              Not past due
             </template>
           </template>
         </Column>
-        <!-- Overdue Days -->
-        <Column header="Over due">
+
+        <Column header="Overdue">
           <template #body="{ data }">
             {{ over_due(data) }} days ago
           </template>
@@ -74,6 +105,7 @@ import ChooseColumns from '@/Components/ChooseColumns.vue';
 import { ref } from 'vue';
 import { Inertia } from '@inertiajs/inertia';
 import moment from 'moment';
+import Customers from '@/Components/Customers.vue';
 
 // Props
 defineProps({
@@ -85,12 +117,27 @@ defineProps({
 
 // Filters
 const filters = ref({
+  invoice_no_start: null,
+  invoice_no_end: null,
+  category_name_english: null, // Changed from customer_type to category_name_english
+  currency: null,
   start_date: null,
   end_date: null,
-  invoice_no: null,
   customer: null,
   status: null,
 });
+
+const customerTypeOptions = ref([
+  { label: 'Individual', value: 'Individual' },
+  { label: 'Public Organization', value: 'Public Organization' },
+  { label: 'NGO', value: 'NGO' },
+  { label: 'Private Company', value: 'Private Company' },
+]);
+
+const currencyOptions = ref([
+  { label: 'USD', value: 'USD' },
+  { label: 'KHR', value: 'KHR' },
+]);
 
 const columns = [
   { field: 'invoice_no', header: 'Invoice No' },
@@ -102,7 +149,7 @@ const columns = [
   { field: 'status', header: 'Status' },
 ];
 
-const selectedColumns = ref(columns);
+const selectedColumns = ref(columns.slice());
 const showColumns = ref(columns);
 
 const statusOptions = ref([
@@ -111,29 +158,24 @@ const statusOptions = ref([
   { label: 'Cancelled', value: 'Cancelled' },
 ]);
 
-// Update columns dynamically
 const updateColumns = () => {
   showColumns.value = selectedColumns.value;
 };
 
-// Navigate to create invoice
 const navigateToCreate = () => {
   Inertia.visit('/invoices/create');
 };
 
-// Edit invoice
 const editInvoice = (id) => {
   Inertia.visit(`/invoices/${id}/edit`);
 };
 
-// Delete invoice
 const deleteInvoice = (id) => {
   if (confirm("Are you sure you want to delete this invoice?")) {
     Inertia.delete(`/invoices/${id}`);
   }
 };
 
-// Calculate overdue days
 const over_due = (rowData) => {
   if (!rowData.due_date) return '-';
   const dueDate = moment(rowData.due_date);
@@ -142,53 +184,49 @@ const over_due = (rowData) => {
   return overdue > 0 ? overdue : 0;
 };
 
-// Print invoice
 const printInvoice = (id) => {
   const invoiceUrl = `/invoices/${id}`;
   const printWindow = window.open(invoiceUrl, '_blank');
-  printWindow.onload = () => {
+  setTimeout(() => {
     printWindow.print();
-  };
+  }, 1000);
 };
 
-// Search invoices based on filters
 const searchInvoices = () => {
   const formattedStartDate = filters.value.start_date ? moment(filters.value.start_date).format('YYYY-MM-DD') : null;
   const formattedEndDate = filters.value.end_date ? moment(filters.value.end_date).format('YYYY-MM-DD') : null;
 
-  // Send all the filters to the backend
   Inertia.get('/invoices', {
-    invoice_no: filters.value.invoice_no,
+    invoice_no_start: filters.value.invoice_no_start,
+    invoice_no_end: filters.value.invoice_no_end,
+    category_name_english: filters.value.category_name_english, // Changed from customer_type to category_name_english
+    currency: filters.value.currency,
+    start_date: formattedStartDate,
+    end_date: formattedEndDate,
     customer: filters.value.customer,
     status: filters.value.status,
-    start_date: formattedStartDate, 
-    end_date: formattedEndDate, 
   });
 };
 
-// Clear all filters
 const clearFilters = () => {
   filters.value = {
+    invoice_no_start: null,
+    invoice_no_end: null,
+    category_name_english: null, // Changed from customer_type to category_name_english
+    currency: null,
     start_date: null,
     end_date: null,
-    invoice_no: null,
     customer: null,
     status: null,
   };
-  searchInvoices(); // Optionally, reset to initial state
+  searchInvoices();
 };
 
 const computeAmountDue = (invoice) => {
   const grandTotal = invoice.grand_total || 0;
   const amountPaid = invoice.agreement?.amount || 0;
-
-  // Calculate the due amount
-  const amountDue = grandTotal - amountPaid;
-
-  // Return the formatted amount with 3 decimal places
-  return amountDue.toFixed(2);
+  return (grandTotal - amountPaid).toFixed(2);
 };
-
 </script>
 
 <style scoped>

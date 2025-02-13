@@ -28,6 +28,11 @@ class Invoice extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function customer_category()
+    {
+        return $this->belongsTo(CustomerCategory::class);
+    }
+
     // Relationship with Agreement
     public function agreement()
     {

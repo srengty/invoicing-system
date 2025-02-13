@@ -29,5 +29,11 @@ class Customer extends Model
         return $this->hasMany(Quotation::class);
     }
 
+    public function customerCategory()
+    {
+        return $this->belongsTo(CustomerCategory::class, 'customer_category_id');
+    }
+
+
 }
 
