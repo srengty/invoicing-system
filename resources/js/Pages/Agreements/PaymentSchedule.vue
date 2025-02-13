@@ -47,7 +47,7 @@
                 <Row>
                     <Column footer="Total:" footerStyle="text-align:right" :colspan="4" style="text-align:right"></Column>
                     <Column :footer="`${currencySign} ${totalAmount.toLocaleString()}`" style="text-align: right;"></Column>
-                    <Column footer=""></Column>
+                    
                 </Row>
             </ColumnGroup>
         </DataTable>

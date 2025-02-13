@@ -1,6 +1,10 @@
 <template>
-    <div class="flex">
-        <div class="flex flex-col items-stretch justify-stretch mx-auto aspect-1/1.414 w-2/3">
+    <div class="flex flex-col">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 print:hidden mb-5 fixed top-0">
+                <Button @click="doPrint" class="md:col-start-2">Print USD</Button>
+                <Button @click="doPrintRiels">Print KHR</Button>
+            </div>
+        <div class="flex flex-col items-stretch justify-stretch mx-auto aspect-1/1.414 shadow-lg p-20 min-h-svh border print:border-0 print:shadow-none print:p-0 print:mx-0 print:aspect-none print:w-full print:print-container">
             <div><img src="/logo.png" alt="ITC logo" class="w-28" /></div>
             <div class="w-full"></div>
             <h1 class="mx-auto text-2xl">Agreement</h1>
@@ -25,10 +29,6 @@
             </div>
             <PaymentSchedule class="mt-2" v-model="form.payment_schedule" :currency="currency"
                 readonly />
-            <div class="grid grid-cols-2 gap-3">
-                <Button @click="doPrint">Print USD</Button>
-                <Button @click="doPrintRiels">Print KHR</Button>
-            </div>
         </div>
     </div>
 </template>
