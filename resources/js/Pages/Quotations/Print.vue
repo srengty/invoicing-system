@@ -13,8 +13,10 @@
         <p><strong>Phone Number:</strong> {{ quotation.phone_number }}</p>
       </div>
       <div class="flex flex-col w-1/2 items-end gap-4">
-        <p><strong>Quotation No.:</strong> {{ quotation.quotation_no }}</p>
-        <p><strong>Quotation Date:</strong> {{ quotation.quotation_date }}</p>
+        <div class="grid gap-4">
+            <p><strong>Quotation No.:</strong> {{ quotation.quotation_no }}</p>
+            <p><strong>Quotation Date:</strong> {{ quotation.quotation_date }}</p>
+        </div>
       </div>
     </div>
       <!-- Print Section -->
@@ -29,18 +31,18 @@
               <Column field="pivot.quantity" header="QTY" />
               <Column field="price" header="Unit Price">
                   <template #body="slotProps">
-                      ${{ parseFloat(slotProps.data.price).toFixed(2) }}
+                      ${{ parseFloat(slotProps.data.price || 0).toFixed(2) }}
                   </template>
               </Column>
               <Column header="Sub-Total">
                   <template #body="slotProps">
-                      ${{ (parseFloat(slotProps.data.price) * slotProps.data.pivot.quantity).toFixed(2) }}
+                      ${{ (parseFloat(slotProps.data.price || 0) * (slotProps.data.pivot?.quantity || 0)).toFixed(2) }}
                   </template>
               </Column>
           </DataTable>
 
           <!-- Total Amount -->
-          <p class="pt-6 flex justify-end">Total (USD/KHR): ${{ parseFloat(quotation.total).toFixed(2) }}</p>
+          <p class="pt-6 flex justify-end">Total (USD/KHR): ${{ parseFloat(quotation.total || 0).toFixed(2) }}</p>
 
           <!-- Terms and Conditions -->
           <div class="mt-8">
@@ -69,7 +71,10 @@
       </div>
   </div>
     <!-- Print Button -->
-  <div class="flex flex-row justify-center"><Button label="Print" icon="pi pi-print" @click="printPage" class="mt-4"/></div>
+<!--  <div class="flex flex-row justify-center"><Button label="Print Quotation" icon="pi pi-print" @click="printPage" class="mt-4"/></div>-->
+    <div class="flex justify-center mt-6">
+        <a href="#" @click.prevent="printPage" class="px-4 py-2 bg-[#10B981] text-white rounded shadow">Print Quotation</a>
+    </div>
 </template>
 
 <script setup>
@@ -124,7 +129,7 @@ const printPage = () => {
 }
 
 @media print {
-    .mt-4 {
+    .mt-6 {
         display: none;
     }
 
