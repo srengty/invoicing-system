@@ -21,32 +21,35 @@
     </div>
       <!-- Print Section -->
       <div ref="printTable" class="page-break">
-          <DataTable v-if="quotation.products && quotation.products.length > 0" :value="quotation.products">
-              <Column header="Order No.">
-                  <template #body="slotProps">
-                      {{ slotProps.index + 1 }}
-                  </template>
-              </Column>
-              <Column field="name" header="ITEM" />
-              <Column field="pivot.quantity" header="QTY" />
-              <Column field="price" header="Unit Price">
-                  <template #body="slotProps">
+          <!-- Table Section -->
+          <div v-if="quotation.products?.length" class="table-container">
+              <!-- Table Header -->
+              <div class="grid grid-cols-5 bg-gray-200 py-2 px-4 font-bold text-center border-b">
+                  <div>Order No.</div>
+                  <div>ITEM</div>
+                  <div>QTY</div>
+                  <div>Unit Price</div>
+                  <div>Sub-Total</div>
+              </div>
+
+              <!-- Table Body -->
+              <div v-for="(product, index) in quotation.products" :key="index" class="grid grid-cols-5 border-b py-2 px-4 text-center">
+                  <div>{{ index + 1 }}</div>
+                  <div>{{ product.name }}</div>
+                  <div>{{ product.pivot.quantity }}</div>
+                  <div>
                       <div class="flex flex-col">
-                          <span class="font-semibold">${{ formatNumber(slotProps.data.price) }}</span>
-                          <span class="text-gray-500 text-sm">{{ currencySymbol }}{{ formatNumber(convertCurrency(slotProps.data.price, false)) }}</span>
+                          <span class="font-semibold">${{ formatNumber(product.price) }}</span>
+                          <span class="text-gray-500 text-sm">៛{{ formatNumber(convertCurrency(product.price, false)) }}</span>
                       </div>
-                  </template>
-              </Column>
-              <Column header="Sub-Total">
-                  <template #body="slotProps">
-                      ${{ (parseFloat(slotProps.data.price || 0) * (slotProps.data.pivot?.quantity || 0)).toFixed(2) }}
-                  </template>
-              </Column>
-          </DataTable>
+                  </div>
+                  <div class="font-semibold">${{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
+              </div>
+          </div>
 
           <!-- Total Amount -->
           <p class="pt-6 flex justify-end">
-              Total ({{ currencySymbol }}): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
+              Total (USD/KHR): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
           </p>
 
           <!-- Terms and Conditions -->
@@ -147,11 +150,12 @@ const printPage = () => {
 }
 .print-area {
     width: 210mm;
-    min-height: 297mm ;
+    min-height: 297mm;
     padding: 20mm;
     background: white;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
     margin: auto;
+
 }
 
 @media screen {
@@ -167,64 +171,26 @@ const printPage = () => {
 
 @media print {
     .mt-6 {
-        display: none;
+        display: none !important;
     }
 
     .print-area {
-        width: 100%;
-        min-height: auto;
-        box-shadow: none;
         margin: 0;
         padding: 0;
+        width: 100%;
+        height: auto;
+        box-shadow: none;
+        page-break-after: avoid;
+    }
+    .table-container {
+        page-break-before: auto;
+        page-break-after: auto;
+        page-break-inside: auto;
     }
 
-    .print-area,
-    .print-area * {
-        break-inside: avoid;
+    .table-container div {
+        page-break-inside: avoid;
+
     }
-}
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 20px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 34px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #10B981;
-}
-
-input:checked + .slider:before {
-    transform: translateX(14px);
 }
 </style>
