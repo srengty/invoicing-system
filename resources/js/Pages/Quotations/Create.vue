@@ -3,7 +3,7 @@
       <GuestLayout>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
-    
+
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
         <Form @submit.prevent="submit">
           <!-- Quotation Info -->
@@ -42,7 +42,7 @@
                   <InputIcon class="pi pi-times-circle" />
                 </IconField>
               </div>
-              
+
               <div class="flex flex-col gap-2">
                 <label for="phone_number">Contact</label>
                 <IconField class="w-full md:w-60">
@@ -56,15 +56,15 @@
                 </IconField>
               </div>
             </div>
-      
+
             <div class="p-4 grid md:grid-rows-2 gap-4">
-              
+
             </div>
           </div>
-    
+
           <!-- Customer & Product Selection -->
           <div class="p-8 grid md:grid-rows-2 gap-4">
-        
+
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-col gap-2 w-full">
                 <label for="customer_id">Customer/Organization</label>
@@ -85,7 +85,7 @@
                 <Button icon="pi pi-plus" label="Add customer" rounded @click="isCreateCustomerVisible=true" />
               </div>
             </div>
-    
+
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-col gap-2 w-full">
                 <label for="p_name">Item</label>
@@ -114,7 +114,7 @@
               </div>
             </div>
           </div>
-    
+
           <!-- Selected Products Table -->
           <div class="pl-6">
             <DataTable
@@ -167,7 +167,7 @@
                 </template>
               </Column>
             </DataTable>
-    
+
             <!-- Totals Summary -->
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
@@ -198,7 +198,7 @@
               </div>
             </div>
           </div>
-    
+
           <!-- Form Buttons -->
           <div class="buttons mt-4 mr-4 flex justify-end">
             <Button
@@ -252,7 +252,7 @@ import Customers from '@/Components/Customers.vue';
     products: Array,
   });
   const checked = ref(true);
-  
+
   // Toast for notifications
   const toast = useToast();
 
@@ -268,7 +268,7 @@ import Customers from '@/Components/Customers.vue';
     grand_total: 0,
     products: [], // Will be an array of objects: { id, quantity }
   });
-  
+
   const selectedProductIds = ref([]);
   const selectedProductsData = ref([]);
 
@@ -280,7 +280,7 @@ import Customers from '@/Components/Customers.vue';
   ]);
 
 
-  watch(selectedProductIds, (newIds) => { 
+  watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
       if (!selectedProductsData.value.find((prod) => prod.id === id)) {
         const prod = props.products.find((p) => p.id === id);
@@ -298,14 +298,14 @@ import Customers from '@/Components/Customers.vue';
       newIds.includes(prod.id)
     );
   });
-  
+
   const updateProductSubtotal = (row) => {
     row.quanity= parseInt(row.quanity) || 0;
     row.subTotal = Number(row.price) * row.quanity;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
   };
- 
+
   const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
   };
@@ -321,18 +321,18 @@ import Customers from '@/Components/Customers.vue';
       0
     );
   });
-  
+
   const calculateGrandTotal = computed(() => {
     return calculateTotal.value + Number((form.tax*calculateTotal.value/100) || 0);
   });
-  
+
   const formattedCustomers = computed(() => {
     return props.customers.map((customer) => ({
       id: customer.id,
       label: `${customer.name} (${customer.code})`,
     }));
   });
-  
+
   const removeProduct = (id) => {
     selectedProductsData.value = selectedProductsData.value.filter(
       (prod) => prod.id !== id
@@ -342,13 +342,13 @@ import Customers from '@/Components/Customers.vue';
       (prodId) => prodId !== id
     );
   };
-  
+
   const submit = (event) => {
     if (event && typeof event.preventDefault === "function") {
     event.preventDefault(); // Ensure the event exists before calling preventDefault
   }
     // Basic validation: all required fields must be filled and at least one product selected.
-    if ( !form.address || !form.phone_number || !form.customer_id || selectedProductsData.value.length === 0)  
+    if ( !form.address || !form.phone_number || !form.customer_id || selectedProductsData.value.length === 0)
     {
       toast.add({
         severity: "error",
@@ -358,13 +358,13 @@ import Customers from '@/Components/Customers.vue';
         life: 3000,
       });
       return;
-    } 
+    }
     // Prepare the products array for submission.
     form.products = selectedProductsData.value.map((prod) => ({
       id: prod.id,
       quantity: prod.quanity,
     }));
-  
+
     // Update totals.
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
@@ -378,7 +378,7 @@ import Customers from '@/Components/Customers.vue';
         console.error(errors);
       },
     });
-   
+
   };
 
   const isCreateCustomerVisible = ref(false);
