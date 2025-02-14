@@ -1,7 +1,7 @@
 <template>
   <Head title="Quotations Printing" />
 
-  <div ref="printArea" class=" flex-col justify-center print-area">
+  <div ref="printArea" class=" flex-col justify-center print-area a4-size">
     <div class="flex flex-row m-4">
         <Image src="https://itc.edu.kh/wp-content/uploads/2021/02/cropped-Logo-ITC.png" alt="Image" width="120" />
     </div>
@@ -20,7 +20,7 @@
       </div>
     </div>
       <!-- Print Section -->
-      <div ref="printTable">
+      <div ref="printTable" class="page-break">
           <DataTable v-if="quotation.products && quotation.products.length > 0" :value="quotation.products">
               <Column header="Order No.">
                   <template #body="slotProps">
@@ -31,7 +31,10 @@
               <Column field="pivot.quantity" header="QTY" />
               <Column field="price" header="Unit Price">
                   <template #body="slotProps">
-                      ${{ parseFloat(slotProps.data.price || 0).toFixed(2) }}
+                      <div class="flex flex-col">
+                          <span class="font-semibold">${{ formatNumber(slotProps.data.price) }}</span>
+                          <span class="text-gray-500 text-sm">{{ currencySymbol }}{{ formatNumber(convertCurrency(slotProps.data.price, false)) }}</span>
+                      </div>
                   </template>
               </Column>
               <Column header="Sub-Total">
@@ -42,18 +45,20 @@
           </DataTable>
 
           <!-- Total Amount -->
-          <p class="pt-6 flex justify-end">Total (USD/KHR): ${{ parseFloat(quotation.total || 0).toFixed(2) }}</p>
+          <p class="pt-6 flex justify-end">
+              Total ({{ currencySymbol }}): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
+          </p>
 
           <!-- Terms and Conditions -->
           <div class="mt-8">
               <p class="font-bold mb-2">Terms and Conditions</p>
-              <div class="w-full border rounded-md p-3  text-sm bg-gray-100 text-gray-800 overflow-y-auto max-h-32">
+              <div class="w-full border rounded-md p-3  text-sm text-gray-800 overflow-y-auto max-h-32">
                   {{ quotation.terms }}
               </div>
           </div>
 
           <!-- Customer Acceptance & Authorization -->
-          <div class="mt-10 flex justify-between text-sm">
+          <div class="mt-10 flex justify-between text-sm page-break-avoid">
               <div>
                   <p class="font-bold">Customer Acceptance</p>
                   <p class="text-xs italic">I hereby accept the quotation and agree on Terms and Conditions.</p>
@@ -70,15 +75,34 @@
           </div>
       </div>
   </div>
-    <!-- Print Button -->
-<!--  <div class="flex flex-row justify-center"><Button label="Print Quotation" icon="pi pi-print" @click="printPage" class="mt-4"/></div>-->
-    <div class="flex justify-center mt-6">
-        <a href="#" @click.prevent="printPage" class="px-4 py-2 bg-[#10B981] text-white rounded shadow">Print Quotation</a>
+
+    <div class="flex justify-center items-center gap-10">
+        <!-- Toggle Currency -->
+        <div class="flex items-center gap-3 mt-6">
+            <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="isUSD" class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2
+                    peer-focus:ring-[#10B981] dark:peer-focus:ring-[#10B981]
+                    rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-6
+                    peer-checked:after:border-white after:content-[''] after:absolute
+                    after:top-1 after:left-1 after:bg-white after:border-gray-300
+                    after:border after:rounded-full after:h-4 after:w-4 after:transition-all
+                    peer-checked:bg-[#10B981]">
+                </div>
+            </label>
+        </div>
+
+        <!-- Print Button -->
+        <div class="flex justify-center mt-6">
+            <a href="#" @click.prevent="printPage" class="px-4 py-2 bg-[#10B981] text-white rounded shadow">Print Quotation</a>
+        </div>
     </div>
+
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { usePage } from "@inertiajs/vue3";
 import DataTable from 'primevue/datatable';
@@ -91,6 +115,19 @@ const quotation = ref(props.quotation);
 const printTable = ref(null);
 const printArea = ref(null);
 
+const isUSD = ref(false);
+const exchangeRate = ref(4100);
+
+const currencySymbol = computed(() => (isUSD.value ? "$" : "៛"));
+const currencyLabel = computed(() => (isUSD.value ? "USD" : "KHR"));
+
+const convertCurrency = (amount) => {
+    return isUSD.value ? amount : amount * exchangeRate.value;
+};
+
+const formatNumber = (num) => {
+    return num.toLocaleString('en-US').replace(/,/g, ' ');
+};
 
 // Store the original title
 const originalTitle = ref(document.title);
@@ -110,7 +147,7 @@ const printPage = () => {
 }
 .print-area {
     width: 210mm;
-    min-height: 297mm;
+    min-height: 297mm ;
     padding: 20mm;
     background: white;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
@@ -145,5 +182,49 @@ const printPage = () => {
     .print-area * {
         break-inside: avoid;
     }
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #10B981;
+}
+
+input:checked + .slider:before {
+    transform: translateX(14px);
 }
 </style>
