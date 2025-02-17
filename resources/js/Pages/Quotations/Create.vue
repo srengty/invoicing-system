@@ -181,8 +181,8 @@
               </div>
               <div class="grand-total-container flex justify-between mt-4">
                   <p class="font-bold text-lg">Exchange rate</p>
-<!--                  <p class="font-bold text-lg">{{ exchangeRate }}</p>-->
-                  <InputNumber v-model="exchangeRate" class="text-right w-24" :minFractionDigits="2" :maxFractionDigits="2" />
+                  <p class="font-bold text-lg">{{ exchangeRate }}</p>
+<!--                  <InputNumber v-model="exchangeRate" class="text-right w-24" :minFractionDigits="2" :maxFractionDigits="2" />-->
               </div>
               <div class="mt-2 flex justify-between items-center">
                 <!-- Tax -->
@@ -374,7 +374,7 @@ const calculateTotal = computed(() => {
     );
 });
 
-const exchangeRate = ref(null);
+const exchangeRate = ref(4100);
 
 const calculateTotalUSD = computed(() => {
     if (!calculateTotal.value || !exchangeRate.value) return "0.00";
