@@ -40,7 +40,7 @@
                   <div>
                       <div class="flex flex-col">
                           <span class="font-semibold">${{ formatNumber(product.price) }}</span>
-                          <span class="text-gray-500 text-sm">៛{{ formatNumber(convertCurrency(product.price, false)) }}</span>
+                          <span class="text-gray-500 text-sm">{{currencySymbol}}{{ formatNumber(convertCurrency(product.price, false)) }}</span>
                       </div>
                   </div>
                   <div class="font-semibold">${{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>

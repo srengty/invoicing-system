@@ -11,23 +11,24 @@
             <div class="p-4 grid grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
                 <label for="quotation_no">Quotation No:</label>
-                <InputText :disabled="false"
-                  id="quotation_no"
-                  v-model="form.quotation_no"
-                  placeholder="Input"
-                  class="w-full md:w-60"
-                />
+                  <InputText
+                      :disabled="isApproved"
+                      v-model="form.quotation_no"
+                      placeholder="Input"
+                      class="w-full md:w-60"
+                  />
               </div>
               <div class="flex flex-col gap-2">
                 <label for="quotation_date">Date:</label>
-                <DatePicker :disabled="false"
-                  v-model="form.quotation_date"
-                  showIcon
-                  fluid
-                  iconDisplay="input"
-                  inputId="quotation_date"
-                  placeholder="Select"
-                  class="w-full md:w-60"
+                <DatePicker
+                    :disabled="isApproved"
+                    v-model="form.quotation_date"
+                    showIcon
+                    fluid
+                    iconDisplay="input"
+                    inputId="quotation_date"
+                    placeholder="Select"
+                    class="w-full md:w-60"
                 />
               </div>
               <div class="flex flex-col gap-2">
@@ -108,7 +109,7 @@
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-row gap-2 w-full">
                 <label for="p_name">Khmer/English</label>
-                <ToggleSwitch v-model="checked" />
+                  <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
               </div>
               <div class="w-60">
               </div>
@@ -117,58 +118,50 @@
 
           <!-- Selected Products Table -->
           <div class="pl-6">
-            <DataTable
-              :value="selectedProductsData"
-              paginator
-              :rows="5"
-              :rowsPerPageOptions="[5, 10, 20, 50]"
-              striped
-            >
-              <!-- Dynamically render columns (id, name, unit, price) -->
-              <Column
-                v-for="col in columns"
-                :key="col.field"
-                :field="col.field"
-                :header="col.header"
-              >
-              <template #body="slotProps">
-                <span>{{ slotProps.data[col.field] }}</span>
-              </template>
-              </Column>
-              <!-- Quantity Column with an input -->
-              <Column field="quantity" header="Qty">
-                <template #body="slotProps">
-                  <InputText
-                    v-model="slotProps.data.quanity"
-                    @input="updateProductSubtotal(slotProps.data)"
-                    class="w-full"
-                  />
-                </template>
-              </Column>
-              <!-- Subtotal Column -->
-              <Column field="subTotal" header="SUB-TOTAL">
-                <template #body="slotProps">
-                  <span class="block w-full text-right">{{ slotProps.data.subTotal.toFixed(2) }}</span>
-                </template>
-              </Column>
-              <!-- Actions Column (Edit/Remove) -->
-              <Column header="Actions">
-                <template #body="slotProps">
-                  <div class="flex gap-2 items-center">
-                    <!-- For example, a Remove button -->
-                    <Button
-                      icon="pi pi-trash"
-                      class="p-button-danger"
-                      label="Remove"
-                      @click="removeProduct(slotProps.data.id)"
-                      rounded
-                    />
-                  </div>
-                </template>
-              </Column>
-            </DataTable>
+              <DataTable :value="selectedProductsData" paginator :rows="5" striped>
+                  <Column field="id" header="No." />
+                  <Column field="name" header="Name">
+                      <template #body="slotProps">
+                          <span>{{ isKhmer ? slotProps.data.name_kh : slotProps.data.name }}</span>
+                      </template>
+                  </Column>
+                  <Column field="unit" header="Unit" />
+                  <Column field="price" header="Unit Price">
+                      <template #body="slotProps">
+                          <InputText
+                              v-model="slotProps.data.price"
+                              class="w-full"
+                          />
+                      </template>
+                  </Column>
+                  <Column field="quantity" header="Qty">
+                      <template #body="slotProps">
+                          <InputText
+                              v-model="slotProps.data.quanity"
+                              @input="updateProductSubtotal(slotProps.data)"
+                              class="w-full"
+                          />
+                      </template>
+                  </Column>
+                  <Column field="subTotal" header="SUB-TOTAL">
+                      <template #body="slotProps">
+                          <span class="w-full text-right">{{ slotProps.data.subTotal.toFixed(2) }}</span>
+                      </template>
+                  </Column>
+                  <Column header="Actions">
+                      <template #body="slotProps">
+                          <Button
+                              icon="pi pi-trash"
+                              class="p-button-danger"
+                              label="Remove"
+                              @click="removeProduct(slotProps.data.id)"
+                              rounded
+                          />
+                      </template>
+                  </Column>
+              </DataTable>
 
-            <!-- Totals Summary -->
+              <!-- Totals Summary -->
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total KHR</p>
@@ -176,7 +169,13 @@
               </div>
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total USD</p>
-                <p class="font-bold"><InputNumber v-model="calculateTotalUSD" class="text-right"></InputNumber></p>
+                <p class="font-bold">
+                    <InputNumber
+                        v-model="calculateTotalUSD"
+                        class="text-right"
+                        @input="updateExchangeRate"
+                    />
+                </p>
               </div>
               <div class="grand-total-container flex justify-between">
                   <p class="font-bold text-lg">Exchange rate</p>
@@ -251,7 +250,44 @@ import Customers from '@/Components/Customers.vue';
     customers: Array,
     products: Array,
   });
-  const checked = ref(true);
+const status = ref("");
+const isKhmer = ref(false);
+const isApproved = ref(false);
+
+const toggleLanguage = () => {
+    selectedProductsData.value = selectedProductsData.value.map((product) => ({
+        ...product,
+        name: isKhmer.value ? product.name_kh : product.name,
+    }));
+};
+
+watch(status, (newStatus) => {
+    if (newStatus === "Approved") {
+        form.quotation_no = "";
+        isApproved.value = true;
+    } else {
+        isApproved.value = false;
+    }
+});
+
+watch(status, (newStatus) => {
+    if (newStatus === "Approved") {
+        form.quotation_date = new Date().toISOString().slice(0, 10); // Set today's date
+        isApproved.value = true;
+    } else {
+        isApproved.value = false;
+    }
+});
+
+const calculateTotalUSD = ref(null);
+const calculateExchangeRate = computed(() => {
+    if (calculateTotalUSD.value == null) return "";
+    return (calculateTotal.value / calculateTotalUSD.value).toFixed(2);
+});
+
+const updateExchangeRate = () => {
+    form.exchangeRate = calculateExchangeRate.value;
+};
 
   // Toast for notifications
   const toast = useToast();
@@ -278,7 +314,6 @@ import Customers from '@/Components/Customers.vue';
     { field: "unit", header: "Unit" },
     { field: "price", header: "Unit Price" },
   ]);
-
 
   watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
@@ -309,12 +344,12 @@ import Customers from '@/Components/Customers.vue';
   const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
   };
-  const calculateTotalUSD = ref(null);
-  const calculateExchangeRate = computed(() => {
-    if(calculateTotalUSD.value == null) return '';
-    const exchangeRate =  calculateTotal.value/calculateTotalUSD.value;
-    return exchangeRate.toFixed(2);
-  });
+  // const calculateTotalUSD = ref(null);
+  // const calculateExchangeRate = computed(() => {
+  //   if(calculateTotalUSD.value == null) return '';
+  //   const exchangeRate =  calculateTotal.value/calculateTotalUSD.value;
+  //   return exchangeRate.toFixed(2);
+  // });
   const calculateTotal = computed(() => {
     return selectedProductsData.value.reduce(
       (sum, prod) => sum + prod.subTotal,
