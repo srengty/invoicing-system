@@ -225,7 +225,7 @@ const statusOptions = [
   { label: 'Paid', value: 'paid' },
   { label: 'Cancelled', value: 'cancelled' },
 ];
-console.log(invoice.products)
+
 const productsList = ref([...invoice.products]);
 const showProductModal = ref(false);
 

@@ -7,27 +7,22 @@
       <div class="flex justify-between items-center p-3 mr-4">
         <h1 class="text-2xl">Create Invoice</h1>
         <div class="flex gap-4">
-          <div>
-            <!-- Add Product Button (Opens product selection modal) -->
-            <Button
-              label="Add Product"
-              icon="pi pi-plus"
-              class="p-button-success"
-              type="button"
-              @click="showProductModal = true"
-              rounded
-            />
-          </div>
-          <div>
-            <Button
-              label="Save Invoice"
-              icon="pi pi-check"
-              class="p-button-success"
-              type="button"
-              @click="submitInvoiceAndRedirect"
-              rounded
-            />
-          </div>
+          <Button
+            label="Add Product"
+            icon="pi pi-plus"
+            class="p-button-success"
+            type="button"
+            @click="showProductModal = true"
+            rounded
+          />
+          <Button
+            label="Save Invoice"
+            icon="pi pi-check"
+            class="p-button-success"
+            type="button"
+            @click="submitInvoiceAndRedirect"
+            rounded
+          />
         </div>
       </div>
 
@@ -60,14 +55,14 @@
           </div>
           <div>
             <label for="deposit_no" class="block text-lg font-medium">Receipt No (for deposit)</label>
-            <InputText v-tooltip="'ប្រាក់កក់មុន'"
+            <InputText
               id="deposit_no"
               v-model="form.deposit_no"
               class="w-1/2"
               placeholder="Enter deposit number"
               required
             />
-            <Button class="w-1/3 ml-4 p-button-info" rounded >Add Receipt</Button>
+            <Button class="w-1/3 ml-4 p-button-info" rounded>Add Receipt</Button>
           </div>
           <div>
             <label for="customer_id" class="block text-lg font-medium">Customer</label>
@@ -81,7 +76,6 @@
               required
             />
           </div>
-          
           <div>
             <label for="status" class="block text-lg font-medium">Status</label>
             <Select
@@ -142,26 +136,19 @@
           <p class="font-bold">Total</p>
           <p class="font-bold">{{ calculateTotal }}</p>
         </div>
-
         <div class="grand-total-container flex justify-between">
           <p class="font-bold text-lg">Grand Total</p>
           <p class="font-bold text-lg">{{ calculateGrandTotal }}</p>
         </div>
-
-        <!-- Instalment Paid Section -->
         <div class="flex justify-between mt-4">
           <p class="font-bold">Instalment Paid</p>
           <p class="font-bold">{{ form.instalmentPaid }}</p>
         </div>
-
-        <!-- Terms and Conditions -->
         <div class="terms mt-4">
           <h3 class="text-lg">Terms and Conditions</h3>
           <p>Full payment is required upon quote acceptance.</p>
           <p>This quote is negotiable for one (1) week from the date stated above.</p>
         </div>
-
-        <!-- Buttons Section -->
         <div class="buttons mt-4 flex justify-end">
           <Button label="Submit request for approval" icon="pi pi-check" class="p-button-rounded p-button-success" @click="submitInvoice" />
           <Button label="Cancel" class="p-button-rounded p-button-secondary ml-2" @click="cancel" />
@@ -178,14 +165,12 @@
             @click="showProductModal = false"
           />
         </template>
-
         <div class="product-list">
           <p v-if="!products || products.length === 0">No products available.</p>
           <DataTable :value="products" class="p-datatable-striped" responsiveLayout="scroll">
             <Column field="name" header="Product Name"></Column>
             <Column field="unit" header="Unit"></Column>
             <Column field="price" header="Price"></Column>
-
             <Column header="Action">
               <template #body="slotProps">
                 <Button
@@ -224,10 +209,10 @@ const form = useForm({
   phone: '',
   start_date: '',
   end_date: '',
-  grand_total: 0, // Initialize grand_total as 0
-  instalmentPaid: 0, // Store instalment paid
+  grand_total: 0,
+  instalmentPaid: 0,
   status: '',
-  products: [], // Empty products array
+  products: [],
 });
 
 const statusOptions = [
@@ -236,104 +221,63 @@ const statusOptions = [
   { label: 'Revise', value: 'Revise' },
 ];
 
-const productsList = ref([]); // The list of products to display in the table
+const productsList = ref([]);
 const showProductModal = ref(false);
 
-const openProductModal = () => {
-  showProductModal.value = true;
-};
-
 watch(() => form.quotation_no, async (newQuotationId) => {
-  console.log('Selected Quotation ID:', newQuotationId);  // Debugging log
   if (newQuotationId) {
     const selectedQuotation = quotations.find(q => q.quotation_no === newQuotationId);
     if (selectedQuotation) {
-      console.log('Selected Quotation:', selectedQuotation);  // Debugging log
-      // Auto-fill fields
+      // Log the selected quotation for debugging
+      console.log('Selected Quotation:', selectedQuotation);
+
+      // Auto-fill customer, address, phone, and status based on selected quotation
       form.customer_id = selectedQuotation.customer_id;
       form.address = selectedQuotation.address;
       form.phone = selectedQuotation.phone_number;
       form.status = selectedQuotation.status;
 
-      // Ensure products is an array before using .map()
-      if (Array.isArray(selectedQuotation.products)) {
+      // Auto-fill products from the selected quotation
+      if (selectedQuotation.products && Array.isArray(selectedQuotation.products)) {
         productsList.value = selectedQuotation.products.map(product => ({
           id: product.id,
           product: product.name,
-          qty: product.qty,
+          qty: product.quantity,
           unit: product.unit,
           unitPrice: product.price,
-          subTotal: product.qty * product.price,
+          subTotal: product.quantity * product.price,
         }));
+        console.log('Products List:', productsList.value); // Log products for debugging
       } else {
-        console.error('No products found for the selected quotation');
+        productsList.value = [];
       }
 
-      // Fetch the related Agreement for the selected quotation
-      try {
-        const agreement = await fetchAgreementForQuotation(newQuotationId);
-        if (agreement) {
-          form.agreement_no = agreement.agreement_no || '';
-          form.start_date = agreement.start_date;
-          form.end_date = agreement.end_date;
-        }
-      } catch (error) {
-        console.error('Error fetching agreement:', error);
-      }
-
-      // Calculate total (Now accessing the computed property value)
-      const total = calculateTotal.value;
-
-      // Get instalment paid (sum of paid invoices for the quotation)
-      try {
-        const paidInvoices = await fetchPaidInvoices(newQuotationId);
-        const instalmentPaid = paidInvoices.reduce((sum, invoice) => sum + invoice.amount_paid, 0);
-
-        console.log('Instalment Paid:', instalmentPaid);  // Debugging log
-        form.instalmentPaid = instalmentPaid;
-        form.grand_total = total - instalmentPaid; // Update grand total
-      } catch (error) {
-        console.error('Error fetching paid invoices:', error);  // Error logging
-      }
+      // Auto-fill agreement number if present
+      form.agreement_no = selectedQuotation.agreement ? selectedQuotation.agreement.agreement_no : '';
     }
   }
 });
 
-// Function to fetch the related agreement based on the selected quotation
-const fetchAgreementForQuotation = async (quotationId) => {
-  try {
-    const response = await fetch(`/quotations/${quotationId}/agreement`);
-    const data = await response.json();
-    console.log('Agreement data:', data);  // Debugging log
-    return data;  // Return the agreement data
-  } catch (error) {
-    console.error('Error fetching agreement:', error);
-    return null;  // Return null if error
-  }
+const indexTemplate = (rowData, { index }) => {
+  return index + 1; // Return the index + 1 for 1-based index display
 };
 
+const calculateTotal = computed(() => {
+  return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
+});
 
-const fetchPaidInvoices = async (quotationId) => {
-  try {
-    const response = await fetch(`/quotations/${quotationId}/invoices?status=paid`);
-    const data = await response.json();
-    console.log('Paid Invoices:', data);  // Debugging log
-    return data;
-  } catch (error) {
-    console.error('Error fetching paid invoices:', error);
-    return [];  // Return empty array in case of error
-  }
-};
+const calculateGrandTotal = computed(() => {
+  return calculateTotal.value - form.instalmentPaid;
+});
 
-// Index template to show row numbers
-const indexTemplate = (data, options) => options.rowIndex + 1;
-
-// Action template for removing products
 const actionTemplate = (data) => {
-  return `<Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />`;
+  return {
+    template: `
+      <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />
+    `
+  };
 };
 
-// Add product to the products list
 const addProduct = (productId) => {
   const product = products.find((prod) => prod.id === productId);
   if (product) {
@@ -343,41 +287,31 @@ const addProduct = (productId) => {
       qty: 1,
       unit: product.unit,
       unitPrice: product.price,
-      subTotal: 1 * product.price,
+      subTotal: product.price,
     };
     productsList.value.push(newProduct);
     showProductModal.value = false;
   }
 };
 
-// Remove product from the products list
 const removeProduct = (productId) => {
   productsList.value = productsList.value.filter((product) => product.id !== productId);
 };
 
-// Calculate the total of all products
-const calculateTotal = computed(() => {
-  return productsList.value.reduce((total, product) => total + product.subTotal, 0);
-});
-
-// Calculate the grand total, subtracting any instalment paid
-const calculateGrandTotal = computed(() => {
-  return calculateTotal.value - form.instalmentPaid;
-});
-
-// Update product subtotal when quantity is changed
 const updateProductSubtotal = (product) => {
   product.subTotal = product.qty * product.unitPrice;
 };
 
-// Submit the invoice
-const submitInvoice = () => {
+const cancel = () => {
+  form.reset();
+  productsList.value = [];
+};
+
+const submitInvoice = async () => {
   if (productsList.value.length === 0) {
     alert('Please add at least one product.');
     return;
   }
-
-  const grandTotal = productsList.value.reduce((total, product) => total + product.subTotal, 0);
 
   const invoiceData = {
     invoice_no: form.invoice_no,
@@ -386,9 +320,9 @@ const submitInvoice = () => {
     customer_id: form.customer_id,
     address: form.address,
     phone: form.phone,
-    start_date: new Date(form.start_date).toISOString(),
-    end_date: new Date(form.end_date).toISOString(),
-    grand_total: grandTotal,
+    start_date: form.start_date,
+    end_date: form.end_date,
+    grand_total: form.grand_total,
     status: form.status,
     products: productsList.value.map(product => ({
       id: product.id,
@@ -398,32 +332,29 @@ const submitInvoice = () => {
 
   const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
 
-  fetch('/invoices', {
-    method: "POST",
-    body: JSON.stringify(invoiceData),
-    headers: {
-      'X-CSRF-TOKEN': csrfToken,
-      "Content-type": "application/json",
-    },
-  });
+  try {
+    const response = await fetch('/invoices', {
+      method: "POST",
+      body: JSON.stringify(invoiceData),
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+        "Content-type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      console.error('Failed to submit invoice:', response.statusText);
+      return;
+    }
+
+    Inertia.visit('/invoices'); // Redirect after submission
+  } catch (error) {
+    console.error('Error submitting invoice:', error);
+  }
 };
 
-// Submit invoice and redirect
 const submitInvoiceAndRedirect = () => {
   submitInvoice();
   Inertia.visit('/invoices');
 };
-
-// Cancel the form
-const cancel = () => {
-  form.reset();
-  productsList.value = [];
-};
 </script>
-
-<style scoped>
-.total-container,
-.grand-total-container {
-  padding: 1rem 0;
-}
-</style>

@@ -45,9 +45,12 @@ class Quotation extends Model
     {
         return $this->hasMany(Invoice::class, 'quotation_no', 'quotation_no');
     }
-    public function agreement():HasOne
+
+    // In Quotation.php (Quotation Model)
+    public function agreement()
     {
         return $this->hasOne(Agreement::class, 'quotation_no', 'quotation_no');
     }
+
 }
 

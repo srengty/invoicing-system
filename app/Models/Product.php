@@ -34,4 +34,9 @@ class Product extends Model
                     ->withTimestamps();
     }
 
+    public function productQuotations()
+    {
+        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no');
+    }
+
 }

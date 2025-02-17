@@ -261,4 +261,15 @@ class InvoiceController extends Controller
             'invoice' => $invoice
         ]);
     }
+
+    public function getInvoicesByQuotation($quotation_no)
+    {
+        // Fetch invoices for the given quotation_no and status=paid
+        $invoices = Invoice::where('quotation_no', $quotation_no)
+                            ->where('status', 'paid')
+                            ->get();
+
+        // Return the invoices as a JSON response
+        return response()->json($invoices);
+    }
 }
