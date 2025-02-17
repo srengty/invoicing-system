@@ -13,23 +13,26 @@
                 <label for="quotation_no">Quotation No:</label>
                   <InputText
                       :disabled="isApproved"
+                      id="quotation_no"
                       v-model="form.quotation_no"
-                      placeholder="Input"
+                      placeholder="Auto-generated"
                       class="w-full md:w-60"
                   />
               </div>
               <div class="flex flex-col gap-2">
                 <label for="quotation_date">Date:</label>
-                <DatePicker
-                    :disabled="isApproved"
-                    v-model="form.quotation_date"
-                    showIcon
-                    fluid
-                    iconDisplay="input"
-                    inputId="quotation_date"
-                    placeholder="Select"
-                    class="w-full md:w-60"
-                />
+                  <DatePicker
+                      :disabled="isApproved"
+                      v-model="form.quotation_date"
+                      :model-value="formatDate(form.quotation_date)"
+                      showIcon
+                      fluid
+                      iconDisplay="input"
+                      inputId="quotation_date"
+                      placeholder="Select"
+                      class="w-full md:w-60"
+                      @update:model-value="updateDate"
+                  />
               </div>
               <div class="flex flex-col gap-2">
                 <label for="address">Address</label>
@@ -109,7 +112,7 @@
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-row gap-2 w-full">
                 <label for="p_name">Khmer/English</label>
-                  <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
+                  <ToggleSwitch v-model="isKhmer" />
               </div>
               <div class="w-60">
               </div>
@@ -120,7 +123,7 @@
           <div class="pl-6">
               <DataTable :value="selectedProductsData" paginator :rows="5" striped>
                   <Column field="id" header="No." />
-                  <Column field="name" header="Name">
+                  <Column field="name" :header="isKhmer ? 'ឈ្មោះ' : 'Name'">
                       <template #body="slotProps">
                           <span>{{ isKhmer ? slotProps.data.name_kh : slotProps.data.name }}</span>
                       </template>
@@ -130,6 +133,8 @@
                       <template #body="slotProps">
                           <InputText
                               v-model="slotProps.data.price"
+                              @input="updateProductSubtotal(slotProps.data) "
+                              :minFractionDigits="2" :maxFractionDigits="2"
                               class="w-full"
                           />
                       </template>
@@ -165,34 +170,32 @@
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total KHR</p>
-                <p class="font-bold">{{ calculateTotal.toFixed(2) }}</p>
+                <p class="font-bold flex items-center gap-1"><span class="text-xl">៛</span>  {{ formatCurrency(calculateTotalKHR) }}</p>
               </div>
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total USD</p>
-                <p class="font-bold">
-                    <InputNumber
-                        v-model="calculateTotalUSD"
-                        class="text-right"
-                        @input="updateExchangeRate"
-                    />
-                </p>
+                  <p class="font-bold flex items-center gap-1"><span class="">$</span>  {{ formatCurrency(calculateTotalUSD) }}</p>
+<!--                <p class="font-bold">-->
+<!--                    <InputNumber v-model="calculateTotalUSD" class="text-right" :minFractionDigits="2" :maxFractionDigits="2" />-->
+<!--                </p>-->
               </div>
-              <div class="grand-total-container flex justify-between">
+              <div class="grand-total-container flex justify-between mt-4">
                   <p class="font-bold text-lg">Exchange rate</p>
-                  <p class="font-bold text-lg">{{ calculateExchangeRate }}</p>
-                </div>
+<!--                  <p class="font-bold text-lg">{{ exchangeRate }}</p>-->
+                  <InputNumber v-model="exchangeRate" class="text-right w-24" :minFractionDigits="2" :maxFractionDigits="2" />
+              </div>
               <div class="mt-2 flex justify-between items-center">
                 <!-- Tax -->
-                <!-- <div>
-                  <label for="tax" class="font-bold">Tax</label>
-                  <InputText
-                    id="tax"
-                    v-model="form.tax"
-                    placeholder="0"
-                    class="w-24 ml-2"
-                    @input="updateTax"
-                  />
-                </div> -->
+<!--                <div>-->
+<!--                  <label for="tax" class="font-bold">Tax</label>-->
+<!--                  <InputText-->
+<!--                    id="tax"-->
+<!--                    v-model="form.tax"-->
+<!--                    placeholder="0"-->
+<!--                    class="w-24 ml-2"-->
+<!--                    @input="updateTax"-->
+<!--                  />-->
+<!--                </div>-->
 
               </div>
             </div>
@@ -250,43 +253,49 @@ import Customers from '@/Components/Customers.vue';
     customers: Array,
     products: Array,
   });
-const status = ref("");
-const isKhmer = ref(false);
-const isApproved = ref(false);
 
-const toggleLanguage = () => {
+  const status = ref("");
+  const isApproved = ref(false);
+  const today = new Date();
+  const isKhmer = ref(false);
+
+  const toggleLanguage = () => {
     selectedProductsData.value = selectedProductsData.value.map((product) => ({
         ...product,
         name: isKhmer.value ? product.name_kh : product.name,
     }));
 };
 
-watch(status, (newStatus) => {
+  const generateQuotationNumber = () => {
+    return Math.floor(100000 + Math.random() * 900000);
+};
+  watch(status, (newStatus) => {
     if (newStatus === "Approved") {
-        form.quotation_no = "";
+        form.value.quotation_no = generateQuotationNumber();
         isApproved.value = true;
     } else {
         isApproved.value = false;
     }
 });
 
-watch(status, (newStatus) => {
+  const formatDate = (date) => {
+    if (!date) return "";
+    return new Date(date).toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric"
+    });
+};
+  watch(status, (newStatus) => {
     if (newStatus === "Approved") {
-        form.quotation_date = new Date().toISOString().slice(0, 10); // Set today's date
+        form.value.quotation_date = today;
         isApproved.value = true;
     } else {
         isApproved.value = false;
     }
 });
-
-const calculateTotalUSD = ref(null);
-const calculateExchangeRate = computed(() => {
-    if (calculateTotalUSD.value == null) return "";
-    return (calculateTotal.value / calculateTotalUSD.value).toFixed(2);
-});
-
-const updateExchangeRate = () => {
-    form.exchangeRate = calculateExchangeRate.value;
+  const updateDate = (selectedDate) => {
+    form.value.quotation_date = selectedDate;
 };
 
   // Toast for notifications
@@ -294,8 +303,8 @@ const updateExchangeRate = () => {
 
   // Define the Inertia form
   const form = useForm({
-    quotation_no: "1",
-    quotation_date: "",
+    quotation_no: generateQuotationNumber(),
+    quotation_date: today,
     address: "",
     phone_number: "",
     customer_id: "",
@@ -304,6 +313,12 @@ const updateExchangeRate = () => {
     grand_total: 0,
     products: [], // Will be an array of objects: { id, quantity }
   });
+
+  const isCreateCustomerVisible = ref(false);
+  const selectCustomer = () => {
+    isCreateCustomerVisible.value = false;
+    form.customer_id = props.customers[props.customers.length - 1].id;
+};
 
   const selectedProductIds = ref([]);
   const selectedProductsData = ref([]);
@@ -344,18 +359,36 @@ const updateExchangeRate = () => {
   const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
   };
+
   // const calculateTotalUSD = ref(null);
-  // const calculateExchangeRate = computed(() => {
-  //   if(calculateTotalUSD.value == null) return '';
-  //   const exchangeRate =  calculateTotal.value/calculateTotalUSD.value;
-  //   return exchangeRate.toFixed(2);
-  // });
-  const calculateTotal = computed(() => {
-    return selectedProductsData.value.reduce(
-      (sum, prod) => sum + prod.subTotal,
-      0
-    );
+  const calculateExchangeRate = computed(() => {
+      if (calculateTotalUSD.value == null || calculateTotalUSD.value === 0) return '';
+      const exchangeRate = calculateTotal.value / calculateTotalUSD.value;
+      return exchangeRate.toFixed(2);
   });
+
+const calculateTotal = computed(() => {
+    return selectedProductsData.value.reduce(
+        (sum, prod) => sum + prod.subTotal,
+        0
+    );
+});
+
+const exchangeRate = ref(null);
+
+const calculateTotalUSD = computed(() => {
+    if (!calculateTotal.value || !exchangeRate.value) return "0.00";
+    return (calculateTotal.value).toFixed(2);
+});
+const calculateTotalKHR = computed(() => {
+    if (!calculateTotal.value || !exchangeRate.value) return "0.00";
+    return (calculateTotal.value * exchangeRate.value).toFixed(2);
+});
+
+const formatCurrency = (value) => {
+    if (!value) return "0.00";
+    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(value);
+};
 
   const calculateGrandTotal = computed(() => {
     return calculateTotal.value + Number((form.tax*calculateTotal.value/100) || 0);
@@ -414,12 +447,6 @@ const updateExchangeRate = () => {
       },
     });
 
-  };
-
-  const isCreateCustomerVisible = ref(false);
-  const selectCustomer = () => {
-    isCreateCustomerVisible.value = false;
-    form.customer_id = props.customers[props.customers.length - 1].id;
   };
 
   const isCreateItemVisible = ref(false);
