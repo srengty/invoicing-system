@@ -10,7 +10,7 @@
           <div class="p-4 grid md:grid-cols-2 gap-0 w-full">
             <div class="p-4 grid grid-cols-2 gap-4">
               <div class="flex flex-col gap-2">
-                <label for="quotation_no">Quotation No:</label>
+                <label for="quotation_no">{{ $t('quotation_no') }}</label>
                   <InputText
                       :disabled="isApproved"
                       id="quotation_no"
@@ -20,7 +20,7 @@
                   />
               </div>
               <div class="flex flex-col gap-2">
-                <label for="quotation_date">Date:</label>
+                <label for="quotation_date">{{ $t('date') }}</label>
                   <DatePicker
                       :disabled="isApproved"
                       v-model="form.quotation_date"
@@ -35,7 +35,7 @@
                   />
               </div>
               <div class="flex flex-col gap-2">
-                <label for="address">Address</label>
+                <label for="address">{{ $t('address') }}</label>
                 <IconField class="w-full md:w-60">
                   <InputText
                     id="address"
@@ -48,7 +48,7 @@
               </div>
 
               <div class="flex flex-col gap-2">
-                <label for="phone_number">Contact</label>
+                <label for="phone_number">{{ $t('contact') }}</label>
                 <IconField class="w-full md:w-60">
                   <InputText
                     id="phone_number"
@@ -71,7 +71,7 @@
 
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-col gap-2 w-full">
-                <label for="customer_id">Customer/Organization</label>
+                <label for="customer_id">{{ $t('customer') }}</label>
                 <Select :filter="true"
                   v-model="form.customer_id"
                   :options="formattedCustomers"
@@ -86,13 +86,13 @@
                 <!-- <Link :href="route('customers.create')">
                   <Button icon="pi pi-plus" label="Add customer" rounded />
                 </Link> -->
-                <Button icon="pi pi-plus" label="Add customer" rounded @click="isCreateCustomerVisible=true" />
+                <Button icon="pi pi-plus" :label="$t('addCustomer')" rounded @click="isCreateCustomerVisible=true" />
               </div>
             </div>
 
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-col gap-2 w-full">
-                <label for="p_name">Item</label>
+                <label for="p_name">{{ $t('item') }}</label>
                 <MultiSelect
                   v-model="selectedProductIds"
                   :options="products"
@@ -111,8 +111,8 @@
             </div>
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-row gap-2 w-full">
-                <label for="p_name">Khmer/English</label>
-                  <ToggleSwitch v-model="isKhmer" />
+                <label for="p_name">{{ $t('language') }}</label>
+                  <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
               </div>
               <div class="w-60">
               </div>
@@ -122,14 +122,14 @@
           <!-- Selected Products Table -->
           <div class="pl-6">
               <DataTable :value="selectedProductsData" paginator :rows="5" striped>
-                  <Column field="id" header="No." />
-                  <Column field="name" :header="isKhmer ? 'ឈ្មោះ' : 'Name'">
+                  <Column field="id" :header="$t('no')" />
+                  <Column field="name" :header="$t('name')">
                       <template #body="slotProps">
                           <span>{{ isKhmer ? slotProps.data.name_kh : slotProps.data.name }}</span>
                       </template>
                   </Column>
-                  <Column field="unit" header="Unit" />
-                  <Column field="price" header="Unit Price">
+                  <Column field="unit" :header="$t('unit')" />
+                  <Column field="price" :header="$t('unit_price')">
                       <template #body="slotProps">
                           <InputText
                               v-model="slotProps.data.price"
@@ -139,7 +139,7 @@
                           />
                       </template>
                   </Column>
-                  <Column field="quantity" header="Qty">
+                  <Column field="quantity" :header="$t('qty')" >
                       <template #body="slotProps">
                           <InputText
                               v-model="slotProps.data.quanity"
@@ -148,17 +148,17 @@
                           />
                       </template>
                   </Column>
-                  <Column field="subTotal" header="SUB-TOTAL">
+                  <Column field="subTotal" :header="$t('subtotal')">
                       <template #body="slotProps">
                           <span class="w-full text-right">{{ slotProps.data.subTotal.toFixed(2) }}</span>
                       </template>
                   </Column>
-                  <Column header="Actions">
+                  <Column :header="$t('actions')">
                       <template #body="slotProps">
                           <Button
                               icon="pi pi-trash"
                               class="p-button-danger"
-                              label="Remove"
+                              :label="$t('remove')"
                               @click="removeProduct(slotProps.data.id)"
                               rounded
                           />
@@ -169,18 +169,18 @@
               <!-- Totals Summary -->
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
-                <p class="font-bold">Total KHR</p>
+                <p class="font-bold">{{ $t('total_khr') }}</p>
                 <p class="font-bold flex items-center gap-1"><span class="text-xl">៛</span>  {{ formatCurrency(calculateTotalKHR) }}</p>
               </div>
               <div class="total-container mt-4 flex justify-between">
-                <p class="font-bold">Total USD</p>
+                <p class="font-bold">{{ $t('total_usd') }}</p>
                   <p class="font-bold flex items-center gap-1"><span class="">$</span>  {{ formatCurrency(calculateTotalUSD) }}</p>
 <!--                <p class="font-bold">-->
 <!--                    <InputNumber v-model="calculateTotalUSD" class="text-right" :minFractionDigits="2" :maxFractionDigits="2" />-->
 <!--                </p>-->
               </div>
               <div class="grand-total-container flex justify-between mt-4">
-                  <p class="font-bold text-lg">Exchange rate</p>
+                  <p class="font-bold text-lg">{{ $t('exchange_rate') }}</p>
                   <p class="font-bold text-lg">{{ exchangeRate }}</p>
 <!--                  <InputNumber v-model="exchangeRate" class="text-right w-24" :minFractionDigits="2" :maxFractionDigits="2" />-->
               </div>
@@ -205,7 +205,7 @@
           <div class="buttons mt-4 mr-4 flex justify-end">
             <Button
               v-ripple
-              label="Submit"
+              :label="$t('submit')"
               icon="pi pi-check"
               type="submit"
               class="p-button-rounded p-button-success"
@@ -213,7 +213,7 @@
             />
             <Button
               v-ripple
-              label="Cancel"
+              :label="$t('cancel')"
               class="p-button-rounded p-button-secondary ml-2"
             />
           </div>
@@ -248,6 +248,7 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import { useToast } from "primevue/usetoast";
 import Customers from '@/Components/Customers.vue';
+import { useI18n } from 'vue-i18n';
 
   const props = defineProps({
     customers: Array,
@@ -257,13 +258,11 @@ import Customers from '@/Components/Customers.vue';
   const status = ref("");
   const isApproved = ref(false);
   const today = new Date();
+  const { locale } = useI18n();
   const isKhmer = ref(false);
 
-  const toggleLanguage = () => {
-    selectedProductsData.value = selectedProductsData.value.map((product) => ({
-        ...product,
-        name: isKhmer.value ? product.name_kh : product.name,
-    }));
+const toggleLanguage = () => {
+    locale.value = isKhmer.value ? 'kh' : 'en';
 };
 
   const generateQuotationNumber = () => {
