@@ -12,54 +12,75 @@
 
       <!-- Filters -->
       <div class="mb-8 pl-3">
-        <div class="text-xl mb-3">Filter by</div>
-        <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
-          <div class="grid grid-cols-2 ">
-            <label class="grid content-center" for="status">Invoice No. Start:</label>
-            <InputText v-model="filters.invoice_no_start" placeholder="Input Invoice No Start" />
-          </div>
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Invoice No. End:</label>
-            <InputText v-model="filters.invoice_no_end" placeholder="Input Invoice No End" />
-          </div>
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Currency:</label>
-            <Dropdown v-model="filters.currency" :options="currencyOptions" placeholder="Select Currency" optionLabel="label" optionValue="value" />
-          </div>
-        </div>
-        <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Start Date:</label>
-            <DatePicker v-model="filters.start_date" placeholder="Pick Start Date"/>
-          </div>
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">End Date:</label>
-            <DatePicker v-model="filters.end_date" placeholder="Pick End Date" />
-          </div>
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Payment Status:</label>
-            <Dropdown v-model="filters.status" :options="statusOptions" placeholder="select Status" optionLabel="label" optionValue="value" />
-          </div>
-        </div>
-        <div class="grid gap-10 w-full grid-cols-4 text-lg">
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Customer:</label>
-            <InputText v-model="filters.customer" placeholder="Input Customer Name" />
-          </div>
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Customer Type:</label>
-            <Dropdown v-model="filters.category_name_english" :options="customerTypeOptions" placeholder="Select Customer Type" optionLabel="label" optionValue="value" />
-          </div>
-          <div class="grid grid-cols-2">
-            <label class="grid content-center" for="status">Income Type:</label>
-            <Dropdown placeholder="Select Income Type" optionLabel="label" optionValue="value" />
-          </div>
-          <div class="grid gap-4 grid-cols-2">
-            <Button label="Search" icon="pi pi-search" @click="searchInvoices" rounded/>
-            <Button label="Clear" icon="pi pi-times" class="p-button-secondary" @click="clearFilters" rounded/>
-          </div>
-        </div>
+    <div class="text-xl mb-3">Filter by</div>
+    
+    <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
+      <!-- Invoice No. Start - Restrict to Numbers -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="invoice_no_start">Invoice No. Start:</label>
+        <InputText v-model="filters.invoice_no_start" placeholder="Input Invoice No Start" v-keyfilter="['num']" />
       </div>
+
+      <!-- Invoice No. End - Restrict to Numbers -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="invoice_no_end">Invoice No. End:</label>
+        <InputText v-model="filters.invoice_no_end" placeholder="Input Invoice No End" v-keyfilter="['num']" />
+      </div>
+
+      <!-- Currency Dropdown -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="currency">Currency:</label>
+        <Dropdown v-model="filters.currency" :options="currencyOptions" placeholder="Select Currency" optionLabel="label" optionValue="value" />
+      </div>
+    </div>
+
+    <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
+      <!-- Start Date -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="start_date">Start Date:</label>
+        <DatePicker v-model="filters.start_date" placeholder="Pick Start Date"/>
+      </div>
+
+      <!-- End Date -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="end_date">End Date:</label>
+        <DatePicker v-model="filters.end_date" placeholder="Pick End Date" />
+      </div>
+
+      <!-- Payment Status -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="status">Payment Status:</label>
+        <Dropdown v-model="filters.status" :options="statusOptions" placeholder="Select Status" optionLabel="label" optionValue="value" />
+      </div>
+    </div>
+
+    <div class="grid gap-10 w-full grid-cols-4 text-lg">
+      <!-- Customer Name - Restrict to Letters Only -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="customer">Customer:</label>
+        <InputText v-model="filters.customer" placeholder="Input Customer Name" v-keyfilter="['alpha']" />
+      </div>
+
+      <!-- Customer Type -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="category_name_english">Customer Type:</label>
+        <Dropdown v-model="filters.category_name_english" :options="customerTypeOptions" placeholder="Select Customer Type" optionLabel="label" optionValue="value" />
+      </div>
+
+      <!-- Income Type (No keyfilter as it's a dropdown) -->
+      <div class="grid grid-cols-2">
+        <label class="grid content-center" for="income_type">Income Type:</label>
+        <Dropdown placeholder="Select Income Type" optionLabel="label" optionValue="value" />
+      </div>
+
+      <!-- Search & Clear Buttons -->
+      <div class="grid gap-4 grid-cols-2">
+        <Button label="Search" icon="pi pi-search" @click="searchInvoices" rounded/>
+        <Button label="Clear" icon="pi pi-times" class="p-button-secondary" @click="clearFilters" rounded/>
+      </div>
+    </div>
+  </div>
+
 
       <!-- Data Table -->
       <DataTable :value="invoices.data" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]">
@@ -100,7 +121,8 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { Button, DataTable, Column, DatePicker, InputText, Dropdown } from 'primevue';
+import { Button, DataTable, Column, DatePicker, InputText, Dropdown, } from 'primevue';
+import KeyFilter from 'primevue/keyfilter';
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import { ref } from 'vue';
 import { Inertia } from '@inertiajs/inertia';

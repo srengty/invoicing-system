@@ -41,6 +41,10 @@ class Quotation extends Model
                     ->withPivot('quantity', 'price')
                     ->withTimestamps();
     }
+    public function productQuotations():HasMany
+    {
+        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no');
+    }
     public function invoices():HasMany
     {
         return $this->hasMany(Invoice::class, 'quotation_no', 'quotation_no');

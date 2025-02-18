@@ -20,7 +20,7 @@ class InvoiceController extends Controller
     {
         // Get all agreements, quotations, customers, and products
         $agreements = Agreement::all();
-        $quotations = Quotation::all();
+        $quotations = Quotation::with(["products","productQuotations","agreement"])->get();
         $customers = Customer::all();
         $products = Product::all();
         

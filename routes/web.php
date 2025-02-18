@@ -28,7 +28,7 @@ Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name(
 Route::get('/agreements/edit/{agreement_no}', [AgreementController::class, 'edit'])->name('agreements.edit');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/quotations/{quotationId}/agreement', [QuotationController::class, 'getAgreementForQuotation']);
-
+Route::post('/api/invoices/filter', [InvoiceController::class, 'filter']);
 
 Route::resource('quotations', QuotationController::class);
 Route::get('/quotations', [QuotationController::class, 'list']);

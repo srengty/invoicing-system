@@ -120,7 +120,7 @@
       <!-- Product Table Section -->
       <div class="m-6">
         <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
-          <Column field="id" header="No." :body="indexTemplate"></Column>
+          <Column field="index" header="No."></Column>
           <Column field="product" header="Product"></Column>
           <Column field="qty" header="Qty">
             <template #body="slotProps">
@@ -130,8 +130,13 @@
           <Column field="unit" header="Unit"></Column>
           <Column field="unitPrice" header="Unit Price"></Column>
           <Column field="subTotal" header="Sub Total"></Column>
-          <Column header="Action" :body="actionTemplate"></Column>
+          <Column header="Action">
+            <template #body="slotProps">
+              <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(slotProps.data.id)" />
+            </template>
+          </Column>
         </DataTable>
+
         <div class="total-container mt-4 flex justify-between">
           <p class="font-bold">Total</p>
           <p class="font-bold">{{ calculateTotal }}</p>
@@ -213,6 +218,7 @@ const form = useForm({
   instalmentPaid: 0,
   status: '',
   products: [],
+  productQuotations:[], 
 });
 
 const statusOptions = [
@@ -224,22 +230,24 @@ const statusOptions = [
 const productsList = ref([]);
 const showProductModal = ref(false);
 
-watch(() => form.quotation_no, async (newQuotationId) => {
+watch(() => form.quotation_no, (newQuotationId) => {
   if (newQuotationId) {
     const selectedQuotation = quotations.find(q => q.quotation_no === newQuotationId);
     if (selectedQuotation) {
-      // Log the selected quotation for debugging
-      console.log('Selected Quotation:', selectedQuotation);
+      console.log('Selected Quotation:', selectedQuotation); // Debugging log
 
-      // Auto-fill customer, address, phone, and status based on selected quotation
-      form.customer_id = selectedQuotation.customer_id;
-      form.address = selectedQuotation.address;
-      form.phone = selectedQuotation.phone_number;
-      form.status = selectedQuotation.status;
+      // Auto-fill customer, address, phone, and status
+      form.customer_id = selectedQuotation.customer_id || '';
+      form.address = selectedQuotation.address || '';
+      form.phone = selectedQuotation.phone_number || '';
+      form.status = selectedQuotation.status || '';
+      // Auto-fill agreement number if present
+      form.agreement_no = selectedQuotation.agreement?.agreement_no || '';
 
-      // Auto-fill products from the selected quotation
-      if (selectedQuotation.products && Array.isArray(selectedQuotation.products)) {
-        productsList.value = selectedQuotation.products.map(product => ({
+      // Populate DataTable with products
+      if (Array.isArray(selectedQuotation.products) && selectedQuotation.products.length > 0) {
+        productsList.value = selectedQuotation.products.map((product, index) => ({
+          index: index + 1, // Auto-numbering for DataTable
           id: product.id,
           product: product.name,
           qty: product.quantity,
@@ -247,13 +255,11 @@ watch(() => form.quotation_no, async (newQuotationId) => {
           unitPrice: product.price,
           subTotal: product.quantity * product.price,
         }));
-        console.log('Products List:', productsList.value); // Log products for debugging
       } else {
         productsList.value = [];
       }
 
-      // Auto-fill agreement number if present
-      form.agreement_no = selectedQuotation.agreement ? selectedQuotation.agreement.agreement_no : '';
+      console.log('Updated DataTable Products:', productsList.value); // Debugging log
     }
   }
 });
