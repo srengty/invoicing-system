@@ -46,7 +46,7 @@ const messages = {
     exchange_rate: 'អត្រាប្តូរប្រាក់',
     submit: 'ដាក់ស្នើ',
     cancel: 'បោះបង់',
-    addCustomer: 'អតិថិជនបន្ថែម',
+    addCustomer: 'បន្ថែមអតិថិជន',
         sed:'លុយ',
   }
 };

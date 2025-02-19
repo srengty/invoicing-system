@@ -82,7 +82,7 @@
                   class="w-full md:w-65"
                 />
               </div>
-              <div class="w-60">
+              <div class="w-80">
                 <!-- <Link :href="route('customers.create')">
                   <Button icon="pi pi-plus" label="Add customer" rounded />
                 </Link> -->
@@ -111,7 +111,7 @@
             </div>
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-row gap-2 w-full">
-                <label for="p_name">{{ $t('language') }}</label>
+                <label for="p_name">English/Khmer</label>
                   <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
               </div>
               <div class="w-60">
@@ -229,7 +229,7 @@
   </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import {ref, computed, watch, onMounted} from "vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from '@/Layouts/GuestLayout.vue';
@@ -264,6 +264,10 @@ import { useI18n } from 'vue-i18n';
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? 'kh' : 'en';
 };
+
+onMounted(()=>{
+    document.cookie = 'locale=en'
+})
 
   const generateQuotationNumber = () => {
     return Math.floor(100000 + Math.random() * 900000);

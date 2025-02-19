@@ -11,7 +11,9 @@ import Aura from '@primevue/themes/aura';
 import { ToastService } from 'primevue';
 import Ripple from 'primevue/ripple'; // Import the Ripple directive
 import Tooltip from 'primevue/tooltip';
-import i18n from './i18n.js';
+import { createI18n } from 'vue-i18n';
+import kh from './locale/kh.json';
+import en from './locale/en.json';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -43,3 +45,11 @@ createInertiaApp({
     },
 });
 
+const i18n = createI18n({
+    fallbackLocale: 'en',
+    locale: document.cookie.split('=')[1],
+    messages:{
+        en: en,
+        kh: kh,
+    }
+});
