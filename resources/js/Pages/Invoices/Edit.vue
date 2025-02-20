@@ -61,7 +61,7 @@
               v-model="form.agreement_no"
               :options="agreements"
               optionLabel="agreement_no"
-              optionValue="id"
+              optionValue="agreement_no"
               placeholder="Select Agreement"
               class="w-full"
               required

@@ -44,6 +44,11 @@ class Invoice extends Model
         return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
     }
 
+    public function product_quotations()
+    {
+        return $this->belongsTo(ProductQuotation::class);
+    }
+
     // Relationship with Products (many-to-many with pivot table for quantities)
     public function products()
     {

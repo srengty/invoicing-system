@@ -47,7 +47,7 @@
               v-model="form.agreement_no"
               :options="agreements"
               optionLabel="agreement_no"
-              optionValue="id"
+              optionValue="agreement_no"
               placeholder="Select Agreement"
               class="w-full"
               required
@@ -202,7 +202,7 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
 
-const { products, agreements, quotations, customers } = usePage().props;
+const { products, agreements, quotations, customers, product_quotations } = usePage().props;
 
 const form = useForm({
   invoice_no: '',
@@ -217,7 +217,6 @@ const form = useForm({
   grand_total: 0,
   instalmentPaid: 0,
   status: '',
-  products: [],
   productQuotations:[], 
 });
 
@@ -241,20 +240,24 @@ watch(() => form.quotation_no, (newQuotationId) => {
       form.address = selectedQuotation.address || '';
       form.phone = selectedQuotation.phone_number || '';
       form.status = selectedQuotation.status || '';
-      // Auto-fill agreement number if present
+      
+      // Auto-fill agreement details if available
       form.agreement_no = selectedQuotation.agreement?.agreement_no || '';
+      form.start_date = selectedQuotation.agreement?.start_date || '';
+      form.end_date = selectedQuotation.agreement?.end_date || '';
 
-      // Populate DataTable with products
-      if (Array.isArray(selectedQuotation.products) && selectedQuotation.products.length > 0) {
-        productsList.value = selectedQuotation.products.map((product, index) => ({
-          index: index + 1, // Auto-numbering for DataTable
-          id: product.id,
-          product: product.name,
-          qty: product.quantity,
-          unit: product.unit,
-          unitPrice: product.price,
-          subTotal: product.quantity * product.price,
-        }));
+      // Ensure `productQuotations` exists and contains products
+      if (Array.isArray(selectedQuotation.product_quotations) && selectedQuotation.product_quotations.length > 0) {
+        productsList.value = selectedQuotation.product_quotations.map((pq, index) => {
+          return {
+            index: index + 1, // Auto-numbering for DataTable
+            product: pq.name || 'Unknown Product', // Get product name safely
+            qty: pq.quantity || 1, // Default quantity to 1 if missing
+            unit: pq.unit || 'Unit', // Ensure unit is defined
+            unitPrice: pq.price || 0, // Default price to 0 if missing
+            subTotal: (pq.quantity || 1) * (pq.price || 0), // Calculate subtotal safely
+          };
+        });
       } else {
         productsList.value = [];
       }
@@ -262,7 +265,8 @@ watch(() => form.quotation_no, (newQuotationId) => {
       console.log('Updated DataTable Products:', productsList.value); // Debugging log
     }
   }
-});
+}, { deep: true });
+
 
 const indexTemplate = (rowData, { index }) => {
   return index + 1; // Return the index + 1 for 1-based index display
