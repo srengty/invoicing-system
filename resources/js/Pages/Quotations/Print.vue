@@ -35,12 +35,11 @@
               <!-- Table Body -->
               <div v-for="(product, index) in quotation.products" :key="index" class="grid grid-cols-5 border-b py-2 px-4 text-center">
                   <div>{{ index + 1 }}</div>
-                  <div>{{ product.name }}</div>
+                  <div>{{ isUSD ? product.name : product.name_kh }}</div>
                   <div>{{ product.pivot.quantity }}</div>
                   <div>
                       <div class="flex flex-col">
-                          <span class="font-semibold">${{ formatNumber(product.price) }}</span>
-                          <span class="text-gray-500 text-sm">{{currencySymbol}}{{ formatNumber(convertCurrency(product.price, false)) }}</span>
+                          <span class="font-semibold">៛{{ formatNumber(product.price) }}</span>
                       </div>
                   </div>
                   <div class="font-semibold">${{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
@@ -82,7 +81,7 @@
     <div class="flex justify-center items-center gap-10">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
-            <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
+            <p class="text-sm font-semibold">Amount ({{ currencyLabel }} {{ productName }})</p>
             <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" v-model="isUSD" class="sr-only peer">
                 <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2
@@ -108,9 +107,6 @@
 import { ref,computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { usePage } from "@inertiajs/vue3";
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from "primevue/button";
 import Image from 'primevue/image';
 
 const { props } = usePage();
@@ -128,8 +124,9 @@ const convertCurrency = (amount) => {
     return isUSD.value ? amount : amount * exchangeRate.value;
 };
 
-const formatNumber = (num) => {
-    return num.toLocaleString('en-US').replace(/,/g, ' ');
+const formatNumber = (value) => {
+    if (!value) return "0.00";
+    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(value);
 };
 
 // Store the original title

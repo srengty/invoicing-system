@@ -125,8 +125,6 @@
                   <Column field="id" header="No." />
                   <Column field="name" header="Name">
                       <template #body="slotProps">
-
-<!--                          <span> {{slotProps.data}} </span>-->
                           <span>{{ isKhmer ? slotProps.data.name_kh : slotProps.data.name }}</span>
                       </template>
                   </Column>
@@ -135,9 +133,11 @@
                       <template #body="slotProps">
                           <InputText
                               v-model="slotProps.data.price"
-                              @input="updateProductSubtotal(slotProps.data) "
-                              :minFractionDigits="2" :maxFractionDigits="2"
+                              @input="updateProductSubtotal(slotProps.data)"
+                              :minFractionDigits="2"
+                              :maxFractionDigits="2"
                               class="w-full"
+                              placeholder="Enter in USD"
                           />
                       </template>
                   </Column>
@@ -152,7 +152,7 @@
                   </Column>
                   <Column field="subTotal" header="Subtotal">
                       <template #body="slotProps">
-                          <span class="w-full text-right">{{ slotProps.data.subTotal.toFixed(2) }}</span>
+                          <span>{{ slotProps.data.subTotal.toFixed(2) }} KHR</span>
                       </template>
                   </Column>
                   <Column header="Actions">
@@ -172,20 +172,24 @@
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total KHR</p>
-                <p class="font-bold flex items-center gap-1"><span class="text-xl">៛</span>  {{ formatCurrency(calculateTotalKHR) }}</p>
+                <p class="font-bold">៛{{ formatCurrency(calculateTotal.toFixed(2) * exchangeRate) }}</p>
               </div>
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total USD</p>
-                  <p class="font-bold flex items-center gap-1"><span class="">$</span>  {{ formatCurrency(calculateTotalUSD) }}</p>
-<!--                <p class="font-bold">-->
-<!--                    <InputNumber v-model="calculateTotalUSD" class="text-right" :minFractionDigits="2" :maxFractionDigits="2" />-->
-<!--                </p>-->
+                <p class="font-bold">
+                    <InputNumber
+                        v-model="calculateTotalUSD"
+                        class="text-right"
+                        :minFractionDigits="2"
+                        :maxFractionDigits="2"
+                        placeholder="Enter USD"
+                    />
+                </p>
               </div>
-              <div class="grand-total-container flex justify-between mt-4">
-                  <p class="font-bold text-lg">Exchange Rate</p>
-                  <p class="font-bold text-lg">{{ exchangeRate }}</p>
-<!--                  <InputNumber v-model="exchangeRate" class="text-right w-24" :minFractionDigits="2" :maxFractionDigits="2" />-->
-              </div>
+              <div class="grand-total-container flex justify-between">
+                  <p class="font-bold text-lg">Exchange rate</p>
+                  <p class="font-bold text-lg">{{ calculateExchangeRate }}</p>
+                </div>
               <div class="mt-2 flex justify-between items-center">
                 <!-- Tax -->
 <!--                <div>-->
@@ -237,6 +241,7 @@ import { useForm } from "@inertiajs/vue3";
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import Select from "primevue/select";
 import MultiSelect from "primevue/multiselect";
+import InputNumber from "primevue/inputnumber";
 import DatePicker from "primevue/datepicker";
 import InputText from "primevue/inputtext";
 import IconField from "primevue/iconfield";
@@ -330,11 +335,9 @@ const toggleLanguage = () => {
   // ]);
 
   watch(selectedProductIds, (newIds) => {
-      // console.log(newIds);
     newIds.forEach((id) => {
       if (!selectedProductsData.value.find((prod) => prod.id === id)) {
         const prod = props.products.find((p) => p.id === id);
-          // console.log(prod);
           if (prod) {
           selectedProductsData.value.push({
             ...prod,
@@ -357,13 +360,18 @@ const toggleLanguage = () => {
     row.subTotal = Number(row.price) * row.quanity;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
+
+      const updatedProduct = selectedProductsData.value.find(prod => prod.id === row.id);
+      if (updatedProduct) {
+          updatedProduct.price = row.price;
+      }
   };
 
   const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
   };
 
-  // const calculateTotalUSD = ref(null);
+  const calculateTotalUSD = ref(null);
   const calculateExchangeRate = computed(() => {
       if (calculateTotalUSD.value == null || calculateTotalUSD.value === 0) return '';
       const exchangeRate = calculateTotal.value / calculateTotalUSD.value;
@@ -379,13 +387,9 @@ const calculateTotal = computed(() => {
 
 const exchangeRate = ref(4100);
 
-const calculateTotalUSD = computed(() => {
-    if (!calculateTotal.value || !exchangeRate.value) return "0.00";
-    return (calculateTotal.value).toFixed(2);
-});
 const calculateTotalKHR = computed(() => {
-    if (!calculateTotal.value || !exchangeRate.value) return "0.00";
-    return (calculateTotal.value * exchangeRate.value).toFixed(2);
+    if (!calculateTotal.value || !calculateExchangeRate.value) return "0.00";
+    return (calculateTotal.value * calculateExchangeRate.value).toFixed(2);
 });
 
 const formatCurrency = (value) => {
