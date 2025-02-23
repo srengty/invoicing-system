@@ -172,7 +172,7 @@
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total KHR</p>
-                <p class="font-bold">៛{{ formatCurrency(calculateTotal.toFixed(2) * exchangeRate) }}</p>
+                <p class="font-bold">៛{{ formatCurrency(calculateTotal.toFixed(2)) }}</p>
               </div>
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total USD</p>
@@ -266,13 +266,10 @@ import Customers from '@/Components/Customers.vue';
   const today = new Date();
   const isKhmer = ref(false);
 
-const toggleLanguage = () => {
+  const toggleLanguage = () => {
     locale.value = isKhmer.value ? 'name_kh' : 'name';
-};
+  };
 
-  const generateQuotationNumber = () => {
-    return Math.floor(100000 + Math.random() * 900000);
-};
   watch(status, (newStatus) => {
     if (newStatus === "Approved") {
         form.value.quotation_no = generateQuotationNumber();
@@ -280,7 +277,7 @@ const toggleLanguage = () => {
     } else {
         isApproved.value = false;
     }
-});
+  });
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -289,7 +286,7 @@ const toggleLanguage = () => {
         day: "2-digit",
         year: "numeric"
     });
-};
+  };
   watch(status, (newStatus) => {
     if (newStatus === "Approved") {
         form.value.quotation_date = today;
@@ -297,17 +294,17 @@ const toggleLanguage = () => {
     } else {
         isApproved.value = false;
     }
-});
+  });
   const updateDate = (selectedDate) => {
     form.value.quotation_date = selectedDate;
-};
+  };
 
   // Toast for notifications
   const toast = useToast();
 
   // Define the Inertia form
   const form = useForm({
-    quotation_no: generateQuotationNumber(),
+    quotation_no: Math.floor(100000 + Math.random() * 900000),
     quotation_date: today,
     address: "",
     phone_number: "",
@@ -322,7 +319,7 @@ const toggleLanguage = () => {
   const selectCustomer = () => {
     isCreateCustomerVisible.value = false;
     form.customer_id = props.customers[props.customers.length - 1].id;
-};
+  };
 
   const selectedProductIds = ref([]);
   const selectedProductsData = ref([]);
@@ -378,24 +375,24 @@ const toggleLanguage = () => {
       return exchangeRate.toFixed(2);
   });
 
-const calculateTotal = computed(() => {
+  const calculateTotal = computed(() => {
     return selectedProductsData.value.reduce(
         (sum, prod) => sum + prod.subTotal,
         0
     );
-});
+  });
 
-const exchangeRate = ref(4100);
+  const exchangeRate = ref(4100);
 
-const calculateTotalKHR = computed(() => {
+  const calculateTotalKHR = computed(() => {
     if (!calculateTotal.value || !calculateExchangeRate.value) return "0.00";
     return (calculateTotal.value * calculateExchangeRate.value).toFixed(2);
-});
+  });
 
-const formatCurrency = (value) => {
+  const formatCurrency = (value) => {
     if (!value) return "0.00";
     return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(value);
-};
+  };
 
   const calculateGrandTotal = computed(() => {
     return calculateTotal.value + Number((form.tax*calculateTotal.value/100) || 0);
@@ -438,6 +435,7 @@ const formatCurrency = (value) => {
     form.products = selectedProductsData.value.map((prod) => ({
       id: prod.id,
       quantity: prod.quanity,
+      price: prod.price,
     }));
 
     // Update totals.

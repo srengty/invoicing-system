@@ -42,13 +42,13 @@
                           <span class="font-semibold">៛{{ formatNumber(product.price) }}</span>
                       </div>
                   </div>
-                  <div class="font-semibold">${{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
+                  <div class="font-semibold">៛{{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
               </div>
           </div>
 
           <!-- Total Amount -->
           <p class="pt-6 flex justify-end">
-              Total (USD/KHR): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
+              Total ({{ currencyLabel }}): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
           </p>
 
           <!-- Terms and Conditions -->
@@ -81,7 +81,7 @@
     <div class="flex justify-center items-center gap-10">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
-            <p class="text-sm font-semibold">Amount ({{ currencyLabel }} {{ productName }})</p>
+            <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
             <label class="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" v-model="isUSD" class="sr-only peer">
                 <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2
@@ -121,7 +121,7 @@ const currencySymbol = computed(() => (isUSD.value ? "$" : "៛"));
 const currencyLabel = computed(() => (isUSD.value ? "USD" : "KHR"));
 
 const convertCurrency = (amount) => {
-    return isUSD.value ? amount : amount * exchangeRate.value;
+    return isUSD.value ? amount / exchangeRate.value : amount;
 };
 
 const formatNumber = (value) => {
