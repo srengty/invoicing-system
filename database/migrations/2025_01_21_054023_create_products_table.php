@@ -24,6 +24,7 @@ return new class extends Migration
             $table->id();
             $table->string('code')->nullable(); // Ensure this line exists
             $table->string('name');
+            $table->string('name_kh')->nullable();
             $table->string('unit');
             $table->decimal('price', 8, 2);
             $table->integer('quantity');

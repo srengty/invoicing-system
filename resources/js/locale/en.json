@@ -1,0 +1,23 @@
+{
+    "quotation_no": "Quotation No:",
+    "date": "Date:",
+    "address": "Address",
+    "contact": "Contact",
+    "customer": "Customer/Organization",
+    "item": "Item",
+    "language": "Khmer/English",
+    "no": "No.",
+    "name": "Name",
+    "unit": "Unit",
+    "unit_price": "Unit Price",
+    "qty": "Qty",
+    "subtotal": "Subtotal",
+    "actions": "Actions",
+    "remove": "Remove",
+    "total_khr": "Total KHR",
+    "total_usd": "Total USD",
+    "exchange_rate": "Exchange Rate",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "addCustomer": "AddCustomer"
+}

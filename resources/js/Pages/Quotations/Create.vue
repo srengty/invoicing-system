@@ -35,7 +35,7 @@
                   />
               </div>
               <div class="flex flex-col gap-2">
-                <label for="address">Address</label>
+                <label for="address">Address:</label>
                 <IconField class="w-full md:w-60">
                   <InputText
                     id="address"
@@ -48,7 +48,7 @@
               </div>
 
               <div class="flex flex-col gap-2">
-                <label for="phone_number">Contact</label>
+                <label for="phone_number">Contact:</label>
                 <IconField class="w-full md:w-60">
                   <InputText
                     id="phone_number"
@@ -82,11 +82,11 @@
                   class="w-full md:w-65"
                 />
               </div>
-              <div class="w-60">
+              <div class="w-80">
                 <!-- <Link :href="route('customers.create')">
                   <Button icon="pi pi-plus" label="Add customer" rounded />
                 </Link> -->
-                <Button icon="pi pi-plus" label="Add customer" rounded @click="isCreateCustomerVisible=true" />
+                <Button icon="pi pi-plus" label="AddCustomer" rounded @click="isCreateCustomerVisible=true" />
               </div>
             </div>
 
@@ -111,8 +111,8 @@
             </div>
             <div class="flex flex-row gap-4 items-end w-1/3">
               <div class="flex flex-row gap-2 w-full">
-                <label for="p_name">Khmer/English</label>
-                  <ToggleSwitch v-model="isKhmer" />
+                <label for="p_name">English/Khmer</label>
+                  <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
               </div>
               <div class="w-60">
               </div>
@@ -123,7 +123,7 @@
           <div class="pl-6">
               <DataTable :value="selectedProductsData" paginator :rows="5" striped>
                   <Column field="id" header="No." />
-                  <Column field="name" :header="isKhmer ? 'ឈ្មោះ' : 'Name'">
+                  <Column field="name" header="Name">
                       <template #body="slotProps">
                           <span>{{ isKhmer ? slotProps.data.name_kh : slotProps.data.name }}</span>
                       </template>
@@ -133,13 +133,15 @@
                       <template #body="slotProps">
                           <InputText
                               v-model="slotProps.data.price"
-                              @input="updateProductSubtotal(slotProps.data) "
-                              :minFractionDigits="2" :maxFractionDigits="2"
+                              @input="updateProductSubtotal(slotProps.data)"
+                              :minFractionDigits="2"
+                              :maxFractionDigits="2"
                               class="w-full"
+                              placeholder="Enter in USD"
                           />
                       </template>
                   </Column>
-                  <Column field="quantity" header="Qty">
+                  <Column field="quantity" header="Qty" >
                       <template #body="slotProps">
                           <InputText
                               v-model="slotProps.data.quanity"
@@ -148,9 +150,9 @@
                           />
                       </template>
                   </Column>
-                  <Column field="subTotal" header="SUB-TOTAL">
+                  <Column field="subTotal" header="Subtotal">
                       <template #body="slotProps">
-                          <span class="w-full text-right">{{ slotProps.data.subTotal.toFixed(2) }}</span>
+                          <span>{{ slotProps.data.subTotal.toFixed(2) }} KHR</span>
                       </template>
                   </Column>
                   <Column header="Actions">
@@ -170,20 +172,24 @@
             <div class="pl-2 pr-60">
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total KHR</p>
-                <p class="font-bold flex items-center gap-1"><span class="text-xl">៛</span>  {{ formatCurrency(calculateTotalKHR) }}</p>
+                <p class="font-bold">៛{{ formatCurrency(calculateTotal.toFixed(2)) }}</p>
               </div>
               <div class="total-container mt-4 flex justify-between">
                 <p class="font-bold">Total USD</p>
-                  <p class="font-bold flex items-center gap-1"><span class="">$</span>  {{ formatCurrency(calculateTotalUSD) }}</p>
-<!--                <p class="font-bold">-->
-<!--                    <InputNumber v-model="calculateTotalUSD" class="text-right" :minFractionDigits="2" :maxFractionDigits="2" />-->
-<!--                </p>-->
+                <p class="font-bold">
+                    <InputNumber
+                        v-model="calculateTotalUSD"
+                        class="text-right"
+                        :minFractionDigits="2"
+                        :maxFractionDigits="2"
+                        placeholder="Enter USD"
+                    />
+                </p>
               </div>
-              <div class="grand-total-container flex justify-between mt-4">
+              <div class="grand-total-container flex justify-between">
                   <p class="font-bold text-lg">Exchange rate</p>
-                  <p class="font-bold text-lg">{{ exchangeRate }}</p>
-<!--                  <InputNumber v-model="exchangeRate" class="text-right w-24" :minFractionDigits="2" :maxFractionDigits="2" />-->
-              </div>
+                  <p class="font-bold text-lg">{{ calculateExchangeRate }}</p>
+                </div>
               <div class="mt-2 flex justify-between items-center">
                 <!-- Tax -->
 <!--                <div>-->
@@ -229,15 +235,15 @@
   </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import { Head, Link } from "@inertiajs/vue3";
+import {ref, computed, watch} from "vue";
+import { Head } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import Select from "primevue/select";
 import MultiSelect from "primevue/multiselect";
+import InputNumber from "primevue/inputnumber";
 import DatePicker from "primevue/datepicker";
 import InputText from "primevue/inputtext";
-import InputNumber from "primevue/inputnumber";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
@@ -253,6 +259,7 @@ import Customers from '@/Components/Customers.vue';
     customers: Array,
     products: Array,
   });
+  console.log(props.products);
 
   const status = ref("");
   const isApproved = ref(false);
@@ -260,15 +267,9 @@ import Customers from '@/Components/Customers.vue';
   const isKhmer = ref(false);
 
   const toggleLanguage = () => {
-    selectedProductsData.value = selectedProductsData.value.map((product) => ({
-        ...product,
-        name: isKhmer.value ? product.name_kh : product.name,
-    }));
-};
+    locale.value = isKhmer.value ? 'name_kh' : 'name';
+  };
 
-  const generateQuotationNumber = () => {
-    return Math.floor(100000 + Math.random() * 900000);
-};
   watch(status, (newStatus) => {
     if (newStatus === "Approved") {
         form.value.quotation_no = generateQuotationNumber();
@@ -276,7 +277,7 @@ import Customers from '@/Components/Customers.vue';
     } else {
         isApproved.value = false;
     }
-});
+  });
 
   const formatDate = (date) => {
     if (!date) return "";
@@ -285,7 +286,7 @@ import Customers from '@/Components/Customers.vue';
         day: "2-digit",
         year: "numeric"
     });
-};
+  };
   watch(status, (newStatus) => {
     if (newStatus === "Approved") {
         form.value.quotation_date = today;
@@ -293,17 +294,17 @@ import Customers from '@/Components/Customers.vue';
     } else {
         isApproved.value = false;
     }
-});
+  });
   const updateDate = (selectedDate) => {
     form.value.quotation_date = selectedDate;
-};
+  };
 
   // Toast for notifications
   const toast = useToast();
 
   // Define the Inertia form
   const form = useForm({
-    quotation_no: generateQuotationNumber(),
+    quotation_no: Math.floor(100000 + Math.random() * 900000),
     quotation_date: today,
     address: "",
     phone_number: "",
@@ -318,29 +319,31 @@ import Customers from '@/Components/Customers.vue';
   const selectCustomer = () => {
     isCreateCustomerVisible.value = false;
     form.customer_id = props.customers[props.customers.length - 1].id;
-};
+  };
 
   const selectedProductIds = ref([]);
   const selectedProductsData = ref([]);
 
-  const columns = ref([
-    { field: "id", header: "No." },
-    { field: "name", header: "Name" },
-    { field: "unit", header: "Unit" },
-    { field: "price", header: "Unit Price" },
-  ]);
+  // const columns = ref([
+  //   { field: "id", header: "No." },
+  //   { field: "name", header: "Name" },
+  //   { field: "unit", header: "Unit" },
+  //   { field: "price", header: "Unit Price" },
+  // ]);
 
   watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
       if (!selectedProductsData.value.find((prod) => prod.id === id)) {
         const prod = props.products.find((p) => p.id === id);
-        if (prod) {
+          if (prod) {
           selectedProductsData.value.push({
             ...prod,
             quanity: 1,
             subTotal: Number(prod.price) * 1,
           });
         }
+          console.log(prod);
+
       }
     });
     // Remove products that have been deselected
@@ -354,41 +357,42 @@ import Customers from '@/Components/Customers.vue';
     row.subTotal = Number(row.price) * row.quanity;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
+
+      const updatedProduct = selectedProductsData.value.find(prod => prod.id === row.id);
+      if (updatedProduct) {
+          updatedProduct.price = row.price;
+      }
   };
 
   const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
   };
 
-  // const calculateTotalUSD = ref(null);
+  const calculateTotalUSD = ref(null);
   const calculateExchangeRate = computed(() => {
       if (calculateTotalUSD.value == null || calculateTotalUSD.value === 0) return '';
       const exchangeRate = calculateTotal.value / calculateTotalUSD.value;
       return exchangeRate.toFixed(2);
   });
 
-const calculateTotal = computed(() => {
+  const calculateTotal = computed(() => {
     return selectedProductsData.value.reduce(
         (sum, prod) => sum + prod.subTotal,
         0
     );
-});
+  });
 
-const exchangeRate = ref(4100);
+  const exchangeRate = ref(4100);
 
-const calculateTotalUSD = computed(() => {
-    if (!calculateTotal.value || !exchangeRate.value) return "0.00";
-    return (calculateTotal.value).toFixed(2);
-});
-const calculateTotalKHR = computed(() => {
-    if (!calculateTotal.value || !exchangeRate.value) return "0.00";
-    return (calculateTotal.value * exchangeRate.value).toFixed(2);
-});
+  const calculateTotalKHR = computed(() => {
+    if (!calculateTotal.value || !calculateExchangeRate.value) return "0.00";
+    return (calculateTotal.value * calculateExchangeRate.value).toFixed(2);
+  });
 
-const formatCurrency = (value) => {
+  const formatCurrency = (value) => {
     if (!value) return "0.00";
     return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(value);
-};
+  };
 
   const calculateGrandTotal = computed(() => {
     return calculateTotal.value + Number((form.tax*calculateTotal.value/100) || 0);
@@ -431,6 +435,7 @@ const formatCurrency = (value) => {
     form.products = selectedProductsData.value.map((prod) => ({
       id: prod.id,
       quantity: prod.quanity,
+      price: prod.price,
     }));
 
     // Update totals.

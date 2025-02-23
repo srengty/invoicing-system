@@ -111,7 +111,7 @@ const openForm = (product = null) => {
         productForm.value = { ...product };
     } else {
         // Reset form for creating a new product
-        productForm.value = { id: null, code: '', name: '', price: null, stock: null, category: '' };
+        productForm.value = { id: null, code: '', name: '', name_kh: '', price: null, stock: null, category: '' };
     }
     isFormVisible.value = true;
 };
