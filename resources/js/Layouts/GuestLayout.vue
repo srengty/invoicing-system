@@ -2,6 +2,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link } from '@inertiajs/vue3';
 import MainNavTree from './MainNavTree.vue';
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 </script>
 
 <template>
@@ -13,11 +14,13 @@ import MainNavTree from './MainNavTree.vue';
                     <!-- <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" /> -->
                         <img src="/logo.png" alt="Logo" class="h-20 w-20" />
                     </Link>
-                    Institute of Technology of Cambodia
+                    <p>Institute of Technology of Cambodia</p>
+
                 </div>
                 <MainNavTree />
             </div>
             <div class="md:col-span-5">
+<!--                <NavbarLayout/>-->
                 <div class="bg-slate-100 dark:bg-slate-100 min-h-10">&emsp;</div>
                 <slot />
             </div>

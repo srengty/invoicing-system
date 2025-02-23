@@ -1,0 +1,23 @@
+{
+    "quotation_no": "លេខរៀង:",
+    "date": "កាលបរិច្ឆេទ:",
+    "address": "អាសយដ្ឋាន",
+    "contact": "ទំនាក់ទំនង",
+    "customer": "អតិថិជន/ស្ថាប័ន",
+    "item": "ទំនិញ",
+    "language": "ភាសាខ្មែរ/អង់គ្លេស",
+    "no": "លរ.",
+    "name": "ឈ្មោះ",
+    "unit": "ខ្នាត",
+    "unit_price": "តម្លែរាយ",
+    "qty": "ចំនួន",
+    "subtotal": "សរុប",
+    "actions": "សកម្មភាព",
+    "remove": "លុប",
+    "total_khr": "សរុប KHR",
+    "total_usd": "សរុប USD",
+    "exchange_rate": "អត្រាប្តូរប្រាក់",
+    "submit": "ដាក់ស្នើ",
+    "cancel": "បោះបង់",
+    "addCustomer": "បន្ថែមអតិថិជន"
+}

@@ -11,6 +11,9 @@ import Aura from '@primevue/themes/aura';
 import { ToastService } from 'primevue';
 import Ripple from 'primevue/ripple'; // Import the Ripple directive
 import Tooltip from 'primevue/tooltip';
+import { createI18n } from 'vue-i18n';
+import kh from './locale/kh.json';
+import en from './locale/en.json';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -31,6 +34,7 @@ createInertiaApp({
                     preset: Aura
                 }
             })
+            .use(i18n)
             .directive('ripple', Ripple) // Register the Ripple directive
             .directive('tooltip', Tooltip)
             .use(ToastService)
@@ -39,4 +43,13 @@ createInertiaApp({
     progress: {
         color: '#4B5563',
     },
+});
+
+const i18n = createI18n({
+    fallbackLocale: 'en',
+    locale: document.cookie.split('=')[1],
+    messages:{
+        en: en,
+        kh: kh,
+    }
 });

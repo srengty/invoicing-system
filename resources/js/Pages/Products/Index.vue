@@ -155,6 +155,7 @@ const form = useForm({
     code: '',
     account_code: '73048 ផលពីសេវាផ្សេងៗ',
     name: '',
+    name_kh: '',
     desc: '',
     desc_kh: '',
     unit: '',
@@ -169,10 +170,13 @@ const openForm = (product = null) => {
         form.id = product.id;
         form.code = product.code;
         form.name = product.name;
+        form.name_kh = product.name_kh;
         form.unit = product.unit;
         form.price = product.price;
         form.quantity = product.quantity;
         form.category = product.category;
+        form.desc = product.desc;
+        form.desc_kh = product.desc_kh;
     } else {
         form.reset();
     }

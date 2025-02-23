@@ -35,21 +35,20 @@
               <!-- Table Body -->
               <div v-for="(product, index) in quotation.products" :key="index" class="grid grid-cols-5 border-b py-2 px-4 text-center">
                   <div>{{ index + 1 }}</div>
-                  <div>{{ product.name }}</div>
+                  <div>{{ isUSD ? product.name : product.name_kh }}</div>
                   <div>{{ product.pivot.quantity }}</div>
                   <div>
                       <div class="flex flex-col">
-                          <span class="font-semibold">${{ formatNumber(product.price) }}</span>
-                          <span class="text-gray-500 text-sm">{{currencySymbol}}{{ formatNumber(convertCurrency(product.price, false)) }}</span>
+                          <span class="font-semibold">៛{{ formatNumber(product.price) }}</span>
                       </div>
                   </div>
-                  <div class="font-semibold">${{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
+                  <div class="font-semibold">៛{{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
               </div>
           </div>
 
           <!-- Total Amount -->
           <p class="pt-6 flex justify-end">
-              Total (USD/KHR): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
+              Total ({{ currencyLabel }}): {{ currencySymbol }}{{ formatNumber(convertCurrency(quotation.total)) }}
           </p>
 
           <!-- Terms and Conditions -->
@@ -108,9 +107,6 @@
 import { ref,computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import { usePage } from "@inertiajs/vue3";
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from "primevue/button";
 import Image from 'primevue/image';
 
 const { props } = usePage();
@@ -125,11 +121,12 @@ const currencySymbol = computed(() => (isUSD.value ? "$" : "៛"));
 const currencyLabel = computed(() => (isUSD.value ? "USD" : "KHR"));
 
 const convertCurrency = (amount) => {
-    return isUSD.value ? amount : amount * exchangeRate.value;
+    return isUSD.value ? amount / exchangeRate.value : amount;
 };
 
-const formatNumber = (num) => {
-    return num.toLocaleString('en-US').replace(/,/g, ' ');
+const formatNumber = (value) => {
+    if (!value) return "0.00";
+    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(value);
 };
 
 // Store the original title
