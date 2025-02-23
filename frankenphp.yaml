@@ -1,0 +1,7 @@
+server:
+  address: 0.0.0.0:9000
+  workers: 4
+  max_request_body_size: 10M
+  static:
+    dir: public
+    cache_control: "max-age=31536000"
