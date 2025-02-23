@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-    import { ref } from 'vue';
+    import { onMounted, ref } from 'vue';
     import AddPayment from '@/Components/Agreements/AddPayment.vue';
     import { Button, Dialog } from 'primevue';
     const isShowing = ref(false);
@@ -16,6 +16,15 @@
     const model = defineModel({
         type: Object,
     });
+    // const props = defineProps({
+    //     name: {
+    //         type: Array,
+    //         default: () => ({}),
+    //     },
+    // });
+    // onMounted(() => {
+    //     console.log('props', props.name);
+    // });
     const doCancel = () => {
         isShowing.value = false;
         emit('close');

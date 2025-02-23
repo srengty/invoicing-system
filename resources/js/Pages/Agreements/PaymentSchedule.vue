@@ -6,7 +6,11 @@
                     {{ slotProps.index + 1 }}
                 </template>
             </Column>
-            <Column field="due_date" header="Due Date"></Column>
+            <Column field="due_date" header="Due Date">
+                <template #body="slotProps">
+                    {{ moment(slotProps.data['due_date']).format('DD/MM/YYYY') }}
+                </template>
+            </Column>
             <Column field="short_description" header="Short Description">
                 <template #editor="{ data, field }">
                     <DatePicker v-model="data[field]" fluid date-format="dd/mm/yy" />
@@ -47,7 +51,7 @@
                 <Row>
                     <Column footer="Total:" footerStyle="text-align:right" :colspan="4" style="text-align:right"></Column>
                     <Column :footer="`${currencySign} ${totalAmount.toLocaleString()}`" style="text-align: right;"></Column>
-                    
+                    <Column footer="" style="text-align: right;" v-if="!readonly"></Column>
                 </Row>
             </ColumnGroup>
         </DataTable>
@@ -61,9 +65,10 @@
 import { ref, defineModel, computed, onMounted } from "vue";
 import { DataTable, Column, Button, InputNumber, InputGroup, InputGroupAddon, DatePicker, Row, ColumnGroup, Dialog } from "primevue";
 import { currencies } from "@/constants";
+import moment from "moment";
 import AddPayment from "@/Components/Agreements/AddPayment.vue";
 const items = defineModel({default:[
-    {
+    /* {
         id: 1,
         due_date: "28/01/2025",
         short_description: "Item description",
@@ -89,7 +94,7 @@ const items = defineModel({default:[
         currency: "KHR",
         remark: "Additional remark",
         amount: 3000,
-    },
+    }, */
 ]});
 const props = defineProps({
     currency: String,
@@ -104,7 +109,9 @@ const onRowEditSave = (event) => {
     items.value[index] = newData;
 };
 const currencySign = computed(()=>currencies.filter(v=>v.value==props.currency)[0]?.sign??'$');
-const priceTemplate = (data) => `${currencies.filter(v=>v.value==data.currency)[0]?.sign??'$'} ${data.amount.toLocaleString()}`;
+const priceTemplate = (data) => {
+    return `${currencies.filter(v=>v.value==data.currency)[0]?.sign??'$'} ${data.amount.toLocaleString()}`;
+}
 const calculateRate = (propsCurrency, itemCurrency)=>{
     if(propsCurrency=='USD'&&itemCurrency=='KHR') return 1/exchange_rate.value;
     else if(propsCurrency=='KHR'&&itemCurrency=='USD') return exchange_rate.value;

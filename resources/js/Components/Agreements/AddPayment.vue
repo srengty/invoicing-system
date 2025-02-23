@@ -29,7 +29,7 @@
             </InputGroup>
             <label for="amount" class="required z-10">Amount</label>
         </FloatLabel>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" v-if="props.multiCurrencies">
             <label for="currency" class="required">Currency</label>
             <RadioButtonGroup id="currency" v-model="model.currency" class="flex flex-wrap gap-4 w-100" @value-change="doCurrencyChange">
                 <div class="flex items-center gap-2" v-for="currency in currencies" :key="currency">
@@ -57,6 +57,12 @@ const maxPercentage = ref(100);
 const emit = defineEmits(['cancel', 'save']);
 const model = defineModel({
     type: Object,
+});
+const props = defineProps({
+    multiCurrencies: {
+        type: Boolean,
+        default: () => (false),
+    },
 });
 const amountPercentage = ref({
     amount: 0,

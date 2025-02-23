@@ -3,28 +3,28 @@
     <Head title="Create Agreement" />
     <GuestLayout>
         <h1>Create Agreement</h1>
-        <Form @submit="submit" :action="route('agreements.store')" v-slot="$form" :initial-values="form">
+        <Form @submit="submit" :action="route('agreements.store')" v-slot="$form" :initial-values="form" :resolver >
             <div class="create-agreement flex flex-row gap-4">
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
                     <div class="grid grid-cols-2 gap-1 items-center">
                         <span v-tooltip="'must be approved and no agreement attached'">Quotation No.</span>
-                        <InputNumber v-model="form.quotation_no" name="quotation_no" :use-grouping="false" class="w-full" />
+                        <InputNumber name="quotation_no" :use-grouping="false" class="w-full" />
                         <span>Agreement No. {{ agreement_max }}</span>
-                        <InputNumber v-model="form.agreement_no" name="agreement_no" :class="(errors.agreement_no ? 'p-invalid' : '')"
+                        <InputNumber name="agreement_no" :class="(errors.agreement_no ? 'p-invalid' : '')"
                             :use-grouping="false" :readonly="true" />
                         <Message v-if="errors.agreement_no" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.agreement_no }}</Message>
                         <span>Date</span>
-                        <DatePicker date-format="dd/mm/yy" v-model="form.agreement_date" name="agreement_date" showIcon />
+                        <DatePicker date-format="dd/mm/yy" name="agreement_date" showIcon />
                         <Message v-if="errors.date" severity="error" size="small" variant="simple" class="col-span-2">{{
                             errors.date }}</Message>
                         <span>Customer</span>
-                        <Select filter v-model="form.customer_id" :options="customers" option-value="id"
+                        <Select filter :options="customers" option-value="id" name="customer_id"
                             option-label="name" :virtualScrollerOptions="{ itemSize: 38 }" />
                         <Message v-if="errors.customer_id" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.customer_id }}</Message>
                         <span>Address</span>
-                        <InputText name="address" v-model="form.address" />
+                        <InputText name="address" />
                         <Message v-if="errors.address" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.address }}</Message>
                         <span>Agreement doc</span>
@@ -44,11 +44,11 @@
                     <div class="grid grid-cols-2 gap-1 items-center">
                         <span class="col-span-2 text-xl mb-5">Agreement summary</span>
                         <span>Start date</span>
-                        <DatePicker date-format="dd/mm/yy" name="start_date" v-model="form.start_date" showIcon />
+                        <DatePicker date-format="dd/mm/yy" name="start_date" showIcon />
                         <Message v-if="errors.start_date" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.start_date }}</Message>
                         <span>End date</span>
-                        <DatePicker date-format="dd/mm/yy" name="end_date" v-model="form.end_date" showIcon />
+                        <DatePicker date-format="dd/mm/yy" name="end_date" showIcon />
                         <Message v-if="errors.end_date" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.end_date }}</Message>
                         <span>Agreement amount ({{ currencies[riels == true ? 0 : 1].name }})</span>
@@ -56,14 +56,18 @@
                             <InputGroupAddon>
                                 <ToggleSwitch v-model="riels" />
                             </InputGroupAddon>
-                            <InputNumber v-model="schedule.agreement_amount" />
+                            <InputNumber name="agreement_amount" />
                         </InputGroup>
                         <Message v-if="errors.agreement_amount" severity="error" size="small" variant="simple"
                             class="col-span-2">{{ errors.agreement_amount }}</Message>
                         <span>Short description</span>
-                        <Textarea name="short_description" rows="2" v-model="form.short_description" ></Textarea>
+                        <Textarea name="short_description" rows="2" ></Textarea>
                         <span>Payment schedule</span>
-                        <PopupAddPaymentSchedule v-model="schedule" @save="doSave" @update="beforeUpdate"/>
+                        <FormField v-slot="$pay" name="payment_schedule" >
+                            <PopupAddPaymentSchedule v-model="schedule" @save="doSave" @update="beforeUpdate"/>
+                            <pre>{{ $pay?$pay:'null' }}</pre>
+                        </FormField>
+                        
                     </div>
                 </div>
                 <div class="border border-gray-200 rounded-lg p-4">
@@ -74,10 +78,10 @@
                     </div>
                 </div>
             </div>
-            <PaymentSchedule class="mt-2" v-model="form.payment_schedule" :currency="form.currency" :agreement_amount="schedule.agreement_amount" />
+            <PaymentSchedule class="mt-2" name="payment_schedule" :currency="form.currency" :agreement_amount="schedule.agreement_amount" />
             <div class="flex justify-end items-center gap-2 my-2 px-24" v-if="hasManyCurrencies">
                 <label for="agreement_exchange_rate" class="required">Exchange rate</label>
-                <InputText id="agreement_exchange_rate" v-model="schedule.exchange_rate"></InputText>
+                <InputText id="agreement_exchange_rate" name="exchange_rate"></InputText>
             </div>
             <Button label="Save" type="submit" :disabled="isStoringAgreement"></Button>
         </Form>
@@ -88,7 +92,7 @@
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Button, DatePicker, FileUpload, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon } from 'primevue';
-import { Form } from '@primevue/forms';
+import { Form, FormField } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
 import { reactive, onMounted, ref, computed } from 'vue';
 import PaymentSchedule from './PaymentSchedule.vue';
@@ -117,7 +121,7 @@ const form = reactive({
     progress: null,
     start_date: new Date(),
     end_date: new Date(),
-    agreement_amount: 0,
+    agreement_amount: 10,
     short_description: "",
     attachments: [],
     payment_schedule: [ ],
@@ -145,6 +149,25 @@ const isStoringAgreement = ref(false);
 const hasManyCurrencies = computed(() => {
     return form.payment_schedule.some(v => v.currency != form.currency);
 });
+const resolver = ({ values }) => {
+    const errors = { customer_id: [], agreement_amount: [] };
+
+    if (!values.customer_id) {
+        errors.customer_id.push({ type: 'required', message: 'customer_id is required.' });
+    }
+    
+    if (!values.agreement_amount) {
+        errors.agreement_amount.push({ type: 'required', message: 'agreement_amount is required.' });
+    }
+
+    if (values.agreement_amount <= 10) {
+        errors.agreement_amount.push({ type: 'minimum', message: 'agreement_amount must be at least 10.' });
+    }
+
+    return {
+        errors
+    };
+};
 onMounted(() => {
     form.agreement_no = props.agreement_max;
     if(props.edit){
@@ -159,19 +182,7 @@ onMounted(() => {
         form.end_date = moment(props.agreement.end_date, 'DD/MM/YYYY').toDate();
         form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
-        form.payment_schedule = props.agreement.payment_schedules.map((v, i) => {
-            return {
-                id: v.id,
-                due_date: moment(v.due_date, 'DD/MM/YYYY').toDate(),
-                short_description: v.short_description,
-                percentage: v.percentage,
-                currency: v.currency,
-                remark: v.remark,
-                amount: v.amount,
-                agreement_currency: props.agreement.currency,
-                exchange_rate: 4100,
-            }
-        });
+        form.payment_schedule = props.agreement.payment_schedules;
         form.attachments = JSON.parse(props.agreement.attachments??'[]');
         form.currency = props.agreement.currency;
         riels.value = (props.agreement.currency == 'KHR' ? true : false);
@@ -181,30 +192,14 @@ onMounted(() => {
 const submit = ({states,valid}) => {
     isStoringAgreement.value = true;
     form.agreement_amount = schedule.value.agreement_amount;
-    const data = {...form, 
-        agreement_date: form.agreement_date.toGMTString(),
-        start_date: form.start_date.toGMTString(),
-        end_date: form.end_date.toGMTString(),
-        payment_schedule: form.payment_schedule.map(v=>({
-            ...v,
-            due_date: v.due_date.toGMTString(),
-        }))
-    }
-    console.log('submit', data, valid);
+    console.log('submit', states, valid);
     if(props.edit){
         form._method = 'PUT';
         router.put(route('agreements.update', props.agreement.agreement_no), form);
     }else{
-        router.post(route('agreements.store'), data);
+        router.post(route('agreements.store'), form);
     }
     isStoringAgreement.value = false;
-    //form.post(route('agreements.store'));
-    // if(e.valid){
-    //     router.push(route('agreements.store'), form);
-    //     toast.add({ severity: 'success', summary: 'Success', detail: 'Agreement created successfully' });
-    // }else{
-    //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
-    // }
 }
 const onUpload = (e) => {
     console.log(e);
@@ -244,25 +239,6 @@ const beforeUpdate = (e) => {
     schedule.value.amount = remainingAmount.value;
     schedule.value.percentage = remainingPercentage.value;
 }
-// const resolver = zodResolver(z.object({
-//     agreement_no: z.number(),
-//     date: z.date(),
-//     customer: z.string().nonempty(),
-//     address: z.string().nonempty(),
-//     agreement_doc: z.string().nonempty(),
-//     start_date: z.date(),
-//     end_date: z.date(),
-//     agreement_amount: z.number(),
-//     tax_amount: z.number(),
-//     attachment: z.string().nonempty(),
-//     payment_schedule: z.array(z.object({
-//         id: z.number(),
-//         due_date: z.string().nonempty(),
-//         short_description: z.string().nonempty(),
-//         remark: z.string().nonempty(),
-//         amount: z.number(),
-//     })),
-// }));
 </script>
 
 <style>

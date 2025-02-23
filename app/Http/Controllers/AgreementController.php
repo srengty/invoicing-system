@@ -42,12 +42,13 @@ class AgreementController extends Controller
     {
         $request->validate([
             'agreement_no' => 'required',
-            'agreement_date' => 'required',
-            'start_date' => 'required',
-            'end_date' => 'required',
+            'agreement_date' => 'required|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
             'customer_id' => 'required',
             'currency' => 'required',
         ]);
+        //dd($request->all());
         $data = $request->except('payment_schedule')+['amount' => $request->agreement_amount];
         $data['attachments'] = json_encode($request->attachments);
         $agreement = Agreement::create($data);
@@ -74,7 +75,7 @@ class AgreementController extends Controller
     public function show(int $id)
     {
         return Inertia::render('Agreements/Show', [
-            'agreement' => Agreement::with('customer')->find($id),
+            'agreement' => Agreement::with('customer')->with('paymentSchedules')->find($id),
         ]);
     }
 
