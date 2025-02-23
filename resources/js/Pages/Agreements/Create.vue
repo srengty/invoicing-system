@@ -2,7 +2,8 @@
 
     <Head title="Create Agreement" />
     <GuestLayout>
-        <h1>Create Agreement</h1>
+        <Toast />
+        <h1>{{props.edit?'Update':'Create'}} Agreement</h1>
         <Form @submit="submit" :action="route('agreements.store')" v-slot="$form" :initial-values="form">
             <div class="create-agreement flex flex-row gap-4">
                 <div class="border border-gray-200 rounded-lg p-4 w-2/5">
@@ -69,8 +70,20 @@
                 <div class="border border-gray-200 rounded-lg p-4">
                     <div class="grid grid-cols-1 gap-1">
                         <span>Attachment</span>
-                        <FileUpload name="attachments" :url="route('agreements.upload')" 
+                        <FileUpload name="attachments" :url="route('agreements.upload')" mode="basic"
                         auto accept="application/pdf" @before-upload="beforeUploadAttachment" @upload="onUploadAttachments" />
+                        <Message v-if="errors.attachments" severity="error" size="small" variant="simple"
+                            class="col-span-2">{{ errors.attachments }}</Message>
+                        <DataView :value="form.attachments">
+                            <template #list="slotProps">
+                                <div class="flex flex-col">
+                                    <div v-for="(item, index) in slotProps.items" :key="index">
+                            <a class="underline hover:text-red-800" v-if="src" :href="src" target="_blank"><i
+                                    class="pi pi-file-pdf"></i> {{ item.split('/').pop() }}</a>
+                                    </div>
+                                </div>
+                            </template>
+                        </DataView>
                     </div>
                 </div>
             </div>
@@ -87,7 +100,7 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { Button, DatePicker, FileUpload, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon } from 'primevue';
+import { Button, DatePicker, FileUpload, InputNumber, InputText, Message, Select, ToggleSwitch, InputGroup, InputGroupAddon, DataView, Toast } from 'primevue';
 import { Form } from '@primevue/forms';
 import { useToast } from "primevue/usetoast";
 import { reactive, onMounted, ref, computed } from 'vue';
@@ -170,30 +183,32 @@ onMounted(() => {
                 amount: v.amount,
                 agreement_currency: props.agreement.currency,
                 exchange_rate: 4100,
+                status: v.status
             }
         });
         form.attachments = JSON.parse(props.agreement.attachments??'[]');
         form.currency = props.agreement.currency;
         riels.value = (props.agreement.currency == 'KHR' ? true : false);
         schedule.value.agreement_amount = props.agreement.amount;
+        src.value = props.agreement.agreement_doc;
     }
 })
 const submit = ({states,valid}) => {
     isStoringAgreement.value = true;
     form.agreement_amount = schedule.value.agreement_amount;
     const data = {...form, 
-        agreement_date: form.agreement_date.toGMTString(),
-        start_date: form.start_date.toGMTString(),
-        end_date: form.end_date.toGMTString(),
+        agreement_date: form.agreement_date.toLocaleDateString('fr-FR'),
+        start_date: form.start_date.toLocaleDateString('fr-FR'),
+        end_date: form.end_date.toLocaleDateString('fr-FR'),
         payment_schedule: form.payment_schedule.map(v=>({
             ...v,
-            due_date: v.due_date.toGMTString(),
+            due_date: v.due_date.toLocaleDateString('fr-FR'),
         }))
     }
-    console.log('submit', data, valid);
+    console.log('submit', data, valid,form.agreement_date);
     if(props.edit){
         form._method = 'PUT';
-        router.put(route('agreements.update', props.agreement.agreement_no), form);
+        router.put(route('agreements.update', props.agreement.agreement_no), data);
     }else{
         router.post(route('agreements.store'), data);
     }
@@ -208,13 +223,12 @@ const submit = ({states,valid}) => {
 }
 const onUpload = (e) => {
     console.log(e);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded' + e.files[0], life: 3000 });
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Document Uploaded ' + e.xhr.responseText, life: 3000 });
     form.agreement_doc = e.xhr.responseText;
     src.value = e.xhr.responseText;
 }
 const onUploadAttachments = (e) => {
-    console.log(e);
-    toast.add({ severity: 'success', summary: 'Success', detail: 'File Uploaded' + e.files[0], life: 3000 });
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Attachment Uploaded ' + e.xhr.responseText, life: 3000 });
     if(!form.attachments) form.attachments = [];
     form.attachments.push(e.xhr.responseText);
 }
@@ -228,6 +242,7 @@ const beforeUploadAttachment = (e) => {
     e.formData.append('_token', page.props.csrf_token);
 }
 const src = ref(null);
+const attachments = ref([]);
 const doSave = (e) => {
     schedule.value.currency = e.currency;
     form.payment_schedule.push({
@@ -238,6 +253,7 @@ const doSave = (e) => {
         currency: e.currency,
         remark: e.remark,
         amount: e.amount,
+        status: e.status
     });
 }
 const beforeUpdate = (e) => {

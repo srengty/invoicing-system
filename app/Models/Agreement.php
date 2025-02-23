@@ -52,22 +52,22 @@ class Agreement extends Model
     {
         return Attribute::make(
             get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
-            set:fn($value)=>(new Carbon($value))->format('Y-m-d')
-            //(Carbon::createFromFormat('d/m/Y',$value))
+            set:fn($value)=>//(new Carbon($value))->format('Y-m-d')
+            (Carbon::createFromFormat('d/m/Y',$value))
         );
     }
     protected function startDate():Attribute
     {
         return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
-            set:fn($value)=>(new Carbon($value))->format('Y-m-d')
-            //(Carbon::createFromFormat('d/m/Y',$value))
+            set:fn($value)=>//(new Carbon($value))->format('Y-m-d')
+            (Carbon::createFromFormat('d/m/Y',$value))
         );
     }
     protected function endDate():Attribute
     {
         return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
-            set:fn($value)=>(new Carbon($value))->format('Y-m-d')
-            //(Carbon::createFromFormat('d/m/Y',$value))
+            set:fn($value)=>//(new Carbon($value))->format('Y-m-d')
+            (Carbon::createFromFormat('d/m/Y',$value))
         );
     }
     public function paymentSchedules():HasMany

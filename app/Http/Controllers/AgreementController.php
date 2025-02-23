@@ -42,9 +42,9 @@ class AgreementController extends Controller
     {
         $request->validate([
             'agreement_no' => 'required',
-            'agreement_date' => 'required|date',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
+            'agreement_date' => 'required|date_format:d/m/Y',
+            'start_date' => 'required|date_format:d/m/Y',
+            'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
         ]);
@@ -89,7 +89,7 @@ class AgreementController extends Controller
             'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
             'csrf_token' => csrf_token(),
             'quotations' => Quotation::all(),
-            'agreement' => Agreement::with('paymentSchedules')->find($agreement_no),
+            'agreement' => Agreement::with('customer')->with('paymentSchedules')->find($agreement_no),
             'edit' => true,
         ]);
     }
@@ -97,13 +97,15 @@ class AgreementController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Agreement $agreement)
+    public function update(Request $request, int $agreement_no)
     {
         $data = $request->except('payment_schedule')+['amount' => $request->agreement_amount];
         $data['attachments'] = json_encode($request->attachments);
+        $agreement = Agreement::with('paymentSchedules')->find($agreement_no);
         $agreement->update($data);
         //dd($agreement->paymentSchedules->pluck('id'));
-        PaymentSchedule::where('agreement_no','=',$agreement->agreement_no)->delete();
+        // PaymentSchedule::where('agreement_no','=',$agreement->agreement_no)->delete();
+        $agreement->paymentSchedules()->delete();
         foreach($request->payment_schedule as $key => $value){
             unset($value['id']);
             $schedule = new PaymentSchedule([

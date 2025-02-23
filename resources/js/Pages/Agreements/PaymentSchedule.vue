@@ -129,6 +129,7 @@ const editingSchedule = ref({
     currency: 'KHR',
     agreement_currency: 'KHR',
     exchange_rate: 4200,
+    status: 'Pending'
 });
 const doEditPaymentSchedule = (data) => {
     Object.assign(editingSchedule.value, data );
