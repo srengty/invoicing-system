@@ -39,10 +39,10 @@
                   <div>{{ product.pivot.quantity }}</div>
                   <div>
                       <div class="flex flex-col">
-                          <span class="font-semibold">៛{{ formatNumber(product.price) }}</span>
+                          <span class="font-semibold">៛{{ formatNumber(product.pivot.price) }}</span>
                       </div>
                   </div>
-                  <div class="font-semibold">៛{{ formatNumber((product.price * product.pivot.quantity).toFixed(2)) }}</div>
+                  <div class="font-semibold">៛{{ formatNumber((product.pivot.price * product.pivot.quantity).toFixed(2)) }}</div>
               </div>
           </div>
 

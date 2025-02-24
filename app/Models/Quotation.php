@@ -27,7 +27,7 @@ class Quotation extends Model
     protected $casts = [
         'quotation_date' => 'datetime',
         'total' => 'double',
-        'quotation_date' => 'datetime:Y-m-d',    
+        'quotation_date' => 'datetime:Y-m-d',
     ];
 
     public function customer()
