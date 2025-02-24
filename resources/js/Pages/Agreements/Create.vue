@@ -253,7 +253,7 @@ const doSave = (e) => {
         currency: e.currency,
         remark: e.remark,
         amount: e.amount,
-        status: e.status
+        status: e.status??'Pending'
     });
 }
 const beforeUpdate = (e) => {

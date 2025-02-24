@@ -125,10 +125,15 @@ class QuotationController extends Controller
     /**
      * For printing quotations.
      */
-//     public function show($quotation_no)
-//     {
-//          $quotation = Quotation::with(['customer', 'products'])->where('quotation_no', $quotation_no)->firstOrFail();
-// }
+    public function show($quotation_no)
+    {
+        $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
+
+        return Inertia::render('Quotations/Print', [
+            'quotation' => $quotation,
+            'products' => $quotation->products,
+        ]);
+    }
 
 
     /**
@@ -199,25 +204,25 @@ class QuotationController extends Controller
         return response()->json($agreement);
     }
 
-    public function show($id)
-    {
-        $quotation = Quotation::with(['customer', 'items', 'agreement'])->findOrFail($id);
+    // public function show($id)
+    // {
+    //     $quotation = Quotation::with(['customer', 'items', 'agreement'])->findOrFail($id);
 
-        return response()->json([
-            'customer_name' => $quotation->customer->name,
-            'customer_address' => $quotation->customer->address,
-            'customer_phone' => $quotation->customer->phone,
-            'agreement' => $quotation->agreement ? ['agreement_no' => $quotation->agreement->number] : null,
-            'items' => $quotation->items->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'unit_price' => $item->unit_price,
-                    'quantity' => $item->quantity,
-                ];
-            }),
-        ]);
-    }
+    //     return response()->json([
+    //         'customer_name' => $quotation->customer->name,
+    //         'customer_address' => $quotation->customer->address,
+    //         'customer_phone' => $quotation->customer->phone,
+    //         'agreement' => $quotation->agreement ? ['agreement_no' => $quotation->agreement->number] : null,
+    //         'items' => $quotation->items->map(function ($item) {
+    //             return [
+    //                 'id' => $item->id,
+    //                 'name' => $item->name,
+    //                 'unit_price' => $item->unit_price,
+    //                 'quantity' => $item->quantity,
+    //             ];
+    //         }),
+    //     ]);
+    // }
 
 }
 
