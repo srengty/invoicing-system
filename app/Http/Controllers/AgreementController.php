@@ -107,12 +107,11 @@ class AgreementController extends Controller
         // PaymentSchedule::where('agreement_no','=',$agreement->agreement_no)->delete();
         $agreement->paymentSchedules()->delete();
         foreach($request->payment_schedule as $key => $value){
-            unset($value['id']);
             $schedule = new PaymentSchedule([
                 'agreement_no' => $request->agreement_no,
                 'due_date' => $value['due_date'],
                 'amount' => $value['amount'],
-                'status' => $value['status'],
+                'status' => $value['status']??'Pending',
                 'percentage' => $value['percentage'],
                 'short_description' => $value['short_description'],
                 'currency' => $value['currency'],
