@@ -64,8 +64,8 @@ class QuotationController extends Controller
             'products'       => 'nullable|array', // Make products optional
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
+              'products.*.price' => 'required|numeric|min:1', // Validate product quantities
         ]);
-
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
@@ -76,8 +76,9 @@ class QuotationController extends Controller
         // Calculate the total
         $total = 0;
         foreach ($validated['products'] as $product) {
-            $prod = Product::find($product['id']);
-            $total += $prod->price * $product['quantity'];
+
+//             $prod = Product::find($product['id']);
+            $total += $product['price'] * $product['quantity'];
         }
         // Calculate tax based on the provided percentage
         // $tax = $validated['tax'] / 100;
@@ -91,6 +92,7 @@ class QuotationController extends Controller
         $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
         $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;  // Start from a default value if none exists
 
+// dd(json_encode($validated["products"], true));
         // Create the quotation
         $quotation = Quotation::create([
             'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
@@ -100,6 +102,7 @@ class QuotationController extends Controller
             'phone_number'   => $validated['phone_number'] ?? null,
             'terms'          => $validated['terms'] ?? null,
             'total'          => $total,
+
         ]);
 
         $quotation->save();
@@ -109,7 +112,9 @@ class QuotationController extends Controller
             $prod = Product::find($product['id']);
             $quotation->products()->attach($prod->id, [
                 'quantity' => $product['quantity'],
-                'price' => $prod->price * $product['quantity'],
+//                 'price' => $prod->price * $product['quantity'],
+                'price' => $prod->price,
+                'product_unit_prices' => json_encode($validated["products"], true),
             ]);
         }
 
@@ -122,7 +127,8 @@ class QuotationController extends Controller
      */
     public function show($quotation_no)
     {
-        $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
+         $quotation = Quotation::with(['customer', 'products'])->where('quotation_no', $quotation_no)->firstOrFail();
+
 
         return Inertia::render('Quotations/Print', [
             'quotation' => $quotation,

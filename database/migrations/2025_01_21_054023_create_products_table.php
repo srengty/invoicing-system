@@ -16,13 +16,14 @@ return new class extends Migration
             $table->string('category_code')->comment('R1, T1, C1');
             $table->string('category_name_khmer');
             $table->string('category_name_english');
-            $table->string('description_khmer');
-            $table->string('description_english');
+            $table->string('description_khmer')->nullable(); // Make descriptions nullable
+            $table->string('description_english')->nullable(); // Make descriptions nullable
             $table->timestamps();
         });
+
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->nullable(); // Ensure this line exists
+            $table->string('code')->nullable();
             $table->string('name');
             $table->string('name_kh')->nullable();
             $table->string('unit');
@@ -31,6 +32,7 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });
+
     }
 
     /**
