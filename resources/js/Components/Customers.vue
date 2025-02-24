@@ -24,7 +24,7 @@
                 </div>
                 <div>
                     <label for="code" class="block text-lg font-medium required">Customer category</label>
-                    <InputText class="w-full" />
+                    <Select name="customer_category_id" :options="customerCategories" option-value="id" option-label="category_name_english" class="w-full" />
                 </div>
                 <div>
                     <label for="name" class="block text-lg font-medium required">Customer/Organization name</label>
@@ -37,7 +37,7 @@
                 </div>
                 <div>
                     <label for="code" class="block text-lg font-medium">Credit period (days)</label>
-                    <InputText class="w-full" />
+                    <InputText class="w-full" v-model="form.credit_period" />
                 </div>
                 <div>
                     <label for="address" class="block text-lg font-medium required">Address</label>
@@ -87,13 +87,14 @@
 </template>
 
 <script setup>
-import { InputText, Button, Message, Fieldset } from 'primevue';
+import { InputText, Button, Message, Fieldset, Select } from 'primevue';
 import { router, useForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 
 const props = defineProps({
     errors: Object,
     redirect_route: String,
+    customerCategories: Array,
 });
 const emit = defineEmits(['success']);
 // Create a form object using useForm hook from Inertia
@@ -111,6 +112,7 @@ const form = useForm({
     bank_account_number: '',
     bank_swift: '',
     redirect_route: props.redirect_route?? 'customers.index',
+    customer_category_id: '',
 });
 
 // Submit form to create a new customer

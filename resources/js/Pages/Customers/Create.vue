@@ -1,7 +1,7 @@
 <template>
     <Head title="Create Customer" />
     <GuestLayout>
-        <Customers></Customers>
+        <Customers :customer-categories="customerCategories"></Customers>
     </GuestLayout>
 </template>
 
@@ -9,6 +9,9 @@
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import Customers from '@/Components/Customers.vue';
 import { Head } from '@inertiajs/vue3';
+defineProps({
+    'customerCategories': Array,
+})
 </script>
 
 <style scoped>

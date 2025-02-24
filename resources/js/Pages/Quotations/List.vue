@@ -68,7 +68,7 @@
 
                                 <template v-slot:item="{ item, options }">
                                     <div :class="['flex items-center justify-between p-2', { 'bg-surface-100 dark:bg-surface-700': options.odd }]" >
-                                        <p><strong>Item:</strong> {{ item.name }} <strong> , QTY:</strong> {{ item.pivot.quantity }}</p>
+                                        <p><strong>Item:</strong> {{ item.name }} <strong> , QTY:</strong> {{ item.pivot.quantity }} <strong> , Unit Price:</strong> {{ item.pivot.price }} </p>
                                     </div>
                                 </template>
 

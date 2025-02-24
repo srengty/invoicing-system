@@ -55,3 +55,47 @@ To deploy the web application on a server or hosting server:
 - First run `npm run build` to build css,js, and resources for production
 - Copy all files to web hosting server and then point web root folder to public folder
 - Export local db to import to server database (if ssh can't be run)
+
+## Test date 24/02/2025
+- [ ] Dashboard
+- [ ] Quotations
+  - [ ] List
+  - [ ] Filter
+  - [ ] Create
+  - [ ] Update
+  - [ ] View
+  - [ ] Print
+  - [ ] Update status from Pending to Aprroved
+  - [ ] Issue invoice (link)
+  - [ ] Issue agreement (link)
+- [ ] Agreements
+  - [ ] List
+  - [ ] Filter
+  - [ ] Create
+  - [ ] Update
+  - [ ] View
+  - [ ] Print
+  - [ ] Issue invoice (fully paid)
+  - [ ] Close agreement
+  - [ ] Cancel agreement
+- [ ] Invoices
+  - [ ] List
+  - [ ] Create
+  - [ ] Update
+  - [ ] View
+  - [ ] Print
+  - [ ] Update status from Pending to Aprroved
+- [ ] Settings:
+  - [x] Customers:
+    - [x] List
+    - [x] Create
+    - [x] Edit
+    - [x] Show
+    - [x] Delete
+  - [ ] Products
+    - [ ] List
+    - [ ] Create
+    - [ ] Edit
+    - [ ] Show
+    - [ ] Delete
+  - [ ] Categories

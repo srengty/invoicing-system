@@ -56,5 +56,10 @@ class Quotation extends Model
         return $this->hasOne(Agreement::class, 'quotation_no', 'quotation_no');
     }
 
+    public function items()
+    {
+        return $this->hasMany(QuotationItem::class, 'quotation_no', 'quotation_no');
+    }
+
 }
 
