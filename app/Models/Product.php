@@ -18,6 +18,10 @@ class Product extends Model
         'price',
         'quantity',
         'category',
+        'division_id',
+        'acc_code',
+        'desc',
+        'desc_kh'
     ];
 
     public $timestamps = true;
@@ -31,8 +35,14 @@ class Product extends Model
     public function quotations()
     {
         return $this->belongsToMany(Quotation::class, 'product_quotation', 'product_id', 'quotation_no')
-                    ->withPivot('quantity', 'price')
+                    ->withPivot('quantity', 'price', 'name', 'unit')
                     ->withTimestamps();
+    }
+
+    public function productQuotations()
+    {
+        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no')
+                    ->withPivot('quantity', 'price', 'unit');
     }
 
 }

@@ -18,6 +18,7 @@ class ProductQuotation extends Model
         'product_id',
         'quantity',
         'price',
+        'product_unit_prices',
     ];
 
     public function product()

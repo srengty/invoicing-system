@@ -27,7 +27,7 @@ class Quotation extends Model
     protected $casts = [
         'quotation_date' => 'datetime',
         'total' => 'double',
-        'quotation_date' => 'datetime:Y-m-d',    
+        'quotation_date' => 'datetime:Y-m-d',
     ];
 
     public function customer()
@@ -41,13 +41,20 @@ class Quotation extends Model
                     ->withPivot('quantity', 'price')
                     ->withTimestamps();
     }
+    public function productQuotations():HasMany
+    {
+        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no');
+    }
     public function invoices():HasMany
     {
         return $this->hasMany(Invoice::class, 'quotation_no', 'quotation_no');
     }
-    public function agreement():HasOne
+
+    // In Quotation.php (Quotation Model)
+    public function agreement()
     {
         return $this->hasOne(Agreement::class, 'quotation_no', 'quotation_no');
     }
+
 }
 

@@ -61,7 +61,7 @@
               v-model="form.agreement_no"
               :options="agreements"
               optionLabel="agreement_no"
-              optionValue="id"
+              optionValue="agreement_no"
               placeholder="Select Agreement"
               class="w-full"
               required
@@ -225,7 +225,7 @@ const statusOptions = [
   { label: 'Paid', value: 'paid' },
   { label: 'Cancelled', value: 'cancelled' },
 ];
-console.log(invoice.products)
+
 const productsList = ref([...invoice.products]);
 const showProductModal = ref(false);
 

@@ -338,7 +338,7 @@ import Customers from '@/Components/Customers.vue';
           if (prod) {
           selectedProductsData.value.push({
             ...prod,
-            quanity: 1,
+            quanity: 1  ,
             subTotal: Number(prod.price) * 1,
           });
         }
@@ -431,13 +431,16 @@ import Customers from '@/Components/Customers.vue';
       });
       return;
     }
+      selectedProductsData.value.forEach((prod)=>{
+          console.log(prod.price);
+      })
     // Prepare the products array for submission.
     form.products = selectedProductsData.value.map((prod) => ({
       id: prod.id,
       quantity: prod.quanity,
-      price: prod.price,
+        price: prod.price
     }));
-
+    console.log(form.products);
     // Update totals.
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
