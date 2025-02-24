@@ -24,7 +24,7 @@
                 </div>
                 <div>
                     <label for="code" class="block text-lg font-medium required">Customer category</label>
-                    <Select name="customer_category_id" :options="customerCategories" option-value="id" option-label="category_name_english" class="w-full" />
+                    <Select v-model="form.customer_category_id" :options="customerCategories" option-value="id" option-label="category_name_english" class="w-full" />
                 </div>
                 <div>
                     <label for="name" class="block text-lg font-medium required">Customer/Organization name</label>
