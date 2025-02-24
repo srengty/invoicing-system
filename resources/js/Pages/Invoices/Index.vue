@@ -137,17 +137,22 @@ defineProps({
   },
 });
 
-// Filters
-const filters = ref({
-  invoice_no_start: null,
-  invoice_no_end: null,
-  category_name_english: null, // Changed from customer_type to category_name_english
-  currency: null,
-  start_date: null,
-  end_date: null,
-  customer: null,
-  status: null,
-});
+const storedFilters = localStorage.getItem("invoiceFilters");
+const filters = ref(
+  storedFilters
+    ? JSON.parse(storedFilters)
+    : {
+        invoice_no_start: null,
+        invoice_no_end: null,
+        category_name_english: null,
+        currency: null,
+        start_date: null,
+        end_date: null,
+        customer: null,
+        status: null,
+        income_type: null,
+      }
+);
 
 const customerTypeOptions = ref([
   { label: 'Individual', value: 'Individual' },
@@ -215,19 +220,30 @@ const printInvoice = (id) => {
 };
 
 const searchInvoices = () => {
-  const formattedStartDate = filters.value.start_date ? moment(filters.value.start_date).format('YYYY-MM-DD') : null;
-  const formattedEndDate = filters.value.end_date ? moment(filters.value.end_date).format('YYYY-MM-DD') : null;
+  const formattedStartDate = filters.value.start_date
+    ? moment(filters.value.start_date).format('YYYY-MM-DD')
+    : null;
+  const formattedEndDate = filters.value.end_date
+    ? moment(filters.value.end_date).format('YYYY-MM-DD')
+    : null;
 
-  Inertia.get('/invoices', {
+  // Create an object with all filter values
+  const invoiceFilters = {
     invoice_no_start: filters.value.invoice_no_start,
     invoice_no_end: filters.value.invoice_no_end,
-    category_name_english: filters.value.category_name_english, // Changed from customer_type to category_name_english
+    category_name_english: filters.value.category_name_english,
     currency: filters.value.currency,
     start_date: formattedStartDate,
     end_date: formattedEndDate,
     customer: filters.value.customer,
     status: filters.value.status,
-  });
+    income_type: filters.value.income_type,
+  };
+
+  // Save all filter values to localStorage as a JSON string
+  localStorage.setItem("invoiceFilters", JSON.stringify(invoiceFilters));
+
+  Inertia.get('/invoices', invoiceFilters);
 };
 
 const clearFilters = () => {

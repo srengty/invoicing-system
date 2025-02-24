@@ -12,11 +12,16 @@ class Product extends Model
     protected $table = 'products';
     protected $fillable = [
         'name',
+        'name_kh',
         'code',
         'unit',
         'price',
         'quantity',
         'category',
+        'division_id',
+        'acc_code',
+        'desc',
+        'desc_kh'
     ];
 
     public $timestamps = true;
@@ -37,7 +42,7 @@ class Product extends Model
     public function productQuotations()
     {
         return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no')
-                    ->withPivot('quantity', 'price', 'name', 'unit');
+                    ->withPivot('quantity', 'price', 'unit');
     }
 
 }

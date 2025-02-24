@@ -26,11 +26,16 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'name_kh' => 'required|string|max:255',
             'code' => 'nullable|string',
             'unit' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'category' => 'nullable|string|max:255',
+            'desc' => 'nullable|string|max:255',
+            'desc_kh' => 'nullable|string|max:255',
+            'acc_code' => 'nullable|string|max:255',
+            'division_id' => 'nullable|integer|max:255',
         ]);
 
         Product::create($validated);

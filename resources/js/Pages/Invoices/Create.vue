@@ -45,7 +45,8 @@
             <label for="agreement_no" class="block text-lg font-medium">Agreement No</label>
             <Select
               v-model="form.agreement_no"
-              :options="agreements"
+              :options="form.agreement_no || !form.quotation_no
+              ? agreements:agreements.filter(a => a.status === 'Open')"
               optionLabel="agreement_no"
               optionValue="agreement_no"
               placeholder="Select Agreement"
@@ -233,38 +234,58 @@ const filteredAgreements = ref([]);
 watch(() => form.quotation_no, (newQuotationId) => {
   if (newQuotationId) {
     const selectedQuotation = quotations.find(q => q.quotation_no === newQuotationId);
-    if (selectedQuotation) {
-      console.log('Selected Quotation:', selectedQuotation); // Debugging log
 
-      // Auto-fill customer, address, phone, and status
+    if (selectedQuotation) {
+      console.log("Selected Quotation:", selectedQuotation);
+
+      // Auto-fill customer details
       form.customer_id = selectedQuotation.customer_id || '';
       form.address = selectedQuotation.address || '';
       form.phone = selectedQuotation.phone_number || '';
       form.status = selectedQuotation.status || '';
-      
-      // Auto-fill agreement details if available
-      form.agreement_no = selectedQuotation.agreement?.agreement_no || '';
-      form.start_date = selectedQuotation.agreement?.start_date || '';
-      form.end_date = selectedQuotation.agreement?.end_date || '';
 
-      // Ensure `productQuotations` exists and contains products
+      if (selectedQuotation.agreement) {
+        console.log("working on agreement")
+        // If quotation has an agreement, set and disable agreement selection
+        form.agreement_no = selectedQuotation.agreement.agreement_no;
+        filteredAgreements.value = [selectedQuotation.agreement];
+      } else {
+        console.log("working on not agreement")
+        // If no agreement, list only agreements that are not linked to any quotation
+        form.agreement_no = ''; // Reset agreement selection
+        filteredAgreements.value = agreements.filter(a => a.quotation == null && a.status === 'Open');
+      }
+
+      // Auto-fill products based on quotation
       if (Array.isArray(selectedQuotation.product_quotations) && selectedQuotation.product_quotations.length > 0) {
-        productsList.value = selectedQuotation.product_quotations.map((pq, index) => {
-          return {
-            index: index + 1, // Auto-numbering for DataTable
-            product: pq.product_id?.name || 'Unknown Product', // Get product name safely
-            qty: pq.quantity || 1, // Default quantity to 1 if missing
-            unit: pq.unit || 'Unit', // Ensure unit is defined
-            unitPrice: pq.price || 0, // Default price to 0 if missing
-            subTotal: (pq.quantity || 1) * (pq.price || 0), // Calculate subtotal safely
-          };
-        });
+        productsList.value = selectedQuotation.product_quotations.map((pq, index) => ({
+          index: index + 1,
+          product: pq.product.name || 'Unknown Product',
+          qty: pq.quantity || 1,
+          unit: pq.product.unit || 'Unit',
+          unitPrice: pq.price || 0,
+          subTotal: (pq.quantity || 1) * (pq.price || 0),
+        }));
       } else {
         productsList.value = [];
       }
 
-      console.log('Updated DataTable Products:', productsList.value); // Debugging log
+      // Recalculate Grand Total
+      form.grand_total = calculateTotal.value - form.instalmentPaid;
+
+      console.log("Updated Form Data after Quotation Selection:", form);
     }
+  } else {
+    // If no quotation is selected, reset agreements list
+    filteredAgreements.value = agreements.filter(a => a.status === 'Open');
+    form.agreement_no = '';
+    form.customer_id = '';
+    form.address = '';
+    form.phone = '';
+    form.start_date = '';
+    form.end_date = '';
+    form.instalmentPaid = 0;
+    productsList.value = [];
   }
 }, { deep: true });
 
@@ -273,17 +294,17 @@ watch(() => form.agreement_no, (newAgreementNo) => {
     const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
 
     if (selectedAgreement) {
-      console.log("Selected Agreement:", selectedAgreement); // Debugging log
+      console.log("Selected Agreement:", selectedAgreement);
 
-      // Always update the quotation number if the agreement has one
+      // Set quotation if the agreement is linked to one
       form.quotation_no = selectedAgreement.quotation_no || '';
 
-      // Auto-fill the address ONLY if it is empty
+      // Auto-fill address only if empty
       if (!form.address) {
         form.address = selectedAgreement.address || '';
       }
 
-      // Auto-fill the start and end dates
+      // Auto-fill start and end dates
       form.start_date = selectedAgreement.start_date || '';
       form.end_date = selectedAgreement.end_date || '';
 
@@ -292,11 +313,10 @@ watch(() => form.agreement_no, (newAgreementNo) => {
         ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
         : 0;
 
-      // Recalculate grand total
+      // Recalculate Grand Total
       form.grand_total = calculateTotal.value - form.instalmentPaid;
     }
   } else {
-    // If agreement is deselected, keep existing data intact
     console.log("Agreement Deselected - Keeping existing data");
   }
 }, { deep: true });
