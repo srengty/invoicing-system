@@ -125,10 +125,10 @@ class QuotationController extends Controller
     /**
      * For printing quotations.
      */
-    public function show($quotation_no)
-    {
-         $quotation = Quotation::with(['customer', 'products'])->where('quotation_no', $quotation_no)->firstOrFail();
-
+//     public function show($quotation_no)
+//     {
+//          $quotation = Quotation::with(['customer', 'products'])->where('quotation_no', $quotation_no)->firstOrFail();
+// }
 
 
     /**
