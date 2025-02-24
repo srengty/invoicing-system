@@ -20,7 +20,7 @@
             icon="pi pi-check"
             class="p-button-success"
             type="button"
-            @click="submitInvoiceAndRedirect"
+            @click="submitInvoice"
             rounded
           />
         </div>
@@ -228,6 +228,7 @@ const statusOptions = [
 
 const productsList = ref([]);
 const showProductModal = ref(false);
+const filteredAgreements = ref([]);
 
 watch(() => form.quotation_no, (newQuotationId) => {
   if (newQuotationId) {
@@ -251,7 +252,7 @@ watch(() => form.quotation_no, (newQuotationId) => {
         productsList.value = selectedQuotation.product_quotations.map((pq, index) => {
           return {
             index: index + 1, // Auto-numbering for DataTable
-            product: pq.name || 'Unknown Product', // Get product name safely
+            product: pq.product_id?.name || 'Unknown Product', // Get product name safely
             qty: pq.quantity || 1, // Default quantity to 1 if missing
             unit: pq.unit || 'Unit', // Ensure unit is defined
             unitPrice: pq.price || 0, // Default price to 0 if missing
@@ -267,6 +268,38 @@ watch(() => form.quotation_no, (newQuotationId) => {
   }
 }, { deep: true });
 
+watch(() => form.agreement_no, (newAgreementNo) => {
+  if (newAgreementNo) {
+    const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
+
+    if (selectedAgreement) {
+      console.log("Selected Agreement:", selectedAgreement); // Debugging log
+
+      // Always update the quotation number if the agreement has one
+      form.quotation_no = selectedAgreement.quotation_no || '';
+
+      // Auto-fill the address ONLY if it is empty
+      if (!form.address) {
+        form.address = selectedAgreement.address || '';
+      }
+
+      // Auto-fill the start and end dates
+      form.start_date = selectedAgreement.start_date || '';
+      form.end_date = selectedAgreement.end_date || '';
+
+      // Calculate instalment paid (sum of all invoice amounts related to this agreement)
+      form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
+        ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
+        : 0;
+
+      // Recalculate grand total
+      form.grand_total = calculateTotal.value - form.instalmentPaid;
+    }
+  } else {
+    // If agreement is deselected, keep existing data intact
+    console.log("Agreement Deselected - Keeping existing data");
+  }
+}, { deep: true });
 
 const indexTemplate = (rowData, { index }) => {
   return index + 1; // Return the index + 1 for 1-based index display
@@ -355,16 +388,9 @@ const submitInvoice = async () => {
     if (!response.ok) {
       console.error('Failed to submit invoice:', response.statusText);
       return;
-    }
-
-    Inertia.visit('/invoices'); // Redirect after submission
+    }// Redirect after submission
   } catch (error) {
     console.error('Error submitting invoice:', error);
   }
-};
-
-const submitInvoiceAndRedirect = () => {
-  submitInvoice();
-  Inertia.visit('/invoices');
 };
 </script>
