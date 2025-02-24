@@ -173,18 +173,15 @@ const openForm = (product = null) => {
         form.name_kh = product.name_kh;
         form.unit = product.unit;
         form.price = product.price;
-        form.quantity = product.quantity;
-<<<<<<< HEAD
+        form.quantity = product.quantity;HEAD
         form.category = product.category;
         form.desc = product.desc;
         form.desc_kh = product.desc_kh;
-=======
         form.category_id = product.category_id;
         form.desc = product.desc;
         form.desc_kh = product.desc_kh;
         form.division_id = product.division_id;
-        form.acc_id = product.acc_id;
->>>>>>> invoices
+        form.acc_id = product.acc_id;invoices
     } else {
         form.reset();
     }
