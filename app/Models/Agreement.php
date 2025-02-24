@@ -35,10 +35,12 @@ class Agreement extends Model
         return $this->belongsTo(Customer::class);
     }
     
+    // In Agreement.php (Agreement Model)
     public function quotation()
     {
-        return $this->belongsTo(Quotation::class);
+        return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
     }
+
 
     // protected $dateFormat = 'Y-m-d';
     protected function casts(){
@@ -74,4 +76,6 @@ class Agreement extends Model
     {
         return $this->hasMany(PaymentSchedule::class, 'agreement_no');
     }
+
+
 }

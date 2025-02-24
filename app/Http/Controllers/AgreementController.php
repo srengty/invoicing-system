@@ -144,4 +144,20 @@ class AgreementController extends Controller
     {
         //
     }
+
+    // Assuming you have a controller method like this
+    public function getAgreementForQuotation($quotationId)
+    {
+        // Get the quotation with the related agreement
+        $quotation = Quotation::with('agreement')->find($quotationId);
+
+        // Check if agreement exists
+        if ($quotation && $quotation->agreement) {
+            return response()->json($quotation->agreement); // Return the agreement data
+        }
+
+        return response()->json(null); // Return null if no agreement found
+    }
+
+
 }

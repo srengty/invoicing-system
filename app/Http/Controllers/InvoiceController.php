@@ -20,7 +20,7 @@ class InvoiceController extends Controller
     {
         // Get all agreements, quotations, customers, and products
         $agreements = Agreement::all();
-        $quotations = Quotation::all();
+        $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
         $customers = Customer::all();
         $products = Product::all();
         
@@ -260,5 +260,16 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/Show', [
             'invoice' => $invoice
         ]);
+    }
+
+    public function getInvoicesByQuotation($quotation_no)
+    {
+        // Fetch invoices for the given quotation_no and status=paid
+        $invoices = Invoice::where('quotation_no', $quotation_no)
+                            ->where('status', 'paid')
+                            ->get();
+
+        // Return the invoices as a JSON response
+        return response()->json($invoices);
     }
 }

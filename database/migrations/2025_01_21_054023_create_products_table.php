@@ -28,6 +28,10 @@ return new class extends Migration
             $table->string('unit');
             $table->decimal('price', 8, 2);
             $table->integer('quantity');
+            $table->string('division_id')->nullable();
+            $table->string('desc')->nullable();
+            $table->string('desc_kh')->nullable();
+            $table->string('acc_code')->nullable();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
         });

@@ -59,11 +59,11 @@
             <!-- Product Form Dialog -->
             <Dialog v-model:visible="isFormVisible" header="Product Form" :modal="true">
                 <form @submit.prevent="submitForm">
-                    <div class="field bg-red-300">
+                    <div class="field">
                         <label for="code">Division</label>
                         <Select id="code" v-model="form.division_id" option-label="name" option-value="id" :options="[{id:1,name:'GIC'},{id:2,name:'GCA'},{id:3,name:'GIC'}]" class="w-full" required ></Select>
                     </div>
-                    <div class="field bg-red-300">
+                    <div class="field">
                         <label for="category">Category</label>
                         <Select id="category" :options="categoryOptions" optionValue="name" optionLabel="name" v-model="form.category" class="w-full" ></Select>
                     </div>
@@ -95,9 +95,9 @@
                         <label for="price">Price in KHR</label>
                         <InputNumber id="price" v-model="form.price" class="w-full" required />
                     </div>
-                    <div class="field bg-red-300">
+                    <div class="field">
                         <label for="price" class="required">Account code</label>
-                        <InputText v-model="form.account_code" class="w-full" required  />
+                        <InputText v-model="form.acc_code" class="w-full" required  />
                     </div>
                     <div class="field">
                         <label for="quantity">Quantity</label>
@@ -153,7 +153,7 @@ const form = useForm({
     id: null,
     division_id: null,
     code: '',
-    account_code: '73048 ផលពីសេវាផ្សេងៗ',
+    acc_code: '73048 ផលពីសេវាផ្សេងៗ',
     name: '',
     name_kh: '',
     desc: '',
@@ -161,7 +161,7 @@ const form = useForm({
     unit: '',
     price: null,
     quantity: null,
-    category: '',
+    category_id: '',
 });
 
 // Open product form
@@ -174,9 +174,17 @@ const openForm = (product = null) => {
         form.unit = product.unit;
         form.price = product.price;
         form.quantity = product.quantity;
+<<<<<<< HEAD
         form.category = product.category;
         form.desc = product.desc;
         form.desc_kh = product.desc_kh;
+=======
+        form.category_id = product.category_id;
+        form.desc = product.desc;
+        form.desc_kh = product.desc_kh;
+        form.division_id = product.division_id;
+        form.acc_id = product.acc_id;
+>>>>>>> invoices
     } else {
         form.reset();
     }

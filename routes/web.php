@@ -27,6 +27,8 @@ Route::post('/agreements/store', [AgreementController::class, 'store'])->name('a
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
 Route::get('/agreements/edit/{agreement_no}', [AgreementController::class, 'edit'])->name('agreements.edit');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
+Route::get('/quotations/{quotationId}/agreement', [QuotationController::class, 'getAgreementForQuotation']);
+Route::post('/api/invoices/filter', [InvoiceController::class, 'filter']);
 
 Route::resource('quotations', QuotationController::class);
 Route::get('/quotations', [QuotationController::class, 'list']);
@@ -38,6 +40,7 @@ Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->
 
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
+Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
 
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
