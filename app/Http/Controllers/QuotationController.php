@@ -11,6 +11,7 @@ use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
 use App\Models\ProductQuotation;
 use Inertia\Inertia;
+
 class QuotationController extends Controller
 {
     public function list()
@@ -27,21 +28,21 @@ class QuotationController extends Controller
             'products' => $products,
 
         ]);
-
     }
 
     public function create()
     {
         $customers = Customer::all(); // Fetch customer id and name`
         $products = Product::all();
-//         dd($products);
+        //         dd($products);
         return inertia('Quotations/Create', [
             'customers' => $customers,
             'products' => $products,
         ]);
     }
 
-    public function updateStatus(Request $request, $id) {
+    public function updateStatus(Request $request, $id)
+    {
         $quotation = Quotation::findOrFail($id);
         $quotation->status = $request->status;  // Ensure correct data is saved
         $quotation->save();
@@ -64,7 +65,7 @@ class QuotationController extends Controller
             'products'       => 'nullable|array', // Make products optional
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
-              'products.*.price' => 'required|numeric|min:1', // Validate product quantities
+            'products.*.price' => 'required|numeric|min:1', // Validate product quantities
         ]);
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
@@ -77,7 +78,7 @@ class QuotationController extends Controller
         $total = 0;
         foreach ($validated['products'] as $product) {
 
-//             $prod = Product::find($product['id']);
+            //             $prod = Product::find($product['id']);
             $total += $product['price'] * $product['quantity'];
         }
         // Calculate tax based on the provided percentage
@@ -92,7 +93,7 @@ class QuotationController extends Controller
         $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
         $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;  // Start from a default value if none exists
 
-// dd(json_encode($validated["products"], true));
+        // dd(json_encode($validated["products"], true));
         // Create the quotation
         $quotation = Quotation::create([
             'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
@@ -112,24 +113,15 @@ class QuotationController extends Controller
             $prod = Product::find($product['id']);
             $quotation->products()->attach($prod->id, [
                 'quantity' => $product['quantity'],
-//                 'price' => $prod->price * $product['quantity'],
+                //                 'price' => $prod->price * $product['quantity'],
                 'price' => $prod->price,
                 'product_unit_prices' => json_encode($validated["products"], true),
             ]);
         }
 
-    // Redirect with a success message
-    return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
-}
-
-    /**
-     * For printing quotations.
-     */
-    public function show($quotation_no)
-    {
-         $quotation = Quotation::with(['customer', 'products'])->where('quotation_no', $quotation_no)->firstOrFail();
-
-
+        // Redirect with a success message
+        return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
+    }
 
     /**
      * Show the form for editing the specified resource.
@@ -218,7 +210,4 @@ class QuotationController extends Controller
             }),
         ]);
     }
-
 }
-
-
