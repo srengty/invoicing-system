@@ -12,6 +12,7 @@ class Customer extends Model
     protected $fillable = [
         'name',
         'code',
+        'credit_period',
         'address',
         'email',
         'phone_number',
@@ -22,6 +23,7 @@ class Customer extends Model
         'bank_account_name',
         'bank_account_number',
         'bank_swift',
+        'customer_category_id',
     ];
 
     public function quotations()

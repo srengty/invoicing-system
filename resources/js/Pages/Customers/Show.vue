@@ -14,19 +14,31 @@
 
             <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <div>
-                    <label for="name" class="block text-lg font-medium">Name</label>
+                    <label class="block text-lg font-medium">Category</label>
+                    <div class="p-inputtext p-component w-full border p-2 rounded">{{
+                        customerCategory?.category_name_english??'N/A'
+                    }} ({{ customerCategory?.category_name_khmer??'N/A' }})</div>
+                </div>
+                <div>
+                    <label class="block text-lg font-medium">Name</label>
                     <div class="p-inputtext p-component w-full border p-2 rounded">{{
                         customer.name
                     }}</div>
                 </div>
                 <div>
-                    <label for="code" class="block text-lg font-medium">Code</label>
+                    <label class="block text-lg font-medium">Code</label>
                     <div class="p-inputtext p-component w-full border p-2 rounded">{{
                         customer.code
                     }}</div>
                 </div>
                 <div>
-                    <label for="email" class="block text-lg font-medium">Email</label>
+                    <label class="block text-lg font-medium">Credit period</label>
+                    <div class="p-inputtext p-component w-full border p-2 rounded">{{
+                        customer.credit_period
+                    }}</div>
+                </div>
+                <div>
+                    <label class="block text-lg font-medium">Email</label>
                     <div class="p-inputtext p-component w-full border p-2 rounded">{{
                         customer.email
                     }}</div>
@@ -105,6 +117,7 @@ export default {
     },
     props: {
         customer: Object,
+        customerCategory: Object
     },
 };
 </script>

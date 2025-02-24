@@ -16,12 +16,20 @@
         <form @submit.prevent="submit">
             <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <div>
+                    <label for="code" class="block text-lg font-medium required">Customer category</label>
+                    <Select v-model="form.customer_category_id" :options="customerCategories" option-value="id" option-label="category_name_english" class="w-full" />
+                </div>
+                <div>
                     <label for="name" class="block text-lg font-medium">Name</label>
                     <InputText id="name" v-model="form.name" class="w-full" placeholder="Enter Customer Name" />
                 </div>
                 <div>
                     <label for="code" class="block text-lg font-medium">Code</label>
                     <InputText id="code" v-model="form.code" class="w-full" placeholder="Enter code" />
+                </div>
+                <div>
+                    <label for="code" class="block text-lg font-medium">Credit period (days)</label>
+                    <InputText class="w-full" v-model="form.credit_period" />
                 </div>
                 <div>
                     <label for="address" class="block text-lg font-medium">Address</label>
@@ -69,20 +77,21 @@
 </template>
 
 <script setup>
-import { InputText, Button } from 'primevue';
+import { InputText, Button, Select } from 'primevue';
 import { useForm } from '@inertiajs/vue3';
 import { Link } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
 import { usePage } from '@inertiajs/vue3';
 
 // Prop to receive customer data
-const { customer } = usePage().props;
+const { customer, customerCategories } = usePage().props;
 
 // Initialize form with customer data if editing, or empty for new customer
 const form = useForm({
     id: customer?.id || '',
     name: customer?.name || '',
     code: customer?.code || '',
+    credit_period: customer?.credit_period || '',
     address: customer?.address || '',
     email: customer?.email || '',
     phone_number: customer?.phone_number || '',
@@ -93,6 +102,7 @@ const form = useForm({
     bank_account_name: customer?.bank_account_name || '',
     bank_account_number: customer?.bank_account_number || '',
     bank_swift: customer?.bank_swift || '',
+    customer_category_id: customer?.customer_category_id || '',
 });
 
 // Submit function to either create or update the customer
