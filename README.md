@@ -69,14 +69,14 @@ To deploy the web application on a server or hosting server:
   - [ ] Issue invoice (link)
   - [ ] Issue agreement (link)
 - [ ] Agreements
-  - [ ] List
+  - [x] List
   - [ ] Filter
-  - [ ] Create
-  - [ ] Update
-  - [ ] View
-  - [ ] Print
-  - [ ] Issue invoice (fully paid)
-  - [ ] Close agreement
+  - [x] Create
+  - [x] Update
+  - [x] View
+  - [x] Print
+  - [ ] Issue invoice
+  - [ ] Close agreement (fully paid)
   - [ ] Cancel agreement
 - [ ] Invoices
   - [ ] List

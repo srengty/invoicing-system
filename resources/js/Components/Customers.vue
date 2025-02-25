@@ -17,8 +17,6 @@
             <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <div class="col-span-3 text-red-500">
                     <ul>
-                        <li>Missing customer categories * ()</li>
-                        <li>Missing credit period (days)</li>
                         <li>Missing Contact person name</li>
                     </ul>
                 </div>

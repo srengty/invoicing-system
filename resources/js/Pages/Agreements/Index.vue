@@ -25,8 +25,8 @@
                     </Column>
                     <Column v-if="col.field==='actions'" :field="col.field" :header="col.header" sortable>
                         <template #body="slotProps">
-                            <Button severity="secondary" size="small" @click="router.get(route('agreements.show',{'id':slotProps.data.agreement_no}))">View</Button>
-                            <Button severity="warn" size="small" @click="router.get(route('agreements.edit',{'agreement_no':slotProps.data.agreement_no}))">Edit</Button>
+                            <Button severity="secondary" size="small" @click="router.get(route('agreements.show',{'id':slotProps.data.agreement_no}))" icon="pi pi-eye" aria-label="View" rounded></Button>
+                            <Button severity="warn" size="small" @click="router.get(route('agreements.edit',{'agreement_no':slotProps.data.agreement_no}))" icon="pi pi-pencil" aria-label="Edit" rounded class="ms-2"></Button>
                         </template>
                     </Column>
                 </template>

@@ -107,9 +107,9 @@
         <Column header="Actions" headerStyle="text-align: center" bodyStyle="text-align: center">
           <template #body="{ data }">
             <div class="flex gap-2 justify-center">
-              <Button icon="pi pi-print" class="p-button-info" label="Print" @click="printInvoice(data.invoice_no)" rounded />
-              <Button icon="pi pi-pencil" class="p-button-warning" label="Edit" @click="editInvoice(data.invoice_no)" rounded />
-              <Button icon="pi pi-trash" class="p-button-danger" label="Delete" @click="deleteInvoice(data.invoice_no)" rounded />
+              <Button icon="pi pi-print" class="p-button-info" aria-label="Print" @click="printInvoice(data.invoice_no)" rounded />
+              <Button icon="pi pi-pencil" class="p-button-warning" aria-label="Edit" @click="editInvoice(data.invoice_no)" rounded />
+              <Button icon="pi pi-trash" class="p-button-danger" aria-label="Delete" @click="deleteInvoice(data.invoice_no)" rounded />
             </div>
           </template>
         </Column>

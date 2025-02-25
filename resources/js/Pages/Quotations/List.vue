@@ -21,8 +21,8 @@
                     <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
-                                <Button icon="pi pi-eye" label="View" severity="info" rounded @click="viewQuotation(slotProps.data)" style="padding-left: 12px;padding-right: 18px;" />
-                                <Button icon="pi pi-print" label="Print out"  @click="printQuotation(slotProps.data.quotation_no)"  rounded style="padding-left: 12px;padding-right: 18px;" />
+                                <Button icon="pi pi-eye" aria-label="View" severity="info" rounded @click="viewQuotation(slotProps.data)" />
+                                <Button icon="pi pi-print" aria-label="Print out"  @click="printQuotation(slotProps.data.quotation_no)"  rounded />
                             </div>
                         </template>
                     </Column>

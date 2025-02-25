@@ -4,17 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-/**
- * Product Category Model
- * @package App\Models
- */
-class Category extends Model
+
+class Division extends Model
 {
-    /** @use HasFactory<\Database\Factories\CategoryFactory> */
+    /** @use HasFactory<\Database\Factories\DivisionFactory> */
     use HasFactory;
     protected $fillable = [
-        'category_name_khmer',
-        'category_name_english',
+        'division_name_khmer',
+        'division_name_english',
         'description_khmer',
         'description_english',
     ];

@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\AgreementController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CustomerCategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
@@ -59,7 +60,7 @@ Route::delete('/settings/products/{product}', [ProductController::class, 'destro
 
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
-Route::resource('/settings/categories', CategoryController::class);
+Route::resource('/settings/categories', CustomerCategoryController::class);
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

@@ -16,21 +16,21 @@
                             <Button
                                 icon="pi pi-eye"
                                 class="p-button-info"
-                                label="View"
+                                aria-label="View"
                                 @click="viewProduct(slotProps.data)"
                                 rounded
                             />
                             <Button
                                 icon="pi pi-pencil"
                                 class="p-button-warning"
-                                label="Edit"
+                                aria-label="Edit"
                                 @click="openForm(slotProps.data)"
                                 rounded
                             />
                             <Button
                                 icon="pi pi-trash"
                                 class="p-button-danger"
-                                label="Delete"
+                                aria-label="Delete"
                                 @click="deleteProduct(slotProps.data.id)"
                                 rounded
                             />

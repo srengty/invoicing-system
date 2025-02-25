@@ -2,10 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\CustomerCategory;
+use App\Models\Category;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/**
+ * Product Category Seeder
+ * @package Database\Seeders
+ */
 class CategorySeeder extends Seeder
 {
     /**
@@ -13,32 +17,25 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        CustomerCategory::factory()->createMany([
+        Category::factory()->createMany([
             [
-            'category_name_khmer' => 'ឯកត្តបុគ្គល',
-            'category_name_english' => 'Individual',
-            'description_khmer' => 'ឯកត្តបុគ្គល',
-            'description_english' => 'Individual',
+                'category_name_khmer' => 'សេវាកម្មជួល',
+                'category_name_english' => 'Rental Service',
+                'description_khmer' => 'សេវាកម្មជួល',
+                'description_english' => 'Rental Service',
             ],
             [
-            'category_name_khmer' => 'អង្គការសាធារណៈ',
-            'category_name_english' => 'Public Organization',
-            'description_khmer' => 'អង្គការសាធារណៈ',
-            'description_english' => 'Public Organization',
+                'category_name_khmer' => 'បង្រៀន',
+                'category_name_english' => 'Training Service',
+                'description_khmer' => 'បង្រៀន',
+                'description_english' => 'Training Service',
             ],
             [
-            'category_name_khmer' => 'អង្គការមិនមែនរដ្ឋាភិបាល',
-            'category_name_english' => 'NGO',
-            'description_khmer' => 'អង្គការមិនមែនរដ្ឋាភិបាល',
-            'description_english' => 'NGO',
+                'category_name_khmer' => 'សេវាកម្មប្រឹក្សា',
+                'category_name_english' => 'Consultation Service',
+                'description_khmer' => 'សេវាកម្មប្រឹក្សា',
+                'description_english' => 'Consultation Service',
             ],
-            [
-            'category_name_khmer' => 'ក្រុមហ៊ុនឯកជន',
-            'category_name_english' => 'Private Company',
-            'description_khmer' => 'ក្រុមហ៊ុនឯកជន',
-            'description_english' => 'Private Company',
-            ],
-
         ]);
     }
 }

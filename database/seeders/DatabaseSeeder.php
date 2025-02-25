@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Invoice;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -21,10 +20,13 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
         $this->call([
-            CategorySeeder::class,
+            ParameterSeeder::class,
+            CustomerCategorySeeder::class,
             CustomerSeeder::class,
             QuotationSeeder::class,
             AgreementSeeder::class,
+            DivisionSeeder::class,
+            CategorySeeder::class,
             ProductSeeder::class,
             InvoiceSeeder::class,
             QuotationProductSeeder::class,

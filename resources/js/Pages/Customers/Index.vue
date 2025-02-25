@@ -19,21 +19,21 @@
                             <Button
                                 icon="pi pi-eye"
                                 class="p-button-info"
-                                label="View"
+                                aria-label="View"
                                 @click="viewCustomer(slotProps.data.id)"
                                 rounded
                             />
                             <Button
                                 icon="pi pi-pencil"
                                 class="p-button-warning"
-                                label="Edit"
+                                aria-label="Edit"
                                 @click="editCustomer(slotProps.data.id)"
                                 rounded
                             />
                             <Button
                                 icon="pi pi-trash"
                                 class="p-button-danger"
-                                label="Delete"
+                                aria-label="Delete"
                                 @click="deleteCustomer(slotProps.data.id)"
                                 rounded
                             />
