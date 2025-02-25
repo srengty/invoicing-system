@@ -7,14 +7,14 @@
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
         <Form @submit.prevent="submit">
             <!-- Quotation Info -->
-            <div class="p-4 grid md:grid-cols-2 gap-0 w-full">
-                <div class="p-4 grid grid-cols-2 gap-4">
+            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
                         <InputText
-                            :disabled="isApproved"
                             id="quotation_no"
                             v-model="form.quotation_no"
+                            disabled
                             placeholder="Auto-generated"
                             class="w-full md:w-60"
                         />
@@ -22,7 +22,6 @@
                     <div class="flex flex-col gap-2">
                         <label for="quotation_date">Date:</label>
                         <DatePicker
-                            :disabled="isApproved"
                             v-model="form.quotation_date"
                             :model-value="formatDate(form.quotation_date)"
                             showIcon
@@ -32,42 +31,18 @@
                             placeholder="Select"
                             class="w-full md:w-60"
                             @update:model-value="updateDate"
+                            disabled
                         />
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="address">Address:</label>
-                        <IconField class="w-full md:w-60">
-                            <InputText
-                                id="address"
-                                v-model="form.address"
-                                placeholder="Input"
-                                class="w-full md:w-60"
-                            />
-                            <InputIcon class="pi pi-times-circle" />
-                        </IconField>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                        <label for="phone_number">Contact:</label>
-                        <IconField class="w-full md:w-60">
-                            <InputText
-                                id="phone_number"
-                                v-model="form.phone_number"
-                                placeholder="Input"
-                                class="w-full md:w-60"
-                            />
-                            <InputIcon class="pi pi-times-circle" />
-                        </IconField>
-                    </div>
                 </div>
-
-                <div class="p-4 grid md:grid-rows-2 gap-4"></div>
             </div>
 
             <!-- Customer & Product Selection -->
-            <div class="p-8 grid md:grid-rows-2 gap-4">
-                <div class="flex flex-row gap-4 items-end w-1/3">
-                    <div class="flex flex-col gap-2 w-full">
+            <div class="p-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div
+                    class="flex flex-row gap-4 items-end md:grid-cols-4 w-full"
+                >
+                    <div class="flex flex-col gap-2">
                         <label for="customer_id">Customer/Organization</label>
                         <Select
                             :filter="true"
@@ -77,38 +52,74 @@
                             optionValue="id"
                             id="customer_id"
                             placeholder="Select a customer"
-                            class="w-full md:w-65"
+                            class="w-full md:w-60"
                         />
                     </div>
-                    <div class="w-80">
-                        <!-- <Link :href="route('customers.create')">
-                  <Button icon="pi pi-plus" label="Add customer" rounded />
-                </Link> -->
+                    <div class="w-10">
                         <Button
                             icon="pi pi-plus"
-                            label="AddCustomer"
+                            title="add customer"
+                            label="addcustomer"
                             rounded
                             @click="isCreateCustomerVisible = true"
+                            class="w-36"
                         />
                     </div>
                 </div>
 
-                <div class="flex flex-row gap-4 items-end w-1/3">
+                <!-- <div class="grid grid-cols-1 md:grid-cols-5"> -->
+                <div class="flex flex-col gap-2 w-full md:ml-28">
+                    <label for="address">Address:</label>
+                    <IconField class="w-full md:w-60">
+                        <InputText
+                            id="address"
+                            v-model="form.address"
+                            placeholder="Input"
+                            class="w-full md:w-60"
+                            readonly
+                        />
+                        <InputIcon
+                            v-if="form.address"
+                            class="pi pi-map-marker"
+                        />
+                    </IconField>
+                </div>
+
+                <div class="flex flex-col gap-2 w-full md:ml-28">
+                    <label for="phone_number">Contact:</label>
+                    <IconField class="w-full md:w-60">
+                        <InputText
+                            id="phone_number"
+                            v-model="form.phone_number"
+                            placeholder="Input"
+                            class="w-full md:w-60"
+                            readonly
+                        />
+                        <InputIcon
+                            v-if="form.phone_number"
+                            class="pi pi-phone"
+                        />
+                    </IconField>
+                </div>
+                <!-- </div> -->
+            </div>
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                     <div class="flex flex-col gap-2 w-full">
-                        <label for="p_name">Item</label>
+                        <label for="item">Item</label>
                         <MultiSelect
                             v-model="selectedProductIds"
                             :options="products"
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Product"
-                            class="w-full md:w-65"
+                            class="w-full md:w-72"
                         />
                     </div>
                     <!-- <div class="w-full">
                 <Link :href="route('products.store')">
                   <Button icon="pi pi-plus" label="Choose Item" rounded />
-                </Link>
+                </Link>x
                 <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
               </div> -->
                 </div>
@@ -142,6 +153,15 @@
                             }}</span>
                         </template>
                     </Column>
+                    <Column field="quantity" header="Qty">
+                        <template #body="slotProps">
+                            <InputText
+                                v-model="slotProps.data.quanity"
+                                @input="updateProductSubtotal(slotProps.data)"
+                                class="w-full"
+                            />
+                        </template>
+                    </Column>
                     <Column field="unit" header="Unit" />
                     <Column field="price" header="Unit Price">
                         <template #body="slotProps">
@@ -152,15 +172,6 @@
                                 :maxFractionDigits="2"
                                 class="w-full"
                                 placeholder="Enter in USD"
-                            />
-                        </template>
-                    </Column>
-                    <Column field="quantity" header="Qty">
-                        <template #body="slotProps">
-                            <InputText
-                                v-model="slotProps.data.quanity"
-                                @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
                             />
                         </template>
                     </Column>
@@ -176,13 +187,29 @@
                     </Column>
                     <Column header="Actions">
                         <template #body="slotProps">
-                            <Button
-                                icon="pi pi-trash"
-                                class="p-button-danger"
-                                label="Remove"
-                                @click="removeProduct(slotProps.data.id)"
-                                rounded
-                            />
+                            <div class="flex gap-2">
+                                <Button
+                                    icon="pi pi-trash"
+                                    class="p-button-danger"
+                                    title="remove"
+                                    @click="removeProduct(slotProps.data.id)"
+                                    rounded
+                                />
+                                <Button
+                                    icon="pi pi-pencil"
+                                    severity="success"
+                                    title="edit"
+                                    @click="viewQuotation(slotProps.data.id)"
+                                    rounded
+                                />
+                                <Button
+                                    icon="pi pi-print"
+                                    severity="success"
+                                    title="print"
+                                    @click="viewQuotation(slotProps.data.id)"
+                                    rounded
+                                />
+                            </div>
                         </template>
                     </Column>
                 </DataTable>
@@ -251,7 +278,7 @@
         v-model:visible="isCreateCustomerVisible"
         modal
         header="Add Customer"
-        class="w-1/2"
+        class="w-2/3"
     >
         <Customers
             redirect_route="quotations.create"
@@ -330,12 +357,12 @@ const toast = useToast();
 
 // Define the Inertia form
 const form = useForm({
-    quotation_no: Math.floor(100000 + Math.random() * 900000),
-    quotation_date: today,
+    quotation_no: null,
+    quotation_date: null,
     status: "Pending",
     address: "",
     phone_number: "",
-    customer_id: "",
+    customer_id: null,
     total: 0,
     tax: 0,
     grand_total: 0,
@@ -377,6 +404,22 @@ watch(selectedProductIds, (newIds) => {
         newIds.includes(prod.id)
     );
 });
+
+watch(
+    () => form.customer_id,
+    (newCustomerId) => {
+        const selectedCustomer = formattedCustomers.value.find(
+            (customer) => customer.id === newCustomerId
+        );
+        if (selectedCustomer) {
+            form.address = selectedCustomer.address || "";
+            form.phone_number = selectedCustomer.phone_number || "";
+        } else {
+            form.address = "";
+            form.phone_number = "";
+        }
+    }
+);
 
 const updateProductSubtotal = (row) => {
     row.quanity = parseInt(row.quanity) || 0;
@@ -436,6 +479,8 @@ const formattedCustomers = computed(() => {
     return props.customers.map((customer) => ({
         id: customer.id,
         label: `${customer.name} (${customer.code})`,
+        address: customer.address,
+        phone_number: customer.phone_number,
     }));
 });
 
