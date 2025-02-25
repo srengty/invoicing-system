@@ -6,15 +6,15 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class CategoryController extends Controller
+class ProductCategoryController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Categories/Index');
+        return Inertia::render('ProductCategories/Index');
     }
     public function create()
     {
-        return Inertia::render('Categories/Create');
+        return Inertia::render('ProductCategories/Create');
     }
     public function store(Request $request)
     {
@@ -22,17 +22,17 @@ class CategoryController extends Controller
             'name' => 'required',
         ]);
         Category::create($request->all());
-        return redirect()->route('categories.index');
+        return redirect()->route('product-categories.index');
     }
     public function show(int $id)
     {
-        return Inertia::render('Categories/Show', [
+        return Inertia::render('ProductCategories/Show', [
             'category' => Category::find($id),
         ]);
     }
     public function edit(int $id)
     {
-        return Inertia::render('Categories/Edit', [
+        return Inertia::render('ProductCategories/Edit', [
             'category' => Category::find($id),
         ]);
     }
@@ -42,11 +42,11 @@ class CategoryController extends Controller
             'name' => 'required',
         ]);
         Category::find($id)->update($request->all());
-        return redirect()->route('categories.index');
+        return redirect()->route('product-categories.index');
     }
     public function destroy(int $id)
     {
         Category::destroy($id);
-        return redirect()->route('categories.index');
+        return redirect()->route('product-categories.index');
     }
 }

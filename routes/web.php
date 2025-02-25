@@ -1,14 +1,12 @@
 <?php
 use App\Http\Controllers\AgreementController;
-use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\CustomerCategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SettingController;
-use App\Models\Customer;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -60,7 +58,8 @@ Route::delete('/settings/products/{product}', [ProductController::class, 'destro
 
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
-Route::resource('/settings/categories', CustomerCategoryController::class);
+Route::resource('/settings/customer-categories', CustomerCategoryController::class);
+Route::resource('/settings/product-categories', ProductCategoryController::class);
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

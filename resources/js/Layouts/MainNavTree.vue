@@ -120,8 +120,14 @@ const items = ref([
                 shortcut: '⌘+P'
             },
             {
-                label: 'Categories',
-                href: '/settings/categories',
+                label: 'Customer Categories',
+                href: '/settings/customer-categories',
+                icon: 'pi pi-box',
+                shortcut: '⌘+P'
+            },
+            {
+                label: 'Product Categories',
+                href: '/settings/product-categories',
                 icon: 'pi pi-box',
                 shortcut: '⌘+P'
             }
@@ -144,7 +150,7 @@ const expandedKeys = ref(items.value.reduce((acc, item) => {
 }
 
 .active {
-    @apply bg-green-100;
+    background-color: #d4f4dd; /* Equivalent to bg-green-100 */
 }
 
 .card {

@@ -3,11 +3,11 @@
     <GuestLayout>
         <div class="products">
             <div class="flex justify-between items-center p-3">
-                <h1 class="text-2xl">Manage Products</h1>
-                <Button icon="pi pi-plus" label="New Product" class="p-button-success" @click="openForm()" rounded />
+                <h1 class="text-2xl">Manage Items</h1>
+                <Button icon="pi pi-plus" label="New Item" class="p-button-success" @click="openForm()" rounded />
             </div>
 
-            <!-- DataTable to display products -->
+            <!-- DataTable to display items -->
             <DataTable :value="products" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
                 <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable />
                 <Column header="Actions">
