@@ -28,7 +28,17 @@
 
       <!-- Invoice Form Section -->
       <form @submit.prevent="submitInvoice">
-        <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
+        <div class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4">
+          <div>
+            <label for="invoice_no" class="block text-lg font-medium">Invoice no</label>
+            <InputText
+              id="invoice_no"
+              v-model="form.invoice_no"
+              class="w-full"
+              placeholder="Enter invoice no"
+              required
+            />
+          </div>
           <div>
             <label for="quotation_no" class="block text-lg font-medium">Quotation No</label>
             <Select
@@ -120,8 +130,12 @@
 
       <!-- Product Table Section -->
       <div class="m-6">
-        <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
-          <Column field="index" header="No."></Column>
+        <DataTable :value="indexedProducts" class="p-datatable-striped" responsiveLayout="scroll">
+          <Column field="index" header="No.">
+            <template #body="slotProps">
+              {{ slotProps.index + 1 }}
+            </template>
+          </Column>
           <Column field="product" header="Product"></Column>
           <Column field="qty" header="Qty">
             <template #body="slotProps">
@@ -201,9 +215,8 @@ import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select } from
 import { usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { Inertia } from '@inertiajs/inertia';
 
-const { products, agreements, quotations, customers, product_quotations } = usePage().props;
+const { products, agreements, quotations, customers } = usePage().props;
 
 const form = useForm({
   invoice_no: '',
@@ -230,6 +243,13 @@ const statusOptions = [
 const productsList = ref([]);
 const showProductModal = ref(false);
 const filteredAgreements = ref([]);
+
+const indexedProducts = computed(() => 
+  productsList.value.map((product, index) => ({
+    ...product,
+    index: index + 1, // Assign index dynamically
+  }))
+);
 
 watch(() => form.quotation_no, (newQuotationId) => {
   if (newQuotationId) {
@@ -333,14 +353,6 @@ const calculateGrandTotal = computed(() => {
   return calculateTotal.value - form.instalmentPaid;
 });
 
-const actionTemplate = (data) => {
-  return {
-    template: `
-      <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />
-    `
-  };
-};
-
 const addProduct = (productId) => {
   const product = products.find((prod) => prod.id === productId);
   if (product) {
@@ -353,7 +365,6 @@ const addProduct = (productId) => {
       subTotal: product.price,
     };
     productsList.value.push(newProduct);
-    showProductModal.value = false;
   }
 };
 
@@ -383,8 +394,8 @@ const submitInvoice = async () => {
     customer_id: form.customer_id,
     address: form.address,
     phone: form.phone,
-    start_date: form.start_date,
-    end_date: form.end_date,
+    date: form.start_date,
+    due_date: form.end_date,
     grand_total: form.grand_total,
     status: form.status,
     products: productsList.value.map(product => ({

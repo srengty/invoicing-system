@@ -8,7 +8,7 @@
     <div class="card flex justify-center dark:bg-white"></div>
     <div class="card flex justify-center pr-1">
 
-        <PanelMenu v-model:expandedKeys="expandedKeys" :model="items" class="w-full md:w-80"
+        <PanelMenu v-model:expandedKeys="expandedKeys" :model="items" class="w-full md:w-80 text-xs"
             :pt="{ panel: { class: 'border-0 bg-transparent p-0' } }" multiple>
             <template #item="{ item }">
                 <div :class="['flex items-center cursor-pointer group', { 'active': page.url == item.href }]">

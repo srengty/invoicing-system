@@ -27,13 +27,14 @@ return new class extends Migration
             $table->string('name');
             $table->string('name_kh')->nullable();
             $table->string('unit');
-            $table->decimal('price', 8, 2);
+            $table->decimal('price', 15, 2);
             $table->integer('quantity');
-            $table->string('division_id')->nullable();
+            $table->string('division_id')->nullable()->constrained()->nullOnDelete();
             $table->string('desc')->nullable();
             $table->string('desc_kh')->nullable();
-            $table->string('acc_code')->nullable();
+            $table->string('acc_code');
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('remark')->nullable();
             $table->timestamps();
         });
 

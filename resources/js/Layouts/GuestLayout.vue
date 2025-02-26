@@ -14,7 +14,9 @@ import NavbarLayout from "@/Layouts/NavbarLayout.vue";
                     <!-- <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" /> -->
                         <img src="/logo.png" alt="Logo" class="h-20 w-20" />
                     </Link>
-                    <p>Institute of Technology of Cambodia</p>
+                    <div class="text-sm">
+                        <p>Institute of Technology of Cambodia</p>
+                    </div>
 
                 </div>
                 <MainNavTree />
