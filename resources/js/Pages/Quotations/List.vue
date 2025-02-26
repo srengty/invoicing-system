@@ -1,7 +1,7 @@
 <template>
     <Head title="Quotations" />
     <GuestLayout>
-        <div class="quotations">
+        <div class="quotations text-sm">
             <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
             </div>
@@ -67,21 +67,25 @@
                         <template #body="slotProps">
                             <div class="flex gap-4">
                                 <Button
+                                    icon="pi pi-eye"
+                                    aria-label="View"
+                                    severity="info"
+                                    rounded
+                                    size="small"
+                                    class="custom-button"
+                                    @click="viewQuotation(slotProps.data)"
+                                />
+                                <Button
                                     icon="pi pi-print"
                                     aria-label="Print out"
+                                    size="small"
+                                    class="custom-button"
                                     @click="
                                         printQuotation(
                                             slotProps.data.quotation_no
                                         )
                                     "
                                     rounded
-                                />
-                                <Button
-                                    icon="pi pi-eye"
-                                    aria-label="View"
-                                    severity="info"
-                                    rounded
-                                    @click="viewQuotation(slotProps.data)"
                                 />
                             </div>
                         </template>
@@ -93,11 +97,12 @@
                     v-model:visible="isViewDialogVisible"
                     header="Quotation Details"
                     modal
-                    :style="{ width: '40rem', high: '200rem' }"
+                    :style="{ width: '40rem' }"
+                    class="text-sm"
                 >
                     <div
                         v-if="selectedQuotation"
-                        class="flex text-lg flex-col gap-2 w-2/2 pl-6"
+                        class="flex flex-col gap-2 text-sm pl-6"
                     >
                         <p><strong>ID:</strong> {{ selectedQuotation.id }}</p>
                         <p>
@@ -117,46 +122,33 @@
                             {{ selectedQuotation.customer?.name || "N/A" }}
                         </p>
                         <p>
-                            <strong>address:</strong>
+                            <strong>Address:</strong>
                             {{ selectedQuotation.address }}
                         </p>
                         <p>
                             <strong>Phone Number:</strong>
                             {{ selectedQuotation.phone_number }}
                         </p>
-                        <!--                        <p><strong>Terms:</strong> {{ selectedQuotation.terms }}</p>-->
-                        <!-- Loop through products -->
+
+                        <!-- Items Section -->
                         <span class="font-bold block mb-2 text-center"
                             >Items</span
                         >
                         <div v-if="selectedQuotation.products?.length">
-                            <VirtualScroller
-                                :items="selectedQuotation.products"
-                                :itemSize="50"
-                                class="border border-surface-200 dark:border-surface-700 rounded w-full"
-                                style="height: 100px"
+                            <DataTable
+                                :value="selectedQuotation.products"
+                                responsiveLayout="scroll"
                             >
-                                <template v-slot:item="{ item, options }">
-                                    <div
-                                        :class="[
-                                            'flex items-center justify-between p-2',
-                                            {
-                                                'bg-surface-100 dark:bg-surface-700':
-                                                    options.odd,
-                                            },
-                                        ]"
-                                    >
-                                        <p>
-                                            <strong>Item:</strong>
-                                            {{ item.name }}
-                                            <strong> , QTY:</strong>
-                                            {{ item.pivot.quantity }}
-                                            <strong> , Unit Price:</strong>
-                                            {{ item.pivot.price }}
-                                        </p>
-                                    </div>
-                                </template>
-                            </VirtualScroller>
+                                <Column field="name" header="Item"></Column>
+                                <Column
+                                    field="pivot.quantity"
+                                    header="QTY"
+                                ></Column>
+                                <Column
+                                    field="pivot.price"
+                                    header="Unit Price"
+                                ></Column>
+                            </DataTable>
                         </div>
 
                         <br />
@@ -165,13 +157,12 @@
                             {{ selectedQuotation.total }}
                         </p>
                     </div>
+
                     <template #footer>
                         <Button
-                            label="Cancel"
-                            outlined
+                            label="Close"
                             severity="secondary"
                             @click="isViewDialogVisible = false"
-                            autofocus
                         />
                     </template>
                 </Dialog>
@@ -242,6 +233,8 @@ const closeForm = () => {
 const viewQuotation = (quotations) => {
     selectedQuotation.value = quotations;
     isViewDialogVisible.value = true;
+
+    console.log(selectedQuotation);
 };
 
 const columns = [
@@ -309,3 +302,11 @@ const updateQuotationStatus = (quotation) => {
     );
 };
 </script>
+
+<style>
+.custom-button {
+    padding: 4px 4px !important; /* Smaller padding */
+    font-size: 12px !important; /* Smaller icon size */
+    min-width: 30px !important; /* Reduce button width */
+}
+</style>

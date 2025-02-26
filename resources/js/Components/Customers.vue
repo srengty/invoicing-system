@@ -1,13 +1,14 @@
 <template>
-    <div class="create-customer">
+    <div class="create-customer text-sm">
         <div class="flex justify-between items-center p-3 mr-4">
-            <h1 class="text-2xl">Create Customer</h1>
+            <h1 class="text-xl">Create Customer</h1>
             <div class="flex gap-2">
                 <!-- Back Button (Navigation to the Customers List page) -->
                 <Link :href="route('customers.index')">
                     <Button
                         icon="pi pi-times"
                         class="p-button"
+                        size="small"
                         title="cancel"
                         rounded
                     />
@@ -18,13 +19,14 @@
                     icon="pi pi-check"
                     class="p-button"
                     title="save"
+                    size="small"
                     @click="submit"
                     rounded
                 />
             </div>
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="">
             <div
                 class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
             >
@@ -36,25 +38,27 @@
                     </ul>
                 </div>
                 <div>
-                    <label for="code" class="block text-lg font-medium required"
+                    <label for="code" class="block text-sm font-medium required"
                         >Customer category</label
                     >
                     <Select
-                        v-model="form.customer_category_id"
+                        v-model.number="form.customer_category_id"
                         :options="customerCategories"
                         option-value="id"
                         option-label="category_name_english"
                         class="w-full"
+                        placeholder="Enter customer category"
                     />
                 </div>
                 <div>
-                    <label for="name" class="block text-lg font-medium required"
+                    <label for="name" class="block text-sm font-medium required"
                         >Customer/Organization name</label
                     >
                     <InputText
                         id="name"
                         v-model="form.name"
                         class="w-full"
+                        size="small"
                         placeholder="Enter Customer Name"
                     />
                     <Message
@@ -67,45 +71,53 @@
                     >
                 </div>
                 <div>
-                    <label for="code" class="block text-lg font-medium required"
+                    <label for="code" class="block text-sm font-medium required"
                         >Customer code</label
                     >
                     <InputText
                         id="code"
                         v-model="form.code"
                         class="w-full"
+                        size="small"
                         placeholder="Enter code"
                     />
                 </div>
                 <div>
-                    <label for="code" class="block text-lg font-medium"
+                    <label for="code" class="block text-sm font-medium required"
                         >Credit period (days)</label
                     >
-                    <InputText class="w-full" v-model="form.credit_period" />
+                    <InputText
+                        class="w-full"
+                        size="small"
+                        v-model="form.credit_period"
+                        placeholder="Enter credit period"
+                    />
                 </div>
                 <div>
                     <label
                         for="address"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Address</label
                     >
                     <InputText
                         id="address"
                         v-model="form.address"
                         class="w-full"
+                        size="small"
                         placeholder="Enter address"
                     />
                 </div>
                 <div>
                     <label
                         for="website"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Website</label
                     >
                     <InputText
                         id="website"
                         v-model="form.website"
                         class="w-full"
+                        size="small"
                         placeholder="Enter website"
                     />
                 </div>
@@ -113,52 +125,56 @@
                 <div>
                     <label
                         for="phone"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Contact person name</label
                     >
                     <InputText
                         id="name"
                         v-model="form.contact_person"
                         class="w-full"
+                        size="small"
                         placeholder="Enter contact person name"
                     />
                 </div>
                 <div>
                     <label
                         for="phone"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Phone</label
                     >
                     <InputText
                         id="phone"
                         v-model="form.phone"
                         class="w-full"
+                        size="small"
                         placeholder="Enter phone number"
                     />
                 </div>
                 <div>
                     <label
                         for="telegram"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Telegram Number</label
                     >
                     <InputText
                         id="telegram"
                         v-model="form.telegram"
                         class="w-full"
+                        size="small"
                         placeholder="Enter telegram number"
                     />
                 </div>
                 <div>
                     <label
                         for="email"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Email</label
                     >
                     <InputText
                         id="email"
                         v-model="form.email"
                         class="w-full"
+                        size="small"
                         placeholder="Enter email"
                     />
                 </div>
@@ -166,65 +182,70 @@
                 <div>
                     <label
                         for="bank_name"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Bank name</label
                     >
                     <InputText
                         id="bank_name"
                         v-model="form.bank_name"
                         class="w-full"
+                        size="small"
                         placeholder="Enter bank name"
                     />
                 </div>
                 <div>
                     <label
                         for="bank_address"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Bank address</label
                     >
                     <InputText
                         id="bank_address"
                         v-model="form.bank_address"
                         class="w-full"
+                        size="small"
                         placeholder="Enter bank address"
                     />
                 </div>
                 <div>
                     <label
                         for="bank_account_name"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Bank account name</label
                     >
                     <InputText
                         id="bank_account_name"
                         v-model="form.bank_account_name"
                         class="w-full"
+                        size="small"
                         placeholder="Enter bank account name"
                     />
                 </div>
                 <div>
                     <label
                         for="bank_account_number"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Bank account number</label
                     >
                     <InputText
                         id="bank_account_number"
                         v-model="form.bank_account_number"
                         class="w-full"
+                        size="small"
                         placeholder="Enter bank account number"
                     />
                 </div>
                 <div>
                     <label
                         for="bank_swift"
-                        class="block text-lg font-medium required"
+                        class="block text-sm font-medium required"
                         >Bank swift</label
                     >
                     <InputText
                         id="bank_swift"
                         v-model="form.bank_swift"
                         class="w-full"
+                        size="small"
                         placeholder="Enter bank swift"
                     />
                 </div>

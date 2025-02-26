@@ -5,23 +5,25 @@
         <Toast position="top-right" group="tr" />
 
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
-        <Form @submit.prevent="submit">
+        <Form @submit.prevent="submit" class="text-sm">
             <!-- Quotation Info -->
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
                         <InputText
+                            :disabled="isApproved"
                             id="quotation_no"
                             v-model="form.quotation_no"
-                            disabled
                             placeholder="Auto-generated"
                             class="w-full md:w-60"
+                            size="small"
                         />
                     </div>
                     <div class="flex flex-col gap-2">
                         <label for="quotation_date">Date:</label>
                         <DatePicker
+                            :disabled="isApproved"
                             v-model="form.quotation_date"
                             :model-value="formatDate(form.quotation_date)"
                             showIcon
@@ -31,14 +33,14 @@
                             placeholder="Select"
                             class="w-full md:w-60"
                             @update:model-value="updateDate"
-                            disabled
+                            size="small"
                         />
                     </div>
                 </div>
             </div>
 
             <!-- Customer & Product Selection -->
-            <div class="p-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="pl-8 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div
                     class="flex flex-row gap-4 items-end md:grid-cols-4 w-full"
                 >
@@ -62,7 +64,8 @@
                             label="addcustomer"
                             rounded
                             @click="isCreateCustomerVisible = true"
-                            class="w-36"
+                            class="w-36 start"
+                            size="small"
                         />
                     </div>
                 </div>
@@ -77,6 +80,7 @@
                             placeholder="Input"
                             class="w-full md:w-60"
                             readonly
+                            size="small"
                         />
                         <InputIcon
                             v-if="form.address"
@@ -94,6 +98,7 @@
                             placeholder="Input"
                             class="w-full md:w-60"
                             readonly
+                            size="small"
                         />
                         <InputIcon
                             v-if="form.phone_number"
@@ -103,19 +108,33 @@
                 </div>
                 <!-- </div> -->
             </div>
-            <div class="p-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                    <div class="flex flex-col gap-2 w-full">
-                        <label for="item">Item</label>
-                        <MultiSelect
-                            v-model="selectedProductIds"
-                            :options="products"
-                            optionLabel="name"
-                            optionValue="id"
-                            placeholder="Select Product"
-                            class="w-full md:w-72"
-                        />
+            <div class="pl-8 pt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
+                    <div class="flex gap-4 items-end">
+                        <div class="flex flex-col gap-2">
+                            <label for="item">Item</label>
+                            <MultiSelect
+                                :filter="true"
+                                v-model="selectedProductIds"
+                                :options="products"
+                                optionLabel="name"
+                                optionValue="id"
+                                placeholder="Select Product"
+                                class="w-full md:w-60"
+                            />
+                        </div>
+                        <div class="w-10">
+                            <Button
+                                icon="pi pi-plus"
+                                label="Add Item"
+                                rounded
+                                @click="isAddItemDialogVisible = true"
+                                class="w-36"
+                                size="small"
+                            />
+                        </div>
                     </div>
+
                     <!-- <div class="w-full">
                 <Link :href="route('products.store')">
                   <Button icon="pi pi-plus" label="Choose Item" rounded />
@@ -123,20 +142,17 @@
                 <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
               </div> -->
                 </div>
-                <div class="flex flex-row gap-4 items-end w-1/3">
-                    <div class="flex flex-row gap-2 w-full">
-                        <label for="p_name">English/Khmer</label>
-                        <ToggleSwitch
-                            v-model="isKhmer"
-                            @change="toggleLanguage"
-                        />
-                    </div>
-                    <div class="w-60"></div>
+            </div>
+            <div class="pl-8 flex flex-row gap-4 items-end w-1/3">
+                <div class="flex flex-row gap-2 w-full">
+                    <label for="p_name">English/Khmer</label>
+                    <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
                 </div>
+                <div class="w-60"></div>
             </div>
 
             <!-- Selected Products Table -->
-            <div class="pl-6">
+            <div class="pl-6 pt-5">
                 <DataTable
                     :value="selectedProductsData"
                     paginator
@@ -159,6 +175,7 @@
                                 v-model="slotProps.data.quanity"
                                 @input="updateProductSubtotal(slotProps.data)"
                                 class="w-full"
+                                size="small"
                             />
                         </template>
                     </Column>
@@ -172,6 +189,7 @@
                                 :maxFractionDigits="2"
                                 class="w-full"
                                 placeholder="Enter in USD"
+                                size="small"
                             />
                         </template>
                     </Column>
@@ -190,15 +208,17 @@
                             <div class="flex gap-2">
                                 <Button
                                     icon="pi pi-trash"
-                                    class="p-button-danger"
+                                    class="p-button-danger w-[10px]"
                                     title="remove"
+                                    size="small"
                                     @click="removeProduct(slotProps.data.id)"
                                     rounded
                                 />
                                 <Button
                                     icon="pi pi-pencil"
-                                    severity="success"
+                                    severity="info"
                                     title="edit"
+                                    size="small"
                                     @click="viewQuotation(slotProps.data.id)"
                                     rounded
                                 />
@@ -206,6 +226,7 @@
                                     icon="pi pi-print"
                                     severity="success"
                                     title="print"
+                                    size="small"
                                     @click="viewQuotation(slotProps.data.id)"
                                     rounded
                                 />
@@ -231,11 +252,12 @@
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
                                 placeholder="Enter USD"
+                                size="small"
                             />
                         </p>
                     </div>
                     <div class="grand-total-container flex justify-between">
-                        <p class="font-bold text-lg">Exchange rate</p>
+                        <p class="font-bold">Exchange rate</p>
                         <p class="font-bold text-lg">
                             {{ calculateExchangeRate }}
                         </p>
@@ -293,6 +315,108 @@
     >
         <Customers redirect_route="quotations.create"></Customers>
     </Dialog>
+
+    <!-- Add Item Dialog -->
+    <Dialog
+        v-model:visible="isAddItemDialogVisible"
+        modal
+        header="Add Item (Popup)"
+        :style="{ width: '500px' }"
+    >
+        <div class="p-fluid grid gap-4 text-sm">
+            <!-- Item Selection -->
+            <div class="field w-full">
+                <label for="item">Item *</label> <br />
+                <MultiSelect
+                    :filter="true"
+                    v-model="selectedProductsData"
+                    :options="products"
+                    optionLabel="name"
+                    optionValue="id"
+                    placeholder="Select Product"
+                    class="w-full text-sm"
+                    size="small"
+                    @change="updateSelectedProductDetails"
+                />
+            </div>
+
+            <!-- Item Category (Auto-complete, Read-Only) -->
+            <div class="field">
+                <label for="item-category">Item Category *</label>
+                <InputText
+                    v-model="products.category"
+                    class="w-full text-sm"
+                    size="small"
+                    readonly
+                />
+            </div>
+
+            <!-- Unit Price (Auto-complete, Editable) -->
+            <div class="field">
+                <label for="unit-price">Unit Price *</label>
+                <InputNumber v-model="products.price" size="small" class="w-full text-sm" />
+            </div>
+
+            <!-- Account Code (Auto-complete, Read-Only) -->
+            <div class="field">
+                <label for="account-code">Account Code *</label>
+                <InputText
+                    v-model="selectedAccountCode"
+                    class="w-full text-sm"
+                    size="small"
+                    readonly
+                />
+            </div>
+
+            <!-- Quantity -->
+            <div class="field">
+                <label for="quantity">Quantity *</label>
+                <InputNumber
+                    v-model="selectedQuantity"
+                    class="w-full text-sm"
+                    size="small"
+                    :min="1"
+                />
+            </div>
+
+            <!-- View Catalog -->
+            <div class="field">
+                <label>View Catalog</label>
+                <a
+                    href="https://yourcatalog.com"
+                    target="_blank"
+                    class="text-blue-500 underline"
+                    >Link to open catalog</a
+                >
+            </div>
+
+            <!-- Additional Remark -->
+            <div class="field">
+                <label for="additional-remark">Additional Remark</label>
+                <Textarea
+                    v-model="additionalRemark"
+                    rows="3"
+                    class="w-full text-sm"
+                />
+            </div>
+        </div>
+
+        <!-- Dialog Footer -->
+        <template #footer>
+            <Button
+                label="Cancel"
+                icon="pi pi-times"
+                class="p-button-text"
+                @click="isAddItemDialogVisible = false"
+            />
+            <Button
+                label="Add Item"
+                icon="pi pi-check"
+                class="p-button-success"
+                @click="addItemToTable"
+            />
+        </template>
+    </Dialog>
 </template>
 
 <script setup>
@@ -327,6 +451,22 @@ const isApproved = ref(false);
 const today = new Date();
 const isKhmer = ref(false);
 const statusOptions = ref(["Pending", "Approved"]);
+const isAddItemDialogVisible = ref(false);
+const selectedItem = ref({});
+const selectedQuantity = ref(1);
+const additionalRemark = ref("");
+const filteredItems = ref([]);
+
+const addItemToTable = () => {
+    if (selectedItem.value.name) {
+        console.log("Item Added:", {
+            ...selectedItem.value,
+            quantity: selectedQuantity.value,
+            remarks: additionalRemark.value,
+        });
+        isAddItemDialogVisible.value = false;
+    }
+};
 
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? "name_kh" : "name";

@@ -16,7 +16,7 @@ class QuotationController extends Controller
 {
     public function list()
     {
-        $quotations = Quotation::with('customer', 'products')->get();
+        $quotations = Quotation::with('customer', 'products')->orderBy('created_at', 'desc')->get();
         $agreements = Agreement::all();
         $customers = Customer::all();
         $products = Product::all();
@@ -55,8 +55,8 @@ class QuotationController extends Controller
 
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
-            'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
-            'quotation_date' => 'required|date_format:Y-m-d\TH:i:s.v\Z',
+            'quotation_no'   => 'integer|unique:quotations,quotation_no',
+            'quotation_date' => 'date_format:Y-m-d\TH:i:s.v\Z',
             'customer_id'    => 'required|exists:customers,id',
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
@@ -113,7 +113,7 @@ class QuotationController extends Controller
             $prod = Product::find($product['id']);
             $quotation->products()->attach($prod->id, [
                 'quantity' => $product['quantity'],
-                //                 'price' => $prod->price * $product['quantity'],
+                // 'price' => $prod->price * $product['quantity'],
                 'price' => $prod->price,
                 'product_unit_prices' => json_encode($validated["products"], true),
             ]);
