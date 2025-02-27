@@ -26,7 +26,6 @@ class QuotationController extends Controller
             'agreements' => $agreements,
             'customers' => $customers,
             'products' => $products,
-
         ]);
     }
 
@@ -55,8 +54,8 @@ class QuotationController extends Controller
 
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
-            'quotation_no'   => 'integer|unique:quotations,quotation_no',
-            'quotation_date' => 'date_format:Y-m-d\TH:i:s.v\Z',
+            'quotation_no'   => 'nullable|integer|unique:quotations,quotation_no',
+            'quotation_date' => 'nullable|date_format:Y-m-d\TH:i:s.v\Z',
             'customer_id'    => 'required|exists:customers,id',
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
@@ -97,7 +96,6 @@ class QuotationController extends Controller
         // Create the quotation
         $quotation = Quotation::create([
             'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
-            'quotation_date' => $quotationDate,
             'customer_id'    => $validated['customer_id'],
             'address'        => $validated['address'] ?? null,
             'phone_number'   => $validated['phone_number'] ?? null,
@@ -114,7 +112,7 @@ class QuotationController extends Controller
             $quotation->products()->attach($prod->id, [
                 'quantity' => $product['quantity'],
                 // 'price' => $prod->price * $product['quantity'],
-                'price' => $prod->price,
+                'price' => $product['price'],
                 'product_unit_prices' => json_encode($validated["products"], true),
             ]);
         }
@@ -127,11 +125,27 @@ class QuotationController extends Controller
      */
     public function show($quotation_no)
     {
-        $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
+        // $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
+        $quotation = Quotation::with(['customer', 'products'])
+        ->where('quotation_no', $quotation_no)
+        ->firstOrFail();
 
+        // return Inertia::render('Quotations/Print', [
+        //     'quotation' => $quotation,
+        //     'products' => $quotation->products,
+        // ]);
         return Inertia::render('Quotations/Print', [
-            'quotation' => $quotation,
-            'products' => $quotation->products,
+            'quotation' => [
+                'id' => $quotation->id,
+                'quotation_no' => $quotation->quotation_no ?? 'Pending Approval',
+                'quotation_date' => $quotation->quotation_date ?? now()->format('Y-m-d'),
+                'customer_id' => $quotation->customer_id,
+                'customer_name' => $quotation->customer->name,
+                'address' => $quotation->address,
+                'phone_number' => $quotation->phone_number,
+                'products' => $quotation->products,
+                'total' => $quotation->total,
+            ],
         ]);
     }
 

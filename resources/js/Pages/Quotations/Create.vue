@@ -61,7 +61,7 @@
                         <Button
                             icon="pi pi-plus"
                             title="add customer"
-                            label="addcustomer"
+                            label="Add Customer"
                             rounded
                             @click="isCreateCustomerVisible = true"
                             class="w-36 start"
@@ -321,7 +321,8 @@
         v-model:visible="isAddItemDialogVisible"
         modal
         header="Add Item (Popup)"
-        :style="{ width: '500px' }"
+        :style="{ width: '400px' }"
+        class="text-sm"
     >
         <div class="p-fluid grid gap-4 text-sm">
             <!-- Item Selection -->
@@ -354,7 +355,11 @@
             <!-- Unit Price (Auto-complete, Editable) -->
             <div class="field">
                 <label for="unit-price">Unit Price *</label>
-                <InputNumber v-model="products.price" size="small" class="w-full text-sm" />
+                <InputNumber
+                    v-model="products.price"
+                    size="small"
+                    class="w-full text-sm"
+                />
             </div>
 
             <!-- Account Code (Auto-complete, Read-Only) -->
@@ -518,13 +523,6 @@ const selectCustomer = () => {
 const selectedProductIds = ref([]);
 const selectedProductsData = ref([]);
 
-// const columns = ref([
-//   { field: "id", header: "No." },
-//   { field: "name", header: "Name" },
-//   { field: "unit", header: "Unit" },
-//   { field: "price", header: "Unit Price" },
-// ]);
-
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
         if (!selectedProductsData.value.find((prod) => prod.id === id)) {
@@ -543,6 +541,15 @@ watch(selectedProductIds, (newIds) => {
     selectedProductsData.value = selectedProductsData.value.filter((prod) =>
         newIds.includes(prod.id)
     );
+});
+
+const formattedCustomers = computed(() => {
+    return props.customers.map((customer) => ({
+        id: customer.id,
+        label: `${customer.name} (${customer.code})`,
+        address: customer.address,
+        phone_number: customer.phone_number,
+    }));
 });
 
 watch(
@@ -615,15 +622,6 @@ const calculateGrandTotal = computed(() => {
     );
 });
 
-const formattedCustomers = computed(() => {
-    return props.customers.map((customer) => ({
-        id: customer.id,
-        label: `${customer.name} (${customer.code})`,
-        address: customer.address,
-        phone_number: customer.phone_number,
-    }));
-});
-
 const removeProduct = (id) => {
     selectedProductsData.value = selectedProductsData.value.filter(
         (prod) => prod.id !== id
@@ -671,7 +669,13 @@ const submit = (event) => {
     // Post the form data using Inertia.
     form.post(route("quotations.store"), {
         onSuccess: () => {
-            alert("Customer created successfully!");
+            console.log("Success Callback Triggered");
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: "Quotation created successfully!",
+                life: 3000,
+            });
         },
         onError: (errors) => {
             console.error(errors);

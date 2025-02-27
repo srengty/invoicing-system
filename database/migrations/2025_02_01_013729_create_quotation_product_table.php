@@ -22,13 +22,15 @@ class CreateQuotationProductTable extends Migration
 
         });
 
-         Schema::create('price_sales', function (Blueprint $table) {
-                    $table->id();
-                    $table->decimal('price');
-                    $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-                    $table->foreignId('product_quotation_id')->constrained('product_quotation')->onDelete('cascade');
-                    $table->timestamps();
-                });
+        Schema::create('price_sales', function (Blueprint $table) {
+            $table->id();
+            $table->decimal('price');
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('product_quotation_id')->constrained('product_quotation')->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        
 
     }
 

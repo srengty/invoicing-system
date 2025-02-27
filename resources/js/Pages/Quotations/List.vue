@@ -1,6 +1,9 @@
 <template>
     <Head title="Quotations" />
     <GuestLayout>
+        <Toast position="top-center" group="tc" />
+        <Toast position="top-right" group="tr" />
+
         <div class="quotations text-sm">
             <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
@@ -186,7 +189,9 @@ import VirtualScroller from "primevue/virtualscroller";
 import moment from "moment";
 import Dropdown from "primevue/dropdown";
 import { router } from "@inertiajs/vue3"; // for printing
+import { useToast } from "primevue/usetoast";
 
+const toast = useToast();
 const isViewDialogVisible = ref(false);
 const selectedQuotation = ref([]);
 const selectedQuo_customer = ref([]);
@@ -269,7 +274,7 @@ const printQuotation = (quotation_no) => {
     // } else {
     //     alert('Popup blocked! Please allow popups for this website.');
     // }
-};
+};  
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 const updateColumns = (columns) => {
@@ -292,10 +297,24 @@ const updateQuotationStatus = (quotation) => {
         },
         {
             preserveScroll: true,
-            onSuccess: () => {
-                console.log("Quotation status updated successfully!");
+            onSuccess: (response) => {
+                if (response.props.flash.success) {
+                    // Ensure a success response exists
+                    toast.add({
+                        severity: "success",
+                        summary: "Success",
+                        detail: "Quotation status updated successfully!",
+                        life: 3000,
+                    });
+                }
             },
             onError: (err) => {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to update quotation status!",
+                    life: 3000,
+                });
                 console.error("Error updating quotation status:", err);
             },
         }
