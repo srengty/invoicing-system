@@ -76,88 +76,110 @@
                 </Dialog>
 
                 <!-- Product Form Dialog -->
-                <Dialog v-model:visible="isFormVisible" header="Create Item" :modal="true" class="text-sm">
-                    <form @submit.prevent="submitForm" class="pl-4 pr-4 pb-4">
-                        <div class="grid gap-2 mb-4 ">
-                            <div class="grid grid-cols-2 gap-8 ">
-                                <div class="field">
-                                    <label for="division" class="required">Division</label>
-                                    <Select id="division" v-model="form.division_id" :options="divisionOptions" optionLabel="name" optionValue="id" class="w-full" required></Select>
-                                </div>
-                                <div class="field">
-                                    <label for="category" class="required">Category</label>
-                                    <Select id="category" v-model="form.category_id" :options="categoryOptions" optionLabel="name" optionValue="id" class="w-full" ></Select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="field">
-                                    <label for="code" class="required">Code</label>
-                                    <InputText id="code" v-model="form.code" class="w-full text-sm" required />
-                                </div>
-                            </div>
+                <Dialog v-model:visible="isFormVisible" :modal="true" class="text-sm max-w-auto bg-color-green-100" size="small"> 
+                    <template #header>
+                    <div class="flex items-center gap-2">
+                        <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
+                        <span class="text-xl font-semibold bor">Create Item</span>
+                    </div>
+                    </template>
+
+                    <!-- Form -->
+                    <form @submit.prevent="submitForm" class="ml-6 mr-6" >
+                    <div class="grid gap-4 mb-4">
+                        <div class="grid grid-cols-3 gap-4">
+                        <!-- Division -->
+                        <div class="field">
+                            <label for="division" class="required">Division</label>
+                            <Select id="division" v-model="form.division_id" :options="divisionOptions" optionLabel="name" optionValue="id" class="w-full" required />
                         </div>
-                        <div class="col-span-3"><hr/></div>
-                        <div class="grid gap-2 mt-2 mb-4">
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="field">
-                                    <label for="name" class="required">Name</label>
-                                    <InputText id="name" v-model="form.name" class="w-full text-sm" required />
-                                </div>
-                                <div class="field">
-                                    <label for="desc">Description</label>
-                                    <InputText v-model="form.desc" class="w-full text-sm" />
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="field">
-                                    <label for="name_kh" class="required">Name (KH)</label>
-                                    <InputText id="name_kh" v-model="form.name_kh" class="w-full text-sm" required />
-                                </div>
-                                <div class="field">
-                                    <label for="desc_kh">Description (KH)</label>
-                                    <InputText v-model="form.desc_kh" class="w-full text-sm"/>
-                                </div>
-                            </div>
+
+                        <!-- Category -->
+                        <div class="field">
+                            <label for="category" class="required">Category</label>
+                            <Select id="category" v-model="form.category_id" :options="categoryOptions" optionLabel="name" optionValue="id" class="w-full" />
                         </div>
-                        <div class="grid gap-2 mt-2 mb-4 text-sm">
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="field">
-                                    <label for="quantity" class="required">Quantity</label>
-                                    <InputNumber id="quantity" v-model="form.quantity" class="w-full text-sm"/>
-                                </div>
-                                <div class="field">
-                                    <label for="price" class="required">Price in KHR</label>
-                                    <InputNumber id="price" v-model="form.price" class="w-full text-sm" required />
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="field">
-                                    <label for="unit" class="required">Unit</label>
-                                    <InputText id="unit" v-model="form.unit" class="w-full text-sm" required />
-                                </div>
-                                <div class="field">
-                                    <label class="required">Remark</label>
-                                    <InputText v-model="form.remark" class="w-full text-sm" required  />
-                                </div>
-                            </div>
+
+                        <!-- Code -->
+                        <div class="field">
+                            <label for="code" class="required">Code</label>
+                            <InputText id="code" v-model="form.code" class="w-full text-sm" required />
                         </div>
-                        <div class="col-span-3"><hr/></div>
-                        <div class="grid gap-2 mt-2 mb-4">
-                            <div class="grid grid-cols-2 gap-8">
-                                <div class="field">
-                                    <label class="required">Account code</label>
-                                    <InputText v-model="form.acc_code" class="w-full text-sm" required  />
-                                </div>
-                                <div class="grid">
-                                    <label>Upload PDF:</label>
-                                    <input type="file" accept="application/pdf" @change="handleFileUpload" class="border p-2 rounded" />
-                                </div> 
-                            </div>
                         </div>
-                        <div class="flex justify-end gap-2 mt-4">
-                            <Button label="Cancel" class="p-button-secondary" @click="closeForm" />
-                            <Button label="Save" class="p-button-primary" type="submit" :loading="form.processing" />
+                    </div>
+
+                    <hr />
+
+                    <div class="grid gap-4 mt-4 mb-4">
+                        <div class="flex gap-4">
+                        <div class="field w-1/3">
+                            <label for="name" class="required">Name</label>
+                            <InputText id="name" v-model="form.name" class="w-full text-sm" required />
                         </div>
+
+                        <div class="field w-2/3">
+                            <label for="desc">Description</label>
+                            <InputText id="desc" v-model="form.desc" class="w-full text-sm" />
+                        </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                        <div class="field w-1/3">
+                            <label for="name_kh" class="required">Name (KH)</label>
+                            <InputText id="name_kh" v-model="form.name_kh" class="w-full text-sm" required />
+                        </div>
+
+                        <div class="field w-2/3">
+                            <label for="desc_kh">Description (KH)</label>
+                            <InputText id="desc_kh" v-model="form.desc_kh" class="w-full text-sm" />
+                        </div>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="grid gap-4 mt-4 mb-4 text-sm">
+                        <div class="grid grid-cols-3 gap-4">
+                        <div class="field">
+                            <label for="quantity" class="required">Quantity</label>
+                            <InputNumber id="quantity" v-model="form.quantity" class="w-full text-sm" size="small" />
+                        </div>
+
+                        <div class="field">
+                            <label for="price" class="required">Price in KHR</label>
+                            <InputNumber id="price" v-model="form.price" class="w-full text-sm" required size="small" />
+                        </div>
+
+                        <div class="field">
+                            <label for="unit" class="required">Unit</label>
+                            <InputText id="unit" v-model="form.unit" class="w-full text-sm" required />
+                        </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                        <div class="field">
+                            <label class="required">Remark</label>
+                            <InputText v-model="form.remark" class="w-full text-sm" required />
+                        </div>
+
+                        <div class="field">
+                            <label class="required">Account code</label>
+                            <InputText v-model="form.acc_code" class="w-full text-sm" required />
+                        </div>
+
+                        <!-- File Upload -->
+                        <div class="grid">
+                            <label>Upload PDF:</label>
+                            <input type="file" accept="application/pdf" @change="handleFileUpload" class="border p-2 rounded" />
+                            <p v-if="fileName" class="text-xs text-gray-600">Selected: {{ fileName }}</p>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-4">
+                        <Button label="Cancel" class="p-button-secondary" @click="closeForm" />
+                        <Button label="Create" class="p-button-primary" type="submit" :loading="form.processing" />
+                    </div>
                     </form>
                 </Dialog>
             </div>
@@ -220,7 +242,7 @@ const selectedProduct = ref(null);
 // Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
-    division_id: '',
+    division_id: 2,
     code: '',
     acc_code: '73048 ផលពីសេវាផ្សេងៗ',
     name: '',
@@ -238,6 +260,7 @@ const form = useForm({
 // Open product form
 const openForm = (product = null) => {
     if (product) {
+        console.log(product);
         form.id = product.id;
         form.code = product.code;
         form.name = product.name;
@@ -246,7 +269,7 @@ const openForm = (product = null) => {
         form.price = product.price;
         form.quantity = product.quantity;
         form.category_id = product.category_id;
-        form.division_id = product.division_id;
+        form.division_id = Number(product.division_id);
         form.desc = product.desc || ''; // ✅ Ensure description is populated
         form.desc_kh = product.desc_kh || ''; 
         form.remark = product.remark || '';
@@ -329,6 +352,5 @@ const deleteProduct = (id) => {
   padding: 6px !important; /* Smaller padding */
   font-size: 14px !important;  /* Smaller icon size */
   min-width: 30px !important;  /* Reduce button width */
-  background-color: aquamarine;
 }
 </style>
