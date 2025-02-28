@@ -64,10 +64,8 @@
                             <a v-if="selectedProduct.pdf_url" :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`" target="_blank" class="text-blue-500">
                                 View PDF
                             </a>
-
-                    </div>
-                    <p v-else class="text-gray-500">No PDF available</p>
-
+                        </div>
+                        <p v-else class="text-gray-500">No PDF available</p>
                     </div>
 
                     <div class="flex justify-end">
@@ -80,7 +78,7 @@
                     <template #header>
                     <div class="flex items-center gap-2">
                         <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
-                        <span class="text-xl font-semibold bor">Create Item</span>
+                        <span class="text-xl font-semibold bor">{{ form.id ? 'Edit Item' : 'Create Item' }}</span>
                     </div>
                     </template>
 
@@ -112,27 +110,26 @@
 
                     <div class="grid gap-4 mt-4 mb-4">
                         <div class="flex gap-4">
-                        <div class="field w-1/3">
-                            <label for="name" class="required">Name</label>
-                            <InputText id="name" v-model="form.name" class="w-full text-sm" required />
-                        </div>
+                            <div class="field w-1/3">
+                                <label for="name" class="required">Name</label>
+                                <InputText id="name" v-model="form.name" class="w-full text-sm" required />
+                            </div>
 
-                        <div class="field w-2/3">
-                            <label for="desc">Description</label>
-                            <InputText id="desc" v-model="form.desc" class="w-full text-sm" />
+                            <div class="field w-2/3">
+                                <label for="desc">Description</label>
+                                <InputText id="desc" v-model="form.desc" class="w-full text-sm" />
+                            </div>
                         </div>
-                        </div>
-
                         <div class="flex gap-4">
-                        <div class="field w-1/3">
-                            <label for="name_kh" class="required">Name (KH)</label>
-                            <InputText id="name_kh" v-model="form.name_kh" class="w-full text-sm" required />
-                        </div>
+                            <div class="field w-1/3">
+                                <label for="name_kh" class="required">Name (KH)</label>
+                                <InputText id="name_kh" v-model="form.name_kh" class="w-full text-sm" required />
+                            </div>
 
-                        <div class="field w-2/3">
-                            <label for="desc_kh">Description (KH)</label>
-                            <InputText id="desc_kh" v-model="form.desc_kh" class="w-full text-sm" />
-                        </div>
+                            <div class="field w-2/3">
+                                <label for="desc_kh">Description (KH)</label>
+                                <InputText id="desc_kh" v-model="form.desc_kh" class="w-full text-sm" />
+                            </div>
                         </div>
                     </div>
 
@@ -140,46 +137,46 @@
 
                     <div class="grid gap-4 mt-4 mb-4 text-sm">
                         <div class="grid grid-cols-3 gap-4">
-                        <div class="field">
-                            <label for="quantity" class="required">Quantity</label>
-                            <InputNumber id="quantity" v-model="form.quantity" class="w-full text-sm" size="small" />
-                        </div>
+                            <div class="field">
+                                <label for="quantity" class="required">Quantity</label>
+                                <InputNumber id="quantity" v-model="form.quantity" class="w-full text-sm" size="small" />
+                            </div>
 
-                        <div class="field">
-                            <label for="price" class="required">Price in KHR</label>
-                            <InputNumber id="price" v-model="form.price" class="w-full text-sm" required size="small" />
-                        </div>
+                            <div class="field">
+                                <label for="price" class="required">Price in KHR</label>
+                                <InputNumber id="price" v-model="form.price" class="w-full text-sm" required size="small" />
+                            </div>
 
-                        <div class="field">
-                            <label for="unit" class="required">Unit</label>
-                            <InputText id="unit" v-model="form.unit" class="w-full text-sm" required />
+                            <div class="field">
+                                <label for="unit" class="required">Unit</label>
+                                <InputText id="unit" v-model="form.unit" class="w-full text-sm" required />
+                            </div>
                         </div>
-                        </div>
-
                         <div class="grid grid-cols-3 gap-4">
-                        <div class="field">
-                            <label class="required">Remark</label>
-                            <InputText v-model="form.remark" class="w-full text-sm" required />
-                        </div>
+                            <div class="field">
+                                <label class="required">Remark</label>
+                                <InputText v-model="form.remark" class="w-full text-sm" required />
+                            </div>
 
-                        <div class="field">
-                            <label class="required">Account code</label>
-                            <InputText v-model="form.acc_code" class="w-full text-sm" required />
-                        </div>
+                            <div class="field">
+                                <label class="required">Account code</label>
+                                <InputText v-model="form.acc_code" class="w-full text-sm" required />
+                            </div>
 
-                        <!-- File Upload -->
-                        <div class="grid">
+                            <!-- File Upload -->
+                            <div class="grid">
                             <label>Upload PDF:</label>
                             <input type="file" accept="application/pdf" @change="handleFileUpload" class="border p-2 rounded" />
-                            <p v-if="fileName" class="text-xs text-gray-600">Selected: {{ fileName }}</p>
+                            <p v-if="form.pdf_url" class="text-xs text-gray-600">
+                                Current file: <a :href="form.pdf_url" target="_blank" class="text-blue-500">{{ form.pdf_url.split('/').pop() }}</a>
+                            </p>
                         </div>
                         </div>
                     </div>
-
-                    <div class="flex justify-end gap-2 mt-4">
-                        <Button label="Cancel" class="p-button-secondary" @click="closeForm" />
-                        <Button label="Create" class="p-button-primary" type="submit" :loading="form.processing" />
-                    </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <Button label="Cancel" class="p-button-secondary" @click="closeForm" />
+                            <Button :label="form.id ? 'Update' : 'Create'" class="p-button-primary" type="submit" :loading="form.processing" />
+                        </div>
                     </form>
                 </Dialog>
             </div>
@@ -235,14 +232,13 @@ const columns = [
 
 // State for form and view dialogs
 const isFormVisible = ref(false);
-
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
 
 // Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
-    division_id: 2,
+    division_id: '',
     code: '',
     acc_code: '73048 ផលពីសេវាផ្សេងៗ',
     name: '',
@@ -255,12 +251,12 @@ const form = useForm({
     category_id: '',
     pdf_url: '',
     remark:'',
+    pdf: null, // Add this line to handle file uploads
 });
 
 // Open product form
 const openForm = (product = null) => {
     if (product) {
-        console.log(product);
         form.id = product.id;
         form.code = product.code;
         form.name = product.name;
@@ -274,12 +270,12 @@ const openForm = (product = null) => {
         form.desc_kh = product.desc_kh || ''; 
         form.remark = product.remark || '';
         form.pdf_url = product.pdf_url || null; // ✅ Ensure PDF URL is correctly set
+        form.pdf = null; // Reset file upload
     } else {
         form.reset();
     }
     isFormVisible.value = true;
 };
-
 
 // Close product form
 const closeForm = () => {
@@ -300,35 +296,43 @@ const viewProduct = (product) => {
     isViewDialogVisible.value = true;
 };
 
-
-// Submit product form (create/update)
 const submitForm = () => {
     const formData = new FormData();
-
-    // Append all form fields
     Object.entries(form).forEach(([key, value]) => {
         if (value !== null && key !== 'pdf') {
             formData.append(key, value);
         }
     });
-
-    // Append the PDF file explicitly
     if (form.pdf) {
         formData.append('pdf', form.pdf);
     }
 
-    // Send form data
-    Inertia.post(route('products.store'), formData, {
-        forceFormData: true,  // Ensures Inertia handles it as multipart/form-data
-        onSuccess: () => {
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully!', life: 3000 });
-            setTimeout(() => location.reload(), 1000);
-            closeForm();
-        },
-        onError: (errors) => {
-            console.error('Form submission errors:', errors);
-        }
-    });
+    if (form.id) {
+        Inertia.put(route('products.update', form.id), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                toast.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully!', life: 3000 });
+                isFormVisible.value = false;
+            },
+            onError: (errors) => {
+                if (errors.response?.status === 409) {
+                    toast.add({ severity: 'error', summary: 'Conflict', detail: 'Update conflict. Refresh and try again.', life: 3000 });
+                }
+                console.error('Update errors:', errors);
+            }
+        });
+    } else {
+        Inertia.post(route('products.store'), formData, {
+            forceFormData: true,
+            onSuccess: () => {
+                toast.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully!', life: 3000 });
+                isFormVisible.value = false;
+            },
+            onError: (errors) => {
+                console.error('Creation errors:', errors);
+            }
+        });
+    }
 };
 
 // Delete product
@@ -340,6 +344,7 @@ const deleteProduct = (id) => {
         });
     }
 };
+
 </script>
 
 <style>
