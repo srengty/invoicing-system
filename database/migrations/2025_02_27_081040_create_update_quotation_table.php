@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('quotations', function (Blueprint $table) {
-            $table->timestamp('quotation_date')->nullable()->change();
+            // $table->timestamp('quotation_date')->nullable()->change();
+            // $table->timestamp('quotation_no')->nullable()->change();
         });
     }
 

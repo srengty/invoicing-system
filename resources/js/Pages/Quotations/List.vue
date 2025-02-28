@@ -58,6 +58,7 @@
                                 class="w-full md:w-14rem"
                                 @change="updateQuotationStatus(slotProps.data)"
                             />
+
                         </template>
                     </Column>
 
@@ -162,6 +163,15 @@
                     </div>
 
                     <template #footer>
+                        <Button
+                            label="Approve"
+                            severity="success"
+
+                        />
+                        <Button
+                            label="Revice"
+                            severity="danger"
+                        />
                         <Button
                             label="Close"
                             severity="secondary"
@@ -274,7 +284,7 @@ const printQuotation = (quotation_no) => {
     // } else {
     //     alert('Popup blocked! Please allow popups for this website.');
     // }
-};  
+};
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 const updateColumns = (columns) => {

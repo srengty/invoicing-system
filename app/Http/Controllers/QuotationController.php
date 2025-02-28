@@ -43,10 +43,26 @@ class QuotationController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $quotation = Quotation::findOrFail($id);
+          // Restrict access: Ensure only "Head Department" can update the status
+        if (auth()->user()->role !== 'head_department') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Update status
+        if ($quotation->status === 'Pending' && $request->status === 'Approved') {
+            if (!$quotation->quotation_date) {
+                $quotation->quotation_date = now(); // Assign current date if not set
+            }
+        }
         $quotation->status = $request->status;  // Ensure correct data is saved
         $quotation->save();
 
-        return response()->json(['message' => 'Quotation status updated successfully!']);
+         return response()->json([
+        'message' => 'Quotation status updated successfully!',
+        'quotation_no' => $quotation->quotation_no,
+        'quotation_date' => $quotation->quotation_date ? $quotation->quotation_date->format('Y-m-d H:i:s') : null,
+        'status' => $quotation->status,
+    ]);
     }
 
     public function store(Request $request)
@@ -95,7 +111,7 @@ class QuotationController extends Controller
         // dd(json_encode($validated["products"], true));
         // Create the quotation
         $quotation = Quotation::create([
-            'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
+            // 'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
             'customer_id'    => $validated['customer_id'],
             'address'        => $validated['address'] ?? null,
             'phone_number'   => $validated['phone_number'] ?? null,
@@ -138,7 +154,7 @@ class QuotationController extends Controller
             'quotation' => [
                 'id' => $quotation->id,
                 'quotation_no' => $quotation->quotation_no ?? 'Pending Approval',
-                'quotation_date' => $quotation->quotation_date ?? now()->format('Y-m-d'),
+                // 'quotation_date' => $quotation->quotation_date ?? now()->format('Y-m-d'),
                 'customer_id' => $quotation->customer_id,
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->address,

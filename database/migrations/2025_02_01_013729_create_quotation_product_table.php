@@ -10,7 +10,7 @@ class CreateQuotationProductTable extends Migration
     {
         Schema::create('product_quotation', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('quotation_no');
+            $table->unsignedBigInteger('quotation_no')->unique()->nullable();
             $table->unsignedBigInteger('product_id'); // Assuming products have an ID
             $table->integer('quantity');
             $table->json('product_unit_prices')->nullable();
@@ -30,7 +30,7 @@ class CreateQuotationProductTable extends Migration
             $table->timestamps();
         });
 
-        
+
 
     }
 
