@@ -20,11 +20,13 @@ class DivisionSeeder extends Seeder
                 'division_name_english' => 'GIC',
                 'description_khmer' => 'ទេពកោសល្យព័ត៌មាន',
                 'description_english' => 'GIC',
+                'division_code' => 'GIC001',
             ],[
                 'division_name_khmer' => 'ទេពកោសល្យអគ្គីសនី',
                 'division_name_english' => 'GEE',
                 'description_khmer' => 'ទេពកោសល្យអគ្គីសនី',
                 'description_english' => 'GEE',
+                'division_code' => 'GIC002',
             ],
         ]);
     }

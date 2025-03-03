@@ -6,7 +6,7 @@
             <div class="Items text-sm">
                 <div class="flex justify-between items-center pb-4 ml-2">
                     <h1 class="text-xl text-green-600">Manage Items</h1>
-                    <Button icon="pi pi-plus" raised label="New Item" size="meduim" class="custom-button-create" severity="warning" @click="openForm()" />
+                    <Button icon="pi pi-plus" raised label="New Item" size="small" class="custom-button-create" severity="warning" @click="openForm()" />
                 </div>
 
                 <!-- DataTable to display items -->
@@ -50,26 +50,53 @@
                 </DataTable>
 
                 <!-- View Product Dialog -->
-                <Dialog v-model:visible="isViewDialogVisible" header="Product Details" :modal="true" class="text-sm">
-                    <div v-if="selectedProduct" class="flex flex-col gap-2 w-64 text-sm">
-                        <p><strong>ID:</strong> {{ selectedProduct.id }}</p>
-                        <p><strong>Code:</strong> {{ selectedProduct.code }}</p>
-                        <p><strong>Name:</strong> {{ selectedProduct.name }}</p>
-                        <p><strong>Name (KH):</strong> {{ selectedProduct.name_kh }}</p>
-                        <p><strong>Unit:</strong> {{ selectedProduct.unit }}</p>
-                        <p><strong>Price:</strong> {{ selectedProduct.price }}</p>
-                        <p><strong>Quantity:</strong> {{ selectedProduct.quantity }}</p>
-                        <p><strong>Category:</strong> {{ getCategoryName(selectedProduct.category_id) }}</p>
-                        <div v-if="selectedProduct.pdf_url">
-                            <a v-if="selectedProduct.pdf_url" :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`" target="_blank" class="text-blue-500">
-                                View PDF
+                <Dialog 
+                    v-model:visible="isViewDialogVisible" 
+                    header="Product Details" 
+                    :modal="true" 
+                    class="w-80 rounded-lg shadow-lg"
+                >
+                <template #header>
+                    <div class="flex items-center gap-2">
+                        <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-2" />
+                        <span class="text-xl font-semibold bor">Item Details</span>
+                    </div>
+                    </template>
+                    <div v-if="selectedProduct" class="space-y-3 text-gray-700 pl-2 pr-2">
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <p><strong>Division:</strong></p> <p class="text-right">{{ getDivisionName(selectedProduct.division_id) }}</p>
+                            <p><strong>Category:</strong></p> <p class="text-right">{{ getCategoryName(selectedProduct.category_id) }}</p>
+                            <p><strong>Code:</strong></p> <p class="text-right">{{ selectedProduct.code }}</p>
+                            <p><strong>Name:</strong></p> <p class="text-right">{{ selectedProduct.name }}</p>
+                            <p><strong>Name (KH):</strong></p> <p class="text-right">{{ selectedProduct.name_kh }}</p>
+                            <p><strong>Dsription:</strong></p> <p class="text-right">{{ selectedProduct.desc }}</p>
+                            <p><strong>Dsription (KH):</strong></p> <p class="text-right">{{ selectedProduct.desc_kh }}</p>
+                            <p><strong>Unit:</strong></p> <p class="text-right">{{ selectedProduct.unit }}</p>
+                            <p><strong>Quantity:</strong></p> <p class="text-right font-semibold">{{ selectedProduct.quantity }}</p>
+                            <p><strong>Price in KHR:</strong></p> <p class="text-right font-semibold text-green-600">{{ selectedProduct.price }}</p>
+                            <p><strong>Unit:</strong></p> <p class="text-right font-semibold">{{ selectedProduct.unit }}</p>
+                            <p><strong>Remark:</strong></p> <p class="text-right font-semibold">{{ selectedProduct.quantity }}</p>
+                            <p><strong>Account code:</strong></p> <p class="text-right font-semibold">{{ selectedProduct.quantity }}</p>
+                        </div>
+
+                        <div v-if="selectedProduct.pdf_url" class="text-center">
+                            <a 
+                                :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`" 
+                                target="_blank" 
+                                class="text-blue-500 hover:text-blue-700 transition duration-200"
+                            >
+                                📄 View PDF
                             </a>
                         </div>
-                        <p v-else class="text-gray-500">No PDF available</p>
+                        <p v-else class="text-center text-gray-400">No PDF available</p>
                     </div>
 
-                    <div class="flex justify-end">
-                        <Button label="Close" class="p-button-secondary" @click="isViewDialogVisible = false" />
+                    <div class="flex justify-end mt-2">
+                        <Button 
+                            label="Close" 
+                            class="p-button-secondary px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition"
+                            @click="isViewDialogVisible = false" 
+                        />
                     </div>
                 </Dialog>
 
@@ -219,6 +246,11 @@ const getCategoryName = (categoryId) => {
     return category ? category.category_name_english || category.category_name_khmer : 'Unknown';
 };
 
+const getDivisionName = (divisionId) => {
+    const division = divisions.find(cat => cat.id === divisionId);
+    return division ? division.division_name_english || division.divison_name_khmer : 'Unknown';
+};
+
 // Define columns for DataTable
 const columns = [
     { field: 'id', header: 'ID' },
@@ -351,11 +383,6 @@ const deleteProduct = (id) => {
 .custom-button {
   padding: 4px 4px !important; /* Smaller padding */
   font-size: 12px !important;  /* Smaller icon size */
-  min-width: 30px !important;  /* Reduce button width */
-}
-.custom-button-create {
-  padding: 6px !important; /* Smaller padding */
-  font-size: 14px !important;  /* Smaller icon size */
   min-width: 30px !important;  /* Reduce button width */
 }
 </style>
