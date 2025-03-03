@@ -47,7 +47,6 @@ class ProductController extends Controller
             'division_id' => 'required|integer|max:255',
             'pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
         ]);
-
         // ✅ Handle PDF file upload correctly
         if ($request->hasFile('pdf')) {
             $file = $request->file('pdf');
@@ -87,7 +86,6 @@ class ProductController extends Controller
             'remark' => 'required|string',
             'pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Allow optional PDF
         ]);
-
         // ✅ Always create a new PDF and delete the old one
         if ($request->hasFile('pdf')) {
             // Delete old file if it exists

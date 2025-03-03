@@ -3,6 +3,7 @@
     <GuestLayout>
         <BodyLayout>
             <Toast />
+
             <div class="Items text-sm">
                 <div class="flex justify-between items-center pb-4 ml-2">
                     <h1 class="text-xl text-green-600">Manage Items</h1>
@@ -338,10 +339,12 @@ const submitForm = () => {
     if (form.pdf) {
         formData.append('pdf', form.pdf);
     }
-
     if (form.id) {
-        Inertia.put(route('products.update', form.id), formData, {
+        Inertia.post(route('products.update', form.id), formData, {
             forceFormData: true,
+            headers:{
+                'Content-Type': 'multipart/form-data',
+            },
             onSuccess: () => {
                 toast.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully!', life: 3000 });
                 isFormVisible.value = false;
@@ -379,10 +382,10 @@ const deleteProduct = (id) => {
 
 </script>
 
-<style>
+<!-- <style>
 .custom-button {
   padding: 4px 4px !important; /* Smaller padding */
   font-size: 12px !important;  /* Smaller icon size */
   min-width: 30px !important;  /* Reduce button width */
 }
-</style>
+</style> -->

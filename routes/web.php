@@ -53,7 +53,7 @@ Route::get('/settings/products', [ProductController::class, 'index'])->name('pro
 Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
 Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
 Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-Route::put('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
+Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
 

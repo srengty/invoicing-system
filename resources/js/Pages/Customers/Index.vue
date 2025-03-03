@@ -3,21 +3,16 @@
     <GuestLayout>
         <BodyLayout>
             <div class="customers">
-            <div class="flex justify-between items-center p-3 pr-0">
+            <div class="flex justify-between items-center p-3">
                 <h1 class="text-xl">Customers/Organization Name</h1>
                 <div>
                     <Link :href="route('customers.create')">
-                        <Button icon="pi pi-plus" label="New" rounded size="small"/>
+                        <Button icon="pi pi-plus" label="New" outlined="" size="small"/>
                     </Link>
-                    <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" rounded size="small"/>
+                    <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" outlined size="small"/>
                 </div>
             </div>
             <DataTable :value="indexedCustomers" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" class="text-sm">
-                <Column field="index" header="#" style="width: 50px">
-                    <template #body="slotProps">
-                        {{ slotProps.data.index }}
-                    </template>
-                </Column>
                 <Column v-for="col of showColumns" :key="col.field" :field="col.field" :header="col.header" sortable></Column>
                 <Column header="Actions">
                     <template #body="slotProps">
@@ -75,6 +70,7 @@ const props = defineProps({
 });
 
 const columns = [
+    { field: 'id', header: 'ID' },
     { field: 'name', header: 'Name' },
     { field: 'code', header: 'Code' },
     { field: 'email', header: 'Email' },
