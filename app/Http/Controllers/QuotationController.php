@@ -11,16 +11,17 @@ use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
 use App\Models\ProductQuotation;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class QuotationController extends Controller
 {
     public function list()
     {
-        $quotations = Quotation::with('customer', 'products')->orderBy('created_at', 'desc')->get();
+        $quotations = Quotation::with(['customer', 'products'])->orderBy('created_at', 'desc')->get();
         $agreements = Agreement::all();
         $customers = Customer::all();
         $products = Product::all();
-
+        Log::info($quotations);
         return Inertia::render('Quotations/List', [ // Render the index page using Inertia
             'quotations' => $quotations,
             'agreements' => $agreements,
@@ -119,17 +120,14 @@ class QuotationController extends Controller
             'total'          => $total,
 
         ]);
-
-        $quotation->save();
-
         // Attach products to the quotation
         foreach ($validated['products'] as $product) {
             $prod = Product::find($product['id']);
             $quotation->products()->attach($prod->id, [
                 'quantity' => $product['quantity'],
-                // 'price' => $prod->price * $product['quantity'],
+                // "quotation_no"=> $quotation->id,
                 'price' => $product['price'],
-                'product_unit_prices' => json_encode($validated["products"], true),
+                'product_unit_prices' => json_encode($validated["products"], true,),
             ]);
         }
     // Redirect with a success message
@@ -143,13 +141,13 @@ class QuotationController extends Controller
     {
         // $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
         $quotation = Quotation::with(['customer', 'products'])
-        ->where('quotation_no', $quotation_no)
+        ->where('id', $quotation_no)
         ->firstOrFail();
-
+        Log::info("message");
         // return Inertia::render('Quotations/Print', [
-        //     'quotation' => $quotation,
-        //     'products' => $quotation->products,
-        // ]);
+            //     'quotation' => $quotation,
+            //     'products' => $quotation->products,
+            // ]);
         return Inertia::render('Quotations/Print', [
             'quotation' => [
                 'id' => $quotation->id,

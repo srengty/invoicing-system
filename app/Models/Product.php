@@ -34,14 +34,14 @@ class Product extends Model
     // Example relationship if needed
     public function quotations()
     {
-        return $this->belongsToMany(Quotation::class, 'product_quotation', 'product_id', 'quotation_no')
+        return $this->belongsToMany(Quotation::class, 'product_quotation', 'product_id', 'id')
                     ->withPivot('quantity', 'price', 'name', 'unit')
                     ->withTimestamps();
     }
 
     public function productQuotations()
     {
-        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no')
+        return $this->hasMany(ProductQuotation::class, 'product_id', 'id')
                     ->withPivot('quantity', 'price', 'unit');
     }
 

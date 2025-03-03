@@ -17,7 +17,7 @@ class CreateQuotationProductTable extends Migration
             $table->decimal('price', 10, 2);
             $table->timestamps();
             // Foreign keys
-            $table->foreign('quotation_no')->references('quotation_no')->on('quotations')->onDelete('cascade');
+            $table->foreign('quotation_no')->references('id')->on('quotations')->onDelete('cascade');
             $table->foreign('product_id')->references('id','name','unit')->on('products')->onDelete('cascade');
 
         });

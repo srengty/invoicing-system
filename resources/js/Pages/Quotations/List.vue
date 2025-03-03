@@ -58,7 +58,6 @@
                                 class="w-full md:w-14rem"
                                 @change="updateQuotationStatus(slotProps.data)"
                             />
-
                         </template>
                     </Column>
 
@@ -84,11 +83,7 @@
                                     aria-label="Print out"
                                     size="small"
                                     class="custom-button"
-                                    @click="
-                                        printQuotation(
-                                            slotProps.data.quotation_no
-                                        )
-                                    "
+                                    @click="printQuotation(slotProps.data.id)"
                                     rounded
                                 />
                             </div>
@@ -163,15 +158,8 @@
                     </div>
 
                     <template #footer>
-                        <Button
-                            label="Approve"
-                            severity="success"
-
-                        />
-                        <Button
-                            label="Revice"
-                            severity="danger"
-                        />
+                        <Button label="Approve" severity="success" />
+                        <Button label="Revice" severity="danger" />
                         <Button
                             label="Close"
                             severity="secondary"
@@ -247,9 +235,9 @@ const closeForm = () => {
 // Open view quotation dialog
 const viewQuotation = (quotations) => {
     selectedQuotation.value = quotations;
+    console.log("Selected Quotation:", selectedQuotation.value);
+    console.log("Selected Products:", selectedQuotation.value.products);
     isViewDialogVisible.value = true;
-
-    console.log(selectedQuotation);
 };
 
 const columns = [

@@ -108,10 +108,10 @@
                 </div>
                 <!-- </div> -->
             </div>
-            <div class="pl-8 pt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
-                    <div class="flex gap-4 items-end">
-                        <div class="flex flex-col gap-2">
+                    <div class="flex gap-32 items-center">
+                        <!-- <div class="flex flex-col gap-2">
                             <label for="item">Item</label>
                             <MultiSelect
                                 :filter="true"
@@ -122,7 +122,8 @@
                                 placeholder="Select Product"
                                 class="w-full md:w-60"
                             />
-                        </div>
+                        </div> -->
+
                         <div class="w-10">
                             <Button
                                 icon="pi pi-plus"
@@ -133,6 +134,14 @@
                                 size="small"
                             />
                         </div>
+                        <div class="flex flex-row gap-2 w-full">
+                            <label for="p_name">English/Khmer</label>
+                            <ToggleSwitch
+                                v-model="isKhmer"
+                                @change="toggleLanguage"
+                            />
+                        </div>
+                        <div class="w-60"></div>
                     </div>
 
                     <!-- <div class="w-full">
@@ -143,13 +152,13 @@
               </div> -->
                 </div>
             </div>
-            <div class="pl-8 flex flex-row gap-4 items-end w-1/3">
+            <!-- <div class="pl-8 flex flex-row gap-4 items-end w-1/3">
                 <div class="flex flex-row gap-2 w-full">
                     <label for="p_name">English/Khmer</label>
                     <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
                 </div>
                 <div class="w-60"></div>
-            </div>
+            </div> -->
 
             <!-- Selected Products Table -->
             <div class="pl-6 pt-5">
@@ -219,7 +228,7 @@
                                     severity="info"
                                     title="edit"
                                     size="small"
-                                    @click="viewQuotation(slotProps.data.id)"
+                                    @click="editProduct(slotProps.data.id)"
                                     rounded
                                 />
                                 <Button
@@ -315,7 +324,6 @@
     >
         <Customers redirect_route="quotations.create"></Customers>
     </Dialog>
-
     <!-- Add Item Dialog -->
     <Dialog
         v-model:visible="isAddItemDialogVisible"
@@ -330,7 +338,7 @@
                 <label for="item">Item *</label> <br />
                 <MultiSelect
                     :filter="true"
-                    v-model="selectedProductsData"
+                    v-model="selectedItemIds"
                     :options="products"
                     optionLabel="name"
                     optionValue="id"
@@ -345,7 +353,7 @@
             <div class="field">
                 <label for="item-category">Item Category *</label>
                 <InputText
-                    v-model="products.category"
+                    v-model="selectedProduct.category"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -356,7 +364,7 @@
             <div class="field">
                 <label for="unit-price">Unit Price *</label>
                 <InputNumber
-                    v-model="products.price"
+                    v-model="selectedProduct.price"
                     size="small"
                     class="w-full text-sm"
                 />
@@ -412,7 +420,7 @@
                 label="Cancel"
                 icon="pi pi-times"
                 class="p-button-text"
-                @click="isAddItemDialogVisible = false"
+                @click="closeAddItemDialog = false"
             />
             <Button
                 label="Add Item"
@@ -445,6 +453,9 @@ import Column from "primevue/column";
 import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
 
+// Toast for notifications
+const toast = useToast();
+
 const props = defineProps({
     customers: Array,
     products: Array,
@@ -457,20 +468,83 @@ const today = new Date();
 const isKhmer = ref(false);
 const statusOptions = ref(["Pending", "Approved"]);
 const isAddItemDialogVisible = ref(false);
-const selectedItem = ref({});
+const selectedItemIds = ref([]);
+const selectedProduct = ref({});
 const selectedQuantity = ref(1);
 const additionalRemark = ref("");
-const filteredItems = ref([]);
+const selectedAccountCode = ref("");
+
+const updateSelectedProductDetails = () => {
+    if (selectedItemIds.value.length > 0) {
+        const selectedProductId = selectedItemIds.value[0];
+        const product = props.products.find((p) => p.id === selectedProductId);
+        if (product) {
+            selectedProduct.value = { ...product };
+            selectedAccountCode.value = product.account_code;
+        }
+    } else {
+        selectedProduct.value = {};
+        selectedAccountCode.value = "";
+    }
+};
 
 const addItemToTable = () => {
-    if (selectedItem.value.name) {
-        console.log("Item Added:", {
-            ...selectedItem.value,
-            quantity: selectedQuantity.value,
-            remarks: additionalRemark.value,
+    if (!selectedProduct.value.name) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Please select an item.",
+            life: 3000,
         });
-        isAddItemDialogVisible.value = false;
+        return;
     }
+
+    if (!selectedQuantity.value || selectedQuantity.value < 1) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Please enter a valid quantity.",
+            life: 3000,
+        });
+        return;
+    }
+
+    const newItem = {
+        ...selectedProduct.value,
+        quanity: selectedQuantity.value,
+        subTotal: Number(selectedProduct.value.price) * selectedQuantity.value,
+        remarks: additionalRemark.value,
+    };
+
+    if (editingProduct.value) {
+        // Editing an existing item
+        const index = selectedProductsData.value.findIndex(
+            (prod) => prod.id === editingProduct.value.id
+        );
+        if (index !== -1) {
+            selectedProductsData.value[index] = newItem; // Update the existing item
+        }
+    } else {
+        // Adding a new item
+        selectedProductsData.value.push(newItem); // Add the new item
+    }
+
+    editingProduct.value = null; // Reset editing product after the process is done.
+    closeAddItemDialog(); // Close the dialog
+};
+
+const closeAddItemDialog = () => {
+    isAddItemDialogVisible.value = false;
+    resetAddItemDialog();
+};
+
+const resetAddItemDialog = () => {
+    selectedItemIds.value = [];
+    selectedProduct.value = {};
+    selectedQuantity.value = 1;
+    additionalRemark.value = "";
+    selectedAccountCode.value = "";
+    editingProduct.value = null;
 };
 
 const toggleLanguage = () => {
@@ -493,12 +567,10 @@ watch(status, (newStatus) => {
         isApproved.value = false;
     }
 });
+
 const updateDate = (selectedDate) => {
     form.value.quotation_date = selectedDate;
 };
-
-// Toast for notifications
-const toast = useToast();
 
 // Define the Inertia form
 const form = useForm({
@@ -626,10 +698,22 @@ const removeProduct = (id) => {
     selectedProductsData.value = selectedProductsData.value.filter(
         (prod) => prod.id !== id
     );
-    // Also update the selected IDs so the MultiSelect reflects the change.
-    selectedProductIds.value = selectedProductIds.value.filter(
-        (prodId) => prodId !== id
+};
+
+const editingProduct = ref(null);
+const editProduct = (productId) => {
+    const productToEdit = selectedProductsData.value.find(
+        (prod) => prod.id === productId
     );
+    if (productToEdit) {
+        editingProduct.value = { ...productToEdit }; // Store the product being edited
+        selectedItemIds.value = [productToEdit.id]; // Set the selected item ID
+        selectedQuantity.value = productToEdit.quanity; // Set the quantity
+        additionalRemark.value = productToEdit.remarks; // Set the remarks
+        selectedProduct.value = { ...productToEdit }; // Set the selected product
+        selectedAccountCode.value = productToEdit.account_code; // Set the account code
+        isAddItemDialogVisible.value = true; // Show the dialog
+    }
 };
 
 const submit = (event) => {
