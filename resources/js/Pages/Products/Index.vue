@@ -302,7 +302,6 @@ import { Inertia } from '@inertiajs/inertia';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import Message from 'primevue/message';
 
 const toast = useToast();
 

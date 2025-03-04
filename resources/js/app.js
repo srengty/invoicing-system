@@ -14,7 +14,6 @@ import Tooltip from 'primevue/tooltip';
 import { createI18n } from 'vue-i18n';
 import kh from './locale/kh.json';
 import en from './locale/en.json';
-import ToastService from "primevue/toastservice"; // ✅ Keep this one
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
