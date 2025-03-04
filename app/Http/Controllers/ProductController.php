@@ -45,16 +45,16 @@ class ProductController extends Controller
             'remark' => 'required|string|max:255',
             'acc_code' => 'required|string|max:255',
             'division_id' => 'required|integer|max:255',
-            'pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
+            'pdf' => 'nullable|file|mimes:pdf|max:2048',
         ]);
-        // ✅ Handle PDF file upload correctly
+
         if ($request->hasFile('pdf')) {
             $file = $request->file('pdf');
             $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
             $file->storeAs('pdfs', $fileName, 'public');
-            $validated['pdf_url'] = $fileName; // ✅ Save filename in `$validated`
+            $validated['pdf_url'] = $fileName;
         } else {
-            $validated['pdf_url'] = null; // ✅ Ensure it is stored as `null` if no file is uploaded
+            $validated['pdf_url'] = null;
         }
 
         Product::create($validated);
@@ -84,37 +84,35 @@ class ProductController extends Controller
             'desc' => 'nullable|string',
             'desc_kh' => 'nullable|string',
             'remark' => 'required|string',
-            'pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Allow optional PDF
+            'pdf' => 'nullable|file|mimes:pdf|max:2048',
         ]);
-        // ✅ Always create a new PDF and delete the old one
+
         if ($request->hasFile('pdf')) {
-            // Delete old file if it exists
             if ($product->pdf_url) {
                 Storage::disk('public')->delete('pdfs/' . $product->pdf_url);
             }
 
-            // Store new file
             $file = $request->file('pdf');
             $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
             $file->storeAs('pdfs', $fileName, 'public');
-            $data['pdf_url'] = $fileName; // ✅ Ensure filename is saved
+            $data['pdf_url'] = $fileName;
         }
 
         $product->update($data);
 
-        return redirect()->back()->with('success', 'Product updated successfully!');
+        return redirect()->route('products.index')->with('success', 'Product updated successfully!');
     }
 
     public function destroy(Product $product)
     {
         try {
             $product->delete();
-
             return redirect()->route('products.index')->with('success', 'Product deleted successfully!');
         } catch (\Exception $e) {
             return redirect()->route('products.index')->with('error', 'There was an error deleting the product.');
         }
     }
+
 
     public function viewPdf($filename)
     {
