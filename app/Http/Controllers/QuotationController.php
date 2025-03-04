@@ -82,6 +82,10 @@ class QuotationController extends Controller
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
             'products.*.price' => 'required|numeric|min:1', // Validate product quantities
+            'products.*.acc_code' => 'nullable|string|max:255',
+            'products.*.category_id' => 'nullable|integer|min:0',
+            'products.*.remark' => 'nullable|string|max:255',
+            'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
         ]);
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
@@ -151,7 +155,7 @@ class QuotationController extends Controller
         return Inertia::render('Quotations/Print', [
             'quotation' => [
                 'id' => $quotation->id,
-                'quotation_no' => $quotation->quotation_no ?? 'Pending Approval',
+                'quotation_no' => $quotation->quotation_no ?? 'Pending',
                 // 'quotation_date' => $quotation->quotation_date ?? now()->format('Y-m-d'),
                 'customer_id' => $quotation->customer_id,
                 'customer_name' => $quotation->customer->name,
@@ -159,6 +163,7 @@ class QuotationController extends Controller
                 'phone_number' => $quotation->phone_number,
                 'products' => $quotation->products,
                 'total' => $quotation->total,
+                'terms' => $quotation->terms,
             ],
         ]);
     }

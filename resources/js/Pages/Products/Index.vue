@@ -20,29 +20,29 @@
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
-                                <Button 
+                                <Button
                                 class="custom-button"
                                 icon="pi pi-eye"
                                 severity="info"
                                 size="small"
-                                @click="viewProduct(slotProps.data)" 
+                                @click="viewProduct(slotProps.data)"
                                 outlined
                                 />
-                                <Button 
+                                <Button
                                 class="custom-button"
                                 icon="pi pi-pencil"
                                 severity="warning"
                                 size="small"
-                                @click="openForm(slotProps.data)" 
-                                outlined 
+                                @click="openForm(slotProps.data)"
+                                outlined
                                 />
-                                <Button 
+                                <Button
                                 class="custom-button"
                                 icon="pi pi-trash"
                                 severity="danger"
                                 size="small"
-                                @click="deleteProduct(slotProps.data.id)" 
-                                outlined 
+                                @click="deleteProduct(slotProps.data.id)"
+                                outlined
                                 />
                             </div>
                         </template>
@@ -50,10 +50,10 @@
                 </DataTable>
 
                 <!-- View Product Dialog -->
-                <Dialog 
-                    v-model:visible="isViewDialogVisible" 
-                    header="Product Details" 
-                    :modal="true" 
+                <Dialog
+                    v-model:visible="isViewDialogVisible"
+                    header="Product Details"
+                    :modal="true"
                     class="w-80 rounded-lg shadow-lg"
                 >
                 <template #header>
@@ -80,9 +80,9 @@
                         </div>
 
                         <div v-if="selectedProduct.pdf_url" class="text-center">
-                            <a 
-                                :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`" 
-                                target="_blank" 
+                            <a
+                                :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`"
+                                target="_blank"
                                 class="text-blue-500 hover:text-blue-700 transition duration-200"
                             >
                                 📄 View PDF
@@ -92,16 +92,16 @@
                     </div>
 
                     <div class="flex justify-end mt-2">
-                        <Button 
-                            label="Close" 
+                        <Button
+                            label="Close"
                             class="p-button-secondary px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition"
-                            @click="isViewDialogVisible = false" 
+                            @click="isViewDialogVisible = false"
                         />
                     </div>
                 </Dialog>
 
                 <!-- Product Form Dialog -->
-                <Dialog v-model:visible="isFormVisible" :modal="true" class="text-sm max-w-auto bg-color-green-100" size="small"> 
+                <Dialog v-model:visible="isFormVisible" :modal="true" class="text-sm max-w-auto bg-color-green-100" size="small">
                     <template #header>
                     <div class="flex items-center gap-2">
                         <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
@@ -227,14 +227,14 @@ const toast = useToast();
 const { products, divisions, categories } = usePage().props;
 
 // ✅ Computed properties to map dropdown options
-const categoryOptions = computed(() => 
+const categoryOptions = computed(() =>
     categories?.map(category => ({
         name: category.category_name_english || category.category_name_khmer,
         id: category.id
     })) || []
 );
 
-const divisionOptions = computed(() => 
+const divisionOptions = computed(() =>
     divisions?.map(division => ({
         name: division.division_name_english || division.divison_name_khmer,
         id: division.id
@@ -299,7 +299,7 @@ const openForm = (product = null) => {
         form.category_id = product.category_id;
         form.division_id = Number(product.division_id);
         form.desc = product.desc || ''; // ✅ Ensure description is populated
-        form.desc_kh = product.desc_kh || ''; 
+        form.desc_kh = product.desc_kh || '';
         form.remark = product.remark || '';
         form.pdf_url = product.pdf_url || null; // ✅ Ensure PDF URL is correctly set
         form.pdf = null; // Reset file upload
