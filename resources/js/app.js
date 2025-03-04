@@ -14,9 +14,22 @@ import Tooltip from 'primevue/tooltip';
 import { createI18n } from 'vue-i18n';
 import kh from './locale/kh.json';
 import en from './locale/en.json';
+import ToastService from "primevue/toastservice"; // ✅ Keep this one
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+const messages = {
+    en: { message: { hello: 'hello world' } },
+    kh: { message: { hello: 'សួស្តី​ពិភពលោក' } }
+  };
+
+const i18n = createI18n({
+    legacy: false, // ✅ Enable Composition API Mode
+    locale: 'en',
+    fallbackLocale: 'en',
+    messages,
+    globalInjection: true // ✅ Allows `$t()` globally in setup()
+  });
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -37,19 +50,10 @@ createInertiaApp({
             .use(i18n)
             .directive('ripple', Ripple) // Register the Ripple directive
             .directive('tooltip', Tooltip)
-            .use(ToastService)
+            .use(ToastService) // ✅ Correct usage
             .mount(el);
     },
     progress: {
         color: '#4B5563',
     },
-});
-
-const i18n = createI18n({
-    fallbackLocale: 'en',
-    locale: document.cookie.split('=')[1],
-    messages:{
-        en: en,
-        kh: kh,
-    }
 });
