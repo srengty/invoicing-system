@@ -9,6 +9,7 @@ use App\Models\Quotation; // Import Quotation model
 use App\Models\Product; // Import Product model
 use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
+use App\Models\CustomerCategory; // Import Customer model
 use App\Models\ProductQuotation;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -34,10 +35,12 @@ class QuotationController extends Controller
     {
         $customers = Customer::all(); // Fetch customer id and name`
         $products = Product::all();
+        $customerCategories = CustomerCategory::all();
         //         dd($products);
         return inertia('Quotations/Create', [
             'customers' => $customers,
             'products' => $products,
+            'customerCategories' => $customerCategories
         ]);
     }
 

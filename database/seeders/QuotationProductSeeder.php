@@ -17,7 +17,7 @@ class QuotationProductSeeder extends Seeder
         // Sample data: Add products to quotations
         DB::table('product_quotation')->insert([
             [
-                'quotation_no' => fake()->randomElement(Quotation::pluck('id')),
+                'quotation_no' => fake()->unique()->randomElement(Quotation::pluck('id')->toArray()),
                 'product_id' => fake()->randomElement(Product::pluck('id')),
                 'quantity' => 2,
                 'price' => 100.0,
@@ -25,7 +25,7 @@ class QuotationProductSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'quotation_no' => fake()->randomElement(Quotation::pluck('id')),
+                'quotation_no' => fake()->unique()->randomElement(Quotation::pluck('id')->toArray()),
                 'product_id' => fake()->randomElement(Product::pluck('id')),
                 'quantity' => 1,
                 'price' => 50.0,
@@ -33,7 +33,7 @@ class QuotationProductSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'quotation_no' => fake()->randomElement(Quotation::pluck('id')),
+                'quotation_no' => fake()->unique()->randomElement(Quotation::pluck('id')->toArray()),
                 'product_id' => fake()->randomElement(Product::pluck('id')),
                 'quantity' => 5,
                 'price' => 200.0,
