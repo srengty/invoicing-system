@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\CustomerCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,8 +14,12 @@ class CustomerCategoryController extends Controller
      */
     public function index()
     {
-        return Inertia::render('CustomerCategories/Index', [
-            'customerCategories' => CustomerCategory::all(),
+        $customers = Customer::all();
+        $customerCategories = CustomerCategory::all(); // Fetch customer categories
+    
+        return Inertia::render('Customers/Index', [
+            'customers' => $customers,
+            'customerCategories' => $customerCategories, // Pass customer categories
         ]);
     }
 

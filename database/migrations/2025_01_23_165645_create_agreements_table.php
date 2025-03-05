@@ -24,7 +24,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 255);
             $table->foreignId('customer_category_id')->nullable()->constrained('customer_categories')->nullOnDelete();
-            $table->integer('code')->nullable();
+            $table->string('code')->nullable();
             $table->integer('credit_period')->default(0)->comment('credit period in days');
             $table->string('address', 255)->nullable();
             $table->string('website', 255)->nullable();

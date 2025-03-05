@@ -12,9 +12,10 @@ class CustomerController extends Controller
     // Display all customers
     public function index()
     {
-        $customers = Customer::all();
+        $customers = Customer::orderBy('created_at')->get();
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
+            'customerCategories' => CustomerCategory::all(),
         ]);
     }
 
@@ -32,18 +33,18 @@ class CustomerController extends Controller
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|integer|max:5000000',
-            'credit_period' => 'nullable|numeric',
-            'address' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone_number' => 'nullable|string|max:20', // Changed from 'phone_number' to 'phone'
-            'telegram_number' => 'nullable|string|max:20', // Changed from 'telegram_number' to 'telegram'
-            'website' => 'nullable|string|max:255',
-            'bank_name' => 'nullable|string|max:255',
-            'bank_address' => 'nullable|string|max:255',
-            'bank_account_name' => 'nullable|string|max:255',
-            'bank_account_number' => 'nullable|string|max:255',
-            'bank_swift' => 'nullable|string|max:255',
+            'code' => 'required|string|max:255',
+            'credit_period' => 'required|numeric|min:0',
+            'address' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone_number' => 'required|string|max:20', // Changed from 'phone_number' to 'phone'
+            'telegram_number' => 'required|string|max:20', // Changed from 'telegram_number' to 'telegram'
+            'website' => 'required|string|max:255',
+            'bank_name' => 'required|string|max:255',
+            'bank_address' => 'required|string|max:255',
+            'bank_account_name' => 'required|string|max:255',
+            'bank_account_number' => 'required|string|max:255',
+            'bank_swift' => 'required|string|max:255',
             'customer_category_id' => 'required|exists:customer_categories,id',
         ]);
 
@@ -80,18 +81,18 @@ class CustomerController extends Controller
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|integer|max:5000000',
-            'credit_period' => 'nullable|integer',
-            'address' => 'nullable|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'phone_number' => 'nullable|string|max:20', // Changed from 'phone_number' to 'phone'
-            'telegram_number' => 'nullable|string|max:20', // Changed from 'telegram_number' to 'telegram'
-            'website' => 'nullable|string|max:255',
-            'bank_name' => 'nullable|string|max:255',
-            'bank_address' => 'nullable|string|max:255',
-            'bank_account_name' => 'nullable|string|max:255',
-            'bank_account_number' => 'nullable|string|max:255',
-            'bank_swift' => 'nullable|string|max:255',
+            'code' => 'required|string|max:255',
+            'credit_period' => 'required|integer|min:0',
+            'address' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone_number' => 'required|string|max:20', // Changed from 'phone_number' to 'phone'
+            'telegram_number' => 'required|string|max:20', // Changed from 'telegram_number' to 'telegram'
+            'website' => 'required|string|max:255',
+            'bank_name' => 'required|string|max:255',
+            'bank_address' => 'required|string|max:255',
+            'bank_account_name' => 'required|string|max:255',
+            'bank_account_number' => 'required|string|max:255',
+            'bank_swift' => 'required|string|max:255',
             'customer_category_id' => 'required|exists:customer_categories,id',
         ]);
 
