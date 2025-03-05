@@ -20,7 +20,7 @@ class CustomerFactory extends Factory
         return [
             'name' => $this->faker->name(),
             'customer_category_id' => $this->faker->randomElement(CustomerCategory::pluck('id')->toArray()),
-            'code' => $this->faker->randomNumber(5),
+            'code' => $this->faker->unique()->word(),
             'credit_period' => 15,
             'address' => $this->faker->address(),
             'website' => $this->faker->url(),
