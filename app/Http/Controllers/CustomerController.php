@@ -34,7 +34,7 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:255',
-            'credit_period' => 'required|numeric|min:0',
+            'credit_period' => 'required|numeric|min:0|max:15',
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone_number' => 'required|string|max:20', // Changed from 'phone_number' to 'phone'
