@@ -1,9 +1,31 @@
 <template>
     <Head title="Quotations Printing" />
 
+    <div class="flex justify-start items-center gap-4 ml-20 mb-4">
+        <!-- Toggle Currency -->
+        <div class="flex items-center gap-3 mt-6">
+            <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="isUSD" class="sr-only peer" />
+                <div
+                    class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#10B981] dark:peer-focus:ring-[#10B981] rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#10B981]"
+                ></div>
+            </label>
+        </div>
+
+        <!-- Print Button -->
+        <div class="flex justify-center mt-6">
+            <a
+                href="#"
+                @click.prevent="printPage"
+                class="px-4 py-2 bg-[#10B981] text-white rounded shadow"
+                >Print Quotation</a
+            >
+        </div>
+    </div>
     <div
         ref="printArea"
-        class="flex-col justify-center print-area a4-size text-sm"
+        class="flex-col justify-center print-area a4-size text-sm "
     >
         <!-- <div class="flex flex-row m-4">
         <Image src="https://itc.edu.kh/wp-content/uploads/2021/02/cropped-Logo-ITC.png" alt="Image" width="120" />
@@ -59,7 +81,8 @@
                     <div>{{ index + 1 }}</div>
                     <div>
                         <p>{{ isUSD ? product.name : product.name_kh }}</p>
-                        <p>{{ product.desc }}</p>
+                        <p>{{ isUSD ? product.desc : product.desc_kh }}</p>
+                        <p>{{ isUSD ? product.remark : product.remark_kh }}</p>
                     </div>
                     <div>{{ product.pivot.quantity }}</div>
                     <div>
@@ -122,29 +145,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="flex justify-center items-center gap-10">
-        <!-- Toggle Currency -->
-        <div class="flex items-center gap-3 mt-6">
-            <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="isUSD" class="sr-only peer" />
-                <div
-                    class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#10B981] dark:peer-focus:ring-[#10B981] rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#10B981]"
-                ></div>
-            </label>
-        </div>
-
-        <!-- Print Button -->
-        <div class="flex justify-center mt-6">
-            <a
-                href="#"
-                @click.prevent="printPage"
-                class="px-4 py-2 bg-[#10B981] text-white rounded shadow"
-                >Print Quotation</a
-            >
         </div>
     </div>
 </template>

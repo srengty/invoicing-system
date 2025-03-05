@@ -52,6 +52,7 @@ return new class extends Migration
             $table->string('terms', 255)->nullable();
             $table->double('total')->default(0)->comment('no tax');
             $table->string('status', 20)->default('Pending');
+            $table->string('customer_status')->nullable();
             $table->timestamps();
         });
         Schema::create('agreements', function (Blueprint $table) {

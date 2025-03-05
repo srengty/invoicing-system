@@ -62,7 +62,7 @@
                             icon="pi pi-plus"
                             title="add customer"
                             label="Add Customer"
-                            rounded
+                            raised
                             @click="isCreateCustomerVisible = true"
                             class="w-36 start"
                             size="small"
@@ -111,24 +111,11 @@
             <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
                     <div class="flex gap-32 items-center">
-                        <!-- <div class="flex flex-col gap-2">
-                            <label for="item">Item</label>
-                            <MultiSelect
-                                :filter="true"
-                                v-model="selectedProductIds"
-                                :options="products"
-                                optionLabel="name"
-                                optionValue="id"
-                                placeholder="Select Product"
-                                class="w-full md:w-60"
-                            />
-                        </div> -->
-
                         <div class="w-10">
                             <Button
                                 icon="pi pi-plus"
                                 label="Add Item"
-                                rounded
+                                raised
                                 @click="isAddItemDialogVisible = true"
                                 class="w-36"
                                 size="small"
@@ -143,22 +130,8 @@
                         </div>
                         <div class="w-60"></div>
                     </div>
-
-                    <!-- <div class="w-full">
-                <Link :href="route('products.store')">
-                  <Button icon="pi pi-plus" label="Choose Item" rounded />
-                </Link>x
-                <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
-              </div> -->
                 </div>
             </div>
-            <!-- <div class="pl-8 flex flex-row gap-4 items-end w-1/3">
-                <div class="flex flex-row gap-2 w-full">
-                    <label for="p_name">English/Khmer</label>
-                    <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
-                </div>
-                <div class="w-60"></div>
-            </div> -->
 
             <!-- Selected Products Table -->
             <div class="pl-6 pt-5">
@@ -168,7 +141,11 @@
                     :rows="5"
                     striped
                 >
-                    <Column field="id" header="No." />
+                    <Column header="No.">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column field="name" header="Name">
                         <template #body="slotProps">
                             <span>{{
@@ -176,12 +153,22 @@
                                     ? slotProps.data.name_kh
                                     : slotProps.data.name
                             }}</span>
+                            <br />
+                            <span>{{
+                                isKhmer
+                                    ? slotProps.data.desc_kh
+                                    : slotProps.data.desc
+                            }}</span>
+                            <br />
+                            <span>
+                                {{ slotProps.data.remark }}
+                            </span>
                         </template>
                     </Column>
                     <Column field="quantity" header="Qty">
                         <template #body="slotProps">
                             <InputText
-                                v-model="slotProps.data.quanity"
+                                v-model="slotProps.data.quantity"
                                 @input="updateProductSubtotal(slotProps.data)"
                                 class="w-full"
                                 size="small"
@@ -217,27 +204,29 @@
                             <div class="flex gap-2">
                                 <Button
                                     icon="pi pi-trash"
-                                    class="p-button-danger w-[10px]"
+                                    class="p-button-danger w-[10px] custom-button"
                                     title="remove"
-                                    size="small"
                                     @click="removeProduct(slotProps.data.id)"
-                                    rounded
+                                    size="small"
+                                    raised
                                 />
                                 <Button
                                     icon="pi pi-pencil"
                                     severity="info"
                                     title="edit"
-                                    size="small"
                                     @click="editProduct(slotProps.data.id)"
-                                    rounded
+                                    size="small"
+                                    class="custom-button"
+                                    raised
                                 />
                                 <Button
                                     icon="pi pi-print"
                                     severity="success"
                                     title="print"
+                                    @click="printSelectedProducts"
                                     size="small"
-                                    @click="viewQuotation(slotProps.data.id)"
-                                    rounded
+                                    class="custom-button"
+                                    raised
                                 />
                             </div>
                         </template>
@@ -294,14 +283,17 @@
                     label="Submit"
                     icon="pi pi-check"
                     type="submit"
-                    class="p-button-rounded p-button-success"
+                    class="p-button-raised"
                     @click="submit"
                 />
-                <Button
-                    v-ripple
-                    label="Cancel"
-                    class="p-button-rounded p-button-secondary ml-2"
-                />
+                <Link :href="route('quotations.list')"
+                    ><Button
+                        v-ripple
+                        icon="pi pi-times"
+                        label="Cancel"
+                        class="p-button-raised p-button-secondary ml-2"
+                    />
+                </Link>
             </div>
         </form>
     </GuestLayout>
@@ -335,25 +327,24 @@
         <div class="p-fluid grid gap-4 text-sm">
             <!-- Item Selection -->
             <div class="field w-full">
-                <label for="item">Item *</label> <br />
-                <MultiSelect
-                    :filter="true"
-                    v-model="selectedItemIds"
-                    :options="products"
+                <label for="item">Item</label> <br />
+                <AutoComplete
+                    v-model="selectedItem"
+                    :suggestions="filteredProducts"
+                    :dropdown="true"
                     optionLabel="name"
-                    optionValue="id"
-                    placeholder="Select Product"
+                    placeholder="Search Product"
                     class="w-full text-sm"
-                    size="small"
+                    @complete="searchProducts"
                     @change="updateSelectedProductDetails"
                 />
             </div>
 
             <!-- Item Category (Auto-complete, Read-Only) -->
             <div class="field">
-                <label for="item-category">Item Category *</label>
+                <label for="item-category">Item Category</label>
                 <InputText
-                    v-model="selectedProduct.category"
+                    v-model="selectedProduct.category_id"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -362,7 +353,7 @@
 
             <!-- Unit Price (Auto-complete, Editable) -->
             <div class="field">
-                <label for="unit-price">Unit Price *</label>
+                <label for="unit-price">Unit Price</label>
                 <InputNumber
                     v-model="selectedProduct.price"
                     size="small"
@@ -372,9 +363,9 @@
 
             <!-- Account Code (Auto-complete, Read-Only) -->
             <div class="field">
-                <label for="account-code">Account Code *</label>
+                <label for="account-code">Account Code</label>
                 <InputText
-                    v-model="selectedAccountCode"
+                    v-model="selectedProduct.acc_code"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -383,9 +374,9 @@
 
             <!-- Quantity -->
             <div class="field">
-                <label for="quantity">Quantity *</label>
+                <label for="quantity">Quantity</label>
                 <InputNumber
-                    v-model="selectedQuantity"
+                    v-model="selectedProduct.quantity"
                     class="w-full text-sm"
                     size="small"
                     :min="1"
@@ -393,23 +384,26 @@
             </div>
 
             <!-- View Catalog -->
-            <div class="field">
-                <label>View Catalog</label>
+            <div v-if="selectedProduct.pdf_url" class="text-start">
+                <label for="quantity">Catalog</label>
                 <a
-                    href="https://yourcatalog.com"
+                    :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`"
                     target="_blank"
-                    class="text-blue-500 underline"
-                    >Link to open catalog</a
+                    class="text-blue-500 hover:text-blue-700 transition duration-200"
                 >
+                    📄 View PDF
+                </a>
             </div>
+            <p v-else class="text-center text-gray-400">No PDF available</p>
 
             <!-- Additional Remark -->
             <div class="field">
                 <label for="additional-remark">Additional Remark</label>
-                <Textarea
-                    v-model="additionalRemark"
-                    rows="3"
+                <InputText
+                    v-model="selectedProduct.remark"
                     class="w-full text-sm"
+                    size="small"
+                    readonly
                 />
             </div>
         </div>
@@ -420,12 +414,13 @@
                 label="Cancel"
                 icon="pi pi-times"
                 class="p-button-text"
-                @click="closeAddItemDialog = false"
+                raised
+                @click="closeAddItemDialog()"
             />
             <Button
                 label="Add Item"
                 icon="pi pi-check"
-                class="p-button-success"
+                raised
                 @click="addItemToTable"
             />
         </template>
@@ -434,10 +429,9 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import Select from "primevue/select";
 import MultiSelect from "primevue/multiselect";
 import InputNumber from "primevue/inputnumber";
 import DatePicker from "primevue/datepicker";
@@ -445,21 +439,51 @@ import InputText from "primevue/inputtext";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
-import { Dialog, ToggleSwitch } from "primevue";
+import Dropdown from "primevue/dropdown";
+import { Dialog, ToggleSwitch, Select, AutoComplete, Checkbox } from "primevue";
 import { Form } from "@primevue/forms";
-import Toast from "primevue/toast";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
 
 // Toast for notifications
 const toast = useToast();
 
+const showToast = (
+    type = "success",
+    title = "Success",
+    message = "Operation completed",
+    duration = 3000
+) => {
+    toast.add({
+        severity: type,
+        detail: message,
+        life: duration,
+        group: "tr",
+    });
+};
+
 const props = defineProps({
     customers: Array,
     products: Array,
 });
+
+// Define the Inertia form
+const form = useForm({
+    quotation_no: null,
+    quotation_date: null,
+    status: "Pending",
+    address: "",
+    phone_number: "",
+    customer_id: null,
+    total: 0,
+    tax: 0,
+    grand_total: 0,
+    products: [], // Will be an array of objects: { id, quantity }
+});
+
 console.log(props.products);
 
 const status = ref("");
@@ -473,66 +497,103 @@ const selectedProduct = ref({});
 const selectedQuantity = ref(1);
 const additionalRemark = ref("");
 const selectedAccountCode = ref("");
+const selectedItemId = ref(null);
+const filteredProducts = ref([]);
+const selectedItem = ref(null);
 
 const updateSelectedProductDetails = () => {
-    if (selectedItemIds.value.length > 0) {
-        const selectedProductId = selectedItemIds.value[0];
-        const product = props.products.find((p) => p.id === selectedProductId);
+    if (selectedItem.value) {
+        const product = props.products.find(
+            (p) => p.id === selectedItem.value.id
+        );
         if (product) {
-            selectedProduct.value = { ...product };
-            selectedAccountCode.value = product.account_code;
+            selectedProduct.value = {
+                ...product,
+                quantity: 1,
+                subTotal: Number(product.price),
+            };
         }
     } else {
         selectedProduct.value = {};
-        selectedAccountCode.value = "";
     }
+};
+
+const searchProducts = (event) => {
+    filteredProducts.value = props.products.filter((product) =>
+        product.name.toLowerCase().includes(event.query.toLowerCase())
+    );
+};
+
+const validateForm = () => {
+    if (!form.address) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer address is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.phone_number) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer phone number is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.customer_id) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please select a customer!",
+            4000
+        );
+        return false;
+    }
+    if (selectedProductsData.value.length === 0) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please add at least one product!",
+            4000
+        );
+        return false;
+    }
+    return true;
 };
 
 const addItemToTable = () => {
     if (!selectedProduct.value.name) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Please select an item.",
-            life: 3000,
-        });
+        showToast("error", "Error", "Please select an item.", 3000);
         return;
     }
 
-    if (!selectedQuantity.value || selectedQuantity.value < 1) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Please enter a valid quantity.",
-            life: 3000,
-        });
-        return;
+    if (!selectedProduct.value.quantity || selectedProduct.value.quantity < 1) {
+        selectedProduct.value.quantity = 1;
     }
 
     const newItem = {
         ...selectedProduct.value,
-        quanity: selectedQuantity.value,
-        subTotal: Number(selectedProduct.value.price) * selectedQuantity.value,
-        remarks: additionalRemark.value,
+        subTotal:
+            Number(selectedProduct.value.price) *
+            selectedProduct.value.quantity,
     };
 
-    if (editingProduct.value) {
-        // Editing an existing item
-        const index = selectedProductsData.value.findIndex(
-            (prod) => prod.id === editingProduct.value.id
-        );
-        if (index !== -1) {
-            selectedProductsData.value[index] = newItem; // Update the existing item
-        }
+    const existingIndex = selectedProductsData.value.findIndex(
+        (prod) => prod.id === newItem.id
+    );
+    if (existingIndex !== -1) {
+        selectedProductsData.value[existingIndex] = newItem; // Update existing
     } else {
-        // Adding a new item
-        selectedProductsData.value.push(newItem); // Add the new item
+        selectedProductsData.value.push(newItem); // Add new
     }
 
-    editingProduct.value = null; // Reset editing product after the process is done.
-    closeAddItemDialog(); // Close the dialog
+    closeAddItemDialog();
 };
 
+// Close Add Item dialog
 const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
     resetAddItemDialog();
@@ -547,6 +608,7 @@ const resetAddItemDialog = () => {
     editingProduct.value = null;
 };
 
+// toggle language
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? "name_kh" : "name";
 };
@@ -571,20 +633,6 @@ watch(status, (newStatus) => {
 const updateDate = (selectedDate) => {
     form.value.quotation_date = selectedDate;
 };
-
-// Define the Inertia form
-const form = useForm({
-    quotation_no: null,
-    quotation_date: null,
-    status: "Pending",
-    address: "",
-    phone_number: "",
-    customer_id: null,
-    total: 0,
-    tax: 0,
-    grand_total: 0,
-    products: [], // Will be an array of objects: { id, quantity }
-});
 
 const isCreateCustomerVisible = ref(false);
 const selectCustomer = () => {
@@ -641,8 +689,8 @@ watch(
 );
 
 const updateProductSubtotal = (row) => {
-    row.quanity = parseInt(row.quanity) || 0;
-    row.subTotal = Number(row.price) * row.quanity;
+    row.quantity = parseInt(row.quantity) || 0;
+    row.subTotal = Number(row.price) * row.quantity;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
@@ -698,6 +746,7 @@ const removeProduct = (id) => {
     selectedProductsData.value = selectedProductsData.value.filter(
         (prod) => prod.id !== id
     );
+    showToast("info", "Item Removed", "Product removed from quotation.", 2500);
 };
 
 const editingProduct = ref(null);
@@ -706,66 +755,69 @@ const editProduct = (productId) => {
         (prod) => prod.id === productId
     );
     if (productToEdit) {
-        editingProduct.value = { ...productToEdit }; // Store the product being edited
-        selectedItemIds.value = [productToEdit.id]; // Set the selected item ID
-        selectedQuantity.value = productToEdit.quanity; // Set the quantity
-        additionalRemark.value = productToEdit.remarks; // Set the remarks
-        selectedProduct.value = { ...productToEdit }; // Set the selected product
-        selectedAccountCode.value = productToEdit.account_code; // Set the account code
-        isAddItemDialogVisible.value = true; // Show the dialog
+        selectedProduct.value = { ...productToEdit };
+        selectedItemId.value = productToEdit.id;
+        isAddItemDialogVisible.value = true;
     }
 };
 
 const submit = (event) => {
     if (event && typeof event.preventDefault === "function") {
-        event.preventDefault(); // Ensure the event exists before calling preventDefault
+        event.preventDefault();
     }
-    // Basic validation: all required fields must be filled and at least one product selected.
-    if (
-        !form.address ||
-        !form.phone_number ||
-        !form.customer_id ||
-        selectedProductsData.value.length === 0
-    ) {
-        toast.add({
-            severity: "error",
-            summary: "Please fill all information!",
-            detail: "Missing required fields",
-            group: "tc",
-            life: 3000,
-        });
+
+    if (!validateForm()) {
         return;
     }
-    selectedProductsData.value.forEach((prod) => {
-        console.log(prod.price);
-    });
-    // Prepare the products array for submission.
+
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
-        quantity: prod.quanity,
-        price: prod.price,
+        quantity: prod.quantity ?? 1,
+        price: prod.price ?? 0,
     }));
-    console.log(form.products);
-    // Update totals.
+
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-    // Post the form data using Inertia.
+    // Send form data via Inertia
     form.post(route("quotations.store"), {
         onSuccess: () => {
-            console.log("Success Callback Triggered");
-            toast.add({
-                severity: "success",
-                summary: "Success",
-                detail: "Quotation created successfully!",
-                life: 3000,
-            });
+            showToast(
+                "success",
+                "Success",
+                "Quotation created successfully!",
+                3000
+            );
         },
         onError: (errors) => {
             console.error(errors);
+            showToast(
+                "error",
+                "Submission Failed",
+                "Could not create quotation.",
+                4000
+            );
         },
     });
 };
 
 const isCreateItemVisible = ref(false);
+
+const selectedProducts = ref([]);
+const printSelectedProducts = () => {
+    if (selectedProducts.value.length === 0) {
+        alert("Please select products to print.");
+        return;
+    }
+
+    // Call print function or route to print preview
+    console.log("Printing selected products:", selectedProducts.value);
+};
 </script>
+<style>
+.custom-button {
+    padding: 7px 7px !important; /* Smaller padding */
+    font-size: 12px !important; /* Smaller icon size */
+    min-width: 30px !important; /* Reduce button width */
+}
+</style>
