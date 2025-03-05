@@ -5,7 +5,7 @@
         <Toast position="top-right" group="tr" />
 
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
-        <Form @submit.prevent="submit" class="text-sm">
+        <form @submit.prevent="submit" class="text-sm">
             <!-- Quotation Info -->
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -303,7 +303,7 @@
                     class="p-button-rounded p-button-secondary ml-2"
                 />
             </div>
-        </Form>
+        </form>
     </GuestLayout>
     <Dialog
         v-model:visible="isCreateCustomerVisible"

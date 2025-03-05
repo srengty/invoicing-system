@@ -1,42 +1,7 @@
 <template>
     <div class="create-customer text-sm">
-        <div class="flex justify-between items-center p-3 mr-4">
-            <h1 class="text-xl">Create Customer</h1>
-            <div class="flex gap-2">
-                <!-- Back Button (Navigation to the Customers List page) -->
-                <Link :href="route('customers.index')">
-                    <Button
-                        icon="pi pi-times"
-                        class="p-button"
-                        size="small"
-                        title="cancel"
-                        rounded
-                    />
-                </Link>
-
-                <!-- Save Button to Trigger Form Submission -->
-                <Button
-                    icon="pi pi-check"
-                    class="p-button"
-                    title="save"
-                    size="small"
-                    @click="submit"
-                    rounded
-                />
-            </div>
-        </div>
-
         <form @submit.prevent="submit" class="">
-            <div
-                class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
-            >
-                <div
-                    class="col-span-1 sm:col-span-2 md:col-span-3 text-red-500 text-center"
-                >
-                    <ul>
-                        <li>Missing Contact person name</li>
-                    </ul>
-                </div>
+            <div class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <div>
                     <label for="code" class="block text-sm font-medium required"
                         >Customer category</label
@@ -250,6 +215,9 @@
                     />
                 </div>
             </div>
+            <div class="flex justify-end gap-2 mr-4 mb-2">
+                <Button label="Create" class="p-button-primary w-38" type="submit" @click="submit" outlined />
+            </div>
         </form>
     </div>
 </template>
@@ -298,4 +266,7 @@ const submit = () => {
         },
     });
 };
+
+
+
 </script>

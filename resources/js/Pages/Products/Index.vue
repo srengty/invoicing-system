@@ -4,8 +4,12 @@
         <BodyLayout>
             <Toast position="top"/>
             <div class="Items text-sm">
-                <div class="flex justify-between items-center pb-4 ml-2">
-                    <h1 class="text-xl text-green-600">Manage Items</h1>
+                <div class="flex justify-between items-center pb-4">
+                    <div class="flex items-center gap-2">
+                            <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
+                            <h1 class="text-xl text-green-600">Manage Items</h1>
+                        </div>
+                    
                     <Button icon="pi pi-plus" raised label="New Item" size="small" class="custom-button-create" severity="warning" @click="openForm()" />
                 </div>
 
@@ -307,7 +311,6 @@ const toast = useToast();
 
 // ✅ Use usePage().props to get data
 const { products, divisions, categories, errors } = usePage().props;
-
 
 // ✅ Computed properties to map dropdown options
 const categoryOptions = computed(() => 

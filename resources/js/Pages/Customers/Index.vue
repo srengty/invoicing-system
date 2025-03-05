@@ -6,9 +6,7 @@
             <div class="flex justify-between items-center p-3">
                 <h1 class="text-xl">Customers/Organization Name</h1>
                 <div>
-                    <Link :href="route('customers.create')">
-                        <Button icon="pi pi-plus" label="New" outlined="" size="small"/>
-                    </Link>
+                    <Button icon="pi pi-plus" label="New" outlined @click="isCreateCustomerVisible = true" size="small"/>
                     <ChooseColumns :columns="columns" v-model="selectedColumns" @apply="updateColumns" outlined size="small"/>
                 </div>
             </div>
@@ -46,6 +44,18 @@
                 </Column>
             </DataTable>
         </div>
+
+        <Dialog
+        v-model:visible="isCreateCustomerVisible"
+        modal
+        header="Add Customer"
+        class="w-2/3"
+    >
+        <Customers
+            redirect_route="quotations.create"
+            @success="selectCustomer"
+        ></Customers>
+    </Dialog>
         </BodyLayout>
     </GuestLayout>
 </template>
@@ -57,6 +67,8 @@ import { DataTable, Column, Button } from 'primevue';
 import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import BodyLayout from '@/Layouts/BodyLayout.vue';
+import Dialog from 'primevue/dialog';
+import Customers from '@/Components/Customers.vue';
 
 const indexedCustomers = computed(() => {
     return props.customers.map((customer, index) => ({
@@ -81,6 +93,12 @@ const columns = [
 
 const selectedColumns = ref([]);
 const showColumns = ref(columns);
+
+const isCreateCustomerVisible = ref(false);
+const selectCustomer = () => {
+    isCreateCustomerVisible.value = false;
+    form.customer_id = props.customers[props.customers.length - 1].id;
+};
 
 const updateColumns = () => {
     showColumns.value = selectedColumns.value;
@@ -110,4 +128,5 @@ const deleteCustomer = (id) => {
 const viewCustomer = (id) => {
     Inertia.visit(route('customers.show', id));
 };
+
 </script>
