@@ -122,7 +122,6 @@ import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import BodyLayout from '@/Layouts/BodyLayout.vue';
 import Dialog from 'primevue/dialog';
-
 import Customers from '@/Components/Customers.vue'; // Import Customers component
 
 const props = defineProps({
@@ -153,11 +152,6 @@ const selectedCustomer = ref(null);
 // Update columns based on selection
 const updateColumns = () => {
     showColumns.value = selectedColumns.value;
-};
-
-// Methods for CRUD operations
-const createCustomer = () => {
-    Inertia.visit(route('customers.create'));
 };
 
 const editCustomer = (id) => {

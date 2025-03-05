@@ -59,7 +59,7 @@ Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('fi
 
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
-Route::resource('/settings/customer-categories', CustomerCategoryController::class);
+Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');
 Route::resource('/settings/product-categories', ProductCategoryController::class);
 
 Route::get('/dashboard', function () {

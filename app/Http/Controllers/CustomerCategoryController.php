@@ -17,7 +17,7 @@ class CustomerCategoryController extends Controller
         $customers = Customer::all();
         $customerCategories = CustomerCategory::all(); // Fetch customer categories
     
-        return Inertia::render('Customers/Index', [
+        return Inertia::render('CustomerCategories/Index', [
             'customers' => $customers,
             'customerCategories' => $customerCategories, // Pass customer categories
         ]);
