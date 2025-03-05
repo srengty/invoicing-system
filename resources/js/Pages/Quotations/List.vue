@@ -17,14 +17,23 @@
                         ><Button
                             icon="pi pi-plus"
                             label="Issue Quotation"
-                            rounded
+                            size="small"
+                            raised
                     /></Link>
                 </div>
                 <Link :href="route('invoices.create')"
-                    ><Button icon="pi pi-plus" label="Issue Invoice" rounded
+                    ><Button
+                        icon="pi pi-plus"
+                        label="Issue Invoice"
+                        size="small"
+                        raised
                 /></Link>
                 <Link :href="route('agreements.create')"
-                    ><Button icon="pi pi-plus" label="Record Agreement" rounded
+                    ><Button
+                        icon="pi pi-plus"
+                        label="Record Agreement"
+                        size="small"
+                        raised
                 /></Link>
             </div>
 
@@ -36,18 +45,18 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <Column
-                        field="quotation_no"
-                        header="No."
-                        style="width: 10%"
-                    />
+                    <Column header="No." style="width: 8%">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
                         style="width: 25%"
                     />
                     <Column field="total" header="Total" style="width: 10%" />
-                    <Column field="status" header="Status" style="width: 10%">
+                    <!-- <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
                             <Dropdown
                                 v-model="slotProps.data.status"
@@ -59,13 +68,47 @@
                                 @change="updateQuotationStatus(slotProps.data)"
                             />
                         </template>
+                    </Column> -->
+                    <Column field="status" header="Status" style="width: 10%">
+                        <template #body="slotProps">
+                            <span
+                                :class="{
+                                    'p-2 border rounded bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.status === 'Pending',
+                                    'p-2 border rounded bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.status === 'Revise',
+                                    'p-2 border rounded bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.status === 'Approved',
+                                }"
+                            >
+                                {{ slotProps.data.status }}
+                            </span>
+                        </template>
                     </Column>
-
                     <Column
                         field="customer_status"
                         header="Customer Status"
                         style="width: 20%"
-                    />
+                    >
+                        <template #body="slotProps">
+                            <span
+                                :class="{
+                                    ' p-2 border rounded bg-blue-100 text-blue-800 border-blue-400':
+                                        slotProps.data.customer_status ===
+                                        'Sent',
+                                    'p-2 border rounded bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.customer_status ===
+                                        'Accept',
+                                    'p-2 border rounded bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.customer_status ===
+                                        'Reject',
+                                }"
+                            >
+                                {{ slotProps.data.customer_status }}
+                            </span>
+                        </template>
+                    </Column>
+
                     <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
@@ -73,18 +116,18 @@
                                     icon="pi pi-eye"
                                     aria-label="View"
                                     severity="info"
-                                    rounded
-                                    size="small"
-                                    class="custom-button"
+                                    class="custom-butto"
                                     @click="viewQuotation(slotProps.data)"
+                                    size="small"
+                                    raised
                                 />
                                 <Button
                                     icon="pi pi-print"
                                     aria-label="Print out"
-                                    size="small"
                                     class="custom-button"
                                     @click="printQuotation(slotProps.data.id)"
-                                    rounded
+                                    size="small"
+                                    raised
                                 />
                             </div>
                         </template>
@@ -158,8 +201,25 @@
                     </div>
 
                     <template #footer>
-                        <Button label="Approve" severity="success" />
-                        <Button label="Revice" severity="danger" />
+                        <Button
+                            label="Approve"
+                            :class="{
+                                'custom-approved':
+                                    selectedQuotation.status === 'Approved',
+                            }"
+                            severity="success"
+                            @click="approveQuotation"
+                            :disabled="selectedQuotation.status === 'Approved'"
+                        />
+                        <Button
+                            label="Revise"
+                            severity="danger"
+                            @click="reviseQuotation"
+                            :disabled="
+                                selectedQuotation.status === 'Approved' ||
+                                selectedQuotation.status === 'Revise'
+                            "
+                        />
                         <Button
                             label="Close"
                             severity="secondary"
@@ -187,6 +247,7 @@ import VirtualScroller from "primevue/virtualscroller";
 import moment from "moment";
 import Dropdown from "primevue/dropdown";
 import { router } from "@inertiajs/vue3"; // for printing
+import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
@@ -194,6 +255,21 @@ const isViewDialogVisible = ref(false);
 const selectedQuotation = ref([]);
 const selectedQuo_customer = ref([]);
 const userRole = ref("manager");
+
+const showToast = (
+    type = "success",
+    title = "Success",
+    message = "Operation completed",
+    duration = 3000
+) => {
+    toast.add({
+        severity: type,
+        summary: title,
+        detail: message,
+        life: duration,
+        group: "tr",
+    });
+};
 
 const props = defineProps({
     customers: Array,
@@ -235,8 +311,6 @@ const closeForm = () => {
 // Open view quotation dialog
 const viewQuotation = (quotations) => {
     selectedQuotation.value = quotations;
-    console.log("Selected Quotation:", selectedQuotation.value);
-    console.log("Selected Products:", selectedQuotation.value.products);
     isViewDialogVisible.value = true;
 };
 
@@ -262,16 +336,6 @@ const printQuotation = (quotation_no) => {
     printWindow.onload = () => {
         printWindow.print();
     };
-    // if (printWindow) {
-    //     printWindow.onload = () => {
-    //         setTimeout(() => {
-    //             printWindow.print();
-    //             printWindow.close();
-    //         }, 1000); // Add delay to ensure full load
-    //     };
-    // } else {
-    //     alert('Popup blocked! Please allow popups for this website.');
-    // }
 };
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);
@@ -287,43 +351,62 @@ const StatusOptions = ref([
     { name: "Revise", code: "Revise" },
 ]);
 
-const updateQuotationStatus = (quotation) => {
+// Update Quotation Status (called by Approve/Revise)
+const updateQuotationStatus = (quotation, message) => {
     router.put(
         `/quotations/${quotation.id}/update-status`,
         {
-            status: quotation.status, // Send selected status to backend
+            status: quotation.status,
+            customer_status: quotation.customer_status, // include customer_status
         },
         {
             preserveScroll: true,
             onSuccess: (response) => {
-                if (response.props.flash.success) {
-                    // Ensure a success response exists
-                    toast.add({
-                        severity: "success",
-                        summary: "Success",
-                        detail: "Quotation status updated successfully!",
-                        life: 3000,
-                    });
-                }
+                showToast("success", "Success", message, 3000);
             },
             onError: (err) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to update quotation status!",
-                    life: 3000,
-                });
-                console.error("Error updating quotation status:", err);
+                showToast(
+                    "error",
+                    "Error",
+                    "Failed to update quotation status!",
+                    3000
+                );
             },
         }
     );
+};
+
+// Approve Quotation
+const approveQuotation = () => {
+    selectedQuotation.value.status = "Approved";
+    selectedQuotation.value.customer_status = "Sent";
+    updateQuotationStatus(
+        selectedQuotation.value,
+        "Quotation approved and sent to customer!"
+    );
+    isViewDialogVisible.value = false;
+};
+// Revise Quotation
+const reviseQuotation = () => {
+    selectedQuotation.value.status = "Revise";
+    selectedQuotation.value.customer_status = "Sent";
+    updateQuotationStatus(
+        selectedQuotation.value,
+        "Quotation revised and sent to customer!"
+    );
+    isViewDialogVisible.value = false;
 };
 </script>
 
 <style>
 .custom-button {
-    padding: 4px 4px !important; /* Smaller padding */
+    padding: 7px 7px !important; /* Smaller padding */
     font-size: 12px !important; /* Smaller icon size */
     min-width: 30px !important; /* Reduce button width */
+}
+.custom-approved {
+    border: 1px solid green;
+    background-color: #d4edda;
+    color: green;
 }
 </style>

@@ -5,7 +5,7 @@
         <Toast position="top-right" group="tr" />
 
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
-        <Form @submit.prevent="submit" class="text-sm">
+        <form @submit.prevent="submit" class="text-sm">
             <!-- Quotation Info -->
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -62,7 +62,7 @@
                             icon="pi pi-plus"
                             title="add customer"
                             label="Add Customer"
-                            rounded
+                            raised
                             @click="isCreateCustomerVisible = true"
                             class="w-36 start"
                             size="small"
@@ -111,24 +111,11 @@
             <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
                     <div class="flex gap-32 items-center">
-                        <!-- <div class="flex flex-col gap-2">
-                            <label for="item">Item</label>
-                            <MultiSelect
-                                :filter="true"
-                                v-model="selectedProductIds"
-                                :options="products"
-                                optionLabel="name"
-                                optionValue="id"
-                                placeholder="Select Product"
-                                class="w-full md:w-60"
-                            />
-                        </div> -->
-
                         <div class="w-10">
                             <Button
                                 icon="pi pi-plus"
                                 label="Add Item"
-                                rounded
+                                raised
                                 @click="isAddItemDialogVisible = true"
                                 class="w-36"
                                 size="small"
@@ -143,22 +130,8 @@
                         </div>
                         <div class="w-60"></div>
                     </div>
-
-                    <!-- <div class="w-full">
-                <Link :href="route('products.store')">
-                  <Button icon="pi pi-plus" label="Choose Item" rounded />
-                </Link>x
-                <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
-              </div> -->
                 </div>
             </div>
-            <!-- <div class="pl-8 flex flex-row gap-4 items-end w-1/3">
-                <div class="flex flex-row gap-2 w-full">
-                    <label for="p_name">English/Khmer</label>
-                    <ToggleSwitch v-model="isKhmer" @change="toggleLanguage" />
-                </div>
-                <div class="w-60"></div>
-            </div> -->
 
             <!-- Selected Products Table -->
             <div class="pl-6 pt-5">
@@ -168,7 +141,11 @@
                     :rows="5"
                     striped
                 >
-                    <Column field="id" header="No." />
+                    <Column header="No.">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column field="name" header="Name">
                         <template #body="slotProps">
                             <span>{{
@@ -227,27 +204,29 @@
                             <div class="flex gap-2">
                                 <Button
                                     icon="pi pi-trash"
-                                    class="p-button-danger w-[10px]"
+                                    class="p-button-danger w-[10px] custom-button"
                                     title="remove"
-                                    size="small"
                                     @click="removeProduct(slotProps.data.id)"
-                                    rounded
+                                    size="small"
+                                    raised
                                 />
                                 <Button
                                     icon="pi pi-pencil"
                                     severity="info"
                                     title="edit"
-                                    size="small"
                                     @click="editProduct(slotProps.data.id)"
-                                    rounded
+                                    size="small"
+                                    class="custom-button"
+                                    raised
                                 />
                                 <Button
                                     icon="pi pi-print"
                                     severity="success"
                                     title="print"
-                                    size="small"
                                     @click="printSelectedProducts"
-                                    rounded
+                                    size="small"
+                                    class="custom-button"
+                                    raised
                                 />
                             </div>
                         </template>
@@ -304,7 +283,7 @@
                     label="Submit"
                     icon="pi pi-check"
                     type="submit"
-                    class="p-button-rounded p-button-success"
+                    class="p-button-raised"
                     @click="submit"
                 />
                 <Link :href="route('quotations.list')"
@@ -312,11 +291,11 @@
                         v-ripple
                         icon="pi pi-times"
                         label="Cancel"
-                        class="p-button-rounded p-button-secondary ml-2"
+                        class="p-button-raised p-button-secondary ml-2"
                     />
                 </Link>
             </div>
-        </Form>
+        </form>
     </GuestLayout>
     <Dialog
         v-model:visible="isCreateCustomerVisible"
@@ -435,12 +414,13 @@
                 label="Cancel"
                 icon="pi pi-times"
                 class="p-button-text"
-                @click="closeAddItemDialog"
+                raised
+                @click="closeAddItemDialog()"
             />
             <Button
                 label="Add Item"
                 icon="pi pi-check"
-                class="p-button-success"
+                raised
                 @click="addItemToTable"
             />
         </template>
@@ -462,9 +442,9 @@ import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
 import { Dialog, ToggleSwitch, Select, AutoComplete, Checkbox } from "primevue";
 import { Form } from "@primevue/forms";
-import Toast from "primevue/toast";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
 
@@ -834,3 +814,10 @@ const printSelectedProducts = () => {
     console.log("Printing selected products:", selectedProducts.value);
 };
 </script>
+<style>
+.custom-button {
+    padding: 7px 7px !important; /* Smaller padding */
+    font-size: 12px !important; /* Smaller icon size */
+    min-width: 30px !important; /* Reduce button width */
+}
+</style>

@@ -42,29 +42,42 @@ class QuotationController extends Controller
     }
 
     public function updateStatus(Request $request, $id)
-    {
-        $quotation = Quotation::findOrFail($id);
-          // Restrict access: Ensure only "Head Department" can update the status
-        if (auth()->user()->role !== 'head_department') {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+{
+    $quotation = Quotation::findOrFail($id);
 
-        // Update status
-        if ($quotation->status === 'Pending' && $request->status === 'Approved') {
-            if (!$quotation->quotation_date) {
-                $quotation->quotation_date = now(); // Assign current date if not set
-            }
-        }
-        $quotation->status = $request->status;  // Ensure correct data is saved
-        $quotation->save();
+    $newStatus = $request->input('status');
+    $newCustomerStatus = $request->input('customer_status'); // "Sent" or any other value
 
-         return response()->json([
-        'message' => 'Quotation status updated successfully!',
-        'quotation_no' => $quotation->quotation_no,
-        'quotation_date' => $quotation->quotation_date ? $quotation->quotation_date->format('Y-m-d H:i:s') : null,
-        'status' => $quotation->status,
-    ]);
+    if ($newStatus === 'Approved' && !$quotation->quotation_no) {
+        $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
+        $quotation->quotation_no = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;
     }
+
+    if ($quotation->status === 'Pending') {
+        if ($newStatus === 'Approved') {
+            if (!$quotation->quotation_date) {
+                $quotation->quotation_date = now();
+            }
+        } elseif ($newStatus === 'Revised') {
+            $quotation->revised_at = now();
+        }
+    }
+
+    $quotation->status = $newStatus;
+    if ($newCustomerStatus) {
+        $quotation->customer_status = $newCustomerStatus;
+    }
+
+    $quotation->save();
+
+    // return response()->json([
+    //     'message'         => 'Quotation status updated successfully!',
+    //     'quotation_no'    => $quotation->quotation_no,
+    //     'quotation_date'  => $quotation->quotation_date ? $quotation->quotation_date->format('Y-m-d H:i:s') : null,
+    //     'status'          => $quotation->status,
+    //     'customer_status' => $quotation->customer_status,
+    // ]);
+}
 
     public function store(Request $request)
     {
