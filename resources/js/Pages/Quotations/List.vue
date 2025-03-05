@@ -93,7 +93,7 @@
                         <template #body="slotProps">
                             <span
                                 :class="{
-                                    ' p-2 border rounded bg-blue-100 text-blue-800 border-blue-400':
+                                    'p-2 border rounded bg-blue-100 text-blue-800 border-blue-400':
                                         slotProps.data.customer_status ===
                                         'Sent',
                                     'p-2 border rounded bg-green-100 text-green-800 border-green-400':
@@ -104,11 +104,25 @@
                                         'Reject',
                                 }"
                             >
+                                <!-- PrimeVue icons in front of the text -->
+                                <i
+                                    :class="{
+                                        'pi pi-send':
+                                            slotProps.data.customer_status ===
+                                            'Sent',
+                                        'pi pi-check':
+                                            slotProps.data.customer_status ===
+                                            'Accept',
+                                        'pi pi-times':
+                                            slotProps.data.customer_status ===
+                                            'Reject',
+                                    }"
+                                    style="margin-right: 8px"
+                                ></i>
                                 {{ slotProps.data.customer_status }}
                             </span>
                         </template>
                     </Column>
-
                     <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
@@ -400,9 +414,9 @@ const reviseQuotation = () => {
 
 <style>
 .custom-button {
-    padding: 7px 7px !important; /* Smaller padding */
-    font-size: 12px !important; /* Smaller icon size */
-    min-width: 30px !important; /* Reduce button width */
+    padding: 7px 7px;
+    font-size: 12px;
+    min-width: 30px;
 }
 .custom-approved {
     border: 1px solid green;

@@ -165,11 +165,15 @@ class QuotationController extends Controller
             //     'quotation' => $quotation,
             //     'products' => $quotation->products,
             // ]);
+        $formattedQuotationDate = $quotation->quotation_date
+        ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
+        : null;
+
         return Inertia::render('Quotations/Print', [
             'quotation' => [
                 'id' => $quotation->id,
                 'quotation_no' => $quotation->quotation_no ?? 'Pending',
-                // 'quotation_date' => $quotation->quotation_date ?? now()->format('Y-m-d'),
+                'quotation_date' => $formattedQuotationDate,
                 'customer_id' => $quotation->customer_id,
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->address,
