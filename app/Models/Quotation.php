@@ -60,5 +60,15 @@ class Quotation extends Model
         return $this->hasMany(QuotationItem::class, 'quotation_no', 'quotation_no');
     }
 
+    public function comments()
+    {
+        return $this->hasMany(QuotationComment::class);
+    }
+
+    public function latestComment()
+    {
+        return $this->hasOne(QuotationComment::class)->latest();
+    }
+
 }
 
