@@ -71,7 +71,7 @@
                 </div>
 
                 <!-- <div class="grid grid-cols-1 md:grid-cols-5"> -->
-                <div class="flex flex-col gap-2 w-full md:ml-28">
+                <div class="flex flex-col gap-2 w-full md:ml-32">
                     <label for="address">Address:</label>
                     <IconField class="w-full md:w-60">
                         <InputText
@@ -121,14 +121,14 @@
                                 size="small"
                             />
                         </div>
-                        <div class="flex flex-row gap-2 w-full">
+                        <div class="flex flex-row gap-2 w-full md:w-80">
                             <label for="p_name">English/Khmer</label>
                             <ToggleSwitch
                                 v-model="isKhmer"
                                 @change="toggleLanguage"
                             />
                         </div>
-                        <div class="w-60"></div>
+                        <div class="w-80"></div>
                     </div>
                 </div>
             </div>
@@ -303,19 +303,26 @@
         header="Add Customer"
         class="w-2/3"
     >
+        <template #header>
+            <div class="flex items-center gap-2">
+                <img src="/User.png" alt="Item Customer" class="h-8 w-8 ml-2" />
+                <span class="text-xl font-semibold bor">Create Customers</span>
+            </div>
+        </template>
         <Customers
-            redirect_route="quotations.create"
-            @success="selectCustomer"
-        ></Customers>
+            :customerCategories="customerCategories"
+            redirect_route="customers.index"
+            :mode="'create'"
+        />
     </Dialog>
-    <Dialog
+    <!-- <Dialog
         v-model:visible="isCreateItemVisible"
         modal
         header="Add Item"
         class="w-1/2"
     >
         <Customers redirect_route="quotations.create"></Customers>
-    </Dialog>
+    </Dialog> -->
     <!-- Add Item Dialog -->
     <Dialog
         v-model:visible="isAddItemDialogVisible"
@@ -468,6 +475,7 @@ const showToast = (
 const props = defineProps({
     customers: Array,
     products: Array,
+    customerCategories: Array,
 });
 
 // Define the Inertia form
@@ -500,6 +508,7 @@ const selectedAccountCode = ref("");
 const selectedItemId = ref(null);
 const filteredProducts = ref([]);
 const selectedItem = ref(null);
+const customerCategories = ref(props.customerCategories);
 
 const updateSelectedProductDetails = () => {
     if (selectedItem.value) {

@@ -15,17 +15,17 @@
 
         <!-- Print Button -->
         <div class="flex justify-center mt-6">
-            <a
-                href="#"
-                @click.prevent="printPage"
-                class="px-4 py-2 bg-[#10B981] text-white rounded shadow"
-                >Print Quotation</a
-            >
+            <Button
+                label="Print Quotation"
+                icon="pi pi-print"
+                class="px-4 py-2"
+                @click="printPage"
+            />
         </div>
     </div>
     <div
         ref="printArea"
-        class="flex-col justify-center print-area a4-size text-sm "
+        class="flex-col justify-center print-area a4-size text-sm"
     >
         <!-- <div class="flex flex-row m-4">
         <Image src="https://itc.edu.kh/wp-content/uploads/2021/02/cropped-Logo-ITC.png" alt="Image" width="120" />
@@ -154,6 +154,7 @@ import { ref, computed } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
 import Image from "primevue/image";
+import Button from "primevue/button";
 
 const { props } = usePage();
 const quotation = ref(props.quotation);
