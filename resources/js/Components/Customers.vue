@@ -387,6 +387,7 @@
 <script setup>
 import { InputText, Button, Message, Select } from "primevue";
 import { useForm } from "@inertiajs/vue3";
+import { Inertia } from '@inertiajs/inertia';
 
 const props = defineProps({
     mode: {
@@ -402,6 +403,8 @@ const props = defineProps({
     redirect_route: String,
     customerCategories: Array,
 });
+
+const emit = defineEmits(['close']);
 
 const form = useForm({
     name: props.customer.name || "",
@@ -432,9 +435,8 @@ const submit = () => {
         form.post(route("customers.store"), {
             onSuccess: () => {
                 alert("Customer created successfully!");
-                // Close the dialog after success
-                isCreateCustomerVisible.value = false; // Close the dialog
-                Inertia.visit(props.redirect_route);  // Optionally redirect after creation
+                emit('close'); // Close the dialog
+                Inertia.visit(route(props.redirect_route)); // Redirect to index
             },
             onError: (errors) => {
                 console.error(errors);
@@ -444,9 +446,8 @@ const submit = () => {
         form.put(route("customers.update", props.customer.id), {
             onSuccess: () => {
                 alert("Customer updated successfully!");
-                // Close the dialog after success
-                isEditCustomerVisible.value = false; // Close the dialog
-                Inertia.visit(props.redirect_route);  // Optionally redirect after update
+                emit('close'); // Close the dialog
+                Inertia.visit(route(props.redirect_route)); // Redirect to index
             },
             onError: (errors) => {
                 console.error(errors);
