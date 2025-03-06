@@ -45,30 +45,12 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <Column header="No." style="width: 8%">
-                        <template #body="slotProps">
-                            {{ slotProps.index + 1 }}
-                        </template>
-                    </Column>
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
-                        style="width: 25%"
+                        style="width: 20%"
                     />
                     <Column field="total" header="Total" style="width: 10%" />
-                    <!-- <Column field="status" header="Status" style="width: 10%">
-                        <template #body="slotProps">
-                            <Dropdown
-                                v-model="slotProps.data.status"
-                                :options="StatusOptions"
-                                optionLabel="name"
-                                optionValue="code"
-                                placeholder="Select Status"
-                                class="w-full md:w-14rem"
-                                @change="updateQuotationStatus(slotProps.data)"
-                            />
-                        </template>
-                    </Column> -->
                     <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
                             <span
@@ -88,7 +70,7 @@
                     <Column
                         field="customer_status"
                         header="Customer Status"
-                        style="width: 20%"
+                        style="width: 15%"
                     >
                         <template #body="slotProps">
                             <span
@@ -121,6 +103,37 @@
                                 ></i>
                                 {{ slotProps.data.customer_status }}
                             </span>
+                        </template>
+                    </Column>
+                    <Column header="Comment / Role" style="width: 15%">
+                        <template #body="slotProps">
+                            <div
+                                v-if="
+                                    slotProps.data.comments &&
+                                    slotProps.data.comments.length
+                                "
+                            >
+                                <!-- We'll show the last comment in the array -->
+                                <p>
+                                    <strong>Comment:</strong>
+                                    {{
+                                        slotProps.data.comments[
+                                            slotProps.data.comments.length - 1
+                                        ].comment
+                                    }}
+                                </p>
+                                <p>
+                                    <strong>Role:</strong>
+                                    {{
+                                        slotProps.data.comments[
+                                            slotProps.data.comments.length - 1
+                                        ].role
+                                    }}
+                                </p>
+                            </div>
+                            <div v-else>
+                                <em>No comment</em>
+                            </div>
                         </template>
                     </Column>
                     <Column header="View / Print-out" style="width: 20%">
@@ -212,6 +225,28 @@
                             <strong>Total:</strong>
                             {{ selectedQuotation.total }}
                         </p>
+                        <!-- Display the comment and role if available -->
+                        <p v-if="selectedQuotation.comment">
+                            <strong>Comment:</strong>
+                            {{ selectedQuotation.comment }}
+                        </p>
+                        <p v-if="selectedQuotation.role">
+                            <strong>Role:</strong> {{ selectedQuotation.role }}
+                        </p>
+                    </div>
+
+                    <!-- Comment input area for approving/revising -->
+                    <div class="mt-4 p-6">
+                        <label for="comment" class="block font-bold mb-2"
+                            >Comment:</label
+                        >
+                        <textarea
+                            id="comment"
+                            v-model="comment"
+                            rows="3"
+                            class="w-full border rounded p-2"
+                            placeholder="Enter your comment here..."
+                        ></textarea>
                     </div>
 
                     <template #footer>
@@ -266,9 +301,10 @@ import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const isViewDialogVisible = ref(false);
-const selectedQuotation = ref([]);
+const selectedQuotation = ref({});
 const selectedQuo_customer = ref([]);
 const userRole = ref("manager");
+const comment = ref("");
 
 const showToast = (
     type = "success",
@@ -371,12 +407,15 @@ const updateQuotationStatus = (quotation, message) => {
         `/quotations/${quotation.id}/update-status`,
         {
             status: quotation.status,
-            customer_status: quotation.customer_status, // include customer_status
+            customer_status: quotation.customer_status,
+            comment: quotation.comment,
+            role: quotation.role,
         },
         {
             preserveScroll: true,
             onSuccess: (response) => {
                 showToast("success", "Success", message, 3000);
+                router.get(route("quotations.index"), {}, { replace: true });
             },
             onError: (err) => {
                 showToast(
@@ -394,21 +433,30 @@ const updateQuotationStatus = (quotation, message) => {
 const approveQuotation = () => {
     selectedQuotation.value.status = "Approved";
     selectedQuotation.value.customer_status = "Sent";
+    selectedQuotation.value.comment = comment.value;
+    selectedQuotation.value.role = userRole.value;
+
     updateQuotationStatus(
         selectedQuotation.value,
         "Quotation approved and sent to customer!"
     );
     isViewDialogVisible.value = false;
+    comment.value = "";
 };
+
 // Revise Quotation
 const reviseQuotation = () => {
     selectedQuotation.value.status = "Revise";
     selectedQuotation.value.customer_status = "Sent";
+    selectedQuotation.value.comment = comment.value;
+    selectedQuotation.value.role = userRole.value;
+
     updateQuotationStatus(
         selectedQuotation.value,
         "Quotation revised and sent to customer!"
     );
     isViewDialogVisible.value = false;
+    comment.value = "";
 };
 </script>
 
