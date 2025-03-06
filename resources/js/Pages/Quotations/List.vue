@@ -415,7 +415,7 @@ const updateQuotationStatus = (quotation, message) => {
             preserveScroll: true,
             onSuccess: (response) => {
                 showToast("success", "Success", message, 3000);
-                router.get(route("quotations.index"), {}, { replace: true });
+                router.get(route("quotations.list"), {}, { replace: true });
             },
             onError: (err) => {
                 showToast(
