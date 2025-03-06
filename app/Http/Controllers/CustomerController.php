@@ -12,7 +12,7 @@ class CustomerController extends Controller
     // Display all customers
     public function index()
     {
-        $customers = Customer::orderBy('created_at')->get();
+        $customers = Customer::orderBy('created_at', 'desc')->get();
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
             'customerCategories' => CustomerCategory::all(),
@@ -33,7 +33,7 @@ class CustomerController extends Controller
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:255',
+            'code' => 'required|unique|string|max:255',
             'credit_period' => 'required|numeric|min:0',
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
@@ -81,7 +81,7 @@ class CustomerController extends Controller
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:255',
+            'code' => 'required|unique|string|max:255',
             'credit_period' => 'required|integer|min:0',
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',

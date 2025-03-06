@@ -432,15 +432,21 @@ const submit = () => {
         form.post(route("customers.store"), {
             onSuccess: () => {
                 alert("Customer created successfully!");
+                // Close the dialog after success
+                isCreateCustomerVisible.value = false; // Close the dialog
+                Inertia.visit(props.redirect_route);  // Optionally redirect after creation
             },
             onError: (errors) => {
                 console.error(errors);
             },
         });
     } else if (props.mode === "edit") {
-        form.put(route("customers.store", props.customer.id), {
+        form.put(route("customers.update", props.customer.id), {
             onSuccess: () => {
                 alert("Customer updated successfully!");
+                // Close the dialog after success
+                isEditCustomerVisible.value = false; // Close the dialog
+                Inertia.visit(props.redirect_route);  // Optionally redirect after update
             },
             onError: (errors) => {
                 console.error(errors);
