@@ -102,7 +102,7 @@ class CustomerController extends Controller
         $customer->update($validated);
 
         // Redirect to the customer's show page with a success message
-        return redirect()->route('customers.show', $customer->id)->with('success', 'Customer updated successfully!');
+        return redirect()->route('customers.index', $customer->id)->with('success', 'Customer updated successfully!');
     }
 
     // Delete customer

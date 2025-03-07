@@ -68,7 +68,7 @@
             <Dialog v-model:visible="isEditCustomerVisible" modal header="Edit Customer" class="w-2/3">
                 <template #header>
                     <div class="flex items-center gap-2">
-                        <img src="/Item.png" alt="Item Customer" class="h-8 w-8 ml-2" />
+                        <img src="/User.png" alt="Item Customer" class="h-8 w-8 ml-2" />
                         <span class="text-xl font-semibold bor">Edit Customer</span>
                     </div>
                 </template>
@@ -85,7 +85,7 @@
             <Dialog v-model:visible="isViewCustomerVisible" modal header="View Customer" class="w-2/3">
                 <template #header>
                     <div class="flex items-center gap-2">
-                        <img src="/Item.png" alt="Item Customer" class="h-8 w-8 ml-2" />
+                        <img src="/User.png" alt="Item Customer" class="h-8 w-8 ml-2" />
                         <span class="text-xl font-semibold bor">Customer Details</span>
                     </div>
                 </template>
