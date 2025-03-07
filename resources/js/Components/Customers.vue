@@ -550,10 +550,11 @@ const submit = () => {
                     "Your new customer has been successfully created!",
                     4000
                 );
-                // setTimeout(() => {}, 1000);
-                emit("close");
-                Inertia.visit(route("customers.index"));
-                console.log("custom");
+                setTimeout(() => {
+                    emit("close");
+                    router.push(route(props.redirect_route));
+                }, 1000);
+                // Inertia.visit(route(props.redirect_route));
             },
             onError: (errors) => {
                 showToast(
@@ -561,8 +562,6 @@ const submit = () => {
                     "Error",
                     "There was an error creating the customer."
                 );
-                console.log("custom");
-
                 console.error(errors);
             },
         });
@@ -574,11 +573,11 @@ const submit = () => {
                     "Success",
                     "Customer updated successfully!"
                 );
-                // setTimeout(() => {
-                // }, 1000);
-                emit("close");
-                router.push(route(props.redirect_route));
-                console.log("custom");
+                setTimeout(() => {
+                    emit("close");
+                    router.push(route(props.redirect_route));
+                }, 1000);
+                // Inertia.visit(route(props.redirect_route));
             },
             onError: (errors) => {
                 showToast(

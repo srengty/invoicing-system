@@ -266,7 +266,7 @@ const viewCustomer = (id) => {
 const localCustomers = ref(
     props.customers.map((cust) => ({
         ...cust,
-        active: typeof cust.active !== "undefined" ? cust.active : true, // default true if missing
+        active: typeof cust.active !== "undefined" ? cust.active : true,
     }))
 );
 const indexedCustomers = computed(() => {
