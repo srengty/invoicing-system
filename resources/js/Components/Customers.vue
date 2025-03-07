@@ -2,8 +2,6 @@
     <Toast position="top-center" group="tc" />
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
-            <Toast></Toast>
-            <router-view />
             <div class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"></div>
             <div
                 class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
@@ -443,13 +441,8 @@
 import { ref } from "vue";
 import { useToast } from "primevue/usetoast";
 import { InputText, Button, Message, Select, Toast } from "primevue";
-import { useForm } from "@inertiajs/vue3";
 import { Inertia } from '@inertiajs/inertia';
-import { InputText, Button, Message, Select } from "primevue";
 import { router, useForm } from "@inertiajs/vue3";
-import { Inertia } from "@inertiajs/inertia";
-import { useToast } from "primevue/usetoast";
-import Toast from "primevue/toast";
 
 const toast = useToast();
 
