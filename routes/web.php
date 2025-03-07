@@ -49,6 +49,8 @@ Route::get('/settings/customers/show/{customer}', [CustomerController::class, 's
 Route::put('/settings/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
 Route::get('/settings/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
 Route::delete('/settings/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
+Route::put('/settings/customers/{customer}/toggle-active', [CustomerController::class, 'toggleActive'])
+    ->name('customers.toggleActive');
 
 Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');

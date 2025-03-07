@@ -1,12 +1,20 @@
 <template>
+    <Toast position="top-center" group="tc" />
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
             <Toast></Toast>
             <router-view />
-            <div class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4">
+            <div class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"></div>
+            <div
+                class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
+            >
+
                 <!-- Customer Category -->
                 <div>
-                    <label for="code" class="block text-sm font-medium required">
+                    <label
+                        for="code"
+                        class="block text-sm font-medium required"
+                    >
                         Customer category
                     </label>
                     <Select
@@ -31,7 +39,10 @@
 
                 <!-- Customer/Organization Name -->
                 <div>
-                    <label for="name" class="block text-sm font-medium required">
+                    <label
+                        for="name"
+                        class="block text-sm font-medium required"
+                    >
                         Customer/Organization name
                     </label>
                     <InputText
@@ -55,7 +66,10 @@
 
                 <!-- Customer Code -->
                 <div>
-                    <label for="code" class="block text-sm font-medium required">
+                    <label
+                        for="code"
+                        class="block text-sm font-medium required"
+                    >
                         Customer code
                     </label>
                     <InputText
@@ -79,7 +93,10 @@
 
                 <!-- Credit Period -->
                 <div>
-                    <label for="credit_period" class="block text-sm font-medium required">
+                    <label
+                        for="credit_period"
+                        class="block text-sm font-medium required"
+                    >
                         Credit period (days)
                     </label>
                     <InputText
@@ -102,7 +119,10 @@
 
                 <!-- Address -->
                 <div>
-                    <label for="address" class="block text-sm font-medium required">
+                    <label
+                        for="address"
+                        class="block text-sm font-medium required"
+                    >
                         Address
                     </label>
                     <InputText
@@ -126,7 +146,10 @@
 
                 <!-- Website -->
                 <div>
-                    <label for="website" class="block text-sm font-medium required">
+                    <label
+                        for="website"
+                        class="block text-sm font-medium required"
+                    >
                         Website
                     </label>
                     <InputText
@@ -154,7 +177,10 @@
 
                 <!-- Contact Person Name -->
                 <div>
-                    <label for="contact_person" class="block text-sm font-medium required">
+                    <label
+                        for="contact_person"
+                        class="block text-sm font-medium required"
+                    >
                         Contact person name
                     </label>
                     <InputText
@@ -178,7 +204,10 @@
 
                 <!-- Phone Number -->
                 <div>
-                    <label for="phone_number" class="block text-sm font-medium required">
+                    <label
+                        for="phone_number"
+                        class="block text-sm font-medium required"
+                    >
                         Phone
                     </label>
                     <InputText
@@ -202,7 +231,10 @@
 
                 <!-- Telegram Number -->
                 <div>
-                    <label for="telegram_number" class="block text-sm font-medium required">
+                    <label
+                        for="telegram_number"
+                        class="block text-sm font-medium required"
+                    >
                         Telegram Number
                     </label>
                     <InputText
@@ -226,7 +258,10 @@
 
                 <!-- Email -->
                 <div>
-                    <label for="email" class="block text-sm font-medium required">
+                    <label
+                        for="email"
+                        class="block text-sm font-medium required"
+                    >
                         Email
                     </label>
                     <InputText
@@ -254,7 +289,10 @@
 
                 <!-- Bank Name -->
                 <div>
-                    <label for="bank_name" class="block text-sm font-medium required">
+                    <label
+                        for="bank_name"
+                        class="block text-sm font-medium required"
+                    >
                         Bank name
                     </label>
                     <InputText
@@ -278,7 +316,10 @@
 
                 <!-- Bank Address -->
                 <div>
-                    <label for="bank_address" class="block text-sm font-medium required">
+                    <label
+                        for="bank_address"
+                        class="block text-sm font-medium required"
+                    >
                         Bank address
                     </label>
                     <InputText
@@ -302,7 +343,10 @@
 
                 <!-- Bank Account Name -->
                 <div>
-                    <label for="bank_account_name" class="block text-sm font-medium required">
+                    <label
+                        for="bank_account_name"
+                        class="block text-sm font-medium required"
+                    >
                         Bank account name
                     </label>
                     <InputText
@@ -326,7 +370,10 @@
 
                 <!-- Bank Account Number -->
                 <div>
-                    <label for="bank_account_number" class="block text-sm font-medium required">
+                    <label
+                        for="bank_account_number"
+                        class="block text-sm font-medium required"
+                    >
                         Bank account number
                     </label>
                     <InputText
@@ -350,7 +397,10 @@
 
                 <!-- Bank Swift -->
                 <div>
-                    <label for="bank_swift" class="block text-sm font-medium required">
+                    <label
+                        for="bank_swift"
+                        class="block text-sm font-medium required"
+                    >
                         Bank swift
                     </label>
                     <InputText
@@ -374,7 +424,10 @@
             </div>
 
             <!-- Submit Button (Hidden in View Mode) -->
-            <div v-if="mode !== 'view'" class="flex justify-end gap-2 mr-4 mb-2">
+            <div
+                v-if="mode !== 'view'"
+                class="flex justify-end gap-2 mr-4 mb-2"
+            >
                 <Button
                     :label="mode === 'create' ? 'Create' : 'Update'"
                     class="p-button-primary w-38"
@@ -392,6 +445,11 @@ import { useToast } from "primevue/usetoast";
 import { InputText, Button, Message, Select, Toast } from "primevue";
 import { useForm } from "@inertiajs/vue3";
 import { Inertia } from '@inertiajs/inertia';
+import { InputText, Button, Message, Select } from "primevue";
+import { router, useForm } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
+import { useToast } from "primevue/usetoast";
+import Toast from "primevue/toast";
 
 const toast = useToast();
 
@@ -410,7 +468,7 @@ const props = defineProps({
     customerCategories: Array,
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(["close"]);
 
 const form = useForm({
     name: props.customer.name || "",
@@ -431,9 +489,65 @@ const form = useForm({
     customer_category_id: props.customer.customer_category_id || "",
 });
 
+const showToast = (severity, summary, detail, duration = 4000) => {
+    toast.add({
+        group: "tc",
+        severity,
+        summary,
+        detail,
+        life: duration,
+        className: "my-custom-toast",
+    });
+};
+
+const validateForm = () => {
+    if (!form.address) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer address is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.phone_number) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer phone number is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.customer_id) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please select a customer!",
+            4000
+        );
+        return false;
+    }
+    if (selectedProductsData.value.length === 0) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please add at least one product!",
+            4000
+        );
+        return false;
+    }
+    return true;
+};
+
 const submit = () => {
     if (!form) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill in all required fields.', life: 3000 });
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please fill in all required fields."
+        );
         return;
     }
 
@@ -446,20 +560,65 @@ const submit = () => {
                     emit('close');
                     Inertia.visit(route(props.redirect_route));
                 }, 1000); // Delay to allow toast to show
+                showToast(
+                    "success",
+                    "Customer Created",
+                    "Your new customer has been successfully created!",
+                    4000
+                );
+                setTimeout(() => {
+                    emit("close");
+                    router.push(route(props.redirect_route));
+                }, 1000);
+                // Inertia.visit(route(props.redirect_route));
+            },
+            onError: (errors) => {
+                showToast(
+                    "error",
+                    "Error",
+                    "There was an error creating the customer."
+                );
+                console.error(errors);
             },
         });
     } else if (props.mode === "edit") {
         form.put(route("customers.update", props.customer.id), {
             onSuccess: () => {
                 toast.add({ severity: 'success', summary: 'Success', detail: 'Customer updated successfully!', life: 3000 });
-
                 setTimeout(() => {
                     emit('close');
                     Inertia.visit(route(props.redirect_route));
                 }, 1000); // Delay for toast display
+                showToast(
+                    "success",
+                    "Success",
+                    "Customer updated successfully!"
+                );
+                setTimeout(() => {
+                    emit("close");
+                    router.push(route(props.redirect_route));
+                }, 1000);
+                // Inertia.visit(route(props.redirect_route));
+            },
+            onError: (errors) => {
+                showToast(
+                    "error",
+                    "Error",
+                    "There was an error updating the customer."
+                );
+                console.error(errors);
             },
         });
     }
 };
 
 </script>
+
+<style scoped>
+.my-custom-toast {
+    /* Example custom styles */
+    background-color: #e0f7fa;
+    border: 1px solid #4dd0e1;
+    color: #006064;
+}
+</style>

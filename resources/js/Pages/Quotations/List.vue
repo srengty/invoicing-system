@@ -272,7 +272,7 @@
                         <Button
                             label="Close"
                             severity="secondary"
-                            @click="isViewDialogVisible = false"
+                            @click="showCancel"
                         />
                     </template>
                 </Dialog>
@@ -359,8 +359,16 @@ const closeForm = () => {
 };
 
 // Open view quotation dialog
-const viewQuotation = (quotations) => {
-    selectedQuotation.value = quotations;
+const viewQuotation = (quotation) => {
+    selectedQuotation.value = quotation;
+    if (quotation.comments && quotation.comments.length) {
+        const lastComment = quotation.comments[quotation.comments.length - 1];
+        comment.value = lastComment.comment;
+        userRole.value = lastComment.role;
+    } else {
+        comment.value = "";
+        userRole.value = "manager";
+    }
     isViewDialogVisible.value = true;
 };
 
@@ -431,6 +439,15 @@ const updateQuotationStatus = (quotation, message) => {
 
 // Approve Quotation
 const approveQuotation = () => {
+    if (!comment.value.trim()) {
+        showToast(
+            "error",
+            "Error",
+            "Please enter a comment before approving!",
+            3000
+        );
+        return;
+    }
     selectedQuotation.value.status = "Approved";
     selectedQuotation.value.customer_status = "Sent";
     selectedQuotation.value.comment = comment.value;
@@ -446,6 +463,15 @@ const approveQuotation = () => {
 
 // Revise Quotation
 const reviseQuotation = () => {
+    if (!comment.value.trim()) {
+        showToast(
+            "error",
+            "Error",
+            "Please enter a comment before revising!",
+            3000
+        );
+        return;
+    }
     selectedQuotation.value.status = "Revise";
     selectedQuotation.value.customer_status = "Sent";
     selectedQuotation.value.comment = comment.value;
@@ -457,6 +483,16 @@ const reviseQuotation = () => {
     );
     isViewDialogVisible.value = false;
     comment.value = "";
+};
+const showCancel = () => {
+    toast.add({
+        severity: "secondary",
+        summary: "Cancelled",
+        detail: "Operation was cancelled.",
+        life: 3000,
+        group: "tr",
+    });
+    isViewDialogVisible.value = false;
 };
 </script>
 

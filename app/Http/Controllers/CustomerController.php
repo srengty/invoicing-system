@@ -40,6 +40,7 @@ class CustomerController extends Controller
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone_number' => 'required|string|max:20', // Changed from 'phone_number' to 'phone'
+            'contact_person' => 'required|string|max:255', // Changed from 'phone_number' to 'phone'
             'telegram_number' => 'required|string|max:20', // Changed from 'telegram_number' to 'telegram'
             'website' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
@@ -88,6 +89,7 @@ class CustomerController extends Controller
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone_number' => 'required|string|max:20', // Changed from 'phone_number' to 'phone'
+            'contact_person' => 'required|string|max:255', // Changed from 'phone_number' to 'phone'
             'telegram_number' => 'required|string|max:20', // Changed from 'telegram_number' to 'telegram'
             'website' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
@@ -111,5 +113,18 @@ class CustomerController extends Controller
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Customer deleted successfully!');
     }
+
+    public function toggleActive(Request $request, Customer $customer)
+{
+    // Validate the incoming request data
+    $data = $request->validate([
+        'active' => 'required|boolean',
+    ]);
+
+    // Update the customer's active status
+    $customer->active = $data['active'];
+    $customer->save();
+}
+
 
 }

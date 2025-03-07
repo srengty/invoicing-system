@@ -39,6 +39,10 @@ return new class extends Migration
             $table->string('bank_account_name', 255)->nullable();
             $table->string('bank_account_number', 255)->nullable();
             $table->string('bank_swift', 255)->nullable();
+
+            // Add the active column here with a default value
+            $table->boolean('active')->default(true);
+            
             $table->timestamps();
         });
         Schema::create('quotations', function (Blueprint $table) {

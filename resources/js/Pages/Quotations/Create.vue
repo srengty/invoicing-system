@@ -285,15 +285,13 @@
                     type="submit"
                     class="p-button-raised"
                     @click="submit"
+                /><Button
+                    v-ripple
+                    icon="pi pi-times"
+                    label="Cancel"
+                    class="p-button-raised p-button-secondary ml-2"
+                    @click="cancelOperation"
                 />
-                <Link :href="route('quotations.list')"
-                    ><Button
-                        v-ripple
-                        icon="pi pi-times"
-                        label="Cancel"
-                        class="p-button-raised p-button-secondary ml-2"
-                    />
-                </Link>
             </div>
         </form>
     </GuestLayout>
@@ -454,6 +452,8 @@ import Column from "primevue/column";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
+import { Inertia } from "@inertiajs/inertia";
+import { router } from "@inertiajs/vue3";
 
 // Toast for notifications
 const toast = useToast();
@@ -808,6 +808,19 @@ const submit = (event) => {
             );
         },
     });
+};
+
+const cancelOperation = () => {
+    toast.add({
+        severity: "secondary",
+        summary: "Cancelled",
+        detail: "Operation was cancelled.",
+        life: 3000,
+        group: "tr",
+    });
+    setTimeout(() => {
+        router.get(route("quotations.list"), {}, { replace: true });
+    }, "");
 };
 
 const isCreateItemVisible = ref(false);
