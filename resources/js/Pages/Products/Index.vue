@@ -1,8 +1,10 @@
 <template>
     <Head title="Products" />
+    <ConfirmDialog />
+    <Toast position="top-center" group="tc" />
     <GuestLayout>
         <BodyLayout>
-            <Toast position="top" />
+            <Toast position="top-center" group="tc" />
             <div class="Items text-sm">
                 <div class="flex justify-between items-center pb-4">
                     <div class="flex items-center gap-2">
@@ -260,7 +262,7 @@
                         <Button
                             label="Close"
                             class="p-button-secondary px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition"
-                            @click="isViewDialogVisible = false"
+                            @click="closeViewDialog"
                         />
                     </div>
                 </Dialog>
@@ -269,7 +271,7 @@
                 <Dialog
                     v-model:visible="isFormVisible"
                     :modal="true"
-                    class="text-sm max-w-auto bg-color-green-100"
+                    class="text-sm bg-color-green-100"
                     size="small"
                 >
                     <template #header>
@@ -601,11 +603,93 @@ import Message from "primevue/message";
 import { ref, computed, onMounted } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
+import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
+import { useConfirm } from "primevue/useconfirm";
+import { router } from "@inertiajs/vue3";
 
+const confirm = useConfirm();
 const toast = useToast();
+
+const showToast = (operation, status) => {
+    const toastMessages = {
+        create: {
+            success: {
+                group: "tc",
+                severity: "success",
+                summary: "Product Created",
+                detail: "Product created successfully!",
+                life: 1000,
+            },
+            error: {
+                group: "tc",
+                severity: "error",
+                summary: "Creation Failed",
+                detail: "Failed to create product. Please check the form fields!",
+                life: 1000,
+            },
+        },
+        update: {
+            success: {
+                group: "tc",
+                severity: "success",
+                summary: "Product Updated",
+                detail: "Product updated successfully!",
+                life: 1000,
+            },
+            error: {
+                group: "tc",
+                severity: "error",
+                summary: "Update Failed",
+                detail: "Failed to update product. Please try again!",
+                life: 1000,
+            },
+        },
+        delete: {
+            success: {
+                group: "tc",
+                severity: "success",
+                summary: "Product Deleted",
+                detail: "Product deleted successfully!",
+                life: 1000,
+            },
+            error: {
+                group: "tc",
+                severity: "error",
+                summary: "Deletion Failed",
+                detail: "Failed to delete product!",
+                life: 1000,
+            },
+        },
+        // New cancel action
+        cancel: {
+            info: {
+                group: "tc",
+                severity: "info",
+                summary: "Action Cancelled",
+                detail: "Operation was cancelled.",
+                life: 1000,
+            },
+        },
+    };
+
+    const options = toastMessages[operation][status];
+    toast.add(options);
+};
+
+// Close the form dialog and notify the user
+const closeForm = () => {
+    showToast("cancel", "info");
+    isFormVisible.value = false;
+    form.reset();
+};
+
+// Close the view dialog and notify the user
+const closeViewDialog = () => {
+    showToast("cancel", "info");
+    isViewDialogVisible.value = false;
+};
 
 // ✅ Use usePage().props to get data
 const { products, divisions, categories, errors } = usePage().props;
@@ -700,12 +784,6 @@ const openForm = (product = null) => {
     isFormVisible.value = true;
 };
 
-// Close product form
-const closeForm = () => {
-    isFormVisible.value = false;
-    form.reset();
-};
-
 const handleFileUpload = (event) => {
     form.pdf = event.target.files[0]; // Store file in form object
 };
@@ -731,47 +809,29 @@ const submitForm = () => {
     }
 
     if (form.id) {
-        Inertia.post(route("products.update", form.id), formData, {
+        router.post(route("products.update", form.id), formData, {
             forceFormData: true,
             headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Product updated successfully!",
-                    life: 3000,
-                });
+                showToast("update", "success");
                 isFormVisible.value = false;
+                router.reload({ preserveScroll: true });
             },
             onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to update product. Please try again!",
-                    life: 3000,
-                });
+                showToast("update", "error");
                 console.error("Update errors:", errors);
             },
         });
     } else {
-        Inertia.post(route("products.store"), formData, {
+        router.post(route("products.store"), formData, {
             forceFormData: true,
             onSuccess: () => {
-                toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Product created successfully!",
-                    life: 3000,
-                });
+                showToast("create", "success");
                 isFormVisible.value = false;
+                router.reload({ preserveScroll: true });
             },
             onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to create product. Please check the form fields!",
-                    life: 3000,
-                });
+                showToast("create", "error");
                 console.error("Creation errors:", errors);
             },
         });
@@ -780,25 +840,42 @@ const submitForm = () => {
 
 // Delete product
 const deleteProduct = (id) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-        Inertia.delete(route("products.destroy", id), {
-            onSuccess: () => {
-                toast.add({
-                    severity: "success",
-                    summary: "Deleted",
-                    detail: "Product deleted successfully!",
-                    life: 3000,
-                });
-            },
-            onError: () => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to delete product!",
-                    life: 3000,
-                });
-            },
-        });
-    }
+    confirm.require({
+        message: "Are you sure you want to delete this product?",
+        header: "Delete Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => {
+            Inertia.delete(route("products.destroy", id), {
+                onSuccess: () => {
+                    toast.add({
+                        group: "tc",
+                        severity: "success",
+                        summary: "Deleted",
+                        detail: "Product deleted successfully!",
+                        life: 3000,
+                    });
+                    router.reload({ preserveScroll: true });
+                },
+                onError: () => {
+                    toast.add({
+                        group: "tc",
+                        severity: "error",
+                        summary: "Error",
+                        detail: "Failed to delete product!",
+                        life: 3000,
+                    });
+                },
+            });
+        },
+        reject: () => {
+            toast.add({
+                group: "tc",
+                severity: "info",
+                summary: "Cancelled",
+                detail: "Product deletion cancelled.",
+                life: 3000,
+            });
+        },
+    });
 };
 </script>

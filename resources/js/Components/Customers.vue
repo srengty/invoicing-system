@@ -1,5 +1,4 @@
 <template>
-    <Toast position="top-center" group="tc" />
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
             <div
