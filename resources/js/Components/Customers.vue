@@ -1,6 +1,8 @@
 <template>
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
+            <Toast></Toast>
+            <router-view />
             <div class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <!-- Customer Category -->
                 <div>
@@ -385,9 +387,13 @@
 </template>
 
 <script setup>
-import { InputText, Button, Message, Select } from "primevue";
+import { ref } from "vue";
+import { useToast } from "primevue/usetoast";
+import { InputText, Button, Message, Select, Toast } from "primevue";
 import { useForm } from "@inertiajs/vue3";
 import { Inertia } from '@inertiajs/inertia';
+
+const toast = useToast();
 
 const props = defineProps({
     mode: {
@@ -398,7 +404,7 @@ const props = defineProps({
     customer: {
         type: Object,
         default: () => ({}),
-    },
+    }, 
     errors: Object,
     redirect_route: String,
     customerCategories: Array,
@@ -426,33 +432,34 @@ const form = useForm({
 });
 
 const submit = () => {
-    if (!form.name || !form.code || !form.customer_category_id) {
-        alert("Please fill in all required fields.");
+    if (!form) {
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill in all required fields.', life: 3000 });
         return;
     }
 
     if (props.mode === "create") {
         form.post(route("customers.store"), {
             onSuccess: () => {
-                alert("Customer created successfully!");
-                emit('close'); // Close the dialog
-                Inertia.visit(route(props.redirect_route)); // Redirect to index
-            },
-            onError: (errors) => {
-                console.error(errors);
+                toast.add({ severity: 'success', summary: 'Success', detail: 'Customer created successfully!', life: 3000 });
+
+                setTimeout(() => {
+                    emit('close');
+                    Inertia.visit(route(props.redirect_route));
+                }, 1000); // Delay to allow toast to show
             },
         });
     } else if (props.mode === "edit") {
         form.put(route("customers.update", props.customer.id), {
             onSuccess: () => {
-                alert("Customer updated successfully!");
-                emit('close'); // Close the dialog
-                Inertia.visit(route(props.redirect_route)); // Redirect to index
-            },
-            onError: (errors) => {
-                console.error(errors);
+                toast.add({ severity: 'success', summary: 'Success', detail: 'Customer updated successfully!', life: 3000 });
+
+                setTimeout(() => {
+                    emit('close');
+                    Inertia.visit(route(props.redirect_route));
+                }, 1000); // Delay for toast display
             },
         });
     }
 };
+
 </script>

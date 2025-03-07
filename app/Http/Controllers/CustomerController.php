@@ -28,12 +28,12 @@ class CustomerController extends Controller
     }
 
     // Store a new customer
-    public function store(Request $request)
+    public function store(Request $request, Customer $customer)
     {
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|unique:customers,code|string|max:255',
+            'code' => 'required|unique:customers,code,' . $customer->id . '|string|max:255',
             'credit_period' => 'required|numeric|min:0',
             'code' => 'required|string|max:255',
             'credit_period' => 'required|numeric|min:0|max:15',
@@ -83,7 +83,7 @@ class CustomerController extends Controller
         // Validate incoming data
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|unique:customers,code,' . $customer->id . '|string|max:255',
+            'code' => 'required|string|max:255',
             'credit_period' => 'required|integer|min:0',
             'address' => 'required|string|max:255',
             'email' => 'required|email|max:255',
