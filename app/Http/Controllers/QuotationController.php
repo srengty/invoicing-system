@@ -55,34 +55,34 @@ class QuotationController extends Controller
     $userRole          = $request->input('role');
     // If you're using authentication with roles, you could do: $userRole = $request->user()->role
 
-    // 1. Handle Quotation Number if Approved and no quotation_no yet
-    if ($newStatus === 'Approved' && !$quotation->quotation_no) {
+    // 1. If status is Approved or Revised, and there's no quotation_no yet, assign one
+    if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_no) {
         $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
         $quotation->quotation_no = $lastQuotation
             ? $lastQuotation->quotation_no + 1
             : 25000001;
     }
 
-    // 2. Handle transitions from Pending -> Approved or Revised
-    if ($quotation->status === 'Pending') {
-        if ($newStatus === 'Approved') {
-            if (!$quotation->quotation_date) {
-                $quotation->quotation_date = now();
-            }
-        } elseif ($newStatus === 'Revised') {
-            $quotation->revised_at = now();
-        }
+    // 2. If status is Approved or Revised, and there's no quotation_date yet, set it
+    if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_date) {
+        $quotation->quotation_date = now();
     }
 
-    // 3. Update the Quotation status
+    // 3. If status is Revised, set the revised_at timestamp
+    if ($newStatus === 'Revised') {
+        $quotation->revised_at = now();
+    }
+
+    // 4. Update the Quotation status and customer status
     $quotation->status = $newStatus;
     if ($newCustomerStatus) {
         $quotation->customer_status = $newCustomerStatus;
     }
 
+    // 5. Save the changes to the quotation
     $quotation->save();
 
-    // 4. If a comment is provided, store it in the quotation_comments table
+    // 6. If a comment is provided, store it in the quotation_comments table
     if (!empty($comment)) {
         $quotation->comments()->create([
             'user_id' => $request->user()->id ?? null,
@@ -92,6 +92,7 @@ class QuotationController extends Controller
         ]);
     }
 }
+
 
 public function storeComment(Request $request, $quotationId)
 {
@@ -177,11 +178,19 @@ public function storeComment(Request $request, $quotationId)
         // Attach products to the quotation
         if (isset($validated['products'])) {
             foreach ($validated['products'] as $product) {
-                $quotation->products()->attach($product['id'], [
+                ProductQuotation::create([
+                    'product_id'=>$product['id'],
                     'quantity' => $product['quantity'],
+                    'quotation_no' => $quotation->id,
                     'price'    => $product['price'],
+
                     'product_unit_prices' => json_encode($validated['products']),
                 ]);
+                // $quotation->products()->attach($product['id'], [
+                //     'quantity' => $product['quantity'],
+                //     'price'    => $product['price'],
+                //     'product_unit_prices' => json_encode($validated['products']),
+                // ]);
             }
         }
     // Redirect with a success message

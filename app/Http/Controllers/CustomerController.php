@@ -102,7 +102,7 @@ class CustomerController extends Controller
         $customer->update($validated);
 
         // Redirect to the customer's show page with a success message
-        return redirect()->route('customers.show', $customer->id)->with('success', 'Customer updated successfully!');
+        return redirect()->route('customers.index', $customer->id)->with('success', 'Customer updated successfully!');
     }
 
     // Delete customer
@@ -111,5 +111,18 @@ class CustomerController extends Controller
         $customer->delete();
         return redirect()->route('customers.index')->with('success', 'Customer deleted successfully!');
     }
+
+    public function toggleActive(Request $request, Customer $customer)
+{
+    // Validate the incoming request data
+    $data = $request->validate([
+        'active' => 'required|boolean',
+    ]);
+
+    // Update the customer's active status
+    $customer->active = $data['active'];
+    $customer->save();
+}
+
 
 }
