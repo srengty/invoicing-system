@@ -532,7 +532,7 @@ const validateForm = () => {
 };
 
 const submit = () => {
-    if (!form.name || !form.code || !form.customer_category_id) {
+    if (!form) {
         showToast(
             "warn",
             "Validation Error",

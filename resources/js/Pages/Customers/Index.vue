@@ -1,5 +1,6 @@
 <template>
     <Head title="Customers/Organization Name" />
+    <ConfirmDialog />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
         <BodyLayout>
@@ -193,8 +194,12 @@ import BodyLayout from "@/Layouts/BodyLayout.vue";
 import Customers from "@/Components/Customers.vue";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
+import ConfirmDialog from "primevue/confirmdialog";
+import { useConfirm } from "primevue/useconfirm";
+import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
+const confirm = useConfirm();
 
 const props = defineProps({
     customers: Array,
@@ -266,7 +271,7 @@ const viewCustomer = (id) => {
 const localCustomers = ref(
     props.customers.map((cust) => ({
         ...cust,
-        active: typeof cust.active !== "undefined" ? cust.active : true,
+        active: typeof cust.active !== "undefined" ? cust.active : true, // default true if missing
     }))
 );
 const indexedCustomers = computed(() => {
@@ -288,39 +293,48 @@ const showToast = (severity, summary, detail, duration = 4000) => {
 };
 
 const toggleActive = (customer) => {
-    const action = customer.active ? "deactivate" : "activate";
-    if (confirm(`Are you sure you want to ${action} this customer?`)) {
-        Inertia.put(
-            route("customers.toggleActive", customer.id),
-            { active: !customer.active },
-            {
-                onSuccess: () => {
-                    showToast(
-                        "success",
-                        "Success",
-                        `Customer ${action}d successfully!`,
-                        4000
-                    );
-                    // Update the reactive array by mapping over it:
-                    localCustomers.value = localCustomers.value.map((cust) => {
-                        if (cust.id === customer.id) {
-                            return { ...cust, active: !cust.active };
-                        }
-                        return cust;
-                    });
-                },
-                onError: (error) => {
-                    showToast(
-                        "error",
-                        "Error",
-                        `Error ${action}ing customer.`,
-                        4000
-                    );
-                    console.error(error);
-                },
-            }
-        );
-    }
+    const action = customer.active ? "activate" : "deactivate";
+
+    confirm.require({
+        message: `Are you sure you want to ${action} this customer?`,
+        header: "Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => {
+            router.put(
+                route("customers.toggleActive", customer.id),
+                { active: !customer.active },
+                {
+                    onSuccess: () => {
+                        showToast(
+                            "success",
+                            "Success",
+                            `Customer ${action}d successfully!`
+                        );
+                        // Optionally update local state
+                        localCustomers.value = localCustomers.value.map(
+                            (cust) =>
+                                cust.id === customer.id
+                                    ? { ...cust, active: !cust.active }
+                                    : cust
+                        );
+                        // Force a reload to fetch fresh data
+                        router.reload({ preserveScroll: true });
+                    },
+                    onError: (error) => {
+                        showToast(
+                            "error",
+                            "Error",
+                            `Error ${action}ing customer.`
+                        );
+                        console.error("Error toggling active status:", error);
+                    },
+                }
+            );
+        },
+        reject: () => {
+            showToast("info", "Cancelled", "No changes were made.");
+        },
+    });
 };
 </script>
 <style scoped>
