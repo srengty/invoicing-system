@@ -1,8 +1,8 @@
 <template>
     <Head title="Products" />
+    <Toast position="top"/>
     <GuestLayout>
-        <BodyLayout>
-            <Toast position="top"/>
+        <BodyLayout>    
             <div class="Items text-sm">
                 <div class="flex justify-between items-center pb-4">
                     <div class="flex items-center gap-2">
@@ -191,9 +191,7 @@
                                 <div class="field">
                                     <label for="division" class="required">Division</label>
                                     <Select id="division" v-model="form.division_id" :options="divisionOptions" optionLabel="name" optionValue="id" class="w-full" required />
-                                    <Message v-if="form.errors.division_id" severity="error" size="small" variant="simple" class="col-span-2">
-                                        {{ form.errors.division_id }}
-                                    </Message>
+                                    <Message v-if="form.errors.division_id" severity="error">{{ form.errors.division_id }}</Message>
                                 </div>
 
                                 <!-- Category -->
@@ -330,8 +328,7 @@
 <script setup>
 import { Head, usePage } from '@inertiajs/vue3';
 import BodyLayout from '@/Layouts/BodyLayout.vue';
-import { DataTable, Column, Button, Dialog, InputText, InputNumber, Select } from 'primevue';
-import Message from "primevue/message";
+import { DataTable, Column, Button, Dialog, InputText, InputNumber, Select, Message } from 'primevue';
 import { ref, computed, onMounted  } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
@@ -341,10 +338,8 @@ import GuestLayout from '@/Layouts/GuestLayout.vue';
 
 const toast = useToast();
 
-// ✅ Use usePage().props to get data
 const { products, divisions, categories, errors } = usePage().props;
 
-// ✅ Computed properties to map dropdown options
 const categoryOptions = computed(() =>
     categories?.map(category => ({
         name: category.category_name_english || category.category_name_khmer,
@@ -373,7 +368,6 @@ const getDivisionName = (divisionId) => {
         : "Unknown";
 };
 
-// Define columns for DataTable
 const columns = [
     { field: "id", header: "ID" },
     { field: "code", header: "Code" },
@@ -384,12 +378,10 @@ const columns = [
     { field: "quantity", header: "Quantity" },
 ];
 
-// State for form and view dialogs
 const isFormVisible = ref(false);
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
 
-// Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
     division_id: "",
@@ -405,10 +397,9 @@ const form = useForm({
     category_id: "",
     pdf_url: "",
     remark: "",
-    pdf: null, // Add this line to handle file uploads
+    pdf: null,
 });
 
-// Open product form
 const openForm = (product = null) => {
     if (product) {
         form.id = product.id;
@@ -420,96 +411,84 @@ const openForm = (product = null) => {
         form.quantity = product.quantity;
         form.category_id = product.category_id;
         form.division_id = Number(product.division_id);
-        form.desc = product.desc || ''; // ✅ Ensure description is populated
+        form.desc = product.desc || '';
         form.desc_kh = product.desc_kh || '';
         form.remark = product.remark || '';
-        form.pdf_url = product.pdf_url || null; // ✅ Ensure PDF URL is correctly set
-        form.pdf = null; // Reset file upload
+        form.pdf_url = product.pdf_url || null;
+        form.pdf = null;
     } else {
         form.reset();
     }
     isFormVisible.value = true;
 };
 
-// Close product form
 const closeForm = () => {
     isFormVisible.value = false;
     form.reset();
 };
 
 const handleFileUpload = (event) => {
-    form.pdf = event.target.files[0]; // Store file in form object
+    form.pdf = event.target.files[0];
 };
 
 const viewProduct = (product) => {
     selectedProduct.value = { ...product };
-
-    // ✅ Always use the correct new PDF URL
     selectedProduct.value.pdf_url = product.pdf_url || null;
-
     isViewDialogVisible.value = true;
 };
 
 const submitForm = () => {
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
-        if (value !== null && key !== "pdf") {
-            formData.append(key, value);
+        if (value !== null && key !== "pdf") formData.append(key, value);
+    });
+    if (form.pdf) formData.append("pdf", form.pdf);
+
+    const url = form.id ? route("products.update", form.id) : route("products.store");
+
+    Inertia.post(url, formData, {
+        forceFormData: true,
+        onSuccess: () => {
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: form.id ? "Product updated successfully!" : "Product created successfully!",
+                life: 3000,
+            });
+            isFormVisible.value = false;
+        },
+        onError: (errors) => {
+            Object.assign(form.errors, errors);
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Please fix the form errors.",
+                life: 3000,
+            });
         }
     });
-    if (form.pdf) {
-        formData.append("pdf", form.pdf);
-    }
-
-    if (form.id) {
-        Inertia.post(route('products.update', form.id), formData, {
-            forceFormData: true,
-            headers: { 'Content-Type': 'multipart/form-data' },
-            onSuccess: () => {
-                toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Product updated successfully!",
-                    life: 3000,
-                });
-                isFormVisible.value = false;
-            },
-            onError: (errors) => {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to update product. Please try again!', life: 3000 });
-                console.error('Update errors:', errors);
-            }
-        });
-    } else {
-        Inertia.post(route("products.store"), formData, {
-            forceFormData: true,
-            onSuccess: () => {
-                toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Product created successfully!",
-                    life: 3000,
-                });
-                isFormVisible.value = false;
-            },
-            onError: (errors) => {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to create product. Please check the form fields!', life: 3000 });
-                console.error('Creation errors:', errors);
-            }
-        });
-    }
 };
 
-// Delete product
 const deleteProduct = (id) => {
     if (confirm('Are you sure you want to delete this product?')) {
         Inertia.delete(route('products.destroy', id), {
             onSuccess: () => {
-                toast.add({ severity: 'success', summary: 'Deleted', detail: 'Product deleted successfully!', life: 3000 });
+                toast.add({ 
+                    severity: 'success', 
+                    summary: 'Deleted', 
+                    detail: 'Product deleted successfully!', 
+                    life: 3000 
+                });
             },
             onError: () => {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete product!', life: 3000 });
+                toast.add({ 
+                    severity: 'error', 
+                    summary: 'Error', 
+                    detail: 'Failed to delete product!', 
+                    life: 3000 
+                });
             }
         });
     }
-};
+}
 </script>

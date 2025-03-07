@@ -1,8 +1,6 @@
 <template>
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
-            <Toast></Toast>
-            <router-view />
             <div class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4">
                 <!-- Customer Category -->
                 <div>

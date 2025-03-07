@@ -1,5 +1,7 @@
 <template>
     <Head title="Customers/Organization Name" />
+    <Toast position="top-center"></Toast>
+    <router-view />
     <GuestLayout>
         <BodyLayout>
             <div class="customers">
@@ -110,11 +112,14 @@ import ChooseColumns from '@/Components/ChooseColumns.vue';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import BodyLayout from '@/Layouts/BodyLayout.vue';
 import Customers from '@/Components/Customers.vue';
+import { useToast } from "primevue/usetoast";
 
 const props = defineProps({
     customers: Array,
     customerCategories: Array,
 });
+
+const toast = useToast();
 
 const columns = [
     { field: 'id', header: 'ID' },
@@ -149,9 +154,10 @@ const deleteCustomer = (id) => {
         Inertia.delete(route('customers.destroy', id), {
             onSuccess: () => {
                 props.customers = props.customers.filter(customer => customer.id !== id);
-                console.log('Customer deleted!');
+                toast.add({ severity: 'success', summary: 'Deleted', detail: 'Customer deleted successfully!', life: 3000 });
             },
             onError: (error) => {
+                toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete customer!', life: 3000 });
                 console.error('Error deleting customer:', error);
             },
         });
