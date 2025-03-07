@@ -70,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import { useToast } from "primevue/usetoast";
 import { Button, Dialog, DataTable, Column, InputText, Toast } from "primevue";
 import { Head, usePage, router } from "@inertiajs/vue3";

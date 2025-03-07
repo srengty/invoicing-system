@@ -93,9 +93,9 @@ To deploy the web application on a server or hosting server:
     - [x] Show
     - [x] Delete
   - [ ] Products
-    - [ ] List
-    - [ ] Create
-    - [ ] Edit
-    - [ ] Show
-    - [ ] Delete
+    - [x] List
+    - [x] Create
+    - [x] Edit
+    - [x] Show
+    - [x] Delete
   - [ ] Categories

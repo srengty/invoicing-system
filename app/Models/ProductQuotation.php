@@ -28,6 +28,6 @@ class ProductQuotation extends Model
 
     public function quotation()
     {
-        return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
+        return $this->belongsTo(Quotation::class, 'quotation_no', 'id');
     }
 }

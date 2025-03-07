@@ -10,8 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Quotation extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'quotation_no'; // Explicitly set the primary key
-    public $incrementing = false;  // Since we're manually generating the ID
+    protected $primaryKey = 'id'; // Explicitly set the primary key
     protected $keyType = 'int'; // Ensure it's an integer
     protected $fillable = [
         'quotation_no',
@@ -38,12 +37,12 @@ class Quotation extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'product_quotation', 'quotation_no', 'product_id')
-                    ->withPivot('quantity', 'price')
+                    ->withPivot('quantity', 'price',)
                     ->withTimestamps();
     }
     public function productQuotations():HasMany
     {
-        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'quotation_no');
+        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'id');
     }
     public function invoices():HasMany
     {
@@ -59,6 +58,16 @@ class Quotation extends Model
     public function items()
     {
         return $this->hasMany(QuotationItem::class, 'quotation_no', 'quotation_no');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(QuotationComment::class);
+    }
+
+    public function latestComment()
+    {
+        return $this->hasOne(QuotationComment::class)->latest();
     }
 
 }

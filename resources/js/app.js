@@ -8,12 +8,12 @@ import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
+import ToastService from 'primevue/toastservice';
 import Ripple from 'primevue/ripple'; // Import the Ripple directive
 import Tooltip from 'primevue/tooltip';
 import { createI18n } from 'vue-i18n';
-import kh from './locale/kh.json';
-import en from './locale/en.json';
-import ToastService from "primevue/toastservice"; // ✅ Keep this one
+import Toast from 'primevue/toast';
+import Message from 'primevue/message';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -30,7 +30,7 @@ const i18n = createI18n({
     globalInjection: true // ✅ Allows `$t()` globally in setup()
   });
 
-createInertiaApp({
+  createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
         resolvePageComponent(
@@ -39,20 +39,23 @@ createInertiaApp({
         ),
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(ZiggyVue)
+            .use(plugin)  // Use the plugin
+            .use(ZiggyVue) // Use ZiggyVue
             .use(PrimeVue, {
                 theme: {
                     preset: Aura
                 }
-            })
-            .use(i18n)
+            })  // Use PrimeVue
+            .use(i18n)  // Use i18n
             .directive('ripple', Ripple) // Register the Ripple directive
-            .directive('tooltip', Tooltip)
-            .use(ToastService) // ✅ Correct usage
-            .mount(el);
+            .directive('tooltip', Tooltip) // Register the Tooltip directive
+            .use(ToastService)  // Correct usage of ToastService
+            .component('Toast', Toast)  // Register the Toast component
+            .component('Message', Message)  // Register the Message component
+            .mount(el);  // Mount the app finally
     },
     progress: {
         color: '#4B5563',
     },
 });
+

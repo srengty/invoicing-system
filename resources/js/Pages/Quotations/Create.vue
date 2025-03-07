@@ -5,10 +5,10 @@
         <Toast position="top-right" group="tr" />
 
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
-        <Form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="text-sm">
             <!-- Quotation Info -->
-            <div class="p-4 grid md:grid-cols-2 gap-0 w-full">
-                <div class="p-4 grid grid-cols-2 gap-4">
+            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
                         <InputText
@@ -17,6 +17,7 @@
                             v-model="form.quotation_no"
                             placeholder="Auto-generated"
                             class="w-full md:w-60"
+                            size="small"
                         />
                     </div>
                     <div class="flex flex-col gap-2">
@@ -32,42 +33,18 @@
                             placeholder="Select"
                             class="w-full md:w-60"
                             @update:model-value="updateDate"
+                            size="small"
                         />
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <label for="address">Address:</label>
-                        <IconField class="w-full md:w-60">
-                            <InputText
-                                id="address"
-                                v-model="form.address"
-                                placeholder="Input"
-                                class="w-full md:w-60"
-                            />
-                            <InputIcon class="pi pi-times-circle" />
-                        </IconField>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                        <label for="phone_number">Contact:</label>
-                        <IconField class="w-full md:w-60">
-                            <InputText
-                                id="phone_number"
-                                v-model="form.phone_number"
-                                placeholder="Input"
-                                class="w-full md:w-60"
-                            />
-                            <InputIcon class="pi pi-times-circle" />
-                        </IconField>
-                    </div>
                 </div>
-
-                <div class="p-4 grid md:grid-rows-2 gap-4"></div>
             </div>
 
             <!-- Customer & Product Selection -->
-            <div class="p-8 grid md:grid-rows-2 gap-4">
-                <div class="flex flex-row gap-4 items-end w-1/3">
-                    <div class="flex flex-col gap-2 w-full">
+            <div class="pl-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div
+                    class="flex flex-row gap-4 items-end md:grid-cols-4 w-full"
+                >
+                    <div class="flex flex-col gap-2">
                         <label for="customer_id">Customer/Organization</label>
                         <Select
                             :filter="true"
@@ -77,62 +54,98 @@
                             optionValue="id"
                             id="customer_id"
                             placeholder="Select a customer"
-                            class="w-full md:w-65"
+                            class="w-full md:w-60"
                         />
                     </div>
-                    <div class="w-80">
-                        <!-- <Link :href="route('customers.create')">
-                  <Button icon="pi pi-plus" label="Add customer" rounded />
-                </Link> -->
+                    <div class="w-10">
                         <Button
                             icon="pi pi-plus"
-                            label="AddCustomer"
-                            rounded
+                            title="add customer"
+                            label="Add Customer"
+                            raised
                             @click="isCreateCustomerVisible = true"
+                            class="w-36 start"
+                            size="small"
                         />
                     </div>
                 </div>
 
-                <div class="flex flex-row gap-4 items-end w-1/3">
-                    <div class="flex flex-col gap-2 w-full">
-                        <label for="p_name">Item</label>
-                        <MultiSelect
-                            v-model="selectedProductIds"
-                            :options="products"
-                            optionLabel="name"
-                            optionValue="id"
-                            placeholder="Select Product"
-                            class="w-full md:w-65"
+                <!-- <div class="grid grid-cols-1 md:grid-cols-5"> -->
+                <div class="flex flex-col gap-2 w-full md:ml-32">
+                    <label for="address">Address:</label>
+                    <IconField class="w-full md:w-60">
+                        <InputText
+                            id="address"
+                            v-model="form.address"
+                            placeholder="Input"
+                            class="w-full md:w-60"
+                            readonly
+                            size="small"
                         />
-                    </div>
-                    <!-- <div class="w-full">
-                <Link :href="route('products.store')">
-                  <Button icon="pi pi-plus" label="Choose Item" rounded />
-                </Link>
-                <Button icon="pi pi-plus" label="Add Item" rounded @click="isCreateItemVisible"/>
-              </div> -->
+                        <InputIcon
+                            v-if="form.address"
+                            class="pi pi-map-marker"
+                        />
+                    </IconField>
                 </div>
-                <div class="flex flex-row gap-4 items-end w-1/3">
-                    <div class="flex flex-row gap-2 w-full">
-                        <label for="p_name">English/Khmer</label>
-                        <ToggleSwitch
-                            v-model="isKhmer"
-                            @change="toggleLanguage"
+
+                <div class="flex flex-col gap-2 w-full md:ml-28">
+                    <label for="phone_number">Contact:</label>
+                    <IconField class="w-full md:w-60">
+                        <InputText
+                            id="phone_number"
+                            v-model="form.phone_number"
+                            placeholder="Input"
+                            class="w-full md:w-60"
+                            readonly
+                            size="small"
                         />
+                        <InputIcon
+                            v-if="form.phone_number"
+                            class="pi pi-phone"
+                        />
+                    </IconField>
+                </div>
+                <!-- </div> -->
+            </div>
+            <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
+                    <div class="flex gap-32 items-center">
+                        <div class="w-10">
+                            <Button
+                                icon="pi pi-plus"
+                                label="Add Item"
+                                raised
+                                @click="isAddItemDialogVisible = true"
+                                class="w-36"
+                                size="small"
+                            />
+                        </div>
+                        <div class="flex flex-row gap-2 w-full md:w-80">
+                            <label for="p_name">English/Khmer</label>
+                            <ToggleSwitch
+                                v-model="isKhmer"
+                                @change="toggleLanguage"
+                            />
+                        </div>
+                        <div class="w-80"></div>
                     </div>
-                    <div class="w-60"></div>
                 </div>
             </div>
 
             <!-- Selected Products Table -->
-            <div class="pl-6">
+            <div class="pl-6 pt-5">
                 <DataTable
                     :value="selectedProductsData"
                     paginator
                     :rows="5"
                     striped
                 >
-                    <Column field="id" header="No." />
+                    <Column header="No.">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column field="name" header="Name">
                         <template #body="slotProps">
                             <span>{{
@@ -140,6 +153,26 @@
                                     ? slotProps.data.name_kh
                                     : slotProps.data.name
                             }}</span>
+                            <br />
+                            <span>{{
+                                isKhmer
+                                    ? slotProps.data.desc_kh
+                                    : slotProps.data.desc
+                            }}</span>
+                            <br />
+                            <span>
+                                {{ slotProps.data.remark }}
+                            </span>
+                        </template>
+                    </Column>
+                    <Column field="quantity" header="Qty">
+                        <template #body="slotProps">
+                            <InputText
+                                v-model="slotProps.data.quantity"
+                                @input="updateProductSubtotal(slotProps.data)"
+                                class="w-full"
+                                size="small"
+                            />
                         </template>
                     </Column>
                     <Column field="unit" header="Unit" />
@@ -152,15 +185,7 @@
                                 :maxFractionDigits="2"
                                 class="w-full"
                                 placeholder="Enter in USD"
-                            />
-                        </template>
-                    </Column>
-                    <Column field="quantity" header="Qty">
-                        <template #body="slotProps">
-                            <InputText
-                                v-model="slotProps.data.quanity"
-                                @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
+                                size="small"
                             />
                         </template>
                     </Column>
@@ -176,13 +201,34 @@
                     </Column>
                     <Column header="Actions">
                         <template #body="slotProps">
-                            <Button
-                                icon="pi pi-trash"
-                                class="p-button-danger"
-                                label="Remove"
-                                @click="removeProduct(slotProps.data.id)"
-                                rounded
-                            />
+                            <div class="flex gap-2">
+                                <Button
+                                    icon="pi pi-trash"
+                                    class="p-button-danger w-[10px] custom-button"
+                                    title="remove"
+                                    @click="removeProduct(slotProps.data.id)"
+                                    size="small"
+                                    raised
+                                />
+                                <Button
+                                    icon="pi pi-pencil"
+                                    severity="info"
+                                    title="edit"
+                                    @click="editProduct(slotProps.data.id)"
+                                    size="small"
+                                    class="custom-button"
+                                    raised
+                                />
+                                <Button
+                                    icon="pi pi-print"
+                                    severity="success"
+                                    title="print"
+                                    @click="printSelectedProducts"
+                                    size="small"
+                                    class="custom-button"
+                                    raised
+                                />
+                            </div>
                         </template>
                     </Column>
                 </DataTable>
@@ -204,11 +250,12 @@
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
                                 placeholder="Enter USD"
+                                size="small"
                             />
                         </p>
                     </div>
                     <div class="grand-total-container flex justify-between">
-                        <p class="font-bold text-lg">Exchange rate</p>
+                        <p class="font-bold">Exchange rate</p>
                         <p class="font-bold text-lg">
                             {{ calculateExchangeRate }}
                         </p>
@@ -236,44 +283,162 @@
                     label="Submit"
                     icon="pi pi-check"
                     type="submit"
-                    class="p-button-rounded p-button-success"
+                    class="p-button-raised"
                     @click="submit"
                 />
-                <Button
-                    v-ripple
-                    label="Cancel"
-                    class="p-button-rounded p-button-secondary ml-2"
-                />
+                <Link :href="route('quotations.list')"
+                    ><Button
+                        v-ripple
+                        icon="pi pi-times"
+                        label="Cancel"
+                        class="p-button-raised p-button-secondary ml-2"
+                    />
+                </Link>
             </div>
-        </Form>
+        </form>
     </GuestLayout>
     <Dialog
         v-model:visible="isCreateCustomerVisible"
         modal
         header="Add Customer"
-        class="w-1/2"
+        class="w-2/3"
     >
+        <template #header>
+            <div class="flex items-center gap-2">
+                <img src="/User.png" alt="Item Customer" class="h-8 w-8 ml-2" />
+                <span class="text-xl font-semibold bor">Create Customers</span>
+            </div>
+        </template>
         <Customers
-            redirect_route="quotations.create"
-            @success="selectCustomer"
-        ></Customers>
+            :customerCategories="customerCategories"
+            redirect_route="customers.index"
+            :mode="'create'"
+        />
     </Dialog>
-    <Dialog
+    <!-- <Dialog
         v-model:visible="isCreateItemVisible"
         modal
         header="Add Item"
         class="w-1/2"
     >
         <Customers redirect_route="quotations.create"></Customers>
+    </Dialog> -->
+    <!-- Add Item Dialog -->
+    <Dialog
+        v-model:visible="isAddItemDialogVisible"
+        modal
+        header="Add Item (Popup)"
+        :style="{ width: '400px' }"
+        class="text-sm"
+    >
+        <div class="p-fluid grid gap-4 text-sm">
+            <!-- Item Selection -->
+            <div class="field w-full">
+                <label for="item">Item</label> <br />
+                <AutoComplete
+                    v-model="selectedItem"
+                    :suggestions="filteredProducts"
+                    :dropdown="true"
+                    optionLabel="name"
+                    placeholder="Search Product"
+                    class="w-full text-sm"
+                    @complete="searchProducts"
+                    @change="updateSelectedProductDetails"
+                />
+            </div>
+
+            <!-- Item Category (Auto-complete, Read-Only) -->
+            <div class="field">
+                <label for="item-category">Item Category</label>
+                <InputText
+                    v-model="selectedProduct.category_id"
+                    class="w-full text-sm"
+                    size="small"
+                    readonly
+                />
+            </div>
+
+            <!-- Unit Price (Auto-complete, Editable) -->
+            <div class="field">
+                <label for="unit-price">Unit Price</label>
+                <InputNumber
+                    v-model="selectedProduct.price"
+                    size="small"
+                    class="w-full text-sm"
+                />
+            </div>
+
+            <!-- Account Code (Auto-complete, Read-Only) -->
+            <div class="field">
+                <label for="account-code">Account Code</label>
+                <InputText
+                    v-model="selectedProduct.acc_code"
+                    class="w-full text-sm"
+                    size="small"
+                    readonly
+                />
+            </div>
+
+            <!-- Quantity -->
+            <div class="field">
+                <label for="quantity">Quantity</label>
+                <InputNumber
+                    v-model="selectedProduct.quantity"
+                    class="w-full text-sm"
+                    size="small"
+                    :min="1"
+                />
+            </div>
+
+            <!-- View Catalog -->
+            <div v-if="selectedProduct.pdf_url" class="text-start">
+                <label for="quantity">Catalog</label>
+                <a
+                    :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`"
+                    target="_blank"
+                    class="text-blue-500 hover:text-blue-700 transition duration-200"
+                >
+                    📄 View PDF
+                </a>
+            </div>
+            <p v-else class="text-center text-gray-400">No PDF available</p>
+
+            <!-- Additional Remark -->
+            <div class="field">
+                <label for="additional-remark">Additional Remark</label>
+                <InputText
+                    v-model="selectedProduct.remark"
+                    class="w-full text-sm"
+                    size="small"
+                    readonly
+                />
+            </div>
+        </div>
+
+        <!-- Dialog Footer -->
+        <template #footer>
+            <Button
+                label="Cancel"
+                icon="pi pi-times"
+                class="p-button-text"
+                raised
+                @click="closeAddItemDialog()"
+            />
+            <Button
+                label="Add Item"
+                icon="pi pi-check"
+                raised
+                @click="addItemToTable"
+            />
+        </template>
     </Dialog>
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import Select from "primevue/select";
 import MultiSelect from "primevue/multiselect";
 import InputNumber from "primevue/inputnumber";
 import DatePicker from "primevue/datepicker";
@@ -281,18 +446,52 @@ import InputText from "primevue/inputtext";
 import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
-import { Dialog, ToggleSwitch } from "primevue";
+import Dropdown from "primevue/dropdown";
+import { Dialog, ToggleSwitch, Select, AutoComplete, Checkbox } from "primevue";
 import { Form } from "@primevue/forms";
-import Toast from "primevue/toast";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
+import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
+
+// Toast for notifications
+const toast = useToast();
+
+const showToast = (
+    type = "success",
+    title = "Success",
+    message = "Operation completed",
+    duration = 3000
+) => {
+    toast.add({
+        severity: type,
+        detail: message,
+        life: duration,
+        group: "tr",
+    });
+};
 
 const props = defineProps({
     customers: Array,
     products: Array,
+    customerCategories: Array,
 });
+
+// Define the Inertia form
+const form = useForm({
+    quotation_no: null,
+    quotation_date: null,
+    status: "Pending",
+    address: "",
+    phone_number: "",
+    customer_id: null,
+    total: 0,
+    tax: 0,
+    grand_total: 0,
+    products: [], // Will be an array of objects: { id, quantity }
+});
+
 console.log(props.products);
 
 const status = ref("");
@@ -300,7 +499,125 @@ const isApproved = ref(false);
 const today = new Date();
 const isKhmer = ref(false);
 const statusOptions = ref(["Pending", "Approved"]);
+const isAddItemDialogVisible = ref(false);
+const selectedItemIds = ref([]);
+const selectedProduct = ref({});
+const selectedQuantity = ref(1);
+const additionalRemark = ref("");
+const selectedAccountCode = ref("");
+const selectedItemId = ref(null);
+const filteredProducts = ref([]);
+const selectedItem = ref(null);
+const customerCategories = ref(props.customerCategories);
 
+const updateSelectedProductDetails = () => {
+    if (selectedItem.value) {
+        const product = props.products.find(
+            (p) => p.id === selectedItem.value.id
+        );
+        if (product) {
+            selectedProduct.value = {
+                ...product,
+                quantity: 1,
+                subTotal: Number(product.price),
+            };
+        }
+    } else {
+        selectedProduct.value = {};
+    }
+};
+
+const searchProducts = (event) => {
+    filteredProducts.value = props.products.filter((product) =>
+        product.name.toLowerCase().includes(event.query.toLowerCase())
+    );
+};
+
+const validateForm = () => {
+    if (!form.address) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer address is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.phone_number) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer phone number is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.customer_id) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please select a customer!",
+            4000
+        );
+        return false;
+    }
+    if (selectedProductsData.value.length === 0) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please add at least one product!",
+            4000
+        );
+        return false;
+    }
+    return true;
+};
+
+const addItemToTable = () => {
+    if (!selectedProduct.value.name) {
+        showToast("error", "Error", "Please select an item.", 3000);
+        return;
+    }
+
+    if (!selectedProduct.value.quantity || selectedProduct.value.quantity < 1) {
+        selectedProduct.value.quantity = 1;
+    }
+
+    const newItem = {
+        ...selectedProduct.value,
+        subTotal:
+            Number(selectedProduct.value.price) *
+            selectedProduct.value.quantity,
+    };
+
+    const existingIndex = selectedProductsData.value.findIndex(
+        (prod) => prod.id === newItem.id
+    );
+    if (existingIndex !== -1) {
+        selectedProductsData.value[existingIndex] = newItem; // Update existing
+    } else {
+        selectedProductsData.value.push(newItem); // Add new
+    }
+
+    closeAddItemDialog();
+};
+
+// Close Add Item dialog
+const closeAddItemDialog = () => {
+    isAddItemDialogVisible.value = false;
+    resetAddItemDialog();
+};
+
+const resetAddItemDialog = () => {
+    selectedItemIds.value = [];
+    selectedProduct.value = {};
+    selectedQuantity.value = 1;
+    additionalRemark.value = "";
+    selectedAccountCode.value = "";
+    editingProduct.value = null;
+};
+
+// toggle language
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? "name_kh" : "name";
 };
@@ -321,26 +638,10 @@ watch(status, (newStatus) => {
         isApproved.value = false;
     }
 });
+
 const updateDate = (selectedDate) => {
     form.value.quotation_date = selectedDate;
 };
-
-// Toast for notifications
-const toast = useToast();
-
-// Define the Inertia form
-const form = useForm({
-    quotation_no: Math.floor(100000 + Math.random() * 900000),
-    quotation_date: today,
-    status: "Pending",
-    address: "",
-    phone_number: "",
-    customer_id: "",
-    total: 0,
-    tax: 0,
-    grand_total: 0,
-    products: [], // Will be an array of objects: { id, quantity }
-});
 
 const isCreateCustomerVisible = ref(false);
 const selectCustomer = () => {
@@ -350,13 +651,6 @@ const selectCustomer = () => {
 
 const selectedProductIds = ref([]);
 const selectedProductsData = ref([]);
-
-// const columns = ref([
-//   { field: "id", header: "No." },
-//   { field: "name", header: "Name" },
-//   { field: "unit", header: "Unit" },
-//   { field: "price", header: "Unit Price" },
-// ]);
 
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
@@ -378,9 +672,34 @@ watch(selectedProductIds, (newIds) => {
     );
 });
 
+const formattedCustomers = computed(() => {
+    return props.customers.map((customer) => ({
+        id: customer.id,
+        label: `${customer.name} (${customer.code})`,
+        address: customer.address,
+        phone_number: customer.phone_number,
+    }));
+});
+
+watch(
+    () => form.customer_id,
+    (newCustomerId) => {
+        const selectedCustomer = formattedCustomers.value.find(
+            (customer) => customer.id === newCustomerId
+        );
+        if (selectedCustomer) {
+            form.address = selectedCustomer.address || "";
+            form.phone_number = selectedCustomer.phone_number || "";
+        } else {
+            form.address = "";
+            form.phone_number = "";
+        }
+    }
+);
+
 const updateProductSubtotal = (row) => {
-    row.quanity = parseInt(row.quanity) || 0;
-    row.subTotal = Number(row.price) * row.quanity;
+    row.quantity = parseInt(row.quantity) || 0;
+    row.subTotal = Number(row.price) * row.quantity;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
@@ -432,67 +751,82 @@ const calculateGrandTotal = computed(() => {
     );
 });
 
-const formattedCustomers = computed(() => {
-    return props.customers.map((customer) => ({
-        id: customer.id,
-        label: `${customer.name} (${customer.code})`,
-    }));
-});
-
 const removeProduct = (id) => {
     selectedProductsData.value = selectedProductsData.value.filter(
         (prod) => prod.id !== id
     );
-    // Also update the selected IDs so the MultiSelect reflects the change.
-    selectedProductIds.value = selectedProductIds.value.filter(
-        (prodId) => prodId !== id
+    showToast("info", "Item Removed", "Product removed from quotation.", 2500);
+};
+
+const editingProduct = ref(null);
+const editProduct = (productId) => {
+    const productToEdit = selectedProductsData.value.find(
+        (prod) => prod.id === productId
     );
+    if (productToEdit) {
+        selectedProduct.value = { ...productToEdit };
+        selectedItemId.value = productToEdit.id;
+        isAddItemDialogVisible.value = true;
+    }
 };
 
 const submit = (event) => {
     if (event && typeof event.preventDefault === "function") {
-        event.preventDefault(); // Ensure the event exists before calling preventDefault
+        event.preventDefault();
     }
-    // Basic validation: all required fields must be filled and at least one product selected.
-    if (
-        !form.address ||
-        !form.phone_number ||
-        !form.customer_id ||
-        selectedProductsData.value.length === 0
-    ) {
-        toast.add({
-            severity: "error",
-            summary: "Please fill all information!",
-            detail: "Missing required fields",
-            group: "tc",
-            life: 3000,
-        });
+
+    if (!validateForm()) {
         return;
     }
-    selectedProductsData.value.forEach((prod) => {
-        console.log(prod.price);
-    });
-    // Prepare the products array for submission.
+
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
-        quantity: prod.quanity,
-        price: prod.price,
+        quantity: prod.quantity ?? 1,
+        price: prod.price ?? 0,
     }));
-    console.log(form.products);
-    // Update totals.
+
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-    // Post the form data using Inertia.
+    // Send form data via Inertia
     form.post(route("quotations.store"), {
         onSuccess: () => {
-            alert("Customer created successfully!");
+            showToast(
+                "success",
+                "Success",
+                "Quotation created successfully!",
+                3000
+            );
         },
         onError: (errors) => {
             console.error(errors);
+            showToast(
+                "error",
+                "Submission Failed",
+                "Could not create quotation.",
+                4000
+            );
         },
     });
 };
 
 const isCreateItemVisible = ref(false);
+
+const selectedProducts = ref([]);
+const printSelectedProducts = () => {
+    if (selectedProducts.value.length === 0) {
+        alert("Please select products to print.");
+        return;
+    }
+
+    // Call print function or route to print preview
+    console.log("Printing selected products:", selectedProducts.value);
+};
 </script>
+<style>
+.custom-button {
+    padding: 7px 7px !important; /* Smaller padding */
+    font-size: 12px !important; /* Smaller icon size */
+    min-width: 30px !important; /* Reduce button width */
+}
+</style>

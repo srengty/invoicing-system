@@ -4,14 +4,30 @@
         <BodyLayout>
             <Toast position="top"/>
             <div class="Items text-sm">
-                <div class="flex justify-between items-center pb-4 ml-2">
-                    <h1 class="text-xl text-green-600">Manage Items</h1>
+                <div class="flex justify-between items-center pb-4">
+                    <div class="flex items-center gap-2">
+                            <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
+                            <h1 class="text-xl text-green-600">Manage Items</h1>
+                        </div>
+
                     <Button icon="pi pi-plus" raised label="New Item" size="small" class="custom-button-create" severity="warning" @click="openForm()" />
                 </div>
 
                 <!-- DataTable to display items -->
-                <DataTable :value="products" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped >
-                    <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable />
+                <DataTable
+                    :value="products"
+                    paginator
+                    :rows="5"
+                    :rowsPerPageOptions="[5, 10, 20, 50]"
+                    striped
+                >
+                    <Column
+                        v-for="col of columns"
+                        :key="col.field"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                    />
                     <Column header="Category">
                         <template #body="{ data }">
                             {{ getCategoryName(data.category_id) }}
@@ -20,29 +36,29 @@
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
-                                <Button 
+                                <Button
                                 class="custom-button"
                                 icon="pi pi-eye"
                                 severity="info"
                                 size="small"
-                                @click="viewProduct(slotProps.data)" 
+                                @click="viewProduct(slotProps.data)"
                                 outlined
                                 />
-                                <Button 
+                                <Button
                                 class="custom-button"
                                 icon="pi pi-pencil"
                                 severity="warning"
                                 size="small"
-                                @click="openForm(slotProps.data)" 
-                                outlined 
+                                @click="openForm(slotProps.data)"
+                                outlined
                                 />
-                                <Button 
+                                <Button
                                 class="custom-button"
                                 icon="pi pi-trash"
                                 severity="danger"
                                 size="small"
-                                @click="deleteProduct(slotProps.data.id)" 
-                                outlined 
+                                @click="deleteProduct(slotProps.data.id)"
+                                outlined
                                 />
                             </div>
                         </template>
@@ -50,99 +66,110 @@
                 </DataTable>
 
                 <!-- View Product Dialog -->
-                <Dialog 
-                    v-model:visible="isViewDialogVisible" 
-                    header="Product Details" 
-                    :modal="true" 
+                <Dialog
+                    v-model:visible="isViewDialogVisible"
+                    header="Product Details"
+                    :modal="true"
                     class="w-96 rounded-lg shadow-lg"
                 >
-                <template #header>
-                    <div class="flex items-center gap-2">
-                        <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-2" />
-                        <span class="text-xl font-semibold bor">Item Details</span>
-                    </div>
+                    <template #header>
+                        <div class="flex items-center gap-2">
+                            <img
+                                src="/Item.png"
+                                alt="Item Icon"
+                                class="h-8 w-8 ml-2"
+                            />
+                            <span class="text-xl font-semibold bor"
+                                >Item Details</span
+                            >
+                        </div>
                     </template>
-                    <div v-if="selectedProduct" class="space-y-3 text-gray-700 pl-2 pr-2">
+                    <div
+                        v-if="selectedProduct"
+                        class="space-y-3 text-gray-700 pl-2 pr-2"
+                    >
                         <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                            <p><strong>Division:</strong></p> 
+                            <p><strong>Division:</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.division_id}">
                                 {{ getDivisionName(selectedProduct?.division_id) ?? 'Null' }}
                             </p>
                             <Message v-if="form.errors.division_id" severity="error" size="small" variant="simple" class="col-span-2">{{ form.errors.division_id }}</Message>
 
-                            <p><strong>Category:</strong></p> 
+                            <p><strong>Category:</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.category_id}">
                                 {{ getCategoryName(selectedProduct?.category_id) ?? 'Null' }}
                             </p>
 
-                            <p><strong>Code:</strong></p> 
+                            <p><strong>Code:</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.code}">
                                 {{ selectedProduct?.code ?? 'Null' }}
                             </p>
 
-                            <p><strong>Name:</strong></p> 
+                            <p><strong>Name:</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.name}">
                                 {{ selectedProduct?.name ?? 'Null' }}
                             </p>
 
-                            <p><strong>Name (KH):</strong></p> 
+                            <p><strong>Name (KH):</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.name_kh}">
                                 {{ selectedProduct?.name_kh ?? 'Null' }}
                             </p>
 
-                            <p><strong>Description:</strong></p> 
+                            <p><strong>Description:</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.desc}">
                                 {{ selectedProduct?.desc ?? 'Null' }}
                             </p>
 
-                            <p><strong>Description (KH):</strong></p> 
+                            <p><strong>Description (KH):</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.desc_kh}">
                                 {{ selectedProduct?.desc_kh ?? 'Null' }}
                             </p>
 
-                            <p><strong>Unit:</strong></p> 
+                            <p><strong>Unit:</strong></p>
                             <p class="text-right" :class="{'text-red-500': !selectedProduct?.unit}">
                                 {{ selectedProduct?.unit ?? 'Null' }}
                             </p>
 
-                            <p><strong>Quantity:</strong></p> 
+                            <p><strong>Quantity:</strong></p>
                             <p class="text-right font-semibold" :class="{'text-red-500': !selectedProduct?.quantity}">
                                 {{ selectedProduct?.quantity ?? 'Null' }}
                             </p>
 
-                            <p><strong>Price in KHR:</strong></p> 
+                            <p><strong>Price in KHR:</strong></p>
                             <p class="text-right font-semibold text-green-600" :class="{'text-red-500': !selectedProduct?.price}">
                                 {{ selectedProduct?.price ?? 'Null' }}
                             </p>
 
-                            <p><strong>Remark:</strong></p> 
+                            <p><strong>Remark:</strong></p>
                             <p class="text-right font-semibold" :class="{'text-red-500': !selectedProduct?.remark}">
                                 {{ selectedProduct?.remark ?? 'Null' }}
                             </p>
 
-                            <p><strong>Account code:</strong></p> 
+                            <p><strong>Account code:</strong></p>
                             <p class="text-right font-semibold" :class="{'text-red-500': !selectedProduct?.acc_code}">
                                 {{ selectedProduct?.acc_code ?? 'Null' }}
                             </p>
                         </div>
 
                         <div v-if="selectedProduct.pdf_url" class="text-center">
-                            <a 
-                                :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`" 
-                                target="_blank" 
+                            <a
+                                :href="`/pdfs/${selectedProduct.pdf_url.split('/').pop()}`"
+                                target="_blank"
                                 class="text-blue-500 hover:text-blue-700 transition duration-200"
                             >
                                 📄 View PDF
                             </a>
                         </div>
-                        <p v-else class="text-center text-gray-400">No PDF available</p>
+                        <p v-else class="text-center text-gray-400">
+                            No PDF available
+                        </p>
                     </div>
 
                     <div class="flex justify-end mt-2">
-                        <Button 
-                            label="Close" 
+                        <Button
+                            label="Close"
                             class="p-button-secondary px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition"
-                            @click="isViewDialogVisible = false" 
+                            @click="isViewDialogVisible = false"
                         />
                     </div>
                 </Dialog>
@@ -281,8 +308,17 @@
                         </div>
 
                         <div class="flex justify-end gap-2 mt-4">
-                            <Button label="Cancel" class="p-button-secondary" @click="closeForm" />
-                            <Button :label="form.id ? 'Update' : 'Create'" class="p-button-primary" type="submit" :loading="form.processing" />
+                            <Button
+                                label="Cancel"
+                                class="p-button-secondary"
+                                @click="closeForm"
+                            />
+                            <Button
+                                :label="form.id ? 'Update' : 'Create'"
+                                class="p-button-primary"
+                                type="submit"
+                                :loading="form.processing"
+                            />
                         </div>
                     </form>
                 </Dialog>
@@ -302,24 +338,22 @@ import { Inertia } from '@inertiajs/inertia';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-// import Message from 'primevue/message';
-
+import Message from 'primevue/message';
 
 const toast = useToast();
 
 // ✅ Use usePage().props to get data
 const { products, divisions, categories, errors } = usePage().props;
 
-
 // ✅ Computed properties to map dropdown options
-const categoryOptions = computed(() => 
+const categoryOptions = computed(() =>
     categories?.map(category => ({
         name: category.category_name_english || category.category_name_khmer,
         id: category.id
     })) || []
 );
 
-const divisionOptions = computed(() => 
+const divisionOptions = computed(() =>
     divisions?.map(division => ({
         name: division.division_name_english || division.divison_name_khmer,
         id: division.id
@@ -327,24 +361,28 @@ const divisionOptions = computed(() =>
 );
 
 const getCategoryName = (categoryId) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.category_name_english || category.category_name_khmer : 'Unknown';
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category
+        ? category.category_name_english || category.category_name_khmer
+        : "Unknown";
 };
 
 const getDivisionName = (divisionId) => {
-    const division = divisions.find(cat => cat.id === divisionId);
-    return division ? division.division_name_english || division.divison_name_khmer : 'Unknown';
+    const division = divisions.find((cat) => cat.id === divisionId);
+    return division
+        ? division.division_name_english || division.divison_name_khmer
+        : "Unknown";
 };
 
 // Define columns for DataTable
 const columns = [
-    { field: 'id', header: 'ID' },
-    { field: 'code', header: 'Code' },
-    { field: 'name', header: 'Name' },
-    { field: 'name_kh', header: 'Name (KH)' },
-    { field: 'unit', header: 'Unit' },
-    { field: 'price', header: 'Price' },
-    { field: 'quantity', header: 'Quantity' },
+    { field: "id", header: "ID" },
+    { field: "code", header: "Code" },
+    { field: "name", header: "Name" },
+    { field: "name_kh", header: "Name (KH)" },
+    { field: "unit", header: "Unit" },
+    { field: "price", header: "Price" },
+    { field: "quantity", header: "Quantity" },
 ];
 
 // State for form and view dialogs
@@ -355,19 +393,19 @@ const selectedProduct = ref(null);
 // Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
-    division_id: '',
-    code: '',
-    acc_code: '73048 ផលពីសេវាផ្សេងៗ',
-    name: '',
-    name_kh: '',
+    division_id: "",
+    code: "",
+    acc_code: "73048 ផលពីសេវាផ្សេងៗ",
+    name: "",
+    name_kh: "",
     desc: null,
     desc_kh: null,
-    unit: '',
+    unit: "",
     price: null,
     quantity: null,
-    category_id: '',
-    pdf_url: '',
-    remark:'',
+    category_id: "",
+    pdf_url: "",
+    remark: "",
     pdf: null, // Add this line to handle file uploads
 });
 
@@ -384,7 +422,7 @@ const openForm = (product = null) => {
         form.category_id = product.category_id;
         form.division_id = Number(product.division_id);
         form.desc = product.desc || ''; // ✅ Ensure description is populated
-        form.desc_kh = product.desc_kh || ''; 
+        form.desc_kh = product.desc_kh || '';
         form.remark = product.remark || '';
         form.pdf_url = product.pdf_url || null; // ✅ Ensure PDF URL is correctly set
         form.pdf = null; // Reset file upload
@@ -401,7 +439,7 @@ const closeForm = () => {
 };
 
 const handleFileUpload = (event) => {
-    form.pdf = event.target.files[0];  // Store file in form object
+    form.pdf = event.target.files[0]; // Store file in form object
 };
 
 const viewProduct = (product) => {
@@ -416,12 +454,12 @@ const viewProduct = (product) => {
 const submitForm = () => {
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
-        if (value !== null && key !== 'pdf') {
+        if (value !== null && key !== "pdf") {
             formData.append(key, value);
         }
     });
     if (form.pdf) {
-        formData.append('pdf', form.pdf);
+        formData.append("pdf", form.pdf);
     }
 
     if (form.id) {
@@ -429,7 +467,12 @@ const submitForm = () => {
             forceFormData: true,
             headers: { 'Content-Type': 'multipart/form-data' },
             onSuccess: () => {
-                toast.add({ severity: 'success', summary: 'Success', detail: 'Product updated successfully!', life: 3000 });
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Product updated successfully!",
+                    life: 3000,
+                });
                 isFormVisible.value = false;
             },
             onError: (errors) => {
@@ -438,10 +481,15 @@ const submitForm = () => {
             }
         });
     } else {
-        Inertia.post(route('products.store'), formData, {
+        Inertia.post(route("products.store"), formData, {
             forceFormData: true,
             onSuccess: () => {
-                toast.add({ severity: 'success', summary: 'Success', detail: 'Product created successfully!', life: 3000 });
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Product created successfully!",
+                    life: 3000,
+                });
                 isFormVisible.value = false;
             },
             onError: (errors) => {

@@ -9,24 +9,26 @@ use App\Models\Quotation; // Import Quotation model
 use App\Models\Product; // Import Product model
 use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
+use App\Models\CustomerCategory; // Import Customer model
 use App\Models\ProductQuotation;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class QuotationController extends Controller
 {
     public function list()
     {
-        $quotations = Quotation::with('customer', 'products')->get();
+        $quotations = Quotation::with(['customer', 'products','comments','latestComment'])->orderBy('created_at', 'desc')->get();
         $agreements = Agreement::all();
         $customers = Customer::all();
         $products = Product::all();
 
+        Log::info($quotations);
         return Inertia::render('Quotations/List', [ // Render the index page using Inertia
             'quotations' => $quotations,
             'agreements' => $agreements,
             'customers' => $customers,
             'products' => $products,
-
         ]);
     }
 
@@ -34,29 +36,91 @@ class QuotationController extends Controller
     {
         $customers = Customer::all(); // Fetch customer id and name`
         $products = Product::all();
+        $customerCategories = CustomerCategory::all();
         //         dd($products);
         return inertia('Quotations/Create', [
             'customers' => $customers,
             'products' => $products,
+            'customerCategories' => $customerCategories
         ]);
     }
 
     public function updateStatus(Request $request, $id)
-    {
-        $quotation = Quotation::findOrFail($id);
-        $quotation->status = $request->status;  // Ensure correct data is saved
-        $quotation->save();
+{
+    $quotation = Quotation::findOrFail($id);
 
-        return response()->json(['message' => 'Quotation status updated successfully!']);
+    $newStatus         = $request->input('status');
+    $newCustomerStatus = $request->input('customer_status');
+    $comment           = $request->input('comment');
+    $userRole          = $request->input('role');
+    // If you're using authentication with roles, you could do: $userRole = $request->user()->role
+
+    // 1. Handle Quotation Number if Approved and no quotation_no yet
+    if ($newStatus === 'Approved' && !$quotation->quotation_no) {
+        $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
+        $quotation->quotation_no = $lastQuotation
+            ? $lastQuotation->quotation_no + 1
+            : 25000001;
     }
+
+    // 2. Handle transitions from Pending -> Approved or Revised
+    if ($quotation->status === 'Pending') {
+        if ($newStatus === 'Approved') {
+            if (!$quotation->quotation_date) {
+                $quotation->quotation_date = now();
+            }
+        } elseif ($newStatus === 'Revised') {
+            $quotation->revised_at = now();
+        }
+    }
+
+    // 3. Update the Quotation status
+    $quotation->status = $newStatus;
+    if ($newCustomerStatus) {
+        $quotation->customer_status = $newCustomerStatus;
+    }
+
+    $quotation->save();
+
+    // 4. If a comment is provided, store it in the quotation_comments table
+    if (!empty($comment)) {
+        $quotation->comments()->create([
+            'user_id' => $request->user()->id ?? null,
+            'role'    => $userRole,
+            'status'  => $newStatus,
+            'comment' => $comment,
+        ]);
+    }
+}
+
+public function storeComment(Request $request, $quotationId)
+{
+    $quotation = Quotation::findOrFail($quotationId);
+
+    $comment = $request->input('comment');
+    $role    = $request->input('role'); // 'ITC management', 'ITC customer', etc.
+
+    $quotation->comments()->create([
+        'user_id' => $request->user()->id ?? null,
+        'role'    => $role,
+        'status'  => $quotation->status, // store the Quotation's current status
+        'comment' => $comment,
+    ]);
+
+    return response()->json([
+        'message'  => 'Comment added successfully!',
+        'comments' => $quotation->comments()->latest()->get(),
+    ]);
+}
+
 
     public function store(Request $request)
     {
 
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
-            'quotation_no'   => 'required|integer|unique:quotations,quotation_no',
-            'quotation_date' => 'required|date_format:Y-m-d\TH:i:s.v\Z',
+            'quotation_no'   => 'nullable|integer|unique:quotations,quotation_no',
+            'quotation_date' => 'nullable|date_format:Y-m-d\TH:i:s.v\Z',
             'customer_id'    => 'required|exists:customers,id',
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
@@ -66,6 +130,10 @@ class QuotationController extends Controller
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
             'products.*.price' => 'required|numeric|min:1', // Validate product quantities
+            'products.*.acc_code' => 'nullable|string|max:255',
+            'products.*.category_id' => 'nullable|integer|min:0',
+            'products.*.remark' => 'nullable|string|max:255',
+            'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
         ]);
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
@@ -76,10 +144,10 @@ class QuotationController extends Controller
 
         // Calculate the total
         $total = 0;
-        foreach ($validated['products'] as $product) {
-
-            //             $prod = Product::find($product['id']);
-            $total += $product['price'] * $product['quantity'];
+        if (isset($validated['products'])) {
+            foreach ($validated['products'] as $product) {
+                $total += $product['price'] * $product['quantity'];
+            }
         }
         // Calculate tax based on the provided percentage
         // $tax = $validated['tax'] / 100;
@@ -87,7 +155,9 @@ class QuotationController extends Controller
         // $grand_total = $total + $tax;
         // $grand_total = $total;
 
-        $quotationDate = Carbon::parse($request->quotation_date)->format('Y-m-d H:i:s');
+        $quotationDate = $request->quotation_date
+        ? Carbon::parse($request->quotation_date)->format('Y-m-d H:i:s')
+        : now()->format('Y-m-d H:i:s');
 
         // Get the last used quotation_no and increment it
         $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
@@ -96,8 +166,7 @@ class QuotationController extends Controller
         // dd(json_encode($validated["products"], true));
         // Create the quotation
         $quotation = Quotation::create([
-            'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
-            'quotation_date' => $quotationDate,
+            // 'quotation_no'   => $newQuotationNo,  // Use the newly generated quotation_no
             'customer_id'    => $validated['customer_id'],
             'address'        => $validated['address'] ?? null,
             'phone_number'   => $validated['phone_number'] ?? null,
@@ -105,18 +174,15 @@ class QuotationController extends Controller
             'total'          => $total,
 
         ]);
-
-        $quotation->save();
-
         // Attach products to the quotation
-        foreach ($validated['products'] as $product) {
-            $prod = Product::find($product['id']);
-            $quotation->products()->attach($prod->id, [
-                'quantity' => $product['quantity'],
-                //                 'price' => $prod->price * $product['quantity'],
-                'price' => $prod->price,
-                'product_unit_prices' => json_encode($validated["products"], true),
-            ]);
+        if (isset($validated['products'])) {
+            foreach ($validated['products'] as $product) {
+                $quotation->products()->attach($product['id'], [
+                    'quantity' => $product['quantity'],
+                    'price'    => $product['price'],
+                    'product_unit_prices' => json_encode($validated['products']),
+                ]);
+            }
         }
     // Redirect with a success message
     return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
@@ -127,11 +193,32 @@ class QuotationController extends Controller
      */
     public function show($quotation_no)
     {
-        $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
+        // $quotation = Quotation::with(['customer', 'products'])->findOrFail($quotation_no);
+        $quotation = Quotation::with(['customer', 'products'])
+        ->where('id', $quotation_no)
+        ->firstOrFail();
+        Log::info("message");
+        // return Inertia::render('Quotations/Print', [
+            //     'quotation' => $quotation,
+            //     'products' => $quotation->products,
+            // ]);
+        $formattedQuotationDate = $quotation->quotation_date
+        ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
+        : null;
 
         return Inertia::render('Quotations/Print', [
-            'quotation' => $quotation,
-            'products' => $quotation->products,
+            'quotation' => [
+                'id' => $quotation->id,
+                'quotation_no' => $quotation->quotation_no ?? 'Pending',
+                'quotation_date' => $formattedQuotationDate,
+                'customer_id' => $quotation->customer_id,
+                'customer_name' => $quotation->customer->name,
+                'address' => $quotation->address,
+                'phone_number' => $quotation->phone_number,
+                'products' => $quotation->products,
+                'total' => $quotation->total,
+                'terms' => $quotation->terms,
+            ],
         ]);
     }
 

@@ -25,7 +25,7 @@ class Product extends Model
         'desc',
         'desc_kh',
         'pdf_url',
-        'remark', 
+        'remark',
     ];
 
     public $timestamps = true;
@@ -61,7 +61,7 @@ class Product extends Model
      */
     public function quotations()
     {
-        return $this->belongsToMany(Quotation::class, 'product_quotation', 'product_id', 'quotation_no')
+        return $this->belongsToMany(Quotation::class, 'product_quotation', 'product_id', 'id')
                     ->withPivot('quantity', 'price', 'name', 'unit')
                     ->withTimestamps();
     }
@@ -71,7 +71,8 @@ class Product extends Model
      */
     public function productQuotations()
     {
-        return $this->hasMany(ProductQuotation::class, 'product_id', 'id');
+        return $this->hasMany(ProductQuotation::class, 'product_id', 'id')
+                    ->withPivot('quantity', 'price', 'unit');
     }
 
     /**

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
+     *
      */
     public function up(): void
     {
@@ -24,7 +24,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 255);
             $table->foreignId('customer_category_id')->nullable()->constrained('customer_categories')->nullOnDelete();
-            $table->integer('code')->nullable();
+            $table->string('code')->nullable();
             $table->integer('credit_period')->default(0)->comment('credit period in days');
             $table->string('address', 255)->nullable();
             $table->string('website', 255)->nullable();
@@ -43,14 +43,16 @@ return new class extends Migration
         });
         Schema::create('quotations', function (Blueprint $table) {
             // $table->unsignedBigInteger('quotation_no')->primary()->comment('25000001:year 2025, quotation no 1');
-            $table->unsignedBigInteger('quotation_no')->primary();
+            $table->id();
+            $table->unsignedBigInteger('quotation_no')->unique()->nullable();
+            $table->timestamp('quotation_date')->nullable();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->timestamp('quotation_date')->useCurrent();
             $table->string('address', 255)->nullable();
             $table->string('phone_number', 20)->nullable();
             $table->string('terms', 255)->nullable();
             $table->double('total')->default(0)->comment('no tax');
             $table->string('status', 20)->default('Pending');
+            $table->string('customer_status')->nullable();
             $table->timestamps();
         });
         Schema::create('agreements', function (Blueprint $table) {
