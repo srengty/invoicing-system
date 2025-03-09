@@ -117,15 +117,6 @@
                                     ) ?? "Null"
                                 }}
                             </p>
-                            <Message
-                                v-if="form.errors.division_id"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                class="col-span-2"
-                                >{{ form.errors.division_id }}</Message
-                            >
-
                             <p><strong>Category:</strong></p>
                             <p
                                 class="text-right"
@@ -305,15 +296,6 @@
                                         class="w-full"
                                         required
                                     />
-                                    <Message
-                                        v-if="form.errors.division_id"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.division_id }}
-                                    </Message>
                                 </div>
 
                                 <!-- Category -->
@@ -329,15 +311,6 @@
                                         optionValue="id"
                                         class="w-full"
                                     />
-                                    <Message
-                                        v-if="form.errors.category_id"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.category_id }}
-                                    </Message>
                                 </div>
 
                                 <!-- Code -->
@@ -378,15 +351,6 @@
                                         class="w-full text-sm"
                                         required
                                     />
-                                    <Message
-                                        v-if="form.errors.name"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.name }}
-                                    </Message>
                                 </div>
 
                                 <div class="field w-2/3">
@@ -410,15 +374,6 @@
                                         class="w-full text-sm"
                                         required
                                     />
-                                    <Message
-                                        v-if="form.errors.name_kh"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.name_kh }}
-                                    </Message>
                                 </div>
 
                                 <div class="field w-2/3">
@@ -448,15 +403,6 @@
                                         class="w-full text-sm"
                                         size="small"
                                     />
-                                    <Message
-                                        v-if="form.errors.quantity"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.quantity }}
-                                    </Message>
                                 </div>
 
                                 <div class="field">
@@ -470,15 +416,6 @@
                                         required
                                         size="small"
                                     />
-                                    <Message
-                                        v-if="form.errors.price"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.price }}
-                                    </Message>
                                 </div>
 
                                 <div class="field">
@@ -491,15 +428,6 @@
                                         class="w-full text-sm"
                                         required
                                     />
-                                    <Message
-                                        v-if="form.errors.unit"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.unit }}
-                                    </Message>
                                 </div>
                             </div>
 
@@ -511,15 +439,6 @@
                                         class="w-full text-sm"
                                         required
                                     />
-                                    <Message
-                                        v-if="form.errors.remark"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.remark }}
-                                    </Message>
                                 </div>
 
                                 <div class="field">
@@ -529,15 +448,6 @@
                                         class="w-full text-sm"
                                         required
                                     />
-                                    <Message
-                                        v-if="form.errors.acc_code"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.acc_code }}
-                                    </Message>
                                 </div>
 
                                 <!-- File Upload -->
@@ -612,6 +522,13 @@ import { router } from "@inertiajs/vue3";
 const confirm = useConfirm();
 const toast = useToast();
 
+const reloadData = () => {
+    router.visit(window.location.href, {
+        preserveScroll: true,
+        preserveState: false,
+    });
+};
+
 const showToast = (operation, status) => {
     const toastMessages = {
         create: {
@@ -620,14 +537,14 @@ const showToast = (operation, status) => {
                 severity: "success",
                 summary: "Product Created",
                 detail: "Product created successfully!",
-                life: 1000,
+                life: 5000,
             },
             error: {
                 group: "tc",
                 severity: "error",
                 summary: "Creation Failed",
                 detail: "Failed to create product. Please check the form fields!",
-                life: 1000,
+                life: 3000,
             },
         },
         update: {
@@ -636,14 +553,14 @@ const showToast = (operation, status) => {
                 severity: "success",
                 summary: "Product Updated",
                 detail: "Product updated successfully!",
-                life: 1000,
+                life: 3000,
             },
             error: {
                 group: "tc",
                 severity: "error",
                 summary: "Update Failed",
                 detail: "Failed to update product. Please try again!",
-                life: 1000,
+                life: 3000,
             },
         },
         delete: {
@@ -652,14 +569,14 @@ const showToast = (operation, status) => {
                 severity: "success",
                 summary: "Product Deleted",
                 detail: "Product deleted successfully!",
-                life: 1000,
+                life: 3000,
             },
             error: {
                 group: "tc",
                 severity: "error",
                 summary: "Deletion Failed",
                 detail: "Failed to delete product!",
-                life: 1000,
+                life: 3000,
             },
         },
         // New cancel action
@@ -669,7 +586,7 @@ const showToast = (operation, status) => {
                 severity: "info",
                 summary: "Action Cancelled",
                 detail: "Operation was cancelled.",
-                life: 1000,
+                life: 3000,
             },
         },
     };
@@ -785,7 +702,7 @@ const openForm = (product = null) => {
 };
 
 const handleFileUpload = (event) => {
-    form.pdf = event.target.files[0]; // Store file in form object
+    form.pdf = event.target.files[0];
 };
 
 const viewProduct = (product) => {
@@ -815,7 +732,7 @@ const submitForm = () => {
             onSuccess: () => {
                 showToast("update", "success");
                 isFormVisible.value = false;
-                router.reload({ preserveScroll: true });
+                reloadData();
             },
             onError: (errors) => {
                 showToast("update", "error");
@@ -828,7 +745,7 @@ const submitForm = () => {
             onSuccess: () => {
                 showToast("create", "success");
                 isFormVisible.value = false;
-                router.reload({ preserveScroll: true });
+                reloadData();
             },
             onError: (errors) => {
                 showToast("create", "error");
@@ -845,7 +762,7 @@ const deleteProduct = (id) => {
         header: "Delete Confirmation",
         icon: "pi pi-exclamation-triangle",
         accept: () => {
-            Inertia.delete(route("products.destroy", id), {
+            router.delete(route("products.destroy", id), {
                 onSuccess: () => {
                     toast.add({
                         group: "tc",
@@ -854,7 +771,7 @@ const deleteProduct = (id) => {
                         detail: "Product deleted successfully!",
                         life: 3000,
                     });
-                    router.reload({ preserveScroll: true });
+                    reloadData();
                 },
                 onError: () => {
                     toast.add({

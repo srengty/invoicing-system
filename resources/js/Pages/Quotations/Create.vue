@@ -181,6 +181,8 @@
                             <InputText
                                 v-model="slotProps.data.price"
                                 @input="updateProductSubtotal(slotProps.data)"
+                                :min="0"
+                                @keydown="preventMinus"
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
                                 class="w-full"
@@ -215,15 +217,6 @@
                                     severity="info"
                                     title="edit"
                                     @click="editProduct(slotProps.data.id)"
-                                    size="small"
-                                    class="custom-button"
-                                    raised
-                                />
-                                <Button
-                                    icon="pi pi-print"
-                                    severity="success"
-                                    title="print"
-                                    @click="printSelectedProducts"
                                     size="small"
                                     class="custom-button"
                                     raised
@@ -361,6 +354,8 @@
                 <label for="unit-price">Unit Price</label>
                 <InputNumber
                     v-model="selectedProduct.price"
+                    :min="0"
+                    @keydown="preventMinus"
                     size="small"
                     class="w-full text-sm"
                 />
@@ -477,7 +472,11 @@ const props = defineProps({
     products: Array,
     customerCategories: Array,
 });
-
+const preventMinus = (event) => {
+    if (event.key === "-") {
+        event.preventDefault();
+    }
+};
 // Define the Inertia form
 const form = useForm({
     quotation_no: null,
@@ -824,17 +823,6 @@ const cancelOperation = () => {
 };
 
 const isCreateItemVisible = ref(false);
-
-const selectedProducts = ref([]);
-const printSelectedProducts = () => {
-    if (selectedProducts.value.length === 0) {
-        alert("Please select products to print.");
-        return;
-    }
-
-    // Call print function or route to print preview
-    console.log("Printing selected products:", selectedProducts.value);
-};
 </script>
 <style>
 .custom-button {
