@@ -468,7 +468,7 @@ const form = useForm({
     phone_number: props.customer.phone_number || "",
     contact_person: props.customer.contact_person || "",
     telegram_number: props.customer.telegram_number || "",
-    credit_period: props.customer.credit_period || "",
+    credit_period: props.customer.credit_period || "15",
     website: props.customer.website || "",
     bank_name: props.customer.bank_name || "",
     bank_address: props.customer.bank_address || "",

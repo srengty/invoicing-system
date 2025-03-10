@@ -296,7 +296,8 @@
                                     required
                                     placeholder="Select Division"
                                 />
-                                <Message v-if="form.errors.division_id" severity="error" size="small">
+                                <Message v-if="form.errors.division_id" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.division_id }}
                                 </Message>
                             </div>
@@ -313,7 +314,8 @@
                                     class="w-full"
                                     placeholder="Select Category"
                                 />
-                                <Message v-if="form.errors.category_id" severity="error" size="small">
+                                <Message v-if="form.errors.category_id" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.category_id }}
                                 </Message>
                             </div>
@@ -327,7 +329,8 @@
                                     class="w-full text-sm"
                                     placeholder="Enter Item Code"
                                 />
-                                <Message v-if="form.errors.code" severity="error" size="small">
+                                <Message v-if="form.errors.code" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.code }}
                                 </Message>
                             </div>
@@ -346,7 +349,8 @@
                                     class="w-full text-sm"
                                     placeholder="Enter Item Name"
                                 />
-                                <Message v-if="form.errors.name" severity="error" size="small">
+                                <Message v-if="form.errors.name" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.name }}
                                 </Message>
                             </div>
@@ -371,7 +375,8 @@
                                     class="w-full text-sm"
                                     placeholder="Enter Khmer Name"
                                 />
-                                <Message v-if="form.errors.name_kh" severity="error" size="small">
+                                <Message v-if="form.errors.name_kh" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.name_kh }}
                                 </Message>
                             </div>
@@ -399,7 +404,8 @@
                                     size="small"
                                     placeholder="Enter Quantity"
                                 />
-                                <Message v-if="form.errors.quantity" severity="error" size="small">
+                                <Message v-if="form.errors.quantity" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.quantity }}
                                 </Message>
                             </div>
@@ -413,7 +419,8 @@
                                     size="small"
                                     placeholder="Enter Price in KHR"
                                 />
-                                <Message v-if="form.errors.price" severity="error" size="small">
+                                <Message v-if="form.errors.price" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.price }}
                                 </Message>
                             </div>
@@ -426,7 +433,8 @@
                                     class="w-full text-sm"
                                     placeholder="Enter Unit (e.g., pcs, kg)"
                                 />
-                                <Message v-if="form.errors.unit" severity="error" size="small">
+                                <Message v-if="form.errors.unit" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.unit }}
                                 </Message>
                             </div>
@@ -439,7 +447,8 @@
                                     class="w-full text-sm"
                                     placeholder="Enter Remarks"
                                 />
-                                <Message v-if="form.errors.remark" severity="error" size="small">
+                                <Message v-if="form.errors.remark" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.remark }}
                                 </Message>
                             </div>
@@ -451,7 +460,8 @@
                                     class="w-full text-sm"
                                     placeholder="Enter Account Code"
                                 />
-                                <Message v-if="form.errors.acc_code" severity="error" size="small">
+                                <Message v-if="form.errors.acc_code" severity="error" size="small" variant="simple"
+                                class="col-span-2">
                                     {{ form.errors.acc_code }}
                                 </Message>
                             </div>
