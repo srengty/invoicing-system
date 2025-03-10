@@ -148,19 +148,19 @@
                     </Column>
                     <Column field="name" header="Name">
                         <template #body="slotProps">
-                            <span>{{
+                            <span class="text-base">{{
                                 isKhmer
                                     ? slotProps.data.name_kh
                                     : slotProps.data.name
                             }}</span>
                             <br />
-                            <span>{{
+                            <span class="text-base">{{
                                 isKhmer
                                     ? slotProps.data.desc_kh
                                     : slotProps.data.desc
                             }}</span>
                             <br />
-                            <span>
+                            <span class="text-sm font-bold">
                                 {{ slotProps.data.remark }}
                             </span>
                         </template>
@@ -203,7 +203,7 @@
                     </Column>
                     <Column header="Actions">
                         <template #body="slotProps">
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 items-center">
                                 <Button
                                     icon="pi pi-trash"
                                     class="p-button-danger w-[10px] custom-button"
@@ -219,6 +219,15 @@
                                     @click="editProduct(slotProps.data.id)"
                                     size="small"
                                     class="custom-button"
+                                    raised
+                                />
+                                <Button
+                                    icon="pi pi-print"
+                                    class="custom-button"
+                                    title="Print Catalog"
+                                    :disabled="!slotProps.data.pdf_url"
+                                    @click="printCatalog(slotProps.data)"
+                                    size="small"
                                     raised
                                 />
                             </div>
@@ -342,7 +351,7 @@
             <div class="field">
                 <label for="item-category">Item Category</label>
                 <InputText
-                    v-model="selectedProduct.category_id"
+                    :value="getCategoryName(selectedProduct.category_id)"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -519,12 +528,16 @@ const updateSelectedProductDetails = () => {
                 ...product,
                 quantity: 1,
                 subTotal: Number(product.price),
+                category_id: product.category_id ?? null,
             };
         }
     } else {
         selectedProduct.value = {};
     }
 };
+watch(selectedProduct, (newVal) => {
+    console.log("Updated selected product:", newVal);
+});
 
 const searchProducts = (event) => {
     filteredProducts.value = props.products.filter((product) =>
@@ -570,6 +583,16 @@ const validateForm = () => {
         return false;
     }
     return true;
+};
+
+const getCategoryName = (categoryId) => {
+    if (!categoryId) return "Unknown"; // Ensure it doesn't show null
+    const category = props.customerCategories.find(
+        (cat) => cat.id === categoryId
+    );
+    return category
+        ? category.category_name_english || category.category_name_khmer
+        : "Unknown";
 };
 
 const addItemToTable = () => {
@@ -823,6 +846,20 @@ const cancelOperation = () => {
 };
 
 const isCreateItemVisible = ref(false);
+const printCatalog = (product) => {
+    if (!product.pdf_url) {
+        showToast(
+            "warn",
+            "No Catalog",
+            "This product does not have a catalog available.",
+            3000
+        );
+        return;
+    }
+
+    const pdfUrl = `/pdfs/${product.pdf_url.split("/").pop()}`;
+    window.open(pdfUrl, "_blank");
+};
 </script>
 <style>
 .custom-button {

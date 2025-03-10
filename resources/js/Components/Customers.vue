@@ -490,44 +490,40 @@ const showToast = (severity, summary, detail, duration = 4000) => {
     });
 };
 
+// Validation functions using regular expressions
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function validateWebsite(url) {
+    if (!url) return false; // reject empty string
+    const pattern = new RegExp(
+        "^(https?:\\/\\/)?" + // protocol is optional
+            "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|localhost|((\\d{1,3}\\.){3}\\d{1,3}))" + // domain name, localhost, or IP (v4)
+            "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // optional port and path
+            "(\\?[;&a-z\\d%_.~+=-]*)?" + // optional query string
+            "(\\#[-a-z\\d_]*)?$", // optional fragment locator
+        "i"
+    );
+    return pattern.test(url);
+}
+
 const validateForm = () => {
-    if (!form.address) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Customer address is required!",
-            4000
-        );
-        return false;
+    let isValid = true;
+    if (!validateEmail(form.email)) {
+        form.errors.email = "Please enter a valid email address.";
+        isValid = false;
+    } else {
+        form.errors.email = "";
     }
-    if (!form.phone_number) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Customer phone number is required!",
-            4000
-        );
-        return false;
+    if (!validateWebsite(form.website)) {
+        form.errors.website = "Please enter a valid website URL.";
+        isValid = false;
+    } else {
+        form.errors.website = "";
     }
-    if (!form.customer_id) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Please select a customer!",
-            4000
-        );
-        return false;
-    }
-    if (selectedProductsData.value.length === 0) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Please add at least one product!",
-            4000
-        );
-        return false;
-    }
-    return true;
+    return isValid;
 };
 
 const submit = () => {
