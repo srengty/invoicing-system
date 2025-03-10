@@ -260,238 +260,243 @@
 
                 <!-- Product Form Dialog -->
                 <Dialog
-                    v-model:visible="isFormVisible"
-                    :modal="true"
-                    class="text-sm bg-color-green-100"
-                    size="small"
-                >
-                    <template #header>
-                        <div class="flex items-center gap-2">
-                            <img
-                                src="/Item.png"
-                                alt="Item Icon"
-                                class="h-8 w-8 ml-4"
-                            />
-                            <span class="text-xl font-semibold bor">{{
-                                form.id ? "Edit Item" : "Create Item"
-                            }}</span>
+                v-model:visible="isFormVisible"
+                :modal="true"
+                class="text-sm bg-color-green-100"
+                size="small"
+                @hide="closeForm"
+            >
+                <template #header>
+                    <div class="flex items-center gap-2">
+                        <img
+                            src="/Item.png"
+                            alt="Item Icon"
+                            class="h-8 w-8 ml-4"
+                        />
+                        <span class="text-xl font-semibold bor">{{
+                            form.id ? "Edit Item" : "Create Item"
+                        }}</span>
+                    </div>
+                </template>
+
+                <!-- Form -->
+                <form @submit.prevent="submitForm" class="ml-6 mr-6">
+                    <div class="grid gap-4 mb-4">
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- Division -->
+                            <div class="field">
+                                <label for="division" class="required">Division</label>
+                                <Select
+                                    id="division"
+                                    v-model="form.division_id"
+                                    :options="divisionOptions"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    class="w-full"
+                                    required
+                                    placeholder="Select Division"
+                                />
+                                <Message v-if="form.errors.division_id" severity="error" size="small">
+                                    {{ form.errors.division_id }}
+                                </Message>
+                            </div>
+
+                            <!-- Category -->
+                            <div class="field">
+                                <label for="category" class="required">Category</label>
+                                <Select
+                                    id="category"
+                                    v-model="form.category_id"
+                                    :options="categoryOptions"
+                                    optionLabel="name"
+                                    optionValue="id"
+                                    class="w-full"
+                                    placeholder="Select Category"
+                                />
+                                <Message v-if="form.errors.category_id" severity="error" size="small">
+                                    {{ form.errors.category_id }}
+                                </Message>
+                            </div>
+
+                            <!-- Code -->
+                            <div class="field">
+                                <label for="code" class="required">Code</label>
+                                <InputText
+                                    id="code"
+                                    v-model="form.code"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Item Code"
+                                />
+                                <Message v-if="form.errors.code" severity="error" size="small">
+                                    {{ form.errors.code }}
+                                </Message>
+                            </div>
                         </div>
-                    </template>
+                    </div>
 
-                    <!-- Form -->
-                    <form @submit.prevent="submitForm" class="ml-6 mr-6">
-                        <div class="grid gap-4 mb-4">
-                            <div class="grid grid-cols-3 gap-4">
-                                <!-- Division -->
-                                <div class="field">
-                                    <label for="division" class="required"
-                                        >Division</label
-                                    >
-                                    <Select
-                                        id="division"
-                                        v-model="form.division_id"
-                                        :options="divisionOptions"
-                                        optionLabel="name"
-                                        optionValue="id"
-                                        class="w-full"
-                                        required
-                                    />
-                                </div>
+                    <hr />
 
-                                <!-- Category -->
-                                <div class="field">
-                                    <label for="category" class="required"
-                                        >Category</label
-                                    >
-                                    <Select
-                                        id="category"
-                                        v-model="form.category_id"
-                                        :options="categoryOptions"
-                                        optionLabel="name"
-                                        optionValue="id"
-                                        class="w-full"
-                                    />
-                                </div>
+                    <div class="grid gap-4 mt-4 mb-4">
+                        <div class="flex gap-4">
+                            <div class="field w-1/3">
+                                <label for="name" class="required">Name</label>
+                                <InputText
+                                    id="name"
+                                    v-model="form.name"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Item Name"
+                                />
+                                <Message v-if="form.errors.name" severity="error" size="small">
+                                    {{ form.errors.name }}
+                                </Message>
+                            </div>
 
-                                <!-- Code -->
-                                <div class="field">
-                                    <label for="code" class="required"
-                                        >Code</label
-                                    >
-                                    <InputText
-                                        id="code"
-                                        v-model="form.code"
-                                        class="w-full text-sm"
-                                        required
-                                    />
-                                    <Message
-                                        v-if="form.errors.code"
-                                        severity="error"
-                                        size="small"
-                                        variant="simple"
-                                        class="col-span-2"
-                                    >
-                                        {{ form.errors.code }}
-                                    </Message>
-                                </div>
+                            <div class="field w-2/3">
+                                <label for="desc">Description</label>
+                                <InputText
+                                    id="desc"
+                                    v-model="form.desc"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Item Description"
+                                />
                             </div>
                         </div>
 
-                        <hr />
-
-                        <div class="grid gap-4 mt-4 mb-4">
-                            <div class="flex gap-4">
-                                <div class="field w-1/3">
-                                    <label for="name" class="required"
-                                        >Name</label
-                                    >
-                                    <InputText
-                                        id="name"
-                                        v-model="form.name"
-                                        class="w-full text-sm"
-                                        required
-                                    />
-                                </div>
-
-                                <div class="field w-2/3">
-                                    <label for="desc">Description</label>
-                                    <InputText
-                                        id="desc"
-                                        v-model="form.desc"
-                                        class="w-full text-sm"
-                                    />
-                                </div>
+                        <div class="flex gap-4">
+                            <div class="field w-1/3">
+                                <label for="name_kh" class="required">Name (KH)</label>
+                                <InputText
+                                    id="name_kh"
+                                    v-model="form.name_kh"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Khmer Name"
+                                />
+                                <Message v-if="form.errors.name_kh" severity="error" size="small">
+                                    {{ form.errors.name_kh }}
+                                </Message>
                             </div>
 
-                            <div class="flex gap-4">
-                                <div class="field w-1/3">
-                                    <label for="name_kh" class="required"
-                                        >Name (KH)</label
-                                    >
-                                    <InputText
-                                        id="name_kh"
-                                        v-model="form.name_kh"
-                                        class="w-full text-sm"
-                                        required
-                                    />
-                                </div>
-
-                                <div class="field w-2/3">
-                                    <label for="desc_kh"
-                                        >Description (KH)</label
-                                    >
-                                    <InputText
-                                        id="desc_kh"
-                                        v-model="form.desc_kh"
-                                        class="w-full text-sm"
-                                    />
-                                </div>
+                            <div class="field w-2/3">
+                                <label for="desc_kh">Description (KH)</label>
+                                <InputText
+                                    id="desc_kh"
+                                    v-model="form.desc_kh"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Khmer Description"
+                                />
                             </div>
                         </div>
-
-                        <hr />
-
-                        <div class="grid gap-4 mt-4 mb-4 text-sm">
-                            <div class="grid grid-cols-3 gap-4">
-                                <div class="field">
-                                    <label for="quantity" class="required"
-                                        >Quantity</label
-                                    >
-                                    <InputNumber
-                                        id="quantity"
-                                        v-model="form.quantity"
-                                        class="w-full text-sm"
-                                        size="small"
-                                    />
-                                </div>
-
-                                <div class="field">
-                                    <label for="price" class="required"
-                                        >Price in KHR</label
-                                    >
-                                    <InputNumber
-                                        id="price"
-                                        v-model="form.price"
-                                        class="w-full text-sm"
-                                        required
-                                        size="small"
-                                    />
-                                </div>
-
-                                <div class="field">
-                                    <label for="unit" class="required"
-                                        >Unit</label
-                                    >
-                                    <InputText
-                                        id="unit"
-                                        v-model="form.unit"
-                                        class="w-full text-sm"
-                                        required
-                                    />
-                                </div>
+                    </div>
+                    <hr />
+                    <div class="grid gap-4 mt-4 mb-4 text-sm">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="field">
+                                <label for="quantity" class="required">Quantity</label>
+                                <InputNumber
+                                    id="quantity"
+                                    v-model="form.quantity"
+                                    class="w-full text-sm"
+                                    size="small"
+                                    placeholder="Enter Quantity"
+                                />
+                                <Message v-if="form.errors.quantity" severity="error" size="small">
+                                    {{ form.errors.quantity }}
+                                </Message>
                             </div>
 
-                            <div class="grid grid-cols-3 gap-4">
-                                <div class="field">
-                                    <label class="required">Remark</label>
-                                    <InputText
-                                        v-model="form.remark"
-                                        class="w-full text-sm"
-                                        required
-                                    />
-                                </div>
+                            <div class="field">
+                                <label for="price" class="required">Price in KHR</label>
+                                <InputNumber
+                                    id="price"
+                                    v-model="form.price"
+                                    class="w-full text-sm"
+                                    size="small"
+                                    placeholder="Enter Price in KHR"
+                                />
+                                <Message v-if="form.errors.price" severity="error" size="small">
+                                    {{ form.errors.price }}
+                                </Message>
+                            </div>
 
-                                <div class="field">
-                                    <label class="required">Account code</label>
-                                    <InputText
-                                        v-model="form.acc_code"
-                                        class="w-full text-sm"
-                                        required
-                                    />
-                                </div>
-
-                                <!-- File Upload -->
-                                <div class="grid">
-                                    <label>Upload PDF:</label>
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        @change="handleFileUpload"
-                                        class="border p-2 rounded"
-                                    />
-                                    <p
-                                        v-if="form.pdf_url"
-                                        class="text-xs text-gray-600"
-                                    >
-                                        Current file:
-                                        <a
-                                            :href="form.pdf_url"
-                                            target="_blank"
-                                            class="text-blue-500"
-                                            >{{
-                                                form.pdf_url.split("/").pop()
-                                            }}</a
-                                        >
-                                    </p>
-                                </div>
+                            <div class="field">
+                                <label for="unit" class="required">Unit</label>
+                                <InputText
+                                    id="unit"
+                                    v-model="form.unit"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Unit (e.g., pcs, kg)"
+                                />
+                                <Message v-if="form.errors.unit" severity="error" size="small">
+                                    {{ form.errors.unit }}
+                                </Message>
                             </div>
                         </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="field">
+                                <label class="required">Remark</label>
+                                <InputText
+                                    v-model="form.remark"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Remarks"
+                                />
+                                <Message v-if="form.errors.remark" severity="error" size="small">
+                                    {{ form.errors.remark }}
+                                </Message>
+                            </div>
 
-                        <div class="flex justify-end gap-2 mt-4">
-                            <Button
-                                label="Cancel"
-                                class="p-button-secondary"
-                                @click="closeForm"
-                            />
-                            <Button
-                                :label="form.id ? 'Update' : 'Create'"
-                                class="p-button-primary"
-                                type="submit"
-                                :loading="form.processing"
-                            />
+                            <div class="field">
+                                <label class="required">Account Code</label>
+                                <InputText
+                                    v-model="form.acc_code"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Account Code"
+                                />
+                                <Message v-if="form.errors.acc_code" severity="error" size="small">
+                                    {{ form.errors.acc_code }}
+                                </Message>
+                            </div>
+
+                            <!-- File Upload -->
+                            <div class="grid">
+                                <label>Upload PDF:</label>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    @change="handleFileUpload"
+                                    class="border p-2 rounded"
+                                />
+                                <p
+                                    v-if="form.pdf_url"
+                                    class="text-xs text-gray-600"
+                                >
+                                    Current file:
+                                    <a
+                                        :href="form.pdf_url"
+                                        target="_blank"
+                                        class="text-blue-500"
+                                    >{{
+                                        form.pdf_url.split("/").pop()
+                                    }}</a>
+                                </p>
+                            </div>
                         </div>
-                    </form>
-                </Dialog>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-4">
+                        <Button
+                            label="Cancel"
+                            class="p-button-secondary"
+                            @click="closeForm"
+                        />
+                        <Button
+                            :label="form.id ? 'Update' : 'Create'"
+                            class="p-button-primary"
+                            type="submit"
+                            :loading="form.processing"
+                        />
+                    </div>
+                </form>
+            </Dialog>
             </div>
         </BodyLayout>
     </GuestLayout>
@@ -510,9 +515,8 @@ import {
     Select,
 } from "primevue";
 import Message from "primevue/message";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useForm } from "@inertiajs/vue3";
-import { Inertia } from "@inertiajs/inertia";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
@@ -590,7 +594,6 @@ const showToast = (operation, status) => {
             },
         },
     };
-
     const options = toastMessages[operation][status];
     toast.add(options);
 };
@@ -599,6 +602,7 @@ const showToast = (operation, status) => {
 const closeForm = () => {
     showToast("cancel", "info");
     isFormVisible.value = false;
+    form.errors = {};
     form.reset();
 };
 
@@ -659,6 +663,11 @@ const isFormVisible = ref(false);
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
 
+// watch(isFormVisible,(value)=>{
+//     if(value==false){
+//         closeForm();
+//     }
+// })
 // Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
@@ -677,6 +686,7 @@ const form = useForm({
     remark: "",
     pdf: null, // Add this line to handle file uploads
 });
+
 
 // Open product form
 const openForm = (product = null) => {
@@ -715,6 +725,17 @@ const viewProduct = (product) => {
 };
 
 const submitForm = () => {
+    if (!form) {
+        toast.add({
+            group: "tc",
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please fill in all required fields!",
+            life: 4000,
+        });
+        return;
+    }
+
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
         if (value !== null && key !== "pdf") {
@@ -726,29 +747,30 @@ const submitForm = () => {
     }
 
     if (form.id) {
-        router.post(route("products.update", form.id), formData, {
+        form.post(route("products.update", form.id), {
             forceFormData: true,
             headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                showToast("update", "success");
+                setTimeout(() => showToast("update", "success"), 50);
                 isFormVisible.value = false;
                 reloadData();
             },
             onError: (errors) => {
-                showToast("update", "error");
+                setTimeout(() => showToast("update", "error"), 50);
                 console.error("Update errors:", errors);
             },
         });
     } else {
-        router.post(route("products.store"), formData, {
+        form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
-                showToast("create", "success");
+                setTimeout(() => showToast("create", "success"), 50);
                 isFormVisible.value = false;
                 reloadData();
             },
             onError: (errors) => {
-                showToast("create", "error");
+                setTimeout(() => showToast("create", "error"), 50)
+                console.log("Validation Errors:", errors);
                 console.error("Creation errors:", errors);
             },
         });
@@ -764,35 +786,42 @@ const deleteProduct = (id) => {
         accept: () => {
             router.delete(route("products.destroy", id), {
                 onSuccess: () => {
-                    toast.add({
-                        group: "tc",
-                        severity: "success",
-                        summary: "Deleted",
-                        detail: "Product deleted successfully!",
-                        life: 3000,
-                    });
+                    setTimeout(() => {
+                        toast.add({
+                            group: "tc",
+                            severity: "success",
+                            summary: "Deleted",
+                            detail: "Product deleted successfully!",
+                            life: 3000,
+                        });
+                    }, 50);
                     reloadData();
                 },
                 onError: () => {
-                    toast.add({
+                    setTimeout(() => {
+                        toast.add({
                         group: "tc",
                         severity: "error",
                         summary: "Error",
                         detail: "Failed to delete product!",
                         life: 3000,
                     });
+                    }, 50);
                 },
             });
         },
         reject: () => {
-            toast.add({
+            setTimeout(() => {
+                toast.add({
                 group: "tc",
                 severity: "info",
                 summary: "Cancelled",
                 detail: "Product deletion cancelled.",
                 life: 3000,
             });
+            }, 50);
         },
     });
 };
 </script>
+

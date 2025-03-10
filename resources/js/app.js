@@ -16,6 +16,7 @@ import Toast from "primevue/toast";
 import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
 import ConfirmDialog from "primevue/confirmdialog";
+import '../css/app.css';
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 

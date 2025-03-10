@@ -63,7 +63,7 @@ Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('fi
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');
-Route::resource('/settings/product-categories', ProductCategoryController::class);
+Route::get('/settings/product-categories', [ProductCategoryController::class, 'index'])->name('productCategory.index');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
