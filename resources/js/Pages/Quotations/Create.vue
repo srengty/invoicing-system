@@ -12,7 +12,7 @@
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
                         <InputText
-                            :disabled="isApproved"
+                            disabled
                             id="quotation_no"
                             v-model="form.quotation_no"
                             placeholder="Auto-generated"
@@ -23,7 +23,7 @@
                     <div class="flex flex-col gap-2">
                         <label for="quotation_date">Date:</label>
                         <DatePicker
-                            :disabled="isApproved"
+                            disabled
                             v-model="form.quotation_date"
                             :model-value="formatDate(form.quotation_date)"
                             showIcon
@@ -160,17 +160,17 @@
                                     : slotProps.data.desc
                             }}</span>
                             <br />
-                            <span class="text-sm font-bold">
-                                {{ slotProps.data.remark }}
-                            </span>
                             <!-- <span class="text-sm font-bold">
+                                {{ slotProps.data.remark }}
+                            </span> -->
+                            <span class="text-sm font-bold">
                                 {{
-                                    slotProps.data.remark.length > 40
-                                        ? slotProps.data.remark.slice(0, 40) +
+                                    slotProps.data.remark.length > 15
+                                        ? slotProps.data.remark.slice(0, 15) +
                                           "..."
                                         : slotProps.data.remark
                                 }}
-                            </span> -->
+                            </span>
                         </template>
                     </Column>
                     <Column field="quantity" header="Qty">
@@ -284,6 +284,20 @@
                         <!--                </div>-->
                     </div>
                 </div>
+            </div>
+
+            <div class="pl-8 pt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
+                <label for="terms" class="font-bold"
+                    >Terms &amp; Conditions:</label
+                >
+                <InputText
+                    id="terms"
+                    v-model="form.terms"
+                    rows="5"
+                    cols="30"
+                    class="w-full md:w-2/3"
+                    placeholder="Enter or edit your Terms & Conditions here"
+                />
             </div>
 
             <!-- Form Buttons -->
@@ -506,6 +520,7 @@ const form = useForm({
     tax: 0,
     grand_total: 0,
     products: [], // Will be an array of objects: { id, quantity }
+    terms: "",
 });
 
 console.log(props.products);

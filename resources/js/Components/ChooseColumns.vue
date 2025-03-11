@@ -1,7 +1,7 @@
 
 <template>
     <div class="card inline-flex justify-center mx-2">
-        <Button type="button" :label="selectedMember ? selectedMember.name : 'Select Columns'" @click="toggle" icon="pi pi-plus" :rounded="rounded" />
+        <Button type="button" :label="selectedMember ? selectedMember.name : 'Select Columns'" @click="toggle" icon="pi pi-plus" :rounded="rounded" size="small" />
 
         <Popover ref="op">
             <div class="flex flex-col gap-1">
