@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Division;
 use App\Models\Product;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -126,6 +127,30 @@ class ProductController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="' . $filename . '"'
         ]);
+    }
+
+    // Call deparment api
+    public function getDepartments(){
+        // 
+        $client = new Client();
+        
+        // Make the GET request to fetch divisions
+        $response = $client->request('POST', 'https://dev.itc.edu.kh/api/departments/', [
+            'headers' => [
+                'Authorization' => 'Bearer KuTw6xVJ4ZW0Z9RQFyS1l9mzrOU5XM2tpdE2ub6LJHgliufbbug7fZGs92Ht7KOj',
+                'Content-Type' => 'application/json'
+            ]
+        ]);
+
+        // Decode the response into an array
+        $departments = json_decode($response->getBody(), true);
+        
+        // Use Inertia to pass the data to the Vue component
+        return Inertia::render('Products/Index', [
+            'departments' => $departments
+              // Pass the data as props to the Vue page
+        ]);
+        dd($departments);
     }
 
 }

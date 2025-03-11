@@ -59,6 +59,7 @@ Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit
 Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
+Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index'); // Get departments for product
 
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 

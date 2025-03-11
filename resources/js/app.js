@@ -20,6 +20,7 @@ import '../css/app.css';
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
+
 const messages = {
     en: { message: { hello: "hello world" } },
     kh: { message: { hello: "សួស្តី​ពិភពលោក" } },
@@ -32,6 +33,7 @@ const i18n = createI18n({
     messages,
     globalInjection: true, // ✅ Allows `$t()` globally in setup()
 });
+
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -56,8 +58,9 @@ createInertiaApp({
             .use(ConfirmationService)
             .component("Toast", Toast) // Register the Toast component
             .component("Message", Message) // Register the Message component
-            .component('ConfirmDialog', ConfirmDialog)
+            .component("ConfirmDialog", ConfirmDialog)
             .mount(el); // Mount the app finally
+
     },
     progress: {
         color: "#4B5563",
