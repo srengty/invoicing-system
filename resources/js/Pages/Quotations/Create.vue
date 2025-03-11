@@ -163,6 +163,14 @@
                             <span class="text-sm font-bold">
                                 {{ slotProps.data.remark }}
                             </span>
+                            <!-- <span class="text-sm font-bold">
+                                {{
+                                    slotProps.data.remark.length > 40
+                                        ? slotProps.data.remark.slice(0, 40) +
+                                          "..."
+                                        : slotProps.data.remark
+                                }}
+                            </span> -->
                         </template>
                     </Column>
                     <Column field="quantity" header="Qty">

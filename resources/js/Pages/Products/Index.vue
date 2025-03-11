@@ -610,7 +610,7 @@ const showToast = (operation, status) => {
 
 // Close the form dialog and notify the user
 const closeForm = () => {
-    showToast("cancel", "info");
+    // showToast("cancel", "info");
     isFormVisible.value = false;
     form.errors = {};
     form.reset();
@@ -761,12 +761,12 @@ const submitForm = () => {
             forceFormData: true,
             headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                setTimeout(() => showToast("update", "success"), 50);
+                setTimeout(() => showToast("update", "success"), 100);
                 isFormVisible.value = false;
                 reloadData();
             },
             onError: (errors) => {
-                setTimeout(() => showToast("update", "error"), 50);
+                setTimeout(() => showToast("update", "error"), 100);
                 console.error("Update errors:", errors);
             },
         });
@@ -774,12 +774,12 @@ const submitForm = () => {
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
-                setTimeout(() => showToast("create", "success"), 50);
+                setTimeout(() => showToast("create", "success"), 100);
                 isFormVisible.value = false;
                 reloadData();
             },
             onError: (errors) => {
-                setTimeout(() => showToast("create", "error"), 50)
+                setTimeout(() => showToast("create", "error"), 100)
                 console.log("Validation Errors:", errors);
                 console.error("Creation errors:", errors);
             },
