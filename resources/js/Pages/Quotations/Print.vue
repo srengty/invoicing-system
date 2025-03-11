@@ -76,13 +76,36 @@
                 <div
                     v-for="(product, index) in quotation.products"
                     :key="index"
-                    class="grid grid-cols-5 border-b py-2 px-4 text-center"
+                    class="grid grid-cols-5 border-b py-2 px-4 text-start"
                 >
                     <div>{{ index + 1 }}</div>
                     <div>
                         <p>{{ isUSD ? product.name : product.name_kh }}</p>
-                        <p>{{ isUSD ? product.desc : product.desc_kh }}</p>
-                        <p>{{ isUSD ? product.remark : product.remark_kh }}</p>
+                        <!-- <p>{{ isUSD ? product.desc : product.desc_kh }}</p> -->
+                        <p>
+                            {{
+                                isUSD
+                                    ? product.desc.length > 15
+                                        ? product.desc.slice(0, 15) + "..."
+                                        : product.desc
+                                    : product.desc_kh.length > 15
+                                    ? product.desc_kh.slice(0, 15) + "..."
+                                    : product.desc_kh
+                            }}
+                        </p>
+
+                        <!-- <p>{{ isUSD ? product.remark : product.remark_kh }}</p> -->
+                        <p>
+                            {{
+                                isUSD
+                                    ? product.remark.length > 15
+                                        ? product.remark.slice(0, 15) + "..."
+                                        : product.remark
+                                    : product.remark_kh.length > 15
+                                    ? product.remark_kh.slice(0, 15) + "..."
+                                    : product.remark_kh
+                            }}
+                        </p>
                     </div>
                     <div>{{ product.pivot.quantity }}</div>
                     <div>

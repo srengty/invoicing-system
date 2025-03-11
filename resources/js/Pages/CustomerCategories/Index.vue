@@ -3,12 +3,13 @@
     <Head title="Create Agreement" />
     <GuestLayout>
         <Toast />
-        <div>
+        <BodyLayout>
+            <div>
             <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-semibold text-gray-800">Customer Categories</h1>
-                <Button type="button" class="p-button-success" @click="openModal">Add New</Button>
+                <h1 class="text-xl font-semibold text-gray-800">Customer Categories</h1>
+                <Button type="button" size="small" class="p-button-success" @click="openModal">Add New</Button>
             </div>
-            <div class="mt-4">
+            <div class="mt-4 text-sm">
                 <DataTable :value="customerCategories" :paginator="true" :rows="10" :rowsPerPageOptions="[5, 10, 20]">
                     <Column field="category_name_khmer" header="Name"></Column>
                     <Column field="category_name_english" header="Name En"></Column>
@@ -21,7 +22,15 @@
                     </Column>
                     <Column field="action" header="Action">
                         <template #body="slotProps">
-                            <Button severity="warn" size="small" @click="router.get(route('categories.edit',{'id':slotProps.data.id}))">Edit</Button>
+                            <!-- <Button severity="warn" size="small" @click="router.get(route('categories.edit',{'id':slotProps.data.id}))">Edit</Button> -->
+                            <Button
+                                    class="custom-button"
+                                    icon="pi pi-pencil"
+                                    severity="warning"
+                                    size="small"
+                                    @click="router.get(route('categories.edit',{'id':slotProps.data.id}))"
+                                    outlined
+                                />
                         </template>
                     </Column>
                 </DataTable>
@@ -66,6 +75,7 @@
                 </form>
             </Dialog>
         </div>
+        </BodyLayout>
     </GuestLayout>
 </template>
 
@@ -75,6 +85,7 @@ import { useToast } from "primevue/usetoast";
 import { Button, Dialog, DataTable, Column, InputText, Toast } from "primevue";
 import { Head, usePage, router } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import BodyLayout from '@/Layouts/BodyLayout.vue';
 const toast = useToast();
 const { customerCategories } = usePage().props;
 const displayModal = ref(false);

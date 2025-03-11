@@ -183,7 +183,6 @@ public function storeComment(Request $request, $quotationId)
                     'quantity' => $product['quantity'],
                     'quotation_no' => $quotation->id,
                     'price'    => $product['price'],
-
                     'product_unit_prices' => json_encode($validated['products']),
                 ]);
                 // $quotation->products()->attach($product['id'], [

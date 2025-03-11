@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ProductCategoryController extends Controller
 {
     public function index()
-    {
-        return Inertia::render('ProductCategories/Index');
+    {   
+        $products = Product::all();
+        $productCategories = Category::all();
+        return Inertia::render('ProductCategories/Index',[
+            'products' => $products,
+            'productCategories' => $productCategories,
+        ]);
     }
     public function create()
     {

@@ -12,7 +12,7 @@
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
                         <InputText
-                            :disabled="isApproved"
+                            disabled
                             id="quotation_no"
                             v-model="form.quotation_no"
                             placeholder="Auto-generated"
@@ -23,7 +23,7 @@
                     <div class="flex flex-col gap-2">
                         <label for="quotation_date">Date:</label>
                         <DatePicker
-                            :disabled="isApproved"
+                            disabled
                             v-model="form.quotation_date"
                             :model-value="formatDate(form.quotation_date)"
                             showIcon
@@ -148,20 +148,28 @@
                     </Column>
                     <Column field="name" header="Name">
                         <template #body="slotProps">
-                            <span>{{
+                            <span class="text-base">{{
                                 isKhmer
                                     ? slotProps.data.name_kh
                                     : slotProps.data.name
                             }}</span>
                             <br />
-                            <span>{{
+                            <span class="text-base">{{
                                 isKhmer
                                     ? slotProps.data.desc_kh
                                     : slotProps.data.desc
                             }}</span>
                             <br />
-                            <span>
+                            <!-- <span class="text-sm font-bold">
                                 {{ slotProps.data.remark }}
+                            </span> -->
+                            <span class="text-sm font-bold">
+                                {{
+                                    slotProps.data.remark.length > 15
+                                        ? slotProps.data.remark.slice(0, 15) +
+                                          "..."
+                                        : slotProps.data.remark
+                                }}
                             </span>
                         </template>
                     </Column>
@@ -181,6 +189,8 @@
                             <InputText
                                 v-model="slotProps.data.price"
                                 @input="updateProductSubtotal(slotProps.data)"
+                                :min="0"
+                                @keydown="preventMinus"
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
                                 class="w-full"
@@ -201,7 +211,7 @@
                     </Column>
                     <Column header="Actions">
                         <template #body="slotProps">
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 items-center">
                                 <Button
                                     icon="pi pi-trash"
                                     class="p-button-danger w-[10px] custom-button"
@@ -221,11 +231,11 @@
                                 />
                                 <Button
                                     icon="pi pi-print"
-                                    severity="success"
-                                    title="print"
-                                    @click="printSelectedProducts"
-                                    size="small"
                                     class="custom-button"
+                                    title="Print Catalog"
+                                    :disabled="!slotProps.data.pdf_url"
+                                    @click="printCatalog(slotProps.data)"
+                                    size="small"
                                     raised
                                 />
                             </div>
@@ -274,6 +284,20 @@
                         <!--                </div>-->
                     </div>
                 </div>
+            </div>
+
+            <div class="pl-8 pt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
+                <label for="terms" class="font-bold"
+                    >Terms &amp; Conditions:</label
+                >
+                <InputText
+                    id="terms"
+                    v-model="form.terms"
+                    rows="5"
+                    cols="30"
+                    class="w-full md:w-2/3"
+                    placeholder="Enter or edit your Terms & Conditions here"
+                />
             </div>
 
             <!-- Form Buttons -->
@@ -349,7 +373,7 @@
             <div class="field">
                 <label for="item-category">Item Category</label>
                 <InputText
-                    v-model="selectedProduct.category_id"
+                    :value="getCategoryName(selectedProduct.category_id)"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -361,6 +385,8 @@
                 <label for="unit-price">Unit Price</label>
                 <InputNumber
                     v-model="selectedProduct.price"
+                    :min="0"
+                    @keydown="preventMinus"
                     size="small"
                     class="w-full text-sm"
                 />
@@ -423,7 +449,7 @@
                 @click="closeAddItemDialog()"
             />
             <Button
-                label="Add Item"
+                :label="editingProduct ? 'Update Item' : 'Add Item'"
                 icon="pi pi-check"
                 raised
                 @click="addItemToTable"
@@ -477,7 +503,11 @@ const props = defineProps({
     products: Array,
     customerCategories: Array,
 });
-
+const preventMinus = (event) => {
+    if (event.key === "-") {
+        event.preventDefault();
+    }
+};
 // Define the Inertia form
 const form = useForm({
     quotation_no: null,
@@ -490,6 +520,7 @@ const form = useForm({
     tax: 0,
     grand_total: 0,
     products: [], // Will be an array of objects: { id, quantity }
+    terms: "",
 });
 
 console.log(props.products);
@@ -520,12 +551,16 @@ const updateSelectedProductDetails = () => {
                 ...product,
                 quantity: 1,
                 subTotal: Number(product.price),
+                category_id: product.category_id ?? null,
             };
         }
     } else {
         selectedProduct.value = {};
     }
 };
+watch(selectedProduct, (newVal) => {
+    console.log("Updated selected product:", newVal);
+});
 
 const searchProducts = (event) => {
     filteredProducts.value = props.products.filter((product) =>
@@ -571,6 +606,16 @@ const validateForm = () => {
         return false;
     }
     return true;
+};
+
+const getCategoryName = (categoryId) => {
+    if (!categoryId) return "Unknown"; // Ensure it doesn't show null
+    const category = props.customerCategories.find(
+        (cat) => cat.id === categoryId
+    );
+    return category
+        ? category.category_name_english || category.category_name_khmer
+        : "Unknown";
 };
 
 const addItemToTable = () => {
@@ -824,16 +869,19 @@ const cancelOperation = () => {
 };
 
 const isCreateItemVisible = ref(false);
-
-const selectedProducts = ref([]);
-const printSelectedProducts = () => {
-    if (selectedProducts.value.length === 0) {
-        alert("Please select products to print.");
+const printCatalog = (product) => {
+    if (!product.pdf_url) {
+        showToast(
+            "warn",
+            "No Catalog",
+            "This product does not have a catalog available.",
+            3000
+        );
         return;
     }
 
-    // Call print function or route to print preview
-    console.log("Printing selected products:", selectedProducts.value);
+    const pdfUrl = `/pdfs/${product.pdf_url.split("/").pop()}`;
+    window.open(pdfUrl, "_blank");
 };
 </script>
 <style>
