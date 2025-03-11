@@ -449,7 +449,7 @@
                 @click="closeAddItemDialog()"
             />
             <Button
-                label="Add Item"
+                :label="editingProduct ? 'Update Item' : 'Add Item'"
                 icon="pi pi-check"
                 raised
                 @click="addItemToTable"

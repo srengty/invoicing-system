@@ -184,7 +184,7 @@ const quotation = ref(props.quotation);
 const printTable = ref(null);
 const printArea = ref(null);
 
-const isUSD = ref(true);
+const isUSD = ref(false);
 const exchangeRate = ref(4100);
 
 const currencySymbol = computed(() => (isUSD.value ? "$" : "៛"));
