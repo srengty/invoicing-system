@@ -286,7 +286,7 @@
                 <div>
                     <label
                         for="bank_name"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium"
                     >
                         Bank name
                     </label>
@@ -298,22 +298,13 @@
                         placeholder="Enter bank name"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.bank_name"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.bank_name }}
-                    </Message>
                 </div>
 
                 <!-- Bank Address -->
                 <div>
                     <label
                         for="bank_address"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium "
                     >
                         Bank address
                     </label>
@@ -325,22 +316,13 @@
                         placeholder="Enter bank address"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.bank_address"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.bank_address }}
-                    </Message>
                 </div>
 
                 <!-- Bank Account Name -->
                 <div>
                     <label
                         for="bank_account_name"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium"
                     >
                         Bank account name
                     </label>
@@ -352,22 +334,13 @@
                         placeholder="Enter bank account name"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.bank_account_name"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.bank_account_name }}
-                    </Message>
                 </div>
 
                 <!-- Bank Account Number -->
                 <div>
                     <label
                         for="bank_account_number"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium "
                     >
                         Bank account number
                     </label>
@@ -379,22 +352,13 @@
                         placeholder="Enter bank account number"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.bank_account_number"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.bank_account_number }}
-                    </Message>
                 </div>
 
                 <!-- Bank Swift -->
                 <div>
                     <label
                         for="bank_swift"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium"
                     >
                         Bank swift
                     </label>
@@ -406,15 +370,6 @@
                         placeholder="Enter bank swift"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.bank_swift"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.bank_swift }}
-                    </Message>
                 </div>
             </div>
 

@@ -12,25 +12,39 @@
                             Customers/Organization Name
                         </h1>
                     </div>
-                    <div>
-                        <Button
+                    <div class="flex items-center gap-2">
+
+                        <InputText
+                            v-model="searchTerm"
+                            placeholder="Search by Name or Code"
+                            class="w-96"
+                            size="small"
+                        />
+                           <Button
                             icon="pi pi-plus"
                             label="New"
-                            outlined
                             @click="isCreateCustomerVisible = true"
                             size="small"
                         />
-                        <ChooseColumns
+
+                        <!-- <ChooseColumns
                             :columns="columns"
                             v-model="selectedColumns"
                             @apply="updateColumns"
                             outlined
                             size="small"
-                        />
+                        /> -->
                     </div>
                 </div>
+                <!-- <div class="flex justify-end items-center pb-4">
+                    <InputText
+                        v-model="searchTerm"
+                        placeholder="Search by Name or Code"
+                        class="w-1/4"
+                    />
+                </div> -->
                 <DataTable
-                    :value="indexedCustomers"
+                    :value="filteredCustomers"
                     paginator
                     :rows="5"
                     :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -41,7 +55,6 @@
                         :key="col.field"
                         :field="col.field"
                         :header="col.header"
-                        sortable
                     ></Column>
                     <Column header="Actions">
                         <template #body="slotProps">
@@ -186,7 +199,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Head } from "@inertiajs/vue3";
-import { DataTable, Column, Button, Dialog } from "primevue";
+import { DataTable, Column, Button, Dialog, InputText } from "primevue";
 import { Inertia } from "@inertiajs/inertia";
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
@@ -207,13 +220,13 @@ const props = defineProps({
 });
 
 const columns = [
-    { field: "id", header: "ID" },
-    { field: "name", header: "Name" },
-    { field: "code", header: "Code" },
-    { field: "email", header: "Email" },
-    { field: "phone_number", header: "Phone" },
-    { field: "telegram_number", header: "Telegram" },
-    { field: "bank_swift", header: "Bank Swift" },
+    { field: "id", header: "ID", style: { width: "5%" } },
+    { field: "name", header: "Name", style: { width: "5%" } },
+    { field: "code", header: "Code", style: { width: "5%" } },
+    { field: "credit_period", header: "Credit", style: { width: "10%" } },
+    { field: "address", header: "Address", style: { width: "15%" } },
+    { field: "website", header: "Website", style: { width: "5%" } },
+    { field: "phone_number", header: "Phone", style: { width: "5%" } },
 ];
 
 const selectedColumns = ref(columns);
@@ -223,10 +236,21 @@ const isCreateCustomerVisible = ref(false);
 const isEditCustomerVisible = ref(false);
 const isViewCustomerVisible = ref(false);
 const selectedCustomer = ref(null);
+const searchTerm = ref("");
 
 const updateColumns = () => {
     showColumns.value = selectedColumns.value;
 };
+
+// Filter the customers by name or code based on the search term
+const filteredCustomers = computed(() => {
+    // Return the filtered list based on the searchTerm
+    return props.customers.filter(
+        (cust) =>
+            cust.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+            cust.code.toLowerCase().includes(searchTerm.value.toLowerCase())
+    );
+});
 
 const editCustomer = (id) => {
     const customer = props.customers.find((cust) => cust.id === id);
