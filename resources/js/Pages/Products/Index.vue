@@ -35,18 +35,24 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     striped
                 >
-                    <Column
-                        v-for="col of columns"
-                        :key="col.field"
-                        :field="col.field"
-                        :header="col.header"
-                        sortable
-                    />
+                    <Column header="Division">
+                        <template #body="{ data }">
+                            {{ getDivisionName(data.division_id) }}
+                        </template>
+                    </Column>
                     <Column header="Category">
                         <template #body="{ data }">
                             {{ getCategoryName(data.category_id) }}
                         </template>
                     </Column>
+                    <Column
+                        v-for="col of columns"
+                        :key="col.field"
+                        :field="col.field"
+                        :header="col.header"
+                        :body="col.body"
+                        sortable
+                    />
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
@@ -525,7 +531,7 @@ import {
     Select,
 } from "primevue";
 import Message from "primevue/message";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { useToast } from "primevue/usetoast";
@@ -653,19 +659,19 @@ const getCategoryName = (categoryId) => {
 const getDivisionName = (divisionId) => {
     const division = divisions.find((cat) => cat.id === divisionId);
     return division
-        ? division.division_name_english || division.divison_name_khmer
+        ? division.division_name_english 
+        // || division.divison_name_khmer
         : "Unknown";
 };
 
 // Define columns for DataTable
 const columns = [
-    { field: "id", header: "ID" },
-    { field: "code", header: "Code" },
-    { field: "name", header: "Name" },
+    // { field: "id", header: "ID" },
+    { field: "code", header: "Item Code" },
+    // { field: "name", header: "Name" },
     { field: "name_kh", header: "Name (KH)" },
     { field: "unit", header: "Unit" },
     { field: "price", header: "Price" },
-    { field: "quantity", header: "Quantity" },
 ];
 
 // State for form and view dialogs
@@ -673,12 +679,6 @@ const isFormVisible = ref(false);
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
 
-// watch(isFormVisible,(value)=>{
-//     if(value==false){
-//         closeForm();
-//     }
-// })
-// Create form using Inertia's `useForm`
 const form = useForm({
     id: null,
     division_id: "",
@@ -733,7 +733,10 @@ const viewProduct = (product) => {
 
     isViewDialogVisible.value = true;
 };
-
+onMounted(()=>{
+    getDepartment().then(response=>{
+    })
+})
 const submitForm = () => {
     if (!form) {
         toast.add({
