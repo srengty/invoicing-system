@@ -502,6 +502,7 @@ const props = defineProps({
     customers: Array,
     products: Array,
     customerCategories: Array,
+    productCategories: Array,
 });
 const preventMinus = (event) => {
     if (event.key === "-") {
@@ -610,7 +611,7 @@ const validateForm = () => {
 
 const getCategoryName = (categoryId) => {
     if (!categoryId) return "Unknown"; // Ensure it doesn't show null
-    const category = props.customerCategories.find(
+    const category = props.productCategories.find(
         (cat) => cat.id === categoryId
     );
     return category
