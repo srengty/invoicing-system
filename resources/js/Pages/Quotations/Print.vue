@@ -20,16 +20,15 @@
                 icon="pi pi-print"
                 class="px-4 py-2"
                 @click="printPage"
+                size="small"
             />
         </div>
     </div>
+
     <div
         ref="printArea"
         class="flex-col justify-center print-area a4-size text-sm"
     >
-        <!-- <div class="flex flex-row m-4">
-        <Image src="https://itc.edu.kh/wp-content/uploads/2021/02/cropped-Logo-ITC.png" alt="Image" width="120" />
-    </div> -->
         <h1 class="flex flex-row justify-center text-3xl font-bold mb-6">
             Quotation
         </h1>
@@ -37,7 +36,7 @@
             <div class="flex flex-col w-1/2 gap-4">
                 <p>
                     <strong>Customer Name:</strong>
-                    {{ quotation.customer?.name || "N/A" }}
+                    {{ quotation.customer_name || "N/A" }}
                 </p>
                 <p><strong>Address:</strong> {{ quotation.address }}</p>
                 <p>
@@ -57,25 +56,25 @@
                 </div>
             </div>
         </div>
-        <!-- Print Section -->
+
+        <!-- Print Section: Products Table -->
         <div ref="printTable" class="page-break">
-            <!-- Table Section -->
             <div v-if="quotation.products?.length" class="table-container">
                 <!-- Table Header -->
                 <div
                     class="grid grid-cols-5 bg-gray-200 py-2 px-4 font-bold text-center border-b"
                 >
-                    <div>Order No.</div>
-                    <div>ITEM</div>
-                    <div>QTY</div>
-                    <div>Unit Price</div>
-                    <div>Sub-Total</div>
+                    <div class="w-1/5">No.</div>
+                    <div class="w-1/5">ITEM</div>
+                    <div class="w-1/5">QTY</div>
+                    <div class="w-3/5">Unit Price</div>
+                    <div class="w-3/5">Sub-Total</div>
                 </div>
 
                 <!-- Table Body -->
                 <div
                     v-for="(product, index) in quotation.products"
-                    :key="index"
+                    :key="product.id"
                     class="grid grid-cols-5 border-b py-2 px-4 text-start"
                 >
                     <div>{{ index + 1 }}</div>
@@ -109,6 +108,57 @@
                 Total ({{ currencyLabel }}): {{ currencySymbol
                 }}{{ formatNumber(convertCurrency(quotation.total)) }}
             </p>
+
+            <!-- Catalogs Section: Allow Selection via Checkboxes -->
+            <div class="mt-8">
+                <h2 class="text-xl font-bold mb-2">Select Catalogs to Print</h2>
+                <div
+                    v-for="product in quotation.products"
+                    :key="product.id"
+                    class="mb-4 flex items-center"
+                >
+                    <!-- Checkbox for catalog selection -->
+                    <input
+                        type="checkbox"
+                        :value="product.id"
+                        v-model="selectedCatalogIds"
+                        class="mr-2"
+                    />
+                    <span class="font-semibold">
+                        {{ isUSD ? product.name : product.name_kh }} Catalog:
+                    </span>
+                    <a
+                        v-if="product.pdf_url"
+                        :href="`/pdfs/${product.pdf_url.split('/').pop()}`"
+                        target="_blank"
+                        class="ml-2 text-blue-500 hover:text-blue-700 transition duration-200"
+                    >
+                        View Catalog
+                    </a>
+                </div>
+            </div>
+
+            <!-- Render Only the Selected Catalogs (Optional Section) -->
+            <div v-if="selectedCatalogs.length" class="mt-8">
+                <h2 class="text-xl font-bold mb-2">Catalogs to be Printed</h2>
+                <div
+                    v-for="product in selectedCatalogs"
+                    :key="product.id"
+                    class="mb-4"
+                >
+                    <p class="font-semibold">
+                        {{ isUSD ? product.name : product.name_kh }} Catalog:
+                    </p>
+                    <a
+                        v-if="product.pdf_url"
+                        :href="`/pdfs/${product.pdf_url.split('/').pop()}`"
+                        target="_blank"
+                        class="text-blue-500 hover:text-blue-700 transition duration-200"
+                    >
+                        View Catalog
+                    </a>
+                </div>
+            </div>
 
             <!-- Terms and Conditions -->
             <div class="mt-8">
@@ -153,12 +203,10 @@
 import { ref, computed } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
-import Image from "primevue/image";
 import Button from "primevue/button";
 
 const { props } = usePage();
 const quotation = ref(props.quotation);
-const printTable = ref(null);
 const printArea = ref(null);
 
 const isUSD = ref(false);
@@ -178,13 +226,20 @@ const formatNumber = (value) => {
     );
 };
 
-// Store the original title
-const originalTitle = ref(document.title);
-
 // Print Page function
 const printPage = () => {
     window.print();
 };
+
+// --- Catalog Selection for Printing ---
+const selectedCatalogIds = ref([]);
+
+// Computed array of products selected for printing catalogs
+const selectedCatalogs = computed(() => {
+    return quotation.value.products.filter((p) =>
+        selectedCatalogIds.value.includes(p.id)
+    );
+});
 </script>
 
 <style scoped>
@@ -201,22 +256,14 @@ const printPage = () => {
     margin: auto;
 }
 
-@media screen {
-    .print-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background-color: #f0f0f0;
-        padding: 20px;
-    }
-}
-
+/* Hide checkboxes in printed output if desired */
 @media print {
+    input[type="checkbox"] {
+        display: none;
+    }
     .mt-6 {
         display: none !important;
     }
-
     .print-area {
         margin: 0;
         padding: 0;
@@ -230,7 +277,6 @@ const printPage = () => {
         page-break-after: auto;
         page-break-inside: auto;
     }
-
     .table-container div {
         page-break-inside: avoid;
     }

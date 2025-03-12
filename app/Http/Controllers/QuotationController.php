@@ -261,6 +261,14 @@ public function storeComment(Request $request, $quotationId)
             // 'tax' => 'required|numeric|min:0',
             // 'grand_total' => 'required|numeric|min:0',
             'status' => 'required|string|max:20',
+            'products'        => 'nullable|array',
+            'products.*.id'   => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:1',
+            'products.*.price'=> 'required|numeric|min:1',
+            'products.*.acc_code' => 'nullable|string|max:255',
+            'products.*.category_id' => 'nullable|integer|min:0',
+            'products.*.remark' => 'nullable|string|max:255',
+            // 'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // if needed
         ]);
 
         $quotation->update($validated);

@@ -37,6 +37,8 @@ Route::post('/quotations', [QuotationController::class, 'store'])->name('quotati
 Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updateStatus']);
 Route::post('/quotations/{quotationId}/comments', [QuotationController::class, 'storeComment']);
 Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
+Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
+
 
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');

@@ -45,6 +45,11 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
+                    <Column header="No." style="width: 5%">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
@@ -270,6 +275,11 @@
                             "
                         />
                         <Button
+                            label="Edit"
+                            severity="info"
+                            @click="editQuotation"
+                        />
+                        <Button
                             label="Close"
                             severity="secondary"
                             @click="showCancel"
@@ -286,7 +296,7 @@
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { onMounted,ref } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
@@ -295,7 +305,7 @@ import { useForm } from "@inertiajs/vue3";
 import VirtualScroller from "primevue/virtualscroller";
 import moment from "moment";
 import Dropdown from "primevue/dropdown";
-import { router } from "@inertiajs/vue3"; // for printing
+import { router,usePage  } from "@inertiajs/vue3"; // for printing
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 
@@ -305,6 +315,9 @@ const selectedQuotation = ref({});
 const selectedQuo_customer = ref([]);
 const userRole = ref("manager");
 const comment = ref("");
+
+const formMode = ref("create");
+const quotationData = ref({});
 
 const showToast = (
     type = "success",
@@ -352,6 +365,13 @@ const openForm = (quotations = null) => {
     }
     isFormVisible.value = true;
 };
+const isFormVisible = ref(false);
+
+const editQuotation = () => {
+    router.get(route('quotations.edit', selectedQuotation.value.id));
+    isViewDialogVisible.value = false;
+};
+
 
 const closeForm = () => {
     isFormVisible.value = false;

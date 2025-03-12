@@ -45,7 +45,6 @@
                         v-model="form.name"
                         class="w-full"
                         size="small"
-                        placeholder="Enter Customer Name"
                         :disabled="mode === 'view'"
                     />
                     <Message
@@ -90,7 +89,7 @@
                 <div>
                     <label
                         for="credit_period"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium"
                     >
                         Credit period (days)
                     </label>
@@ -141,10 +140,7 @@
 
                 <!-- Website -->
                 <div>
-                    <label
-                        for="website"
-                        class="block text-sm font-medium required"
-                    >
+                    <label for="website" class="block text-sm font-medium">
                         Website
                     </label>
                     <InputText
@@ -155,15 +151,6 @@
                         placeholder="Enter website"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.website"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.website }}
-                    </Message>
                 </div>
 
                 <div class="col-span-1 sm:col-span-2 md:col-span-3">
@@ -174,7 +161,7 @@
                 <div>
                     <label
                         for="contact_person"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium"
                     >
                         Contact person name
                     </label>
@@ -186,15 +173,6 @@
                         placeholder="Enter contact person name"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.contact_person"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.contact_person }}
-                    </Message>
                 </div>
 
                 <!-- Phone Number -->
@@ -228,7 +206,7 @@
                 <div>
                     <label
                         for="telegram_number"
-                        class="block text-sm font-medium required"
+                        class="block text-sm font-medium"
                     >
                         Telegram Number
                     </label>
@@ -240,23 +218,11 @@
                         placeholder="Enter telegram number"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.telegram_number"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.telegram_number }}
-                    </Message>
                 </div>
 
                 <!-- Email -->
                 <div>
-                    <label
-                        for="email"
-                        class="block text-sm font-medium required"
-                    >
+                    <label for="email" class="block text-sm font-medium">
                         Email
                     </label>
                     <InputText
@@ -267,15 +233,6 @@
                         placeholder="Enter email"
                         :disabled="mode === 'view'"
                     />
-                    <Message
-                        v-if="form.errors.email"
-                        severity="error"
-                        size="small"
-                        variant="simple"
-                        class="col-span-2"
-                    >
-                        {{ form.errors.email }}
-                    </Message>
                 </div>
 
                 <div class="col-span-1 sm:col-span-2 md:col-span-3">
@@ -284,10 +241,7 @@
 
                 <!-- Bank Name -->
                 <div>
-                    <label
-                        for="bank_name"
-                        class="block text-sm font-medium"
-                    >
+                    <label for="bank_name" class="block text-sm font-medium">
                         Bank name
                     </label>
                     <InputText
@@ -302,10 +256,7 @@
 
                 <!-- Bank Address -->
                 <div>
-                    <label
-                        for="bank_address"
-                        class="block text-sm font-medium "
-                    >
+                    <label for="bank_address" class="block text-sm font-medium">
                         Bank address
                     </label>
                     <InputText
@@ -340,7 +291,7 @@
                 <div>
                     <label
                         for="bank_account_number"
-                        class="block text-sm font-medium "
+                        class="block text-sm font-medium"
                     >
                         Bank account number
                     </label>
@@ -356,10 +307,7 @@
 
                 <!-- Bank Swift -->
                 <div>
-                    <label
-                        for="bank_swift"
-                        class="block text-sm font-medium"
-                    >
+                    <label for="bank_swift" class="block text-sm font-medium">
                         Bank swift
                     </label>
                     <InputText
