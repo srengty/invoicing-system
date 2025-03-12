@@ -89,6 +89,7 @@
                     </IconField>
                 </div>
 
+
                 <div class="flex flex-col gap-2 w-full md:ml-28">
                     <label for="phone_number">Contact:</label>
                     <IconField class="w-full md:w-60">
@@ -179,6 +180,7 @@
                                 v-model="slotProps.data.quantity"
                                 @input="updateProductSubtotal(slotProps.data)"
                                 class="w-full"
+
                                 size="small"
                             />
                         </template>
@@ -243,6 +245,7 @@
                     </Column>
                 </DataTable>
 
+
                 <!-- Totals Summary -->
                 <div class="pl-2 pr-60">
                     <div class="total-container mt-4 flex justify-between">
@@ -299,6 +302,7 @@
                     placeholder="Enter or edit your Terms & Conditions here"
                 />
             </div>
+
 
             <!-- Form Buttons -->
             <div class="buttons mt-4 mr-4 flex justify-end">
@@ -413,6 +417,7 @@
                     :min="1"
                 />
             </div>
+
 
             <!-- View Catalog -->
             <div v-if="selectedProduct.pdf_url" class="text-start">
@@ -541,6 +546,7 @@ const selectedItemId = ref(null);
 const filteredProducts = ref([]);
 const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
+
 
 const updateSelectedProductDetails = () => {
     if (selectedItem.value) {
@@ -698,6 +704,7 @@ const selectCustomer = () => {
 const selectedProductIds = ref([]);
 const selectedProductsData = ref([]);
 
+
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
         if (!selectedProductsData.value.find((prod) => prod.id === id)) {
@@ -833,6 +840,7 @@ const submit = (event) => {
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
+
 
     // Send form data via Inertia
     form.post(route("quotations.store"), {
