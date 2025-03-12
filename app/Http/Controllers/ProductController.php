@@ -39,14 +39,14 @@ class ProductController extends Controller
             'code' => 'required|string|unique:products,code',
             'unit' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'quantity' => 'required|integer|min:0',
             'category_id' => 'required|integer|min:0',
             'desc' => 'nullable|string|max:255',
             'desc_kh' => 'nullable|string|max:255',
-            'remark' => 'required|string|max:255',
+            'remark' => 'nullable|string|max:255',
             'acc_code' => 'required|string|max:255',
             'division_id' => 'required|integer|max:255',
             'pdf' => 'nullable|file|mimes:pdf|max:2048',
+            'status' => 'pending',
         ]);
 
         if ($request->hasFile('pdf')) {
@@ -80,11 +80,10 @@ class ProductController extends Controller
             'name_kh' => 'required|string|max:255',
             'unit' => 'required|string|max:255',
             'price' => 'required|numeric',
-            'quantity' => 'required|integer',
             'acc_code' => 'required|string',
             'desc' => 'nullable|string',
             'desc_kh' => 'nullable|string',
-            'remark' => 'required|string',
+            'remark' => 'nullable|string',
             'pdf' => 'nullable|file|mimes:pdf|max:2048',
         ]);
 
@@ -153,4 +152,13 @@ class ProductController extends Controller
         dd($departments);
     }
 
+    public function toggleStatus(Request $request, Product $product)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,approved,rejected',
+        ]);
+
+        $product->status = $request->status;
+        $product->save();
+    }
 }

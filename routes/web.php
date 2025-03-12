@@ -9,6 +9,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProductCommentController;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -59,8 +60,11 @@ Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit
 Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
-Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index'); // Get departments for product
-
+Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index');
+Route::put('/settings/products/{product}/toggleStatus', [ProductCommentController::class, 'store']);
+Route::put('/settings//products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
+    ->name('products.toggleStatus');
+Route::resource('/settings/products', ProductController::class);
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');

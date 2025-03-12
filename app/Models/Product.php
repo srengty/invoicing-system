@@ -18,7 +18,6 @@ class Product extends Model
         'code',
         'unit',
         'price',
-        'quantity',
         'category_id',
         'division_id',
         'acc_code',
@@ -26,6 +25,11 @@ class Product extends Model
         'desc_kh',
         'pdf_url',
         'remark',
+        'status'
+    ];
+
+    protected $attributes = [
+        'status' => 'pending', // ✅ Default to pending
     ];
 
     public $timestamps = true;
@@ -92,4 +96,10 @@ class Product extends Model
         // Otherwise, prepend it with the correct storage path
         return asset('storage/pdfs/' . $this->attributes['pdf_url']);
     }
+
+    public function comments()
+    {
+        return $this->hasMany(ProductComment::class);
+    }
+
 }

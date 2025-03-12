@@ -38,13 +38,13 @@ return new class extends Migration
             $table->string('name_kh')->nullable();
             $table->string('unit');
             $table->decimal('price', 15, 2);
-            $table->integer('quantity');
             $table->foreignId('division_id')->nullable()->constrained('divisions')->nullOnDelete();
             $table->string('desc')->nullable();
             $table->string('desc_kh')->nullable();
             $table->string('acc_code')->nullable();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->string('remark')->nullable();
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }

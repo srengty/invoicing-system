@@ -115,14 +115,14 @@ class CustomerController extends Controller
     }
 
     public function toggleActive(Request $request, Customer $customer)
-{
-    // Validate the incoming request data
-    $data = $request->validate([
-        'active' => 'required|boolean',
-    ]);
+    {
+        // Validate the incoming request data
+        $data = $request->validate([
+            'active' => 'required|boolean',
+        ]);
 
-    // Update the customer's active status
-    $customer->active = $data['active'];
-    $customer->save();
-}
+        // Update the customer's active status
+        $customer->active = $data['active'];
+        $customer->save();
+    }
 }

@@ -27,7 +27,6 @@ class ProductFactory extends Factory
             'name' => $this->faker->word,
             'unit' => $this->faker->randomElement(['kg', 'pc', 'box']),
             'price' => $this->faker->randomFloat(2, 1, 1000), // Random price between 1 and 1000
-            'quantity' => $this->faker->numberBetween(1, 100), // Random quantity between 1 and 100
             'category_id' => $this->faker->randomElement(Category::pluck('id')->toArray()), // Random category id
         ];
     }

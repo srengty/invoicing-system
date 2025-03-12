@@ -28,13 +28,7 @@
                 </div>
 
                 <!-- DataTable to display items -->
-                <DataTable
-                    :value="products"
-                    paginator
-                    :rows="5"
-                    :rowsPerPageOptions="[5, 10, 20, 50]"
-                    striped
-                >
+                <DataTable :value="products" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
                     <Column header="Division">
                         <template #body="{ data }">
                             {{ getDivisionName(data.division_id) }}
@@ -45,41 +39,32 @@
                             {{ getCategoryName(data.category_id) }}
                         </template>
                     </Column>
-                    <Column
-                        v-for="col of columns"
-                        :key="col.field"
-                        :field="col.field"
-                        :header="col.header"
-                        :body="col.body"
-                        sortable
-                    />
+                    <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable />
+
+                    <!-- ✅ Status Button Column -->
+                    <Column header="Status">
+                        <template #body="{ data }">
+                            <Button
+                                :icon="data.status === 'approved' ? 'pi pi-check' : data.status === 'rejected' ? 'pi pi-times' : 'pi pi-clock'"
+                                :label="data.status === 'approved' ? 'Approved' : data.status === 'rejected' ? 'Rejected' : 'Pending'"
+                                :class="data.status === 'approved' ? 'p-button-success' : data.status === 'rejected' ? 'p-button-danger' : 'p-button-warning'"
+                                size="small"
+                                @click="toggleStatus(data)"
+                                outlined
+                            />
+                        </template>
+                    </Column>
+
+
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
-                                <Button
-                                    class="custom-button"
-                                    icon="pi pi-eye"
-                                    severity="info"
-                                    size="small"
-                                    @click="viewProduct(slotProps.data)"
-                                    outlined
-                                />
-                                <Button
-                                    class="custom-button"
-                                    icon="pi pi-pencil"
-                                    severity="warning"
-                                    size="small"
-                                    @click="openForm(slotProps.data)"
-                                    outlined
-                                />
-                                <Button
-                                    class="custom-button"
-                                    icon="pi pi-trash"
-                                    severity="danger"
-                                    size="small"
-                                    @click="deleteProduct(slotProps.data.id)"
-                                    outlined
-                                />
+                                <Button class="custom-button" icon="pi pi-eye" severity="info" size="small"
+                                    @click="viewProduct(slotProps.data)" outlined />
+                                <Button class="custom-button" icon="pi pi-pencil" severity="warning" size="small"
+                                    @click="openForm(slotProps.data)" outlined />
+                                <Button class="custom-button" icon="pi pi-trash" severity="danger" size="small"
+                                    @click="deleteProduct(slotProps.data.id)" outlined />
                             </div>
                         </template>
                     </Column>
@@ -198,16 +183,6 @@
                                 {{ selectedProduct?.unit ?? "Null" }}
                             </p>
 
-                            <p><strong>Quantity:</strong></p>
-                            <p
-                                class="text-right font-semibold"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.quantity,
-                                }"
-                            >
-                                {{ selectedProduct?.quantity ?? "Null" }}
-                            </p>
-
                             <p><strong>Price in KHR:</strong></p>
                             <p
                                 class="text-right font-semibold text-green-600"
@@ -247,7 +222,7 @@
                                 target="_blank"
                                 class="text-blue-500 hover:text-blue-700 transition duration-200"
                             >
-                                📄 View PDF
+                                📄 View Catelog
                             </a>
                         </div>
                         <p v-else class="text-center text-gray-400">
@@ -401,20 +376,6 @@
                     <hr />
                     <div class="grid gap-4 mt-4 mb-4 text-sm">
                         <div class="grid grid-cols-3 gap-4">
-                            <div class="field">
-                                <label for="quantity" class="required">Quantity</label>
-                                <InputNumber
-                                    id="quantity"
-                                    v-model="form.quantity"
-                                    class="w-full text-sm"
-                                    size="small"
-                                    placeholder="Enter Quantity"
-                                />
-                                <Message v-if="form.errors.quantity" severity="error" size="small" variant="simple"
-                                class="col-span-2">
-                                    {{ form.errors.quantity }}
-                                </Message>
-                            </div>
 
                             <div class="field">
                                 <label for="price" class="required">Price in KHR</label>
@@ -474,7 +435,7 @@
 
                             <!-- File Upload -->
                             <div class="grid">
-                                <label>Upload PDF:</label>
+                                <label>Upload Catelog:</label>
                                 <input
                                     type="file"
                                     accept="application/pdf"
@@ -512,6 +473,18 @@
                         />
                     </div>
                 </form>
+            </Dialog>
+
+            <Dialog v-model:visible="isStatusDialogVisible" header="Change Product Status" :modal="true" class="w-80">
+                <div class="p-2 pt-0">
+                    <p class="text-lg text-center pb-2">Do you want to approve or reject this product?</p>
+                    <textarea v-model="commentText" placeholder="Enter your comment..." class="w-full p-2 border rounded"></textarea>
+
+                    <div class="flex justify-center gap-4 mt-4">
+                        <Button label="Reject" icon="pi pi-times" class="p-button-danger" @click="changeStatus('rejected')" size="small" outlined/>
+                        <Button label="Approve" icon="pi pi-check" class="p-button-success" @click="changeStatus('approved') " size="small" outlined/>
+                    </div>
+                </div>
             </Dialog>
             </div>
         </BodyLayout>
@@ -678,6 +651,19 @@ const columns = [
 const isFormVisible = ref(false);
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
+const commentText = ref(""); 
+
+const selectedProductForStatus = ref(null); // ✅ Define this variable
+const isStatusDialogVisible = ref(false); 
+
+const handleStatusClick = (product) => {
+    if (product.status === "pending") {
+        selectedProductForStatus.value = product;
+        isStatusDialogVisible.value = true; // Show dialog for pending status
+    } else {
+        toggleStatus(product); // Directly toggle if not pending
+    }
+};
 
 const form = useForm({
     id: null,
@@ -690,7 +676,6 @@ const form = useForm({
     desc_kh: null,
     unit: "",
     price: null,
-    quantity: null,
     category_id: "",
     pdf_url: "",
     remark: "",
@@ -707,7 +692,6 @@ const openForm = (product = null) => {
         form.name_kh = product.name_kh;
         form.unit = product.unit;
         form.price = product.price;
-        form.quantity = product.quantity;
         form.category_id = product.category_id;
         form.division_id = Number(product.division_id);
         form.desc = product.desc || ""; // ✅ Ensure description is populated
@@ -733,10 +717,69 @@ const viewProduct = (product) => {
 
     isViewDialogVisible.value = true;
 };
-onMounted(()=>{
-    getDepartment().then(response=>{
-    })
-})
+
+const getDepartment = async () => {
+    try {
+        const response = await axios.get('/api/departments'); // Replace with actual API endpoint
+        divisions.value = response.data;
+    } catch (error) {
+        console.error("Error fetching departments:", error);
+    }
+};
+
+// onMounted(() => {
+//     getDepartment();
+// });
+
+const changeStatus = (newStatus) => {
+    if (!selectedProductForStatus.value) return;
+
+    if (!commentText.value.trim()) {
+        toast.add({
+            group: "tc",
+            severity: "error",
+            summary: "Comment Required",
+            detail: "Please enter a comment before proceeding.",
+            life: 3000,
+        });
+        return;
+    }
+
+    router.put(
+        route("products.toggleStatus", { product: selectedProductForStatus.value.id }),
+        { status: newStatus, comment: commentText.value.trim() },
+        {
+            onSuccess: () => {
+                toast.add({
+                    group: "tc",
+                    severity: "success",
+                    summary: "Status Updated",
+                    detail: `Product marked as ${newStatus.toUpperCase()} with comment.`,
+                    life: 3000,
+                });
+
+                selectedProductForStatus.value.status = newStatus;
+                isStatusDialogVisible.value = false;
+                commentText.value = ""; // ✅ Clear comment
+            },
+            onError: () => {
+                toast.add({
+                    group: "tc",
+                    severity: "error",
+                    summary: "Update Failed",
+                    detail: "Could not update product status!",
+                    life: 3000,
+                });
+            },
+        }
+    );
+};
+
+const toggleStatus = (product) => {
+    selectedProductForStatus.value = product;
+    isStatusDialogVisible.value = true;
+};
+
 const submitForm = () => {
     if (!form) {
         toast.add({
