@@ -1,7 +1,7 @@
 <template>
     <Head title="Quotations Printing" />
 
-    <div class="flex justify-start items-center gap-4 ml-20 mb-4">
+    <div class="flex justify-start items-center gap-4 ml-10">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
             <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
@@ -87,14 +87,18 @@
                     <div>
                         <div class="flex flex-col">
                             <span class="font-semibold"
-                                >៛{{ formatNumber(product.pivot.price) }}</span
+                                >៛{{
+                                    formatNumber(
+                                        convertCurrency(product.pivot.price)
+                                    )
+                                }}</span
                             >
                         </div>
                     </div>
                     <div class="font-semibold">
                         ៛{{
                             formatNumber(
-                                (
+                                convertCurrency(
                                     product.pivot.price * product.pivot.quantity
                                 ).toFixed(2)
                             )
@@ -108,57 +112,6 @@
                 Total ({{ currencyLabel }}): {{ currencySymbol
                 }}{{ formatNumber(convertCurrency(quotation.total)) }}
             </p>
-
-            <!-- Catalogs Section: Allow Selection via Checkboxes -->
-            <div class="mt-8">
-                <h2 class="text-xl font-bold mb-2">Select Catalogs to Print</h2>
-                <div
-                    v-for="product in quotation.products"
-                    :key="product.id"
-                    class="mb-4 flex items-center"
-                >
-                    <!-- Checkbox for catalog selection -->
-                    <input
-                        type="checkbox"
-                        :value="product.id"
-                        v-model="selectedCatalogIds"
-                        class="mr-2"
-                    />
-                    <span class="font-semibold">
-                        {{ isUSD ? product.name : product.name_kh }} Catalog:
-                    </span>
-                    <a
-                        v-if="product.pdf_url"
-                        :href="`/pdfs/${product.pdf_url.split('/').pop()}`"
-                        target="_blank"
-                        class="ml-2 text-blue-500 hover:text-blue-700 transition duration-200"
-                    >
-                        View Catalog
-                    </a>
-                </div>
-            </div>
-
-            <!-- Render Only the Selected Catalogs (Optional Section) -->
-            <div v-if="selectedCatalogs.length" class="mt-8">
-                <h2 class="text-xl font-bold mb-2">Catalogs to be Printed</h2>
-                <div
-                    v-for="product in selectedCatalogs"
-                    :key="product.id"
-                    class="mb-4"
-                >
-                    <p class="font-semibold">
-                        {{ isUSD ? product.name : product.name_kh }} Catalog:
-                    </p>
-                    <a
-                        v-if="product.pdf_url"
-                        :href="`/pdfs/${product.pdf_url.split('/').pop()}`"
-                        target="_blank"
-                        class="text-blue-500 hover:text-blue-700 transition duration-200"
-                    >
-                        View Catalog
-                    </a>
-                </div>
-            </div>
 
             <!-- Terms and Conditions -->
             <div class="mt-8">
@@ -200,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
 import Button from "primevue/button";
@@ -226,27 +179,12 @@ const formatNumber = (value) => {
     );
 };
 
-// Print Page function
 const printPage = () => {
     window.print();
 };
-
-// --- Catalog Selection for Printing ---
-const selectedCatalogIds = ref([]);
-
-// Computed array of products selected for printing catalogs
-const selectedCatalogs = computed(() => {
-    return quotation.value.products.filter((p) =>
-        selectedCatalogIds.value.includes(p.id)
-    );
-});
 </script>
 
 <style scoped>
-.print-container {
-    padding: 20px;
-    font-family: Arial, sans-serif;
-}
 .print-area {
     width: 210mm;
     min-height: 297mm;

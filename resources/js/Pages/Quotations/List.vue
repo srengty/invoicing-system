@@ -278,7 +278,9 @@
                             label="Edit"
                             severity="info"
                             @click="editQuotation"
+                            :disabled="selectedQuotation.status === 'Approved'"
                         />
+
                         <Button
                             label="Close"
                             severity="secondary"
@@ -296,7 +298,7 @@
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
-import { onMounted,ref } from "vue";
+import { onMounted, ref } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
@@ -305,7 +307,7 @@ import { useForm } from "@inertiajs/vue3";
 import VirtualScroller from "primevue/virtualscroller";
 import moment from "moment";
 import Dropdown from "primevue/dropdown";
-import { router,usePage  } from "@inertiajs/vue3"; // for printing
+import { router, usePage } from "@inertiajs/vue3"; // for printing
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 
@@ -366,12 +368,29 @@ const openForm = (quotations = null) => {
     isFormVisible.value = true;
 };
 const isFormVisible = ref(false);
-
 const editQuotation = () => {
-    router.get(route('quotations.edit', selectedQuotation.value.id));
-    isViewDialogVisible.value = false;
-};
+    if (selectedQuotation.value.status !== "Approved") {
+        console.log("Sending to create.vue:", selectedQuotation.value); // Debugging log
 
+        router.visit(route("quotations.create"), {
+            method: "get",
+            data: {
+                quotation: selectedQuotation.value, // ✅ Send as request data
+            },
+            preserveState: true, // Keeps the state between navigation
+            preserveScroll: true, // Prevents page from resetting scroll position
+        });
+
+        isViewDialogVisible.value = false;
+    } else {
+        showToast(
+            "error",
+            "Edit Disabled",
+            "You cannot edit an approved quotation!",
+            3000
+        );
+    }
+};
 
 const closeForm = () => {
     isFormVisible.value = false;

@@ -1,5 +1,5 @@
 <template>
-    <Head title="Create Quotation" />
+    <Head :title="isEditing ? 'Edit Quotation' : 'Create Quotation'" />
     <GuestLayout>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
@@ -54,11 +54,12 @@
                             :filter="true"
                             v-model="form.customer_id"
                             :options="formattedCustomers"
-                            optionLabel="label"
+                            optionLabel="name"
                             optionValue="id"
                             id="customer_id"
                             placeholder="Select a customer"
                             class="w-full md:w-60"
+                            @change="updateCustomerDetails"
                         />
                     </div>
                     <div class="w-10">
@@ -312,13 +313,12 @@
             <!-- Form Buttons -->
             <div class="buttons mt-4 mr-4 mb-10 flex justify-end">
                 <Button
-                    v-ripple
-                    label="Submit"
+                    :label="isEditing ? 'Update' : 'Create'"
                     icon="pi pi-check"
                     type="submit"
                     class="p-button-raised"
-                    @click="submit"
-                /><Button
+                />
+                <Button
                     v-ripple
                     icon="pi pi-times"
                     label="Cancel"
@@ -470,7 +470,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
@@ -491,10 +491,10 @@ import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
 import { Inertia } from "@inertiajs/inertia";
 import { router } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
 
 // Toast for notifications
 const toast = useToast();
-
 const showToast = (
     type = "success",
     title = "Success",
@@ -508,33 +508,62 @@ const showToast = (
         group: "tr",
     });
 };
+const preventMinus = (event) => {
+    if (event.key === "-") {
+        event.preventDefault();
+    }
+};
+const pageProps = usePage().props;
+const quotation = ref(pageProps.quotation || null);
+const isEditing = ref(!!quotation.value);
+
+onMounted(() => {
+    if (quotation.value) {
+        form.customer_id = quotation.value.customer_id.toString(); // Ensure it's a string
+        updateCustomerDetails();
+    }
+});
 
 const props = defineProps({
     customers: Array,
     products: Array,
     customerCategories: Array,
     productCategories: Array,
-});
-const preventMinus = (event) => {
-    if (event.key === "-") {
-        event.preventDefault();
-    }
-};
-// Define the Inertia form
-const form = useForm({
-    quotation_no: null,
-    quotation_date: null,
-    status: "Pending",
-    address: "",
-    phone_number: "",
-    customer_id: null,
-    total: 0,
-    tax: 0,
-    grand_total: 0,
-    products: [], // Will be an array of objects: { id, quantity }
-    terms: "",
+    quotation: Object, // Accept quotation data when editing
 });
 
+// Define the Inertia form
+const form = useForm({
+    quotation_no: quotation.value?.quotation_no || "",
+    quotation_date: quotation.value?.quotation_date || "",
+    status: quotation.value?.status || "Pending",
+    address: quotation.value?.address || "",
+    phone_number: quotation.value?.phone_number || "",
+    customer_id: quotation.value?.customer_id || "",
+    total: quotation.value?.total || 0,
+    tax: quotation.value?.tax || 0,
+    grand_total: quotation.value?.grand_total || 0,
+    products: quotation.value?.products || [],
+    terms: quotation.value?.terms || "",
+});
+const updateCustomerDetails = () => {
+    const selectedCustomer = formattedCustomers.value.find(
+        (customer) => customer.id == form.customer_id
+    );
+
+    if (selectedCustomer) {
+        form.address = selectedCustomer.address || "";
+        form.phone_number = selectedCustomer.phone_number || "";
+    }
+
+    console.log("Updated Customer Data:", selectedCustomer); // Debugging
+};
+watch(
+    () => form.customer_id,
+    (newValue) => {
+        console.log("Customer ID changed:", newValue);
+    }
+);
 
 console.log(props.products);
 
@@ -622,7 +651,7 @@ const validateForm = () => {
 };
 
 const getCategoryName = (categoryId) => {
-    if (!categoryId) return "Unknown"; // Ensure it doesn't show null
+    if (!categoryId) return "Unknown";
     const category = props.productCategories.find(
         (cat) => cat.id === categoryId
     );
@@ -648,12 +677,16 @@ const addItemToTable = () => {
             selectedProduct.value.quantity,
     };
 
-    // If not in editing mode and there's already an item in the quotation, prevent adding another
-    if (!editingProduct.value && selectedProductsData.value.length > 0) {
+    // Check if the same product name already exists
+    const duplicateItem = selectedProductsData.value.find(
+        (prod) => prod.name === newItem.name
+    );
+
+    if (duplicateItem && !editingProduct.value) {
         showToast(
             "error",
             "Error",
-            "Only one item is allowed per quotation.",
+            "This item is already in the quotation.",
             3000
         );
         return;
@@ -758,8 +791,8 @@ watch(selectedProductIds, (newIds) => {
 
 const formattedCustomers = computed(() => {
     return props.customers.map((customer) => ({
-        id: customer.id,
-        label: `${customer.name} (${customer.code})`,
+        id: customer.id.toString(), // Ensure ID is a string for proper binding
+        name: customer.name, // Display name in dropdown
         address: customer.address,
         phone_number: customer.phone_number,
     }));
@@ -767,16 +800,32 @@ const formattedCustomers = computed(() => {
 
 watch(
     () => form.customer_id,
+    (newVal) => {
+        console.log("Selected Customer ID:", newVal);
+    }
+);
+const selectedCustomer = computed(() => {
+    return (
+        formattedCustomers.value.find((c) => c.id === form.customer_id) || null
+    );
+});
+
+const selectedCustomerName = computed(() => {
+    const customer = formattedCustomers.value.find(
+        (c) => c.id == form.customer_id
+    );
+    return customer ? customer.name : "";
+});
+
+watch(
+    () => form.customer_id,
     (newCustomerId) => {
-        const selectedCustomer = formattedCustomers.value.find(
-            (customer) => customer.id === newCustomerId
-        );
-        if (selectedCustomer) {
-            form.address = selectedCustomer.address || "";
-            form.phone_number = selectedCustomer.phone_number || "";
-        } else {
-            form.address = "";
-            form.phone_number = "";
+        if (newCustomerId) {
+            const customer = props.customers.find((c) => c.id == newCustomerId);
+            if (customer) {
+                form.address = customer.address || "";
+                form.phone_number = customer.phone_number || "";
+            }
         }
     }
 );
@@ -798,13 +847,6 @@ const updateProductSubtotal = (row) => {
 const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
 };
-
-// const calculateExchangeRate = computed(() => {
-//     if (calculateTotalUSD.value == null || calculateTotalUSD.value === 0)
-//         return "";
-//     const exchangeRate = calculateTotal.value / calculateTotalUSD.value;
-//     return exchangeRate.toFixed(2); // Format exchange rate
-// });
 
 const calculateTotalUSD = ref(null);
 const calculateExchangeRate = computed(() => {
@@ -858,7 +900,7 @@ const editProduct = (productId) => {
     );
     if (productToEdit) {
         selectedProduct.value = { ...productToEdit };
-        editingProduct.value = productToEdit; // Set product to be edited
+        selectedItemId.value = productToEdit.id;
         isAddItemDialogVisible.value = true;
     }
 };
@@ -872,35 +914,63 @@ const submit = (event) => {
         return;
     }
 
+    // Prepare product data before submitting
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
+        includeCatalog: prod.includeCatalog ?? false, // Store checkbox selection
     }));
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-    // Send form data via Inertia
-    form.post(route("quotations.store"), {
-        onSuccess: () => {
-            showToast(
-                "success",
-                "Success",
-                "Quotation created successfully!",
-                3000
-            );
-        },
-        onError: (errors) => {
-            console.error(errors);
-            showToast(
-                "error",
-                "Submission Failed",
-                "Could not create quotation.",
-                4000
-            );
-        },
-    });
+    // Determine if we're creating or updating
+    if (form.id) {
+        // Update existing quotation
+        form.put(route("quotations.update", { id: form.id }), {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Updated",
+                    "Quotation updated successfully!",
+                    3000
+                );
+                router.get(route("quotations.list"));
+            },
+            onError: (errors) => {
+                console.error(errors);
+                showToast(
+                    "error",
+                    "Update Failed",
+                    "Could not update quotation.",
+                    4000
+                );
+            },
+        });
+    } else {
+        // Create new quotation
+        form.post(route("quotations.store"), {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Created",
+                    "Quotation created successfully!",
+                    3000
+                );
+                router.get(route("quotations.list"));
+            },
+            onError: (errors) => {
+                console.error(errors);
+                showToast(
+                    "error",
+                    "Submission Failed",
+                    "Could not create quotation.",
+                    4000
+                );
+            },
+        });
+    }
 };
 
 const cancelOperation = () => {

@@ -33,20 +33,23 @@ class QuotationController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        $customers = Customer::all(); // Fetch customer id and name`
-        $products = Product::all();
-        $customerCategories = CustomerCategory::all();
-        $productCategories = Category::all();
-        //         dd($products);
-        return inertia('Quotations/Create', [
-            'customers' => $customers,
-            'products' => $products,
-            'customerCategories' => $customerCategories,
-            'productCategories' => $productCategories
-        ]);
-    }
+    public function create(Request $request)
+{
+    $customers = Customer::all();
+    $products = Product::all();
+    $customerCategories = CustomerCategory::all();
+    $productCategories = Category::all();
+
+    $quotation = $request->input('quotation', null);
+
+    return inertia('Quotations/Create', [
+       'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
+        'products' => $products,
+        'customerCategories' => $customerCategories,
+        'productCategories' => $productCategories,
+        'quotation' => $quotation,
+    ]);
+}
 
     public function updateStatus(Request $request, $id)
 {
