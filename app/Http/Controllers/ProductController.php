@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Division;
 use App\Models\ProductComment;
 use App\Models\Product;
 use GuzzleHttp\Client;
@@ -20,12 +19,10 @@ class ProductController extends Controller
             $query->latest();
         }])->orderBy('created_at', 'desc')->get();
         $categories = Category::select('id', 'category_name_english')->get();
-        $divisions = Division::select('id', 'division_name_english')->get();
 
         return Inertia::render('Products/Index', [
             'products' => $products,
             'categories' => $categories,
-            'divisions' => $divisions,
         ]);
     }
 

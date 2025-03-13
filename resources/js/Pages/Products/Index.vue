@@ -44,12 +44,14 @@
                     <!-- ✅ Status Button Column -->
                     <Column header="Status">
                         <template #body="{ data }">
-                            <Button
+                            <div class="flex">
+                                <Button
                                 :icon="data.status === 'approved' ? 'pi pi-check' : data.status === 'rejected' ? 'pi pi-times' : 'pi pi-clock'"
                                 :label="data.status === 'approved' ? 'Approved' : data.status === 'rejected' ? 'Rejected' : 'Pending'"
                                 :class="data.status === 'approved' ? 'p-button-success' : data.status === 'rejected' ? 'p-button-danger' : 'p-button-warning'"
                                 size="small"
                                 @click="toggleStatus(data)"
+                                class="text-sm flex-grow"
                                 outlined
                             />
                             <Button 
@@ -59,6 +61,7 @@
                                 @click="viewComment(data.comments)" 
                                 outlined 
                             />
+                            </div>
                         </template>
                     </Column>
 
@@ -274,15 +277,15 @@
                             <!-- Division -->
                             <div class="field">
                                 <label for="division" class="required">Division</label>
-                                <Select
-                                    id="division"
+                                <Dropdown
                                     v-model="form.division_id"
                                     :options="divisionOptions"
                                     optionLabel="name"
                                     optionValue="id"
+                                    placeholder="Select a Division"
+                                    :filter="true"
+                                    filterPlaceholder="Search divisions..."
                                     class="w-full"
-                                    required
-                                    placeholder="Select Division"
                                 />
                                 <Message v-if="form.errors.division_id" severity="error" size="small" variant="simple"
                                 class="col-span-2">
@@ -487,9 +490,9 @@
                     <p class="text-lg text-center pb-2">Do you want to approve or reject this product?</p>
                     <textarea v-model="commentText" placeholder="Enter your comment..." class="w-full p-2 border rounded"></textarea>
 
-                    <div class="flex justify-center gap-4 mt-4">
-                        <Button label="Reject" icon="pi pi-times" class="p-button-danger" @click="changeStatus('rejected')" size="small" outlined/>
-                        <Button label="Approve" icon="pi pi-check" class="p-button-success" @click="changeStatus('approved') " size="small" outlined/>
+                    <div class="flex justify-center gap-4 mt-4 text-sm">
+                        <Button label="Reject" icon="pi pi-times" class="p-button-danger text-sm" @click="changeStatus('rejected')" size="small" outlined/>
+                        <Button label="Approve" icon="pi pi-check" class="p-button-success text-sm" @click="changeStatus('approved') " size="small" outlined/>
                     </div>
                 </div>
             </Dialog>
@@ -528,13 +531,31 @@ import Toast from "primevue/toast";
 import { useConfirm } from "primevue/useconfirm";
 import { router } from "@inertiajs/vue3";
 import {getDepartment} from '../../data';
+import Dropdown from "primevue/dropdown";
 
 const confirm = useConfirm();
 const toast = useToast();
+const divisionOptions = ref([]);
 
-onMounted(async()=>{
-    const data=await getDepartment();
-})
+onMounted(async () => {
+  const response = await getDepartment();
+  const data = response.data; // Extract the `data` array
+
+  // Filter departments with status === "service"
+  const serviceDepartments = data.filter(dept => dept.status === "service");
+
+  if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
+    divisionOptions.value = serviceDepartments.map(dept => ({
+      name: dept.name, // Use the `name` field from your data
+      id: dept.id      // Use the `id` field from your data
+    }));
+  } else {
+    console.warn('No service departments found.');
+    divisionOptions.value = []; // Ensure it's an empty array to avoid errors
+  }
+
+  console.log('Filtered divisionOptions:', divisionOptions.value); // Debugging: Check the filtered options
+});
 
 const reloadData = () => {
     router.visit(window.location.href, {
@@ -623,7 +644,7 @@ const closeViewDialog = () => {
 };
 
 // ✅ Use usePage().props to get data
-const { products, divisions, categories, errors } = usePage().props;
+const { products, categories } = usePage().props;
 
 // ✅ Computed properties to map dropdown options
 const categoryOptions = computed(
@@ -635,13 +656,13 @@ const categoryOptions = computed(
         })) || []
 );
 
-const divisionOptions = computed(
-    () =>
-        divisions?.map((division) => ({
-            name: division.division_name_english || division.divison_name_khmer,
-            id: division.id,
-        })) || []
-);
+// const divisionOptions = computed(
+//     () =>
+//         divisions?.map((division) => ({
+//             name: division.division_name_english || division.divison_name_khmer,
+//             id: division.id,
+//         })) || []
+// );
 
 const getCategoryName = (categoryId) => {
     const category = categories.find((cat) => cat.id === categoryId);
@@ -651,11 +672,8 @@ const getCategoryName = (categoryId) => {
 };
 
 const getDivisionName = (divisionId) => {
-    const division = divisions.find((cat) => cat.id === divisionId);
-    return division
-        ? division.division_name_english 
-        // || division.divison_name_khmer
-        : "Unknown";
+    const division = divisionOptions.value.find((div) => div.id === divisionId);
+    return division ? division.name : "Unknown";
 };
 
 // Define columns for DataTable
@@ -711,7 +729,7 @@ const openForm = (product = null) => {
         form.unit = product.unit;
         form.price = product.price;
         form.category_id = product.category_id;
-        form.division_id = Number(product.division_id);
+        form.division_id = product.division_id;
         form.desc = product.desc || ""; // ✅ Ensure description is populated
         form.desc_kh = product.desc_kh || "";
         form.remark = product.remark || "";

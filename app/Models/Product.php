@@ -42,13 +42,6 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Get the division associated with the product.
-     */
-    public function division()
-    {
-        return $this->belongsTo(Division::class);
-    }
 
     /**
      * Many-to-Many relationship with Invoice.
