@@ -172,7 +172,7 @@
                             </span> -->
                             <span class="text-sm font-bold">
                                 {{
-                                    slotProps.data.remark.length > 15
+                                    slotProps.data.remark > 15
                                         ? slotProps.data.remark.slice(0, 15) +
                                           "..."
                                         : slotProps.data.remark
@@ -909,7 +909,6 @@ const editProduct = (productId) => {
         editingProduct.value = productToEdit; // ✅ Set for tracking updates
     }
 };
-
 
 const submit = (event) => {
     if (event && typeof event.preventDefault === "function") {
