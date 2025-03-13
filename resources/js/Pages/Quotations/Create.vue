@@ -519,8 +519,15 @@ const isEditing = ref(!!quotation.value);
 
 onMounted(() => {
     if (quotation.value) {
-        form.customer_id = quotation.value.customer_id.toString(); // Ensure it's a string
-        updateCustomerDetails();
+        form.customer_id = quotation.value.customer_id.toString();
+        form.quotation_no = quotation.value.quotation_no;
+        form.quotation_date = quotation.value.quotation_date;
+        form.address = quotation.value.address;
+        form.phone_number = quotation.value.phone_number;
+        form.status = quotation.value.status;
+        form.products = quotation.value.products || [];
+
+        updateCustomerDetails(); // ✅ Ensure customer details update
     }
 });
 
@@ -556,7 +563,7 @@ const updateCustomerDetails = () => {
         form.phone_number = selectedCustomer.phone_number || "";
     }
 
-    console.log("Updated Customer Data:", selectedCustomer); // Debugging
+    console.log("Updated Customer Data:", selectedCustomer);
 };
 watch(
     () => form.customer_id,
@@ -564,8 +571,6 @@ watch(
         console.log("Customer ID changed:", newValue);
     }
 );
-
-console.log(props.products);
 
 const status = ref("");
 const isApproved = ref(false);
@@ -900,10 +905,11 @@ const editProduct = (productId) => {
     );
     if (productToEdit) {
         selectedProduct.value = { ...productToEdit };
-        selectedItemId.value = productToEdit.id;
         isAddItemDialogVisible.value = true;
+        editingProduct.value = productToEdit; // ✅ Set for tracking updates
     }
 };
+
 
 const submit = (event) => {
     if (event && typeof event.preventDefault === "function") {

@@ -59,12 +59,13 @@
                     <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
                             <span
+                                class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                 :class="{
-                                    'p-2 border rounded bg-yellow-100 text-yellow-800 border-yellow-400':
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
                                         slotProps.data.status === 'Pending',
-                                    'p-2 border rounded bg-red-100 text-red-800 border-red-400':
+                                    'bg-red-100 text-red-800 border-red-400':
                                         slotProps.data.status === 'Revise',
-                                    'p-2 border rounded bg-green-100 text-green-800 border-green-400':
+                                    'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.status === 'Approved',
                                 }"
                             >
@@ -72,6 +73,7 @@
                             </span>
                         </template>
                     </Column>
+
                     <Column
                         field="customer_status"
                         header="Customer Status"
@@ -79,14 +81,15 @@
                     >
                         <template #body="slotProps">
                             <span
+                                class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                 :class="{
-                                    'p-2 border rounded bg-blue-100 text-blue-800 border-blue-400':
+                                    'bg-blue-100 text-blue-800 border-blue-400':
                                         slotProps.data.customer_status ===
                                         'Sent',
-                                    'p-2 border rounded bg-green-100 text-green-800 border-green-400':
+                                    'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.customer_status ===
                                         'Accept',
-                                    'p-2 border rounded bg-red-100 text-red-800 border-red-400':
+                                    'bg-red-100 text-red-800 border-red-400':
                                         slotProps.data.customer_status ===
                                         'Reject',
                                 }"
@@ -110,6 +113,7 @@
                             </span>
                         </template>
                     </Column>
+
                     <Column header="Comment / Role" style="width: 15%">
                         <template #body="slotProps">
                             <div
@@ -370,14 +374,14 @@ const openForm = (quotations = null) => {
 const isFormVisible = ref(false);
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
-        console.log("Sending to create.vue:", selectedQuotation.value); // Debugging log
+        console.log("Editing quotation:", selectedQuotation.value);
 
         router.visit(route("quotations.create"), {
             method: "get",
             data: {
-                quotation: selectedQuotation.value, // ✅ Send as request data
+                quotation: selectedQuotation.value, // ✅ Pass quotation data
             },
-            preserveState: true, // Keeps the state between navigation
+            preserveState: true, // Keeps the form state
             preserveScroll: true, // Prevents page from resetting scroll position
         });
 

@@ -13,14 +13,13 @@
                         </h1>
                     </div>
                     <div class="flex items-center gap-2">
-
                         <InputText
                             v-model="searchTerm"
                             placeholder="Search by Name or Code"
                             class="w-96"
                             size="small"
                         />
-                           <Button
+                        <Button
                             icon="pi pi-plus"
                             label="New"
                             @click="isCreateCustomerVisible = true"
@@ -94,11 +93,13 @@
                                             ? 'Deactivate'
                                             : 'Activate'
                                     "
-                                    :class="
-                                        slotProps.data.active
-                                            ? 'p-button-danger'
-                                            : 'p-button-success'
-                                    "
+                                    :class="{
+                                        'p-button-danger':
+                                            slotProps.data.active,
+                                        'p-button-success':
+                                            !slotProps.data.active,
+                                        ' w-28 h-8 flex items-center justify-center': true,
+                                    }"
                                     aria-label="Toggle Active Status"
                                     size="small"
                                     @click="toggleActive(slotProps.data)"
