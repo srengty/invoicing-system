@@ -1,6 +1,5 @@
 <template>
     <Head title="Customers/Organization Name" />
-    <router-view />
     <ConfirmDialog />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
@@ -14,14 +13,13 @@
                         </h1>
                     </div>
                     <div class="flex items-center gap-2">
-
                         <InputText
                             v-model="searchTerm"
                             placeholder="Search by Name or Code"
                             class="w-96"
                             size="small"
                         />
-                           <Button
+                        <Button
                             icon="pi pi-plus"
                             label="New"
                             @click="isCreateCustomerVisible = true"
@@ -95,11 +93,13 @@
                                             ? 'Deactivate'
                                             : 'Activate'
                                     "
-                                    :class="
-                                        slotProps.data.active
-                                            ? 'p-button-danger'
-                                            : 'p-button-success'
-                                    "
+                                    :class="{
+                                        'p-button-danger':
+                                            slotProps.data.active,
+                                        'p-button-success':
+                                            !slotProps.data.active,
+                                        ' w-28 h-8 flex items-center justify-center': true,
+                                    }"
                                     aria-label="Toggle Active Status"
                                     size="small"
                                     @click="toggleActive(slotProps.data)"
@@ -147,8 +147,6 @@
             >
                 <template #header>
                     <div class="flex items-center gap-2">
-                        <img src="/User.png" alt="Item Customer" class="h-8 w-8 ml-2" />
-                        <span class="text-xl font-semibold bor">Edit Customer</span>
                         <img
                             src="/Item.png"
                             alt="Item Customer"
@@ -177,8 +175,6 @@
             >
                 <template #header>
                     <div class="flex items-center gap-2">
-                        <img src="/User.png" alt="Item Customer" class="h-8 w-8 ml-2" />
-                        <span class="text-xl font-semibold bor">Customer Details</span
                         <img
                             src="/Item.png"
                             alt="Item Customer"
@@ -202,7 +198,6 @@
 </template>
 
 <script setup>
-
 import { computed, ref } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { DataTable, Column, Button, Dialog, InputText } from "primevue";
@@ -217,14 +212,13 @@ import ConfirmDialog from "primevue/confirmdialog";
 import { useConfirm } from "primevue/useconfirm";
 import { router } from "@inertiajs/vue3";
 
+const toast = useToast();
 const confirm = useConfirm();
 
 const props = defineProps({
     customers: Array,
     customerCategories: Array,
 });
-
-const toast = useToast();
 
 const columns = [
     { field: "id", header: "ID", style: { width: "5%" } },
@@ -270,12 +264,6 @@ const deleteCustomer = (id) => {
     if (confirm("Are you sure you want to delete this customer?")) {
         Inertia.delete(route("customers.destroy", id), {
             onSuccess: () => {
-                props.customers = props.customers.filter(customer => customer.id !== id);
-                toast.add({ severity: 'success', summary: 'Deleted', detail: 'Customer deleted successfully!', life: 3000 });
-            },
-            onError: (error) => {
-                toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete customer!', life: 3000 });
-                console.error('Error deleting customer:', error);
                 // Remove the customer from the list if necessary.
                 props.customers = props.customers.filter(
                     (customer) => customer.id !== id
