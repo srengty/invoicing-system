@@ -1,7 +1,7 @@
 <template>
     <Head title="Quotations Printing" />
 
-    <div class="flex justify-start items-center gap-4 ml-20 mb-4">
+    <div class="flex justify-start items-center gap-4 ml-10">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
             <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
@@ -20,16 +20,15 @@
                 icon="pi pi-print"
                 class="px-4 py-2"
                 @click="printPage"
+                size="small"
             />
         </div>
     </div>
+
     <div
         ref="printArea"
         class="flex-col justify-center print-area a4-size text-sm"
     >
-        <!-- <div class="flex flex-row m-4">
-        <Image src="https://itc.edu.kh/wp-content/uploads/2021/02/cropped-Logo-ITC.png" alt="Image" width="120" />
-    </div> -->
         <h1 class="flex flex-row justify-center text-3xl font-bold mb-6">
             Quotation
         </h1>
@@ -37,7 +36,7 @@
             <div class="flex flex-col w-1/2 gap-4">
                 <p>
                     <strong>Customer Name:</strong>
-                    {{ quotation.customer?.name || "N/A" }}
+                    {{ quotation.customer_name || "N/A" }}
                 </p>
                 <p><strong>Address:</strong> {{ quotation.address }}</p>
                 <p>
@@ -57,25 +56,25 @@
                 </div>
             </div>
         </div>
-        <!-- Print Section -->
+
+        <!-- Print Section: Products Table -->
         <div ref="printTable" class="page-break">
-            <!-- Table Section -->
             <div v-if="quotation.products?.length" class="table-container">
                 <!-- Table Header -->
                 <div
                     class="grid grid-cols-5 bg-gray-200 py-2 px-4 font-bold text-center border-b"
                 >
-                    <div>Order No.</div>
-                    <div>ITEM</div>
-                    <div>QTY</div>
-                    <div>Unit Price</div>
-                    <div>Sub-Total</div>
+                    <div class="w-1/5">No.</div>
+                    <div class="w-1/5">ITEM</div>
+                    <div class="w-1/5">QTY</div>
+                    <div class="w-3/5">Unit Price</div>
+                    <div class="w-3/5">Sub-Total</div>
                 </div>
 
                 <!-- Table Body -->
                 <div
                     v-for="(product, index) in quotation.products"
-                    :key="index"
+                    :key="product.id"
                     class="grid grid-cols-5 border-b py-2 px-4 text-start"
                 >
                     <div>{{ index + 1 }}</div>
@@ -88,14 +87,18 @@
                     <div>
                         <div class="flex flex-col">
                             <span class="font-semibold"
-                                >៛{{ formatNumber(product.pivot.price) }}</span
+                                >៛{{
+                                    formatNumber(
+                                        convertCurrency(product.pivot.price)
+                                    )
+                                }}</span
                             >
                         </div>
                     </div>
                     <div class="font-semibold">
                         ៛{{
                             formatNumber(
-                                (
+                                convertCurrency(
                                     product.pivot.price * product.pivot.quantity
                                 ).toFixed(2)
                             )
@@ -150,15 +153,13 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
-import Image from "primevue/image";
 import Button from "primevue/button";
 
 const { props } = usePage();
 const quotation = ref(props.quotation);
-const printTable = ref(null);
 const printArea = ref(null);
 
 const isUSD = ref(false);
@@ -178,20 +179,12 @@ const formatNumber = (value) => {
     );
 };
 
-// Store the original title
-const originalTitle = ref(document.title);
-
-// Print Page function
 const printPage = () => {
     window.print();
 };
 </script>
 
 <style scoped>
-.print-container {
-    padding: 20px;
-    font-family: Arial, sans-serif;
-}
 .print-area {
     width: 210mm;
     min-height: 297mm;
@@ -201,22 +194,14 @@ const printPage = () => {
     margin: auto;
 }
 
-@media screen {
-    .print-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background-color: #f0f0f0;
-        padding: 20px;
-    }
-}
-
+/* Hide checkboxes in printed output if desired */
 @media print {
+    input[type="checkbox"] {
+        display: none;
+    }
     .mt-6 {
         display: none !important;
     }
-
     .print-area {
         margin: 0;
         padding: 0;
@@ -230,7 +215,6 @@ const printPage = () => {
         page-break-after: auto;
         page-break-inside: auto;
     }
-
     .table-container div {
         page-break-inside: avoid;
     }

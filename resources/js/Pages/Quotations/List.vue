@@ -45,6 +45,11 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
+                    <Column header="No." style="width: 5%">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
@@ -54,12 +59,13 @@
                     <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
                             <span
+                                class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                 :class="{
-                                    'p-2 border rounded bg-yellow-100 text-yellow-800 border-yellow-400':
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
                                         slotProps.data.status === 'Pending',
-                                    'p-2 border rounded bg-red-100 text-red-800 border-red-400':
+                                    'bg-red-100 text-red-800 border-red-400':
                                         slotProps.data.status === 'Revise',
-                                    'p-2 border rounded bg-green-100 text-green-800 border-green-400':
+                                    'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.status === 'Approved',
                                 }"
                             >
@@ -67,6 +73,7 @@
                             </span>
                         </template>
                     </Column>
+
                     <Column
                         field="customer_status"
                         header="Customer Status"
@@ -74,14 +81,15 @@
                     >
                         <template #body="slotProps">
                             <span
+                                class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                 :class="{
-                                    'p-2 border rounded bg-blue-100 text-blue-800 border-blue-400':
+                                    'bg-blue-100 text-blue-800 border-blue-400':
                                         slotProps.data.customer_status ===
                                         'Sent',
-                                    'p-2 border rounded bg-green-100 text-green-800 border-green-400':
+                                    'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.customer_status ===
                                         'Accept',
-                                    'p-2 border rounded bg-red-100 text-red-800 border-red-400':
+                                    'bg-red-100 text-red-800 border-red-400':
                                         slotProps.data.customer_status ===
                                         'Reject',
                                 }"
@@ -105,6 +113,7 @@
                             </span>
                         </template>
                     </Column>
+
                     <Column header="Comment / Role" style="width: 15%">
                         <template #body="slotProps">
                             <div
@@ -270,6 +279,13 @@
                             "
                         />
                         <Button
+                            label="Edit"
+                            severity="info"
+                            @click="editQuotation"
+                            :disabled="selectedQuotation.status === 'Approved'"
+                        />
+
+                        <Button
                             label="Close"
                             severity="secondary"
                             @click="showCancel"
@@ -286,7 +302,7 @@
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
@@ -295,7 +311,7 @@ import { useForm } from "@inertiajs/vue3";
 import VirtualScroller from "primevue/virtualscroller";
 import moment from "moment";
 import Dropdown from "primevue/dropdown";
-import { router } from "@inertiajs/vue3"; // for printing
+import { router, usePage } from "@inertiajs/vue3"; // for printing
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 
@@ -305,6 +321,9 @@ const selectedQuotation = ref({});
 const selectedQuo_customer = ref([]);
 const userRole = ref("manager");
 const comment = ref("");
+
+const formMode = ref("create");
+const quotationData = ref({});
 
 const showToast = (
     type = "success",
@@ -351,6 +370,30 @@ const openForm = (quotations = null) => {
         form.reset();
     }
     isFormVisible.value = true;
+};
+const isFormVisible = ref(false);
+const editQuotation = () => {
+    if (selectedQuotation.value.status !== "Approved") {
+        console.log("Editing quotation:", selectedQuotation.value);
+
+        router.visit(route("quotations.create"), {
+            method: "get",
+            data: {
+                quotation: selectedQuotation.value, // ✅ Pass quotation data
+            },
+            preserveState: true, // Keeps the form state
+            preserveScroll: true, // Prevents page from resetting scroll position
+        });
+
+        isViewDialogVisible.value = false;
+    } else {
+        showToast(
+            "error",
+            "Edit Disabled",
+            "You cannot edit an approved quotation!",
+            3000
+        );
+    }
 };
 
 const closeForm = () => {

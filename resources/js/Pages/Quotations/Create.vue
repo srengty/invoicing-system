@@ -1,5 +1,5 @@
 <template>
-    <Head title="Create Quotation" />
+    <Head :title="isEditing ? 'Edit Quotation' : 'Create Quotation'" />
     <GuestLayout>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
@@ -21,7 +21,9 @@
                         />
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label for="quotation_date">Date:</label>
+                        <label for="quotation_date" class="required"
+                            >Date:</label
+                        >
                         <DatePicker
                             disabled
                             v-model="form.quotation_date"
@@ -45,16 +47,19 @@
                     class="flex flex-row gap-4 items-end md:grid-cols-4 w-full"
                 >
                     <div class="flex flex-col gap-2">
-                        <label for="customer_id">Customer/Organization</label>
+                        <label for="customer_id" class="required"
+                            >Customer/Organization</label
+                        >
                         <Select
                             :filter="true"
                             v-model="form.customer_id"
                             :options="formattedCustomers"
-                            optionLabel="label"
+                            optionLabel="name"
                             optionValue="id"
                             id="customer_id"
                             placeholder="Select a customer"
                             class="w-full md:w-60"
+                            @change="updateCustomerDetails"
                         />
                     </div>
                     <div class="w-10">
@@ -72,7 +77,7 @@
 
                 <!-- <div class="grid grid-cols-1 md:grid-cols-5"> -->
                 <div class="flex flex-col gap-2 w-full md:ml-32">
-                    <label for="address">Address:</label>
+                    <label for="address" class="required">Address:</label>
                     <IconField class="w-full md:w-60">
                         <InputText
                             id="address"
@@ -89,9 +94,10 @@
                     </IconField>
                 </div>
 
-
                 <div class="flex flex-col gap-2 w-full md:ml-28">
-                    <label for="phone_number">Contact:</label>
+                    <label for="phone_number" class="required"
+                        >Phone number:</label
+                    >
                     <IconField class="w-full md:w-60">
                         <InputText
                             id="phone_number"
@@ -179,8 +185,7 @@
                             <InputText
                                 v-model="slotProps.data.quantity"
                                 @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
-
+                                class="w-5/4"
                                 size="small"
                             />
                         </template>
@@ -195,8 +200,8 @@
                                 @keydown="preventMinus"
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
-                                class="w-full"
                                 placeholder="Enter in USD"
+                                class="w-5/6"
                                 size="small"
                             />
                         </template>
@@ -211,6 +216,7 @@
                             >
                         </template>
                     </Column>
+
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2 items-center">
@@ -243,11 +249,15 @@
                             </div>
                         </template>
                     </Column>
+                    <Column header="Print Catalog">
+                        <template #body="slotProps">
+                            <Checkbox v-model="slotProps.data.includeCatalog" />
+                        </template>
+                    </Column>
                 </DataTable>
 
-
                 <!-- Totals Summary -->
-                <div class="pl-2 pr-60">
+                <div class="pl-2 pr-6">
                     <div class="total-container mt-4 flex justify-between">
                         <p class="font-bold">Total KHR</p>
                         <p class="font-bold">
@@ -257,14 +267,23 @@
                     <div class="total-container mt-4 flex justify-between">
                         <p class="font-bold">Total USD</p>
                         <p class="font-bold">
-                            <InputNumber
-                                v-model="calculateTotalUSD"
+                            <!-- The v-model binding automatically updates calculateTotalUSD -->
+                            <input
+                                type="number"
+                                v-model.number="calculateTotalUSD"
+                                placeholder="Enter USD"
+                                :minFractionDigits="2"
+                                :maxFractionDigits="2"
+                                class="w-1/7 h-9 text-sm"
+                            />
+                            <!-- <InputNumber
+                                v-model.number="calculateTotalUSD"
                                 class="text-right"
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
-                                placeholder="Enter USD"
                                 size="small"
-                            />
+                                placeholder="Enter USD"
+                            /> -->
                         </p>
                     </div>
                     <div class="grand-total-container flex justify-between">
@@ -273,23 +292,10 @@
                             {{ calculateExchangeRate }}
                         </p>
                     </div>
-                    <div class="mt-2 flex justify-between items-center">
-                        <!-- Tax -->
-                        <!--                <div>-->
-                        <!--                  <label for="tax" class="font-bold">Tax</label>-->
-                        <!--                  <InputText-->
-                        <!--                    id="tax"-->
-                        <!--                    v-model="form.tax"-->
-                        <!--                    placeholder="0"-->
-                        <!--                    class="w-24 ml-2"-->
-                        <!--                    @input="updateTax"-->
-                        <!--                  />-->
-                        <!--                </div>-->
-                    </div>
                 </div>
             </div>
 
-            <div class="pl-8 pt-5 grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-1 gap-4">
                 <label for="terms" class="font-bold"
                     >Terms &amp; Conditions:</label
                 >
@@ -300,20 +306,19 @@
                     cols="30"
                     class="w-full md:w-2/3"
                     placeholder="Enter or edit your Terms & Conditions here"
+                    size="small"
                 />
             </div>
 
-
             <!-- Form Buttons -->
-            <div class="buttons mt-4 mr-4 flex justify-end">
+            <div class="buttons mt-4 mr-4 mb-10 flex justify-end">
                 <Button
-                    v-ripple
-                    label="Submit"
+                    :label="isEditing ? 'Update' : 'Create'"
                     icon="pi pi-check"
                     type="submit"
                     class="p-button-raised"
-                    @click="submit"
-                /><Button
+                />
+                <Button
                     v-ripple
                     icon="pi pi-times"
                     label="Cancel"
@@ -360,7 +365,7 @@
         <div class="p-fluid grid gap-4 text-sm">
             <!-- Item Selection -->
             <div class="field w-full">
-                <label for="item">Item</label> <br />
+                <label for="item" class="required">Item</label> <br />
                 <AutoComplete
                     v-model="selectedItem"
                     :suggestions="filteredProducts"
@@ -375,7 +380,9 @@
 
             <!-- Item Category (Auto-complete, Read-Only) -->
             <div class="field">
-                <label for="item-category">Item Category</label>
+                <label for="item-category" class="required"
+                    >Item Category</label
+                >
                 <InputText
                     :value="getCategoryName(selectedProduct.category_id)"
                     class="w-full text-sm"
@@ -386,7 +393,7 @@
 
             <!-- Unit Price (Auto-complete, Editable) -->
             <div class="field">
-                <label for="unit-price">Unit Price</label>
+                <label for="unit-price" class="required">Unit Price</label>
                 <InputNumber
                     v-model="selectedProduct.price"
                     :min="0"
@@ -398,7 +405,7 @@
 
             <!-- Account Code (Auto-complete, Read-Only) -->
             <div class="field">
-                <label for="account-code">Account Code</label>
+                <label for="account-code" class="required">Account Code</label>
                 <InputText
                     v-model="selectedProduct.acc_code"
                     class="w-full text-sm"
@@ -409,7 +416,7 @@
 
             <!-- Quantity -->
             <div class="field">
-                <label for="quantity">Quantity</label>
+                <label for="quantity" class="required">Quantity</label>
                 <InputNumber
                     v-model="selectedProduct.quantity"
                     class="w-full text-sm"
@@ -417,7 +424,6 @@
                     :min="1"
                 />
             </div>
-
 
             <!-- View Catalog -->
             <div v-if="selectedProduct.pdf_url" class="text-start">
@@ -427,7 +433,7 @@
                     target="_blank"
                     class="text-blue-500 hover:text-blue-700 transition duration-200"
                 >
-                    📄 View PDF
+                    📄 View Catelog
                 </a>
             </div>
             <p v-else class="text-center text-gray-400">No PDF available</p>
@@ -464,7 +470,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
@@ -485,10 +491,10 @@ import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
 import { Inertia } from "@inertiajs/inertia";
 import { router } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
 
 // Toast for notifications
 const toast = useToast();
-
 const showToast = (
     type = "success",
     title = "Success",
@@ -502,34 +508,69 @@ const showToast = (
         group: "tr",
     });
 };
+const preventMinus = (event) => {
+    if (event.key === "-") {
+        event.preventDefault();
+    }
+};
+const pageProps = usePage().props;
+const quotation = ref(pageProps.quotation || null);
+const isEditing = ref(!!quotation.value);
+
+onMounted(() => {
+    if (quotation.value) {
+        form.customer_id = quotation.value.customer_id.toString();
+        form.quotation_no = quotation.value.quotation_no;
+        form.quotation_date = quotation.value.quotation_date;
+        form.address = quotation.value.address;
+        form.phone_number = quotation.value.phone_number;
+        form.status = quotation.value.status;
+        form.products = quotation.value.products || [];
+
+        updateCustomerDetails(); // ✅ Ensure customer details update
+    }
+});
 
 const props = defineProps({
     customers: Array,
     products: Array,
     customerCategories: Array,
     productCategories: Array,
-});
-const preventMinus = (event) => {
-    if (event.key === "-") {
-        event.preventDefault();
-    }
-};
-// Define the Inertia form
-const form = useForm({
-    quotation_no: null,
-    quotation_date: null,
-    status: "Pending",
-    address: "",
-    phone_number: "",
-    customer_id: null,
-    total: 0,
-    tax: 0,
-    grand_total: 0,
-    products: [], // Will be an array of objects: { id, quantity }
-    terms: "",
+    quotation: Object, // Accept quotation data when editing
 });
 
-console.log(props.products);
+// Define the Inertia form
+const form = useForm({
+    quotation_no: quotation.value?.quotation_no || "",
+    quotation_date: quotation.value?.quotation_date || "",
+    status: quotation.value?.status || "Pending",
+    address: quotation.value?.address || "",
+    phone_number: quotation.value?.phone_number || "",
+    customer_id: quotation.value?.customer_id || "",
+    total: quotation.value?.total || 0,
+    tax: quotation.value?.tax || 0,
+    grand_total: quotation.value?.grand_total || 0,
+    products: quotation.value?.products || [],
+    terms: quotation.value?.terms || "",
+});
+const updateCustomerDetails = () => {
+    const selectedCustomer = formattedCustomers.value.find(
+        (customer) => customer.id == form.customer_id
+    );
+
+    if (selectedCustomer) {
+        form.address = selectedCustomer.address || "";
+        form.phone_number = selectedCustomer.phone_number || "";
+    }
+
+    console.log("Updated Customer Data:", selectedCustomer);
+};
+watch(
+    () => form.customer_id,
+    (newValue) => {
+        console.log("Customer ID changed:", newValue);
+    }
+);
 
 const status = ref("");
 const isApproved = ref(false);
@@ -546,7 +587,6 @@ const selectedItemId = ref(null);
 const filteredProducts = ref([]);
 const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
-
 
 const updateSelectedProductDetails = () => {
     if (selectedItem.value) {
@@ -616,7 +656,7 @@ const validateForm = () => {
 };
 
 const getCategoryName = (categoryId) => {
-    if (!categoryId) return "Unknown"; // Ensure it doesn't show null
+    if (!categoryId) return "Unknown";
     const category = props.productCategories.find(
         (cat) => cat.id === categoryId
     );
@@ -642,13 +682,43 @@ const addItemToTable = () => {
             selectedProduct.value.quantity,
     };
 
-    const existingIndex = selectedProductsData.value.findIndex(
-        (prod) => prod.id === newItem.id
+    // Check if the same product name already exists
+    const duplicateItem = selectedProductsData.value.find(
+        (prod) => prod.name === newItem.name
     );
-    if (existingIndex !== -1) {
-        selectedProductsData.value[existingIndex] = newItem; // Update existing
+
+    if (duplicateItem && !editingProduct.value) {
+        showToast(
+            "error",
+            "Error",
+            "This item is already in the quotation.",
+            3000
+        );
+        return;
+    }
+
+    if (editingProduct.value) {
+        const existingIndex = selectedProductsData.value.findIndex(
+            (prod) => prod.id === editingProduct.value.id
+        );
+        if (existingIndex !== -1) {
+            selectedProductsData.value[existingIndex] = newItem;
+        }
+        editingProduct.value = null;
+        showToast(
+            "success",
+            "Item Updated",
+            "The item has been updated successfully.",
+            3000
+        );
     } else {
-        selectedProductsData.value.push(newItem); // Add new
+        selectedProductsData.value.push(newItem);
+        showToast(
+            "success",
+            "Item Added",
+            "The item has been added to the table.",
+            3000
+        );
     }
 
     closeAddItemDialog();
@@ -704,7 +774,6 @@ const selectCustomer = () => {
 const selectedProductIds = ref([]);
 const selectedProductsData = ref([]);
 
-
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
         if (!selectedProductsData.value.find((prod) => prod.id === id)) {
@@ -727,8 +796,8 @@ watch(selectedProductIds, (newIds) => {
 
 const formattedCustomers = computed(() => {
     return props.customers.map((customer) => ({
-        id: customer.id,
-        label: `${customer.name} (${customer.code})`,
+        id: customer.id.toString(), // Ensure ID is a string for proper binding
+        name: customer.name, // Display name in dropdown
         address: customer.address,
         phone_number: customer.phone_number,
     }));
@@ -736,16 +805,32 @@ const formattedCustomers = computed(() => {
 
 watch(
     () => form.customer_id,
+    (newVal) => {
+        console.log("Selected Customer ID:", newVal);
+    }
+);
+const selectedCustomer = computed(() => {
+    return (
+        formattedCustomers.value.find((c) => c.id === form.customer_id) || null
+    );
+});
+
+const selectedCustomerName = computed(() => {
+    const customer = formattedCustomers.value.find(
+        (c) => c.id == form.customer_id
+    );
+    return customer ? customer.name : "";
+});
+
+watch(
+    () => form.customer_id,
     (newCustomerId) => {
-        const selectedCustomer = formattedCustomers.value.find(
-            (customer) => customer.id === newCustomerId
-        );
-        if (selectedCustomer) {
-            form.address = selectedCustomer.address || "";
-            form.phone_number = selectedCustomer.phone_number || "";
-        } else {
-            form.address = "";
-            form.phone_number = "";
+        if (newCustomerId) {
+            const customer = props.customers.find((c) => c.id == newCustomerId);
+            if (customer) {
+                form.address = customer.address || "";
+                form.phone_number = customer.phone_number || "";
+            }
         }
     }
 );
@@ -770,21 +855,23 @@ const updateTax = () => {
 
 const calculateTotalUSD = ref(null);
 const calculateExchangeRate = computed(() => {
-    if (calculateTotalUSD.value == null || calculateTotalUSD.value === 0)
+    if (!calculateTotalUSD.value) {
         return "";
+    }
     const exchangeRate = calculateTotal.value / calculateTotalUSD.value;
     return exchangeRate.toFixed(2);
 });
-
 const calculateTotal = computed(() => {
     return selectedProductsData.value.reduce(
         (sum, prod) => sum + prod.subTotal,
         0
     );
 });
+const handleUSDInput = (value) => {
+    calculateTotalUSD.value = value;
+};
 
 const exchangeRate = ref(4100);
-
 const calculateTotalKHR = computed(() => {
     if (!calculateTotal.value || !calculateExchangeRate.value) return "0.00";
     return (calculateTotal.value * calculateExchangeRate.value).toFixed(2);
@@ -818,10 +905,11 @@ const editProduct = (productId) => {
     );
     if (productToEdit) {
         selectedProduct.value = { ...productToEdit };
-        selectedItemId.value = productToEdit.id;
         isAddItemDialogVisible.value = true;
+        editingProduct.value = productToEdit; // ✅ Set for tracking updates
     }
 };
+
 
 const submit = (event) => {
     if (event && typeof event.preventDefault === "function") {
@@ -832,36 +920,63 @@ const submit = (event) => {
         return;
     }
 
+    // Prepare product data before submitting
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
+        includeCatalog: prod.includeCatalog ?? false, // Store checkbox selection
     }));
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-
-    // Send form data via Inertia
-    form.post(route("quotations.store"), {
-        onSuccess: () => {
-            showToast(
-                "success",
-                "Success",
-                "Quotation created successfully!",
-                3000
-            );
-        },
-        onError: (errors) => {
-            console.error(errors);
-            showToast(
-                "error",
-                "Submission Failed",
-                "Could not create quotation.",
-                4000
-            );
-        },
-    });
+    // Determine if we're creating or updating
+    if (form.id) {
+        // Update existing quotation
+        form.put(route("quotations.update", { id: form.id }), {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Updated",
+                    "Quotation updated successfully!",
+                    3000
+                );
+                router.get(route("quotations.list"));
+            },
+            onError: (errors) => {
+                console.error(errors);
+                showToast(
+                    "error",
+                    "Update Failed",
+                    "Could not update quotation.",
+                    4000
+                );
+            },
+        });
+    } else {
+        // Create new quotation
+        form.post(route("quotations.store"), {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Created",
+                    "Quotation created successfully!",
+                    3000
+                );
+                router.get(route("quotations.list"));
+            },
+            onError: (errors) => {
+                console.error(errors);
+                showToast(
+                    "error",
+                    "Submission Failed",
+                    "Could not create quotation.",
+                    4000
+                );
+            },
+        });
+    }
 };
 
 const cancelOperation = () => {

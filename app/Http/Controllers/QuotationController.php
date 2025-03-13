@@ -9,9 +9,9 @@ use App\Models\Quotation; // Import Quotation model
 use App\Models\Product; // Import Product model
 use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
-use App\Models\Category;
 use App\Models\CustomerCategory; // Import Customer model
 use App\Models\ProductQuotation;
+use App\Models\Category;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 
@@ -33,20 +33,23 @@ class QuotationController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        $customers = Customer::all(); // Fetch customer id and name`
-        $products = Product::all();
-        $customerCategories = CustomerCategory::all();
-        $productCategories = Category::all();
-        //         dd($products);
-        return inertia('Quotations/Create', [
-            'customers' => $customers,
-            'products' => $products,
-            'customerCategories' => $customerCategories,
-            'productCategories' => $productCategories,
-        ]);
-    }
+    public function create(Request $request)
+{
+    $customers = Customer::all();
+    $products = Product::all();
+    $customerCategories = CustomerCategory::all();
+    $productCategories = Category::all();
+
+    $quotation = $request->input('quotation', null);
+
+    return inertia('Quotations/Create', [
+       'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
+        'products' => $products,
+        'customerCategories' => $customerCategories,
+        'productCategories' => $productCategories,
+        'quotation' => $quotation,
+    ]);
+}
 
     public function updateStatus(Request $request, $id)
 {
@@ -261,6 +264,14 @@ public function storeComment(Request $request, $quotationId)
             // 'tax' => 'required|numeric|min:0',
             // 'grand_total' => 'required|numeric|min:0',
             'status' => 'required|string|max:20',
+            'products'        => 'nullable|array',
+            'products.*.id'   => 'required|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:1',
+            'products.*.price'=> 'required|numeric|min:1',
+            'products.*.acc_code' => 'nullable|string|max:255',
+            'products.*.category_id' => 'nullable|integer|min:0',
+            'products.*.remark' => 'nullable|string|max:255',
+            // 'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // if needed
         ]);
 
         $quotation->update($validated);
