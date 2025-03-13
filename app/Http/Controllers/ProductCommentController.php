@@ -25,10 +25,6 @@ class ProductCommentController extends Controller
         // ✅ Update the product's status
         $product->update(['status' => $request->status]);
 
-        return response()->json([
-            'message' => 'Product status updated with comment.',
-            'comment' => $comment,
-        ]);
     }
 }
 

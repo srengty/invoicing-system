@@ -12,8 +12,9 @@ class ProductComment extends Model
     protected $fillable = ['product_id', 'comment', 'user_name'];
 
     // ✅ Define the relationship with Product
-    public function product()
+    public function comments()
     {
-        return $this->belongsTo(Product::class);
+        return $this->hasMany(ProductComment::class);
     }
+
 }

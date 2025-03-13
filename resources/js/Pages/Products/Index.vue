@@ -52,6 +52,13 @@
                                 @click="toggleStatus(data)"
                                 outlined
                             />
+                            <Button 
+                                v-if="data.comments && data.comments.length > 0" 
+                                icon="pi pi-comment" 
+                                class="p-button-info ml-2" 
+                                @click="viewComment(data.comments)" 
+                                outlined 
+                            />
                         </template>
                     </Column>
 
@@ -193,7 +200,7 @@
                                 {{ selectedProduct?.price ?? "Null" }}
                             </p>
 
-                            <p><strong>Remark:</strong></p>
+                            <!-- <p><strong>Remark:</strong></p>
                             <p
                                 class="text-right font-semibold"
                                 :class="{
@@ -201,7 +208,7 @@
                                 }"
                             >
                                 {{ selectedProduct?.remark ?? "Null" }}
-                            </p>
+                            </p> -->
 
                             <p><strong>Account code:</strong></p>
                             <p
@@ -405,20 +412,6 @@
                                     {{ form.errors.unit }}
                                 </Message>
                             </div>
-                        </div>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="field">
-                                <label class="required">Remark</label>
-                                <InputText
-                                    v-model="form.remark"
-                                    class="w-full text-sm"
-                                    placeholder="Enter Remarks"
-                                />
-                                <Message v-if="form.errors.remark" severity="error" size="small" variant="simple"
-                                class="col-span-2">
-                                    {{ form.errors.remark }}
-                                </Message>
-                            </div>
 
                             <div class="field">
                                 <label class="required">Account Code</label>
@@ -432,6 +425,20 @@
                                     {{ form.errors.acc_code }}
                                 </Message>
                             </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4">
+                            <!-- <div class="field">
+                                <label class="required">Remark</label>
+                                <InputText
+                                    v-model="form.remark"
+                                    class="w-full text-sm"
+                                    placeholder="Enter Remarks"
+                                />
+                                <Message v-if="form.errors.remark" severity="error" size="small" variant="simple"
+                                class="col-span-2">
+                                    {{ form.errors.remark }}
+                                </Message>
+                            </div> -->
 
                             <!-- File Upload -->
                             <div class="grid">
@@ -486,6 +493,15 @@
                     </div>
                 </div>
             </Dialog>
+
+            <Dialog v-model:visible="isCommentDialogVisible" header="Comment" :modal="true" class="w-80">
+                <div class="">
+                    <p class="text-gray-700 rounded border p-2">{{ selectedComment }}</p>
+                    <div class="flex justify-end  mt-4">
+                        <Button label="Close" class="p-button-secondary" @click="isCommentDialogVisible = false" />
+                    </div>
+                </div>
+            </Dialog>
             </div>
         </BodyLayout>
     </GuestLayout>
@@ -511,9 +527,14 @@ import { useToast } from "primevue/usetoast";
 import Toast from "primevue/toast";
 import { useConfirm } from "primevue/useconfirm";
 import { router } from "@inertiajs/vue3";
+import {getDepartment} from '../../data';
 
 const confirm = useConfirm();
 const toast = useToast();
+
+onMounted(async()=>{
+    const data=await getDepartment();
+})
 
 const reloadData = () => {
     router.visit(window.location.href, {
@@ -639,9 +660,7 @@ const getDivisionName = (divisionId) => {
 
 // Define columns for DataTable
 const columns = [
-    // { field: "id", header: "ID" },
     { field: "code", header: "Item Code" },
-    // { field: "name", header: "Name" },
     { field: "name_kh", header: "Name (KH)" },
     { field: "unit", header: "Unit" },
     { field: "price", header: "Price" },
@@ -651,19 +670,18 @@ const columns = [
 const isFormVisible = ref(false);
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
+const selectedComment = ref("");
 const commentText = ref(""); 
+const isCommentDialogVisible = ref(false);
 
 const selectedProductForStatus = ref(null); // ✅ Define this variable
 const isStatusDialogVisible = ref(false); 
 
-const handleStatusClick = (product) => {
-    if (product.status === "pending") {
-        selectedProductForStatus.value = product;
-        isStatusDialogVisible.value = true; // Show dialog for pending status
-    } else {
-        toggleStatus(product); // Directly toggle if not pending
-    }
+const viewComment = (comments) => {
+    selectedComment.value = comments.map(c => c.comment).join('\n'); // Combine all comments into a single string
+    isCommentDialogVisible.value = true;
 };
+
 
 const form = useForm({
     id: null,
@@ -718,22 +736,8 @@ const viewProduct = (product) => {
     isViewDialogVisible.value = true;
 };
 
-const getDepartment = async () => {
-    try {
-        const response = await axios.get('/api/departments'); // Replace with actual API endpoint
-        divisions.value = response.data;
-    } catch (error) {
-        console.error("Error fetching departments:", error);
-    }
-};
-
-// onMounted(() => {
-//     getDepartment();
-// });
-
 const changeStatus = (newStatus) => {
     if (!selectedProductForStatus.value) return;
-
     if (!commentText.value.trim()) {
         toast.add({
             group: "tc",
@@ -757,10 +761,10 @@ const changeStatus = (newStatus) => {
                     detail: `Product marked as ${newStatus.toUpperCase()} with comment.`,
                     life: 3000,
                 });
-
+                // router.reload();
                 selectedProductForStatus.value.status = newStatus;
                 isStatusDialogVisible.value = false;
-                commentText.value = ""; // ✅ Clear comment
+                reloadData();
             },
             onError: () => {
                 toast.add({

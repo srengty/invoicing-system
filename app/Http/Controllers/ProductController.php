@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Division;
+use App\Models\ProductComment;
 use App\Models\Product;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
@@ -15,7 +16,9 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::orderBy('created_at', 'desc')->get();
+        $products = Product::with(['comments' => function ($query) {
+            $query->latest();
+        }])->orderBy('created_at', 'desc')->get();
         $categories = Category::select('id', 'category_name_english')->get();
         $divisions = Division::select('id', 'division_name_english')->get();
 
@@ -38,7 +41,7 @@ class ProductController extends Controller
             'name_kh' => 'required|string|max:255',
             'code' => 'required|string|unique:products,code',
             'unit' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'price' => 'required|numeric|min:100',
             'category_id' => 'required|integer|min:0',
             'desc' => 'nullable|string|max:255',
             'desc_kh' => 'nullable|string|max:255',
@@ -79,7 +82,7 @@ class ProductController extends Controller
             'name' => 'required|string|max:255',
             'name_kh' => 'required|string|max:255',
             'unit' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:100',
             'acc_code' => 'required|string',
             'desc' => 'nullable|string',
             'desc_kh' => 'nullable|string',
@@ -151,14 +154,28 @@ class ProductController extends Controller
         ]);
         dd($departments);
     }
+    
 
     public function toggleStatus(Request $request, Product $product)
     {
-        $request->validate([
+
+        $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected',
+            'comment' => 'nullable|string',
         ]);
 
-        $product->status = $request->status;
-        $product->save();
+        // ✅ Update the product status
+        $product->update(['status' => $validated['status']]);
+
+        $comment = null;
+
+        // ✅ Save or update comment if provided
+        if (!empty($validated['comment'])) {
+            $comment = ProductComment::updateOrCreate(
+                ['product_id' => $product->id], // Ensure one comment per product
+                ['comment' => $validated['comment']]
+            );
+        }
     }
+
 }
