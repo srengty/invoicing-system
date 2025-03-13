@@ -15,8 +15,32 @@
                     <div class="flex items-center gap-2">
                         <InputText
                             v-model="searchTerm"
-                            placeholder="Search by Name or Code"
-                            class="w-96"
+                            placeholder="Search"
+                            class="w-64"
+                            size="small"
+                        />
+
+                        <Button 
+                            v-model="searchType" 
+                            :class="{'p-button-primary': searchType === 'name', 'p-button-outlined': searchType !== 'name'}"
+                            label="Search by Name"
+                            @click="searchType = 'name'"
+                            size="small"
+                        />
+                        <Button 
+                            v-model="searchType" 
+                            :class="{'p-button-primary': searchType === 'code', 'p-button-outlined': searchType !== 'code'}"
+                            label="Search by Code"
+                            @click="searchType = 'code'"
+                            size="small"
+                        />
+
+                        <!-- Search Input -->
+                        
+                        <Button
+                            icon="pi pi-plus"
+                            label="New"
+                            @click="isCreateCustomerVisible = true"
                             size="small"
                         />
                         <Button
@@ -214,6 +238,7 @@ import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
 const confirm = useConfirm();
+const searchType = ref("name"); 
 
 const props = defineProps({
     customers: Array,
@@ -245,12 +270,15 @@ const updateColumns = () => {
 
 // Filter the customers by name or code based on the search term
 const filteredCustomers = computed(() => {
-    // Return the filtered list based on the searchTerm
-    return props.customers.filter(
-        (cust) =>
-            cust.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-            cust.code.toLowerCase().includes(searchTerm.value.toLowerCase())
-    );
+    return props.customers.filter((cust) => {
+        const term = searchTerm.value.toLowerCase();
+        if (searchType.value === "name") {
+            return cust.name.toLowerCase().includes(term);
+        } else if (searchType.value === "code") {
+            return cust.code.toLowerCase().includes(term);
+        }
+        return false;
+    });
 });
 
 const editCustomer = (id) => {

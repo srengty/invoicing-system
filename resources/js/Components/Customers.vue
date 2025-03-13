@@ -344,9 +344,10 @@ import { InputText, Button, Message, Select } from "primevue";
 import { Inertia } from '@inertiajs/inertia';
 import { router, useForm } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
+import { useConfirm } from "primevue/useconfirm";
 
+const confirm = useConfirm();
 const toast = useToast();
-
 
 const props = defineProps({
     mode: {
@@ -442,6 +443,34 @@ const submit = () => {
         return;
     }
 
+    // Check if the credit period is greater than 30 and prompt the user for confirmation
+    if (parseInt(form.credit_period) > 30) {
+        confirm.require({
+            message: "The credit period is over 30 days. Are you sure you want to proceed?",
+            header: "Credit Period Confirmation",
+            icon: "pi pi-exclamation-triangle",
+            accept: () => {
+                // Proceed with form submission if the user accepts
+                handleFormSubmission();
+            },
+            reject: () => {
+                // Don't submit the form if the user rejects
+                toast.add({
+                    severity: "info",
+                    summary: "Action Cancelled",
+                    detail: "The submission has been cancelled.",
+                    life: 3000,
+                });
+            },
+        });
+    } else {
+        // Proceed with form submission if the credit period is 30 or less
+        handleFormSubmission();
+    }
+};
+
+// Function to handle the form submission logic
+const handleFormSubmission = () => {
     if (props.mode === "create") {
         form.post(route("customers.store"), {
             onSuccess: () => {
@@ -513,4 +542,3 @@ const submit = () => {
     color: #006064;
 }
 </style>
->>>>>>> main

@@ -15,6 +15,29 @@
                         />
                         <h1 class="text-xl text-green-600">Manage Items</h1>
                     </div>
+                    <div class="flex items-center gap-2">
+                        
+                        <!-- Search Input -->
+                        <InputText
+                            v-model="searchTerm"
+                            placeholder="Search"
+                            class="w-64"
+                            size="small"
+                        />
+                        <Button 
+                            v-model="searchType" 
+                            :class="{'p-button-primary': searchType === 'name_kh', 'p-button-outlined': searchType !== 'name_kh'}"
+                            label="Search by Name"
+                            @click="searchType = 'name_kh'"
+                            size="small"
+                        />
+                        <Button 
+                            v-model="searchType" 
+                            :class="{'p-button-primary': searchType === 'code', 'p-button-outlined': searchType !== 'code'}"
+                            label="Search by Code"
+                            @click="searchType = 'code'"
+                            size="small"
+                        />
 
                     <Button
                         icon="pi pi-plus"
@@ -25,10 +48,11 @@
                         severity="warning"
                         @click="openForm()"
                     />
+                    </div>
                 </div>
 
                 <!-- DataTable to display items -->
-                <DataTable :value="products" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
+                <DataTable :value="filteredProducts" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
                     <Column header="Division">
                         <template #body="{ data }">
                             {{ getDivisionName(data.division_id) }}
@@ -801,6 +825,23 @@ const toggleStatus = (product) => {
     selectedProductForStatus.value = product;
     isStatusDialogVisible.value = true;
 };
+
+const searchTerm = ref(""); // The search term input
+const searchType = ref("name_kh"); // Default search type is 'name'
+
+// Computed property to filter products based on the search type and search term
+const filteredProducts = computed(() => {
+  return products.filter((product) => {
+    const term = searchTerm.value.toLowerCase();
+    if (searchType.value === "name_kh") {
+      return product.name_kh.toLowerCase().includes(term);
+    } else if (searchType.value === "code") {
+      return product.code.toLowerCase().includes(term);
+    }
+    return false;
+  });
+});
+
 
 const submitForm = () => {
     if (!form) {
