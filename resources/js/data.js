@@ -177,3 +177,6 @@ async function getDepartment(){
     ],
 }
 }
+export {
+    getDepartment
+}
