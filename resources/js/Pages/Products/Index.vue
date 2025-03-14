@@ -16,7 +16,7 @@
                         <h1 class="text-xl text-green-600">Manage Items</h1>
                     </div>
                     <div class="flex items-center gap-2">
-                        
+
                         <!-- Search Input -->
                         <InputText
                             v-model="searchTerm"
@@ -24,15 +24,15 @@
                             class="w-64"
                             size="small"
                         />
-                        <Button 
-                            v-model="searchType" 
+                        <Button
+                            v-model="searchType"
                             :class="{'p-button-primary': searchType === 'name_kh', 'p-button-outlined': searchType !== 'name_kh'}"
                             label="Search by Name"
                             @click="searchType = 'name_kh'"
                             size="small"
                         />
-                        <Button 
-                            v-model="searchType" 
+                        <Button
+                            v-model="searchType"
                             :class="{'p-button-primary': searchType === 'code', 'p-button-outlined': searchType !== 'code'}"
                             label="Search by Code"
                             @click="searchType = 'code'"
@@ -78,12 +78,12 @@
                                 class="text-sm flex-grow"
                                 outlined
                             />
-                            <Button 
-                                v-if="data.comments && data.comments.length > 0" 
-                                icon="pi pi-comment" 
-                                class="p-button-info ml-2" 
-                                @click="viewComment(data.comments)" 
-                                outlined 
+                            <Button
+                                v-if="data.comments && data.comments.length > 0"
+                                icon="pi pi-comment"
+                                class="p-button-info ml-2"
+                                @click="viewComment(data.comments)"
+                                outlined
                             />
                             </div>
                         </template>
@@ -713,11 +713,11 @@ const isFormVisible = ref(false);
 const isViewDialogVisible = ref(false);
 const selectedProduct = ref(null);
 const selectedComment = ref("");
-const commentText = ref(""); 
+const commentText = ref("");
 const isCommentDialogVisible = ref(false);
 
 const selectedProductForStatus = ref(null); // ✅ Define this variable
-const isStatusDialogVisible = ref(false); 
+const isStatusDialogVisible = ref(false);
 
 const viewComment = (comments) => {
     selectedComment.value = comments.map(c => c.comment).join('\n'); // Combine all comments into a single string

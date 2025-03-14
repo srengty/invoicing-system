@@ -288,7 +288,7 @@
                     </div>
                     <div class="grand-total-container flex justify-between">
                         <p class="font-bold">Exchange rate</p>
-                        <p class="font-bold text-lg">
+                        <p class="font-bold text-">
                             {{ calculateExchangeRate }}
                         </p>
                     </div>
@@ -317,6 +317,7 @@
                     icon="pi pi-check"
                     type="submit"
                     class="p-button-raised"
+                    size="small"
                 />
                 <Button
                     v-ripple
@@ -324,6 +325,7 @@
                     label="Cancel"
                     class="p-button-raised p-button-secondary ml-2"
                     @click="cancelOperation"
+                    size="small"
                 />
             </div>
         </form>
@@ -445,7 +447,6 @@
                     v-model="selectedProduct.remark"
                     class="w-full text-sm"
                     size="small"
-                    readonly
                 />
             </div>
         </div>
@@ -680,6 +681,7 @@ const addItemToTable = () => {
         subTotal:
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
+        remark: selectedProduct.value.remark || "",
     };
 
     // Check if the same product name already exists
@@ -924,6 +926,7 @@ const submit = (event) => {
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
+        remark: prod.remark ?? "add 1 day",
         includeCatalog: prod.includeCatalog ?? false, // Store checkbox selection
     }));
 
