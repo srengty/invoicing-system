@@ -288,7 +288,7 @@
                     </div>
                     <div class="grand-total-container flex justify-between">
                         <p class="font-bold">Exchange rate</p>
-                        <p class="font-bold text-lg">
+                        <p class="font-bold text-">
                             {{ calculateExchangeRate }}
                         </p>
                     </div>
@@ -317,6 +317,7 @@
                     icon="pi pi-check"
                     type="submit"
                     class="p-button-raised"
+                    size="small"
                 />
                 <Button
                     v-ripple
@@ -324,6 +325,7 @@
                     label="Cancel"
                     class="p-button-raised p-button-secondary ml-2"
                     @click="cancelOperation"
+                     size="small"
                 />
             </div>
         </form>
