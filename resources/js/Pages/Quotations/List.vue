@@ -36,7 +36,6 @@
                         raised
                 /></Link>
             </div>
-
             <div>
                 <DataTable
                     :value="quotations"
@@ -385,15 +384,13 @@ const openForm = (quotations = null) => {
 const isFormVisible = ref(false);
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
-        console.log("Editing quotation:", selectedQuotation.value);
-
         router.visit(route("quotations.create"), {
             method: "get",
             data: {
-                quotation: selectedQuotation.value, // ✅ Pass quotation data
+                quotation: selectedQuotation.value,
             },
-            preserveState: true, // Keeps the form state
-            preserveScroll: true, // Prevents page from resetting scroll position
+            preserveState: true,
+            preserveScroll: true,
         });
 
         isViewDialogVisible.value = false;
@@ -424,6 +421,17 @@ const viewQuotation = (quotation) => {
         userRole.value = "manager";
     }
     isViewDialogVisible.value = true;
+
+    // When Edit is clicked, navigate to create.vue with quotation data
+    const navigateToEditQuotation = () => {
+        router.visit(route("quotations.create"), {
+            method: "get",
+            data: { quotation: selectedQuotation.value }, // Pass selected quotation data
+            preserveState: true,
+            preserveScroll: true,
+        });
+        isViewDialogVisible.value = false; // Close the dialog
+    };
 };
 
 const columns = [

@@ -76,7 +76,7 @@
                     <Column
                         field="customer_category_name"
                         header="Category"
-                        style="width: 10%"
+                        style="width: 5%"
                     ></Column>
 
                     <!-- Loop through other columns -->
@@ -253,9 +253,9 @@ const columns = [
     {
         field: "credit_period",
         header: "Credit Period",
-        style: { width: "10%" },
+        style: { width: "5%" },
     },
-    { field: "address", header: "Address", style: { width: "15%" } },
+    { field: "address", header: "Address", style: { width: "5%" } },
     { field: "website", header: "Website", style: { width: "5%" } },
     { field: "phone_number", header: "Phone", style: { width: "5%" } },
 ];

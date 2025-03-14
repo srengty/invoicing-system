@@ -2,7 +2,7 @@
 <template>
     <div class="card">
         <DataTable :value="products" tableStyle="min-width: 50rem">
-            <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable></Column>
+            <Column v-for="col of columns" :key="col.field" :field="col.field" :header="col.header" sortable  class="text-sm"></Column>
             <Column field="action" header="Action">
                 <template #body="slotProps">
                     <img :src="`https://picsum.photos/seed/${slotProps.data.image}/300/150`" :alt="slotProps.data.image" class="w-24 rounded" />
