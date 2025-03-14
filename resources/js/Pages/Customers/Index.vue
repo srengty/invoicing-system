@@ -74,11 +74,20 @@
                     class="text-sm"
                 >
                     <Column
+                        field="customer_category_name"
+                        header="Category"
+                        style="width: 10%"
+                    ></Column>
+
+                    <!-- Loop through other columns -->
+                    <Column
                         v-for="col of showColumns"
                         :key="col.field"
                         :field="col.field"
                         :header="col.header"
                     ></Column>
+
+                    <!-- Actions Column -->
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
@@ -98,29 +107,21 @@
                                     @click="editCustomer(slotProps.data.id)"
                                     outlined
                                 />
-                                <!-- <Button
-                                    icon="pi pi-trash"
-                                    class="p-button-danger"
-                                    aria-label="Delete"
-                                    size="small"
-                                    @click="deleteCustomer(slotProps.data.id)"
-                                    outlined
-                                /> -->
                                 <Button
                                     :icon="
                                         slotProps.data.active
-                                            ? 'pi pi-lock'
-                                            : 'pi pi-unlock'
+                                            ? 'pi pi-unlock'
+                                            : 'pi pi-lock'
                                     "
                                     :label="
                                         slotProps.data.active
-                                            ? 'Deactivate'
-                                            : 'Activate'
+                                            ? 'Activate'
+                                            : 'Deactivate'
                                     "
                                     :class="{
-                                        'p-button-danger':
-                                            slotProps.data.active,
                                         'p-button-success':
+                                            slotProps.data.active,
+                                        'p-button-danger':
                                             !slotProps.data.active,
                                         ' w-28 h-8 flex items-center justify-center': true,
                                     }"
@@ -249,7 +250,11 @@ const columns = [
     // { field: "id", header: "ID", style: { width: "5%" } },
     { field: "name", header: "Name", style: { width: "5%" } },
     { field: "code", header: "Code", style: { width: "5%" } },
-    { field: "credit_period", header: "Credit", style: { width: "10%" } },
+    {
+        field: "credit_period",
+        header: "Credit Period",
+        style: { width: "10%" },
+    },
     { field: "address", header: "Address", style: { width: "15%" } },
     { field: "website", header: "Website", style: { width: "5%" } },
     { field: "phone_number", header: "Phone", style: { width: "5%" } },
@@ -268,52 +273,41 @@ const updateColumns = () => {
     showColumns.value = selectedColumns.value;
 };
 
-// Filter the customers by name or code based on the search term
 const filteredCustomers = computed(() => {
-    return props.customers.filter((cust) => {
-        const term = searchTerm.value.toLowerCase();
-        if (searchType.value === "name") {
-            return cust.name.toLowerCase().includes(term);
-        } else if (searchType.value === "code") {
-            return cust.code.toLowerCase().includes(term);
-        }
-        return false;
-    });
+    const filtered = props.customers
+        .map((cust) => {
+            const categoryName = getCategoryNameById(cust.customer_category_id); // Fetch category name
+            const updatedCustomer = {
+                ...cust,
+                customer_category_name: categoryName, // Ensure category name is added here
+            };
+            return updatedCustomer;
+        })
+        .filter((cust) => {
+            const term = searchTerm.value.toLowerCase();
+            if (searchType.value === "name") {
+                return cust.name.toLowerCase().includes(term);
+            } else if (searchType.value === "code") {
+                return cust.code.toLowerCase().includes(term);
+            }
+            return false;
+        });
+
+    return filtered;
 });
+
+const getCategoryNameById = (categoryId) => {
+    const category = props.customerCategories.find(
+        (category) => category.id === categoryId
+    );
+    console.log(category); // This will show the correct category object with `category_name_english`
+    return category ? category.category_name_english : "Unknown Category"; // Make sure to use category_name_english here
+};
 
 const editCustomer = (id) => {
     const customer = props.customers.find((cust) => cust.id === id);
     selectedCustomer.value = customer;
     isEditCustomerVisible.value = true;
-};
-
-const deleteCustomer = (id) => {
-    // Optionally, if you need delete functionality, keep this function.
-    if (confirm("Are you sure you want to delete this customer?")) {
-        Inertia.delete(route("customers.destroy", id), {
-            onSuccess: () => {
-                // Remove the customer from the list if necessary.
-                props.customers = props.customers.filter(
-                    (customer) => customer.id !== id
-                );
-                showToast(
-                    "success",
-                    "Deleted",
-                    "Customer deleted successfully!",
-                    4000
-                );
-            },
-            onError: (error) => {
-                showToast(
-                    "error",
-                    "Error",
-                    "There was an error deleting the customer.",
-                    4000
-                );
-                console.error("Error deleting customer:", error);
-            },
-        });
-    }
 };
 
 const viewCustomer = (id) => {
@@ -346,38 +340,41 @@ const showToast = (severity, summary, detail, duration = 4000) => {
 };
 
 const toggleActive = (customer) => {
-    const action = customer.active ? "activate" : "deactivate";
+    const action = customer.active ? "deactivate" : "activate"; // Clarify action message
 
+    // Show confirmation dialog
     confirm.require({
         message: `Are you sure you want to ${action} this customer?`,
         header: "Confirmation",
         icon: "pi pi-exclamation-triangle",
         accept: () => {
+            // Call API to toggle the active status
             router.put(
                 route("customers.toggleActive", customer.id),
-                { active: !customer.active },
+                { active: !customer.active }, // Toggle the active status
                 {
                     onSuccess: () => {
                         showToast(
                             "success",
                             "Success",
-                            `Customer ${action}d successfully!`
+                            `Customer successfully ${action}d!`
                         );
-                        // Optionally update local state
+                        // Update local state
                         localCustomers.value = localCustomers.value.map(
                             (cust) =>
                                 cust.id === customer.id
-                                    ? { ...cust, active: !cust.active }
+                                    ? { ...cust, active: !cust.active } // Update the status locally
                                     : cust
                         );
-                        // Force a reload to fetch fresh data
+                        // Optionally reload the page if you want to refresh data from the server
                         router.reload({ preserveScroll: true });
                     },
                     onError: (error) => {
+                        // Display error message
                         showToast(
                             "error",
                             "Error",
-                            `Error ${action}ing customer.`
+                            `There was an error ${action}ing the customer. Please try again later.`
                         );
                         console.error("Error toggling active status:", error);
                     },
@@ -385,6 +382,7 @@ const toggleActive = (customer) => {
             );
         },
         reject: () => {
+            // Toast notification on rejection
             showToast("info", "Cancelled", "No changes were made.");
         },
     });
