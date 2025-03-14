@@ -246,7 +246,7 @@ const props = defineProps({
 });
 
 const columns = [
-    { field: "id", header: "ID", style: { width: "5%" } },
+    // { field: "id", header: "ID", style: { width: "5%" } },
     { field: "name", header: "Name", style: { width: "5%" } },
     { field: "code", header: "Code", style: { width: "5%" } },
     { field: "credit_period", header: "Credit", style: { width: "10%" } },
