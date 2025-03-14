@@ -325,7 +325,7 @@
                     label="Cancel"
                     class="p-button-raised p-button-secondary ml-2"
                     @click="cancelOperation"
-                     size="small"
+                    size="small"
                 />
             </div>
         </form>
@@ -447,7 +447,6 @@
                     v-model="selectedProduct.remark"
                     class="w-full text-sm"
                     size="small"
-                    readonly
                 />
             </div>
         </div>
@@ -682,6 +681,7 @@ const addItemToTable = () => {
         subTotal:
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
+        remark: selectedProduct.value.remark || "",
     };
 
     // Check if the same product name already exists
@@ -926,6 +926,7 @@ const submit = (event) => {
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
+        remark: prod.remark ?? "add 1 day",
         includeCatalog: prod.includeCatalog ?? false, // Store checkbox selection
     }));
 

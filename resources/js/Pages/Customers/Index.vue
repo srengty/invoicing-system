@@ -20,32 +20,32 @@
                             size="small"
                         />
 
-                        <Button 
-                            v-model="searchType" 
-                            :class="{'p-button-primary': searchType === 'name', 'p-button-outlined': searchType !== 'name'}"
+                        <Button
+                            v-model="searchType"
+                            :class="{
+                                'p-button-primary': searchType === 'name',
+                                'p-button-outlined': searchType !== 'name',
+                            }"
                             label="Search by Name"
                             @click="searchType = 'name'"
                             size="small"
                         />
-                        <Button 
-                            v-model="searchType" 
-                            :class="{'p-button-primary': searchType === 'code', 'p-button-outlined': searchType !== 'code'}"
+                        <Button
+                            v-model="searchType"
+                            :class="{
+                                'p-button-primary': searchType === 'code',
+                                'p-button-outlined': searchType !== 'code',
+                            }"
                             label="Search by Code"
                             @click="searchType = 'code'"
                             size="small"
                         />
 
                         <!-- Search Input -->
-                        
+
                         <Button
                             icon="pi pi-plus"
-                            label="New"
-                            @click="isCreateCustomerVisible = true"
-                            size="small"
-                        />
-                        <Button
-                            icon="pi pi-plus"
-                            label="New"
+                            label="New Customer"
                             @click="isCreateCustomerVisible = true"
                             size="small"
                         />
@@ -238,7 +238,7 @@ import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
 const confirm = useConfirm();
-const searchType = ref("name"); 
+const searchType = ref("name");
 
 const props = defineProps({
     customers: Array,
@@ -246,7 +246,7 @@ const props = defineProps({
 });
 
 const columns = [
-    { field: "id", header: "ID", style: { width: "5%" } },
+    // { field: "id", header: "ID", style: { width: "5%" } },
     { field: "name", header: "Name", style: { width: "5%" } },
     { field: "code", header: "Code", style: { width: "5%" } },
     { field: "credit_period", header: "Credit", style: { width: "10%" } },

@@ -45,6 +45,7 @@
                         v-model="form.name"
                         class="w-full"
                         size="small"
+                        placeholder="Enter Customer/Organization name"
                         :disabled="mode === 'view'"
                     />
                     <Message
@@ -341,7 +342,7 @@
 import { ref } from "vue";
 import { useToast } from "primevue/usetoast";
 import { InputText, Button, Message, Select } from "primevue";
-import { Inertia } from '@inertiajs/inertia';
+import { Inertia } from "@inertiajs/inertia";
 import { router, useForm } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useConfirm } from "primevue/useconfirm";
@@ -358,7 +359,7 @@ const props = defineProps({
     customer: {
         type: Object,
         default: () => ({}),
-    }, 
+    },
     errors: Object,
     redirect_route: String,
     customerCategories: Array,
@@ -434,7 +435,12 @@ const validateForm = () => {
 
 const submit = () => {
     if (!form) {
-        toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill in all required fields.', life: 3000 });
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Please fill in all required fields.",
+            life: 3000,
+        });
         showToast(
             "warn",
             "Validation Error",
@@ -446,7 +452,8 @@ const submit = () => {
     // Check if the credit period is greater than 30 and prompt the user for confirmation
     if (parseInt(form.credit_period) > 30) {
         confirm.require({
-            message: "The credit period is over 30 days. Are you sure you want to proceed?",
+            message:
+                "The credit period is over 30 days. Are you sure you want to proceed?",
             header: "Credit Period Confirmation",
             icon: "pi pi-exclamation-triangle",
             accept: () => {
@@ -474,9 +481,14 @@ const handleFormSubmission = () => {
     if (props.mode === "create") {
         form.post(route("customers.store"), {
             onSuccess: () => {
-                toast.add({ severity: 'success', summary: 'Success', detail: 'Customer created successfully!', life: 3000 });
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Customer created successfully!",
+                    life: 3000,
+                });
                 setTimeout(() => {
-                    emit('close');
+                    emit("close");
                     Inertia.visit(route(props.redirect_route));
                 }, 1000); // Delay to allow toast to show
                 showToast(
@@ -503,10 +515,15 @@ const handleFormSubmission = () => {
     } else if (props.mode === "edit") {
         form.put(route("customers.update", props.customer.id), {
             onSuccess: () => {
-                toast.add({ severity: 'success', summary: 'Success', detail: 'Customer updated successfully!', life: 3000 });
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Customer updated successfully!",
+                    life: 3000,
+                });
 
                 setTimeout(() => {
-                    emit('close');
+                    emit("close");
                     Inertia.visit(route(props.redirect_route));
                 }, 1000); // Delay for toast display
                 showToast(
@@ -531,7 +548,6 @@ const handleFormSubmission = () => {
         });
     }
 };
-
 </script>
 
 <style scoped>

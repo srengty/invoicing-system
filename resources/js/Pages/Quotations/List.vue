@@ -59,7 +59,7 @@
                     <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
                             <span
-                                class="p-2 border rounded w-24 h-8 flex items-center justify-center"
+                                class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
                                 :class="{
                                     'bg-yellow-100 text-yellow-800 border-yellow-400':
                                         slotProps.data.status === 'Pending',
@@ -69,6 +69,17 @@
                                         slotProps.data.status === 'Approved',
                                 }"
                             >
+                                <i
+                                    :class="{
+                                        'pi pi-clock':
+                                            slotProps.data.status === 'Pending',
+                                        'pi pi-times':
+                                            slotProps.data.status === 'Revise',
+                                        'pi pi-check':
+                                            slotProps.data.status ===
+                                            'Approved',
+                                    }"
+                                ></i>
                                 {{ slotProps.data.status }}
                             </span>
                         </template>
