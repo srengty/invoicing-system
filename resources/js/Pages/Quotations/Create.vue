@@ -155,24 +155,25 @@
                     </Column>
                     <Column field="name" header="Name">
                         <template #body="slotProps">
-                            <span class="text-base">{{
-                                isKhmer
-                                    ? slotProps.data.name_kh
-                                    : slotProps.data.name
-                            }}</span>
+                            <span class="text-base">
+                                {{
+                                    isKhmer
+                                        ? slotProps.data.name_kh
+                                        : slotProps.data.name
+                                }}
+                            </span>
                             <br />
-                            <span class="text-base">{{
-                                isKhmer
-                                    ? slotProps.data.desc_kh
-                                    : slotProps.data.desc
-                            }}</span>
+                            <span class="text-base">
+                                {{
+                                    isKhmer
+                                        ? slotProps.data.desc_kh
+                                        : slotProps.data.desc
+                                }}
+                            </span>
                             <br />
-                            <!-- <span class="text-sm font-bold">
-                                {{ slotProps.data.remark }}
-                            </span> -->
                             <span class="text-sm font-bold">
                                 {{
-                                    slotProps.data.remark > 15
+                                    slotProps.data.remark.length > 15
                                         ? slotProps.data.remark.slice(0, 15) +
                                           "..."
                                         : slotProps.data.remark
@@ -208,12 +209,14 @@
                     </Column>
                     <Column field="subTotal" header="Subtotal">
                         <template #body="slotProps">
-                            <span
-                                >{{
-                                    slotProps.data.subTotal.toFixed(2)
+                            <span>
+                                {{
+                                    slotProps.data.subTotal
+                                        ? slotProps.data.subTotal.toFixed(2)
+                                        : "0.00"
                                 }}
-                                KHR</span
-                            >
+                                KHR
+                            </span>
                         </template>
                     </Column>
 
@@ -519,16 +522,19 @@ const quotation = ref(pageProps.quotation || null);
 const isEditing = ref(!!quotation.value);
 
 onMounted(() => {
-    if (quotation.value) {
-        form.customer_id = quotation.value.customer_id.toString();
-        form.quotation_no = quotation.value.quotation_no;
-        form.quotation_date = quotation.value.quotation_date;
-        form.address = quotation.value.address;
-        form.phone_number = quotation.value.phone_number;
-        form.status = quotation.value.status;
-        form.products = quotation.value.products || [];
+    if (props.quotation) {
+        form.quotation_no = props.quotation.quotation_no;
+        form.quotation_date = props.quotation.quotation_date;
+        form.customer_id = props.quotation.customer_id;
+        form.address = props.quotation.address;
+        form.phone_number = props.quotation.phone_number;
+        form.products = props.quotation.products || []; // Ensure products are assigned here
+        form.total = props.quotation.total;
+        form.tax = props.quotation.tax;
+        form.grand_total = props.quotation.grand_total;
 
-        updateCustomerDetails(); // ✅ Ensure customer details update
+        // Update the customer details
+        updateCustomerDetails();
     }
 });
 
@@ -542,7 +548,7 @@ const props = defineProps({
 
 // Define the Inertia form
 const form = useForm({
-    quotation_no: quotation.value?.quotation_no || "",
+    quotation_no: quotation.value?.quotation_no || "", // Pre-fill for editing
     quotation_date: quotation.value?.quotation_date || "",
     status: quotation.value?.status || "Pending",
     address: quotation.value?.address || "",
@@ -551,9 +557,10 @@ const form = useForm({
     total: quotation.value?.total || 0,
     tax: quotation.value?.tax || 0,
     grand_total: quotation.value?.grand_total || 0,
-    products: quotation.value?.products || [],
+    products: quotation.value?.products || [], // Pre-fill products for editing
     terms: quotation.value?.terms || "",
 });
+
 const updateCustomerDetails = () => {
     const selectedCustomer = formattedCustomers.value.find(
         (customer) => customer.id == form.customer_id
@@ -563,13 +570,12 @@ const updateCustomerDetails = () => {
         form.address = selectedCustomer.address || "";
         form.phone_number = selectedCustomer.phone_number || "";
     }
-
-    console.log("Updated Customer Data:", selectedCustomer);
 };
+
 watch(
     () => form.customer_id,
-    (newValue) => {
-        console.log("Customer ID changed:", newValue);
+    () => {
+        updateCustomerDetails();
     }
 );
 
@@ -611,8 +617,10 @@ watch(selectedProduct, (newVal) => {
 });
 
 const searchProducts = (event) => {
-    filteredProducts.value = props.products.filter((product) =>
-        product.name.toLowerCase().includes(event.query.toLowerCase())
+    filteredProducts.value = props.products.filter(
+        (product) =>
+            product.status === "approved" &&
+            product.name.toLowerCase().includes(event.query.toLowerCase())
     );
 };
 
@@ -839,7 +847,7 @@ watch(
 
 const updateProductSubtotal = (row) => {
     row.quantity = parseInt(row.quantity) || 0;
-    row.subTotal = Number(row.price) * row.quantity;
+    row.subTotal = Number(row.price) * row.quantity || 0;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
@@ -905,10 +913,21 @@ const editProduct = (productId) => {
     const productToEdit = selectedProductsData.value.find(
         (prod) => prod.id === productId
     );
+
     if (productToEdit) {
         selectedProduct.value = { ...productToEdit };
         isAddItemDialogVisible.value = true;
-        editingProduct.value = productToEdit; // ✅ Set for tracking updates
+        editingProduct.value = productToEdit;
+        const selectedCustomer = props.customers.find(
+            (customer) => customer.id === productToEdit.customer_id
+        );
+        if (selectedCustomer) {
+            form.customer_id = selectedCustomer.id;
+            form.address = selectedCustomer.address || "";
+            form.phone_number = selectedCustomer.phone_number || "";
+        }
+
+        isAddItemDialogVisible.value = true;
     }
 };
 
@@ -919,6 +938,31 @@ const submit = (event) => {
 
     if (!validateForm()) {
         return;
+    }
+
+    // If editing, update the existing quotation; otherwise, create a new one
+    if (form.id) {
+        form.put(route("quotations.update", { id: form.id }), {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Updated",
+                    "Quotation updated successfully!"
+                );
+                router.get(route("quotations.list"));
+            },
+        });
+    } else {
+        form.post(route("quotations.store"), {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Created",
+                    "Quotation created successfully!"
+                );
+                router.get(route("quotations.list"));
+            },
+        });
     }
 
     // Prepare product data before submitting

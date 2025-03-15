@@ -5,7 +5,6 @@
     <GuestLayout>
         <BodyLayout>
             <div class="customers">
-                <!-- Search and Header Section -->
                 <div class="flex justify-between items-center pb-4">
                     <div class="flex items-center gap-2">
                         <img src="/User.png" alt="Item Icon" class="h-8 w-8" />
@@ -14,7 +13,6 @@
                         </h1>
                     </div>
                     <div class="flex items-center gap-2">
-                        <!-- Search Input -->
                         <InputText
                             v-model="searchTerm"
                             placeholder="Search"
@@ -22,7 +20,6 @@
                             size="small"
                         />
 
-                        <!-- Search Type Dropdown -->
                         <Dropdown
                             v-model="searchType"
                             :options="searchOptions"
@@ -32,7 +29,6 @@
                             placeholder="Search by"
                         />
 
-                        <!-- New Customer Button -->
                         <Button
                             icon="pi pi-plus"
                             label="New Customer"
@@ -42,7 +38,6 @@
                     </div>
                 </div>
 
-                <!-- DataTable -->
                 <DataTable
                     :value="filteredCustomers"
                     paginator
@@ -50,7 +45,16 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     class="text-sm"
                 >
-                    <!-- Dynamic Columns -->
+                    <Column
+                        field="customer_category_name"
+                        header="Category"
+                        style="width: 5%"
+                    >
+                        <template #body="{ data }">
+                            {{ getCategoryNameById(data.customer_category_id) }}
+                        </template>
+                    </Column>
+
                     <Column
                         v-for="col of showColumns"
                         :key="col.field"
@@ -58,11 +62,9 @@
                         :header="col.header"
                     ></Column>
 
-                    <!-- Actions Column -->
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
-                                <!-- View Button -->
                                 <Button
                                     icon="pi pi-eye"
                                     class="p-button-info"
@@ -71,8 +73,6 @@
                                     @click="viewCustomer(slotProps.data.id)"
                                     outlined
                                 />
-
-                                <!-- Edit Button -->
                                 <Button
                                     icon="pi pi-pencil"
                                     class="p-button-warning"
@@ -81,25 +81,23 @@
                                     @click="editCustomer(slotProps.data.id)"
                                     outlined
                                 />
-
-                                <!-- Toggle Active Status Button -->
                                 <Button
                                     :icon="
                                         slotProps.data.active
-                                            ? 'pi pi-lock'
-                                            : 'pi pi-unlock'
+                                            ? 'pi pi-unlock'
+                                            : 'pi pi-lock'
                                     "
                                     :label="
                                         slotProps.data.active
-                                            ? 'Deactivate'
-                                            : 'Activate'
+                                            ? 'Activate'
+                                            : 'Deactivate'
                                     "
                                     :class="{
-                                        'p-button-danger':
-                                            slotProps.data.active,
                                         'p-button-success':
+                                            slotProps.data.active,
+                                        'p-button-danger':
                                             !slotProps.data.active,
-                                        'w-28 h-8 flex items-center justify-center': true,
+                                        ' w-28 h-8 flex items-center justify-center': true,
                                     }"
                                     aria-label="Toggle Active Status"
                                     size="small"
@@ -112,7 +110,7 @@
                 </DataTable>
             </div>
 
-            <!-- Create Customer Dialog -->
+            <!-- Dialogs for Create, Edit, and View -->
             <Dialog
                 v-model:visible="isCreateCustomerVisible"
                 modal
@@ -214,48 +212,45 @@ import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
 const confirm = useConfirm();
+const searchType = ref("name");
 
-// Props
 const props = defineProps({
     customers: Array,
     customerCategories: Array,
 });
 
-// Reactive State
-const searchTerm = ref("");
-const searchType = ref("name");
-const isCreateCustomerVisible = ref(false);
-const isEditCustomerVisible = ref(false);
-const isViewCustomerVisible = ref(false);
-const selectedCustomer = ref(null);
-
-// Columns for DataTable
 const columns = [
     { field: "name", header: "Name", style: { width: "5%" } },
     { field: "code", header: "Code", style: { width: "5%" } },
-    { field: "credit_period", header: "Credit Period", style: { width: "10%" } },
-    { field: "address", header: "Address", style: { width: "15%" } },
+    { field: "credit_period", header: "Credit Period", style: { width: "5%" } },
+    { field: "address", header: "Address", style: { width: "5%" } },
     { field: "website", header: "Website", style: { width: "5%" } },
     { field: "phone_number", header: "Phone", style: { width: "5%" } },
 ];
 
+const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 
-// Search Options
+const isCreateCustomerVisible = ref(false);
+const isEditCustomerVisible = ref(false);
+const isViewCustomerVisible = ref(false);
+const selectedCustomer = ref(null);
+const searchTerm = ref("");
+
 const searchOptions = [
     { label: "Name", value: "name" },
     { label: "Code", value: "code" },
     { label: "Phone", value: "phone_number" },
     { label: "Email", value: "email" },
     { label: "Address", value: "address" },
-    { label: "Credit Period", value: "credit_period" }, // Added
-    { label: "Status", value: "active" }, // Added
+    { label: "Credit Period", value: "credit_period" },
+    { label: "Status", value: "active" },
+    { label: "Category", value: "customer_category_name" }, // Added
 ];
 
-// Filtered Customers
 const filteredCustomers = computed(() => {
     const term = searchTerm.value.toLowerCase();
-    if (!term) return props.customers; // If no search term, return all customers
+    if (!term) return props.customers;
 
     return props.customers.filter((customer) => {
         if (searchType.value === "name") {
@@ -271,68 +266,49 @@ const filteredCustomers = computed(() => {
         } else if (searchType.value === "credit_period") {
             return customer.credit_period.toString().includes(term);
         } else if (searchType.value === "active") {
-            // Handle filtering by status (activate/deactivate)
-            const status = customer.active.toLowerCase(); // Convert to lowercase
+            const status = customer.active.toLowerCase();
             return status.includes(term);
+        } else if (searchType.value === "customer_category_name") {
+            const categoryName = getCategoryNameById(customer.customer_category_id).toLowerCase();
+            return categoryName.includes(term);
         }
         return false;
     });
 });
 
-// Edit Customer
+const getCategoryNameById = (categoryId) => {
+    const category = props.customerCategories.find(
+        (category) => category.id === categoryId
+    );
+    return category ? category.category_name_english : "Unknown Category";
+};
+
 const editCustomer = (id) => {
     const customer = props.customers.find((cust) => cust.id === id);
     selectedCustomer.value = customer;
     isEditCustomerVisible.value = true;
 };
 
-// View Customer
 const viewCustomer = (id) => {
     const customer = props.customers.find((cust) => cust.id === id);
     selectedCustomer.value = customer;
     isViewCustomerVisible.value = true;
 };
 
-// Toggle Active Status
-const toggleActive = (customer) => {
-    const action = customer.active ? "deactivate" : "activate";
+const localCustomers = ref(
+    props.customers.map((cust) => ({
+        ...cust,
+        active: cust.active || "deactivate", // Default to "deactivate" if missing
+    }))
+);
 
-    confirm.require({
-        message: `Are you sure you want to ${action} this customer?`,
-        header: "Confirmation",
-        icon: "pi pi-exclamation-triangle",
-        accept: () => {
-            router.put(
-                route("customers.toggleActive", customer.id),
-                { active: !customer.active },
-                {
-                    onSuccess: () => {
-                        showToast(
-                            "success",
-                            "Success",
-                            `Customer ${action}d successfully!`
-                        );
-                        // Refresh the page to reflect changes
-                        router.reload({ preserveScroll: true });
-                    },
-                    onError: (error) => {
-                        showToast(
-                            "error",
-                            "Error",
-                            `Error ${action}ing customer.`
-                        );
-                        console.error("Error toggling active status:", error);
-                    },
-                }
-            );
-        },
-        reject: () => {
-            showToast("info", "Cancelled", "No changes were made.");
-        },
-    });
-};
+const indexedCustomers = computed(() => {
+    return localCustomers.value.map((customer, index) => ({
+        ...customer,
+        index: index + 1,
+    }));
+});
 
-// Show Toast
 const showToast = (severity, summary, detail, duration = 4000) => {
     toast.add({
         group: "tc",
@@ -341,6 +317,55 @@ const showToast = (severity, summary, detail, duration = 4000) => {
         detail,
         life: duration,
         className: "my-custom-toast",
+    });
+};
+
+const toggleActive = (customer) => {
+    const action = customer.active ? "deactivate" : "activate"; // Clarify action message
+
+    // Show confirmation dialog
+    confirm.require({
+        message: `Are you sure you want to ${action} this customer?`,
+        header: "Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        accept: () => {
+            // Call API to toggle the active status
+            router.put(
+                route("customers.toggleActive", customer.id),
+                { active: !customer.active }, // Toggle the active status
+                {
+                    onSuccess: () => {
+                        showToast(
+                            "success",
+                            "Success",
+                            `Customer successfully ${action}d!`
+                        );
+                        // Update local state
+                        localCustomers.value = localCustomers.value.map(
+                            (cust) =>
+                                cust.id === customer.id
+                                    ? { ...cust, active: !cust.active } // Update the status locally
+                                    : cust
+                        );
+                        // Optionally reload the page if you want to refresh data from the server
+                        router.reload({ preserveScroll: true });
+                    },
+                    onError: (error) => {
+                        // Display error message
+                        showToast(
+                            "error",
+                            "Error",
+                            `There was an error ${action}ing the customer. Please try again later.`
+                        );
+                        console.error("Error toggling active status:", error);
+                    },
+                }
+            );
+        },
+        reject: () => {
+            // Toast notification on rejection
+            showToast("info", "Cancelled", "No changes were made.");
+        },
     });
 };
 </script>

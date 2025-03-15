@@ -35,18 +35,19 @@ class QuotationController extends Controller
 
     public function create(Request $request)
 {
+    $products = Product::where('status', 'approved')->get();
+    $quotation = $request->input('quotation', null);
+
     $customers = Customer::all();
     $products = Product::all();
     $customerCategories = CustomerCategory::all();
     $productCategories = Category::all();
 
-    $quotation = $request->input('quotation', null);
-
     return inertia('Quotations/Create', [
        'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
         'products' => $products,
-        'customerCategories' => $customerCategories,
-        'productCategories' => $productCategories,
+        'customerCategories' => CustomerCategory::all(),
+        'productCategories' => Category::all(),
         'quotation' => $quotation,
     ]);
 }
@@ -100,7 +101,7 @@ class QuotationController extends Controller
 }
 
 
-public function storeComment(Request $request, $quotationId)
+    public function storeComment(Request $request, $quotationId)
 {
     $quotation = Quotation::findOrFail($quotationId);
 
@@ -119,7 +120,6 @@ public function storeComment(Request $request, $quotationId)
         'comments' => $quotation->comments()->latest()->get(),
     ]);
 }
-
 
     public function store(Request $request)
     {
@@ -153,7 +153,11 @@ public function storeComment(Request $request, $quotationId)
         $total = 0;
         if (isset($validated['products'])) {
             foreach ($validated['products'] as $product) {
-                $total += $product['price'] * $product['quantity'];
+                // Only add approved products to the total
+                $productData = Product::find($product['id']);
+                if ($productData && $productData->status === 'approved') {
+                    $total += $product['price'] * $product['quantity'];
+                }
             }
         }
         // Calculate tax based on the provided percentage
@@ -184,13 +188,16 @@ public function storeComment(Request $request, $quotationId)
         // Attach products to the quotation
         if (isset($validated['products'])) {
             foreach ($validated['products'] as $product) {
-                ProductQuotation::create([
-                    'product_id'=>$product['id'],
-                    'quantity' => $product['quantity'],
-                    'quotation_no' => $quotation->id,
-                    'price'    => $product['price'],
-                    'product_unit_prices' => json_encode($validated['products']),
-                ]);
+                $productData = Product::find($product['id']);
+                // Only attach approved products
+                if ($productData && $productData->status === 'approved') {
+                    ProductQuotation::create([
+                        'product_id' => $product['id'],
+                        'quantity'   => $product['quantity'],
+                        'quotation_no' => $quotation->id,
+                        'price'      => $product['price'],
+                    ]);
+                }
                 // $quotation->products()->attach($product['id'], [
                 //     'quantity' => $product['quantity'],
                 //     'price'    => $product['price'],
@@ -241,9 +248,11 @@ public function storeComment(Request $request, $quotationId)
      */
     public function edit(Quotation $quotation)
     {
+        $products = $quotation->products;
         // Render a form for editing an existing quotation
         return Inertia::render('Quotations/Edit', [
             'quotation' => $quotation,
+            'products' => $products,  
         ]);
     }
 
