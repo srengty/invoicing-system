@@ -847,7 +847,7 @@ watch(
 
 const updateProductSubtotal = (row) => {
     row.quantity = parseInt(row.quantity) || 0;
-    row.subTotal = Number(row.price) * row.quantity || 0; 
+    row.subTotal = Number(row.price) * row.quantity || 0;
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
