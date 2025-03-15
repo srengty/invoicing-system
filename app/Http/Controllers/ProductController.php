@@ -75,7 +75,7 @@ class ProductController extends Controller
         $data = $request->validate([
             'division_id' => 'required',
             'category_id' => 'required',
-            'code' => 'required|string|max:255',
+            'code' => 'required|unique:products,code,' . $product->id . '|string|max:255',
             'name' => 'required|string|max:255',
             'name_kh' => 'required|string|max:255',
             'unit' => 'required|string|max:255',

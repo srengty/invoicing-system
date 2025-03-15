@@ -24,7 +24,7 @@
                             class="w-64"
                             size="small"
                         />
-                        <Button
+                        <!-- <Button
                             v-model="searchType"
                             :class="{'p-button-primary': searchType === 'name_kh', 'p-button-outlined': searchType !== 'name_kh'}"
                             label="Search by Name"
@@ -37,6 +37,14 @@
                             label="Search by Code"
                             @click="searchType = 'code'"
                             size="small"
+                        /> -->
+                        <Dropdown 
+                            v-model="searchType" 
+                            :options="searchOptions" 
+                            optionLabel="label" 
+                            optionValue="value" 
+                            class="w-48"
+                            
                         />
 
                     <Button
@@ -337,7 +345,7 @@
 
                             <!-- Code -->
                             <div class="field">
-                                <label for="code" class="required">Code</label>
+                                <label for="code" class="required" unique>Code</label>
                                 <InputText
                                     id="code"
                                     v-model="form.code"
@@ -560,6 +568,41 @@ import Dropdown from "primevue/dropdown";
 const confirm = useConfirm();
 const toast = useToast();
 const divisionOptions = ref([]);
+
+const searchOptions = [
+    { label: "All Fields", value: "all" },
+    { label: "Name (KH)", value: "name_kh" },
+    { label: "Division", value: "division.name" },
+    { label: "Category", value: "category_id" },
+    { label: "Code", value: "code" },
+    { label: "Status", value: "status" },
+    { label: "Unit", value: "unit" },
+    { label: "Price", value: "price" }
+];
+
+const filteredProducts = computed(() => {
+    const term = searchTerm.value.toLowerCase();
+    return products.filter((product) => {
+        if (!term) return true; // If search term is empty, show all products
+
+        if (searchType.value === "all") {
+            return Object.values(product).some(value =>
+                value?.toString().toLowerCase().includes(term)
+            );
+        } else if (searchType.value === "division.name") {
+            // Filter by division name
+            const divisionName = getDivisionName(product.division_id)?.toLowerCase();
+            return divisionName?.includes(term);
+        } else if (searchType.value === "category_id") {
+            // Filter by category name
+            const categoryName = getCategoryName(product.category_id)?.toLowerCase();
+            return categoryName?.includes(term);
+        } else {
+            // Filter by other fields (e.g., code, name_kh, etc.)
+            return product[searchType.value]?.toString().toLowerCase().includes(term);
+        }
+    });
+});
 
 onMounted(async () => {
   const response = await getDepartment();
@@ -830,17 +873,17 @@ const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
 // Computed property to filter products based on the search type and search term
-const filteredProducts = computed(() => {
-  return products.filter((product) => {
-    const term = searchTerm.value.toLowerCase();
-    if (searchType.value === "name_kh") {
-      return product.name_kh.toLowerCase().includes(term);
-    } else if (searchType.value === "code") {
-      return product.code.toLowerCase().includes(term);
-    }
-    return false;
-  });
-});
+// const filteredProducts = computed(() => {
+//   return products.filter((product) => {
+//     const term = searchTerm.value.toLowerCase();
+//     if (searchType.value === "name_kh") {
+//       return product.name_kh.toLowerCase().includes(term);
+//     } else if (searchType.value === "code") {
+//       return product.code.toLowerCase().includes(term);
+//     }
+//     return false;
+//   });
+// });
 
 
 const submitForm = () => {

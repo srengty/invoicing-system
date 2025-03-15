@@ -5,6 +5,7 @@
     <GuestLayout>
         <BodyLayout>
             <div class="customers">
+                <!-- Search and Header Section -->
                 <div class="flex justify-between items-center pb-4">
                     <div class="flex items-center gap-2">
                         <img src="/User.png" alt="Item Icon" class="h-8 w-8" />
@@ -13,6 +14,7 @@
                         </h1>
                     </div>
                     <div class="flex items-center gap-2">
+                        <!-- Search Input -->
                         <InputText
                             v-model="searchTerm"
                             placeholder="Search"
@@ -20,52 +22,27 @@
                             size="small"
                         />
 
-                        <Button
+                        <!-- Search Type Dropdown -->
+                        <Dropdown
                             v-model="searchType"
-                            :class="{
-                                'p-button-primary': searchType === 'name',
-                                'p-button-outlined': searchType !== 'name',
-                            }"
-                            label="Search by Name"
-                            @click="searchType = 'name'"
-                            size="small"
-                        />
-                        <Button
-                            v-model="searchType"
-                            :class="{
-                                'p-button-primary': searchType === 'code',
-                                'p-button-outlined': searchType !== 'code',
-                            }"
-                            label="Search by Code"
-                            @click="searchType = 'code'"
-                            size="small"
+                            :options="searchOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="w-48 text-sm"
+                            placeholder="Search by"
                         />
 
-                        <!-- Search Input -->
-
+                        <!-- New Customer Button -->
                         <Button
                             icon="pi pi-plus"
                             label="New Customer"
                             @click="isCreateCustomerVisible = true"
                             size="small"
                         />
-
-                        <!-- <ChooseColumns
-                            :columns="columns"
-                            v-model="selectedColumns"
-                            @apply="updateColumns"
-                            outlined
-                            size="small"
-                        /> -->
                     </div>
                 </div>
-                <!-- <div class="flex justify-end items-center pb-4">
-                    <InputText
-                        v-model="searchTerm"
-                        placeholder="Search by Name or Code"
-                        class="w-1/4"
-                    />
-                </div> -->
+
+                <!-- DataTable -->
                 <DataTable
                     :value="filteredCustomers"
                     paginator
@@ -73,15 +50,19 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     class="text-sm"
                 >
+                    <!-- Dynamic Columns -->
                     <Column
                         v-for="col of showColumns"
                         :key="col.field"
                         :field="col.field"
                         :header="col.header"
                     ></Column>
+
+                    <!-- Actions Column -->
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2">
+                                <!-- View Button -->
                                 <Button
                                     icon="pi pi-eye"
                                     class="p-button-info"
@@ -90,6 +71,8 @@
                                     @click="viewCustomer(slotProps.data.id)"
                                     outlined
                                 />
+
+                                <!-- Edit Button -->
                                 <Button
                                     icon="pi pi-pencil"
                                     class="p-button-warning"
@@ -98,14 +81,8 @@
                                     @click="editCustomer(slotProps.data.id)"
                                     outlined
                                 />
-                                <!-- <Button
-                                    icon="pi pi-trash"
-                                    class="p-button-danger"
-                                    aria-label="Delete"
-                                    size="small"
-                                    @click="deleteCustomer(slotProps.data.id)"
-                                    outlined
-                                /> -->
+
+                                <!-- Toggle Active Status Button -->
                                 <Button
                                     :icon="
                                         slotProps.data.active
@@ -122,7 +99,7 @@
                                             slotProps.data.active,
                                         'p-button-success':
                                             !slotProps.data.active,
-                                        ' w-28 h-8 flex items-center justify-center': true,
+                                        'w-28 h-8 flex items-center justify-center': true,
                                     }"
                                     aria-label="Toggle Active Status"
                                     size="small"
@@ -224,9 +201,8 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Head } from "@inertiajs/vue3";
-import { DataTable, Column, Button, Dialog, InputText } from "primevue";
+import { DataTable, Column, Button, Dialog, InputText, Dropdown } from "primevue";
 import { Inertia } from "@inertiajs/inertia";
-import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from "@/Layouts/BodyLayout.vue";
 import Customers from "@/Components/Customers.vue";
@@ -238,115 +214,88 @@ import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
 const confirm = useConfirm();
-const searchType = ref("name");
 
+// Props
 const props = defineProps({
     customers: Array,
     customerCategories: Array,
 });
 
+// Reactive State
+const searchTerm = ref("");
+const searchType = ref("name");
+const isCreateCustomerVisible = ref(false);
+const isEditCustomerVisible = ref(false);
+const isViewCustomerVisible = ref(false);
+const selectedCustomer = ref(null);
+
+// Columns for DataTable
 const columns = [
-    // { field: "id", header: "ID", style: { width: "5%" } },
     { field: "name", header: "Name", style: { width: "5%" } },
     { field: "code", header: "Code", style: { width: "5%" } },
-    { field: "credit_period", header: "Credit", style: { width: "10%" } },
+    { field: "credit_period", header: "Credit Period", style: { width: "10%" } },
     { field: "address", header: "Address", style: { width: "15%" } },
     { field: "website", header: "Website", style: { width: "5%" } },
     { field: "phone_number", header: "Phone", style: { width: "5%" } },
 ];
 
-const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 
-const isCreateCustomerVisible = ref(false);
-const isEditCustomerVisible = ref(false);
-const isViewCustomerVisible = ref(false);
-const selectedCustomer = ref(null);
-const searchTerm = ref("");
+// Search Options
+const searchOptions = [
+    { label: "Name", value: "name" },
+    { label: "Code", value: "code" },
+    { label: "Phone", value: "phone_number" },
+    { label: "Email", value: "email" },
+    { label: "Address", value: "address" },
+    { label: "Credit Period", value: "credit_period" }, // Added
+    { label: "Status", value: "active" }, // Added
+];
 
-const updateColumns = () => {
-    showColumns.value = selectedColumns.value;
-};
-
-// Filter the customers by name or code based on the search term
+// Filtered Customers
 const filteredCustomers = computed(() => {
-    return props.customers.filter((cust) => {
-        const term = searchTerm.value.toLowerCase();
+    const term = searchTerm.value.toLowerCase();
+    if (!term) return props.customers; // If no search term, return all customers
+
+    return props.customers.filter((customer) => {
         if (searchType.value === "name") {
-            return cust.name.toLowerCase().includes(term);
+            return customer.name.toLowerCase().includes(term);
         } else if (searchType.value === "code") {
-            return cust.code.toLowerCase().includes(term);
+            return customer.code.toLowerCase().includes(term);
+        } else if (searchType.value === "phone_number") {
+            return customer.phone_number.toLowerCase().includes(term);
+        } else if (searchType.value === "email") {
+            return customer.email.toLowerCase().includes(term);
+        } else if (searchType.value === "address") {
+            return customer.address.toLowerCase().includes(term);
+        } else if (searchType.value === "credit_period") {
+            return customer.credit_period.toString().includes(term);
+        } else if (searchType.value === "active") {
+            // Handle filtering by status (activate/deactivate)
+            const status = customer.active.toLowerCase(); // Convert to lowercase
+            return status.includes(term);
         }
         return false;
     });
 });
 
+// Edit Customer
 const editCustomer = (id) => {
     const customer = props.customers.find((cust) => cust.id === id);
     selectedCustomer.value = customer;
     isEditCustomerVisible.value = true;
 };
 
-const deleteCustomer = (id) => {
-    // Optionally, if you need delete functionality, keep this function.
-    if (confirm("Are you sure you want to delete this customer?")) {
-        Inertia.delete(route("customers.destroy", id), {
-            onSuccess: () => {
-                // Remove the customer from the list if necessary.
-                props.customers = props.customers.filter(
-                    (customer) => customer.id !== id
-                );
-                showToast(
-                    "success",
-                    "Deleted",
-                    "Customer deleted successfully!",
-                    4000
-                );
-            },
-            onError: (error) => {
-                showToast(
-                    "error",
-                    "Error",
-                    "There was an error deleting the customer.",
-                    4000
-                );
-                console.error("Error deleting customer:", error);
-            },
-        });
-    }
-};
-
+// View Customer
 const viewCustomer = (id) => {
     const customer = props.customers.find((cust) => cust.id === id);
     selectedCustomer.value = customer;
     isViewCustomerVisible.value = true;
 };
-const localCustomers = ref(
-    props.customers.map((cust) => ({
-        ...cust,
-        active: typeof cust.active !== "undefined" ? cust.active : true, // default true if missing
-    }))
-);
-const indexedCustomers = computed(() => {
-    return localCustomers.value.map((customer, index) => ({
-        ...customer,
-        index: index + 1,
-    }));
-});
 
-const showToast = (severity, summary, detail, duration = 4000) => {
-    toast.add({
-        group: "tc",
-        severity,
-        summary,
-        detail,
-        life: duration,
-        className: "my-custom-toast",
-    });
-};
-
+// Toggle Active Status
 const toggleActive = (customer) => {
-    const action = customer.active ? "activate" : "deactivate";
+    const action = customer.active ? "deactivate" : "activate";
 
     confirm.require({
         message: `Are you sure you want to ${action} this customer?`,
@@ -363,14 +312,7 @@ const toggleActive = (customer) => {
                             "Success",
                             `Customer ${action}d successfully!`
                         );
-                        // Optionally update local state
-                        localCustomers.value = localCustomers.value.map(
-                            (cust) =>
-                                cust.id === customer.id
-                                    ? { ...cust, active: !cust.active }
-                                    : cust
-                        );
-                        // Force a reload to fetch fresh data
+                        // Refresh the page to reflect changes
                         router.reload({ preserveScroll: true });
                     },
                     onError: (error) => {
@@ -389,7 +331,20 @@ const toggleActive = (customer) => {
         },
     });
 };
+
+// Show Toast
+const showToast = (severity, summary, detail, duration = 4000) => {
+    toast.add({
+        group: "tc",
+        severity,
+        summary,
+        detail,
+        life: duration,
+        className: "my-custom-toast",
+    });
+};
 </script>
+
 <style scoped>
 .my-custom-toast {
     background-color: #e0f7fa;
