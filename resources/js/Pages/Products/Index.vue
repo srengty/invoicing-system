@@ -43,7 +43,7 @@
                             :options="searchOptions" 
                             optionLabel="label" 
                             optionValue="value" 
-                            class="w-48"
+                            class="w-48 text-sm"
                             
                         />
 
