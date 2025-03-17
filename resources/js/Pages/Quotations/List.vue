@@ -93,6 +93,9 @@
                             <span
                                 class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                 :class="{
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.customer_status ===
+                                        'Pending',
                                     'bg-blue-100 text-blue-800 border-blue-400':
                                         slotProps.data.customer_status ===
                                         'Sent',
@@ -107,6 +110,9 @@
                                 <!-- PrimeVue icons in front of the text -->
                                 <i
                                     :class="{
+                                        'pi pi-clock':
+                                            slotProps.data.customer_status ===
+                                            'Pending',
                                         'pi pi-send':
                                             slotProps.data.customer_status ===
                                             'Sent',
@@ -425,7 +431,6 @@ const editQuotation = () => {
     }
 };
 
-
 const closeForm = () => {
     isFormVisible.value = false;
     form.reset();
@@ -533,7 +538,7 @@ const approveQuotation = () => {
         return;
     }
     selectedQuotation.value.status = "Approved";
-    selectedQuotation.value.customer_status = "Sent";
+    selectedQuotation.value.customer_status = "Pending";
     selectedQuotation.value.comment = comment.value;
     selectedQuotation.value.role = userRole.value;
 
