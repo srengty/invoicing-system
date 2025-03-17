@@ -63,7 +63,7 @@
                 <DataTable :value="filteredProducts" paginator :rows="5" :rowsPerPageOptions="[5, 10, 20, 50]" striped>
                     <Column header="Division">
                         <template #body="{ data }">
-                            {{ getDivisionName(data.division_id) }}
+                            {{ getDivisionDisplay(data.division_id) }}
                         </template>
                     </Column>
                     <Column header="Category">
@@ -117,167 +117,153 @@
                     v-model:visible="isViewDialogVisible"
                     header="Product Details"
                     :modal="true"
-                    class="w-96 rounded-lg shadow-lg"
+                    class="flex rounded-lg shadow-lg w-auto"
                 >
                     <template #header>
                         <div class="flex items-center gap-2">
                             <img
                                 src="/Item.png"
                                 alt="Item Icon"
-                                class="h-8 w-8 ml-2"
+                                class="h-8 ml-2"
                             />
-                            <span class="text-xl font-semibold bor"
-                                >Item Details</span
-                            >
+                            <span class="text-xl font-semibold">Item Details</span>
                         </div>
                     </template>
-                    <div
-                        v-if="selectedProduct"
-                        class="space-y-3 text-gray-700 pl-2 pr-2"
-                    >
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                            <p><strong>Division:</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500':
-                                        !selectedProduct?.division_id,
-                                }"
-                            >
-                                {{
-                                    getDivisionName(
-                                        selectedProduct?.division_id
-                                    ) ?? "Null"
-                                }}
-                            </p>
-                            <p><strong>Category:</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500':
-                                        !selectedProduct?.category_id,
-                                }"
-                            >
-                                {{
-                                    getCategoryName(
-                                        selectedProduct?.category_id
-                                    ) ?? "Null"
-                                }}
-                            </p>
 
-                            <p><strong>Code:</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.code,
-                                }"
-                            >
-                                {{ selectedProduct?.code ?? "Null" }}
-                            </p>
+                    <div class="grid gap-4 mb-4">
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label for="division" class="block text-sm font-medium">Division</label>
+                                <InputText
+                                    id="division"
+                                    :value="getDivisionDisplay(selectedProduct?.division_id)"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
 
-                            <p><strong>Name:</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.name,
-                                }"
-                            >
-                                {{ selectedProduct?.name ?? "Null" }}
-                            </p>
+                            <!-- Category -->
+                            <div>
+                                <label for="category" class="block text-sm font-medium">Category</label>
+                                <InputText
+                                    id="category"
+                                    :value="getCategoryName(selectedProduct?.category_id)"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
 
-                            <p><strong>Name (KH):</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.name_kh,
-                                }"
-                            >
-                                {{ selectedProduct?.name_kh ?? "Null" }}
-                            </p>
-
-                            <p><strong>Description:</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.desc,
-                                }"
-                            >
-                                {{ selectedProduct?.desc ?? "Null" }}
-                            </p>
-
-                            <p><strong>Description (KH):</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.desc_kh,
-                                }"
-                            >
-                                {{ selectedProduct?.desc_kh ?? "Null" }}
-                            </p>
-
-                            <p><strong>Unit:</strong></p>
-                            <p
-                                class="text-right"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.unit,
-                                }"
-                            >
-                                {{ selectedProduct?.unit ?? "Null" }}
-                            </p>
-
-                            <p><strong>Price in KHR:</strong></p>
-                            <p
-                                class="text-right font-semibold text-green-600"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.price,
-                                }"
-                            >
-                                {{ selectedProduct?.price ?? "Null" }}
-                            </p>
-
-                            <!-- <p><strong>Remark:</strong></p>
-                            <p
-                                class="text-right font-semibold"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.remark,
-                                }"
-                            >
-                                {{ selectedProduct?.remark ?? "Null" }}
-                            </p> -->
-
-                            <p><strong>Account code:</strong></p>
-                            <p
-                                class="text-right font-semibold"
-                                :class="{
-                                    'text-red-500': !selectedProduct?.acc_code,
-                                }"
-                            >
-                                {{ selectedProduct?.acc_code ?? "Null" }}
-                            </p>
+                            <!-- Code -->
+                            <div>
+                                <label for="code" class="block text-sm font-medium">Code</label>
+                                <InputText
+                                    id="code"
+                                    :value="selectedProduct?.code || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
                         </div>
+                        <hr />
+                        <div class="grid gap-4">
+                        <div class="flex gap-4">
+                            <div class="field w-1/3">
+                                <label for="name" class="block text-sm font-medium w-1/3">Name</label>
+                                <InputText
+                                    id="name"
+                                    :value="selectedProduct?.name || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
 
-                        <div v-if="selectedProduct.pdf_url" class="text-center">
-                            <a
-                                :href="`/pdfs/${selectedProduct.pdf_url
-                                    .split('/')
-                                    .pop()}`"
-                                target="_blank"
-                                class="text-blue-500 hover:text-blue-700 transition duration-200"
-                            >
-                                📄 View Catelog
-                            </a>
+                            <div class="field w-2/3">
+                                <label for="desc" class="block text-sm font-medium">Description</label>
+                                <InputText
+                                    id="desc"
+                                    :value="selectedProduct?.desc || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
                         </div>
-                        <p v-else class="text-center text-gray-400">
-                            No PDF available
-                        </p>
+                        <div class="flex gap-4">
+                            <div class="field w-1/3">
+                                <label for="name_kh" class="block text-sm font-medium">Name (KH)</label>
+                                <InputText
+                                    id="name_kh"
+                                    :value="selectedProduct?.name_kh || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
+
+                            <div class="field w-2/3">
+                                <label for="desc_kh" class="block text-sm font-medium">Description (KH)</label>
+                                <InputText
+                                    id="desc_kh"
+                                    :value="selectedProduct?.desc_kh || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
+                        </div>
+                        <hr />
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label for="price" class="block text-sm font-medium">Price in KHR</label>
+                                <InputText
+                                    id="price"
+                                    :value="selectedProduct?.price ? `${selectedProduct.price} KHR` : 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
+
+                            <!-- Category -->
+                            <div>
+                                <label for="unit" class="block text-sm font-medium">Unit</label>
+                                <InputText
+                                    id="unit"
+                                    :value="selectedProduct?.unit || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
+
+                            <!-- Code -->
+                            <div>
+                                <label for="acc_code" class="block text-sm font-medium">Account Code</label>
+                                <InputText
+                                    id="acc_code"
+                                    :value="selectedProduct?.acc_code || 'N/A'"
+                                    class="w-full text-sm"
+                                    disabled
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">Catalog File</label>
+                            <div v-if="selectedProduct?.pdf_url">
+                                <a
+                                    :href="selectedProduct.pdf_url"
+                                    target="_blank"
+                                    class="text-blue-500 underline"
+                                >
+                                    View Catelog
+                                </a>
+                            </div>
+                            <div v-else class="text-gray-500">No file uploaded</div>
+                        </div>    
+                    </div>
+                    
+                        <!-- PDF Catalog -->
+                        
                     </div>
 
-                    <div class="flex justify-end mt-2">
-                        <Button
-                            label="Close"
-                            class="p-button-secondary px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition"
-                            @click="closeViewDialog"
-                        />
+                    <!-- Close Button -->
+                    <div class="flex justify-end gap-2 mr-4 mb-2">
+                        <Button label="Close" class="p-button-secondary" @click="closeViewDialog" />
                     </div>
                 </Dialog>
 
@@ -312,7 +298,7 @@
                                 <Dropdown
                                     v-model="form.division_id"
                                     :options="divisionOptions"
-                                    optionLabel="name"
+                                    optionLabel="displayName"
                                     optionValue="id"
                                     placeholder="Select a Division"
                                     :filter="true"
@@ -590,38 +576,40 @@ const filteredProducts = computed(() => {
                 value?.toString().toLowerCase().includes(term)
             );
         } else if (searchType.value === "division.name") {
-            // Filter by division name
-            const divisionName = getDivisionName(product.division_id)?.toLowerCase();
-            return divisionName?.includes(term);
+            // ✅ Filter by division code and name
+            const division = divisionOptions.value.find(d => d.id === product.division_id);
+            const divisionText = division ? `${division.code} - ${division.name}`.toLowerCase() : "";
+            return divisionText.includes(term);
         } else if (searchType.value === "category_id") {
-            // Filter by category name
+            // ✅ Filter by category name
             const categoryName = getCategoryName(product.category_id)?.toLowerCase();
             return categoryName?.includes(term);
         } else {
-            // Filter by other fields (e.g., code, name_kh, etc.)
+            // ✅ Filter by other fields (e.g., code, name_kh, etc.)
             return product[searchType.value]?.toString().toLowerCase().includes(term);
         }
     });
 });
 
+
 onMounted(async () => {
   const response = await getDepartment();
-  const data = response.data; // Extract the `data` array
+  const data = response.data; 
 
   // Filter departments with status === "service"
   const serviceDepartments = data.filter(dept => dept.status === "service");
 
   if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
     divisionOptions.value = serviceDepartments.map(dept => ({
-      name: dept.name, // Use the `name` field from your data
-      id: dept.id      // Use the `id` field from your data
+      name: dept.name, 
+      id: dept.id,
+      code: dept.code,  // Assuming `code` exists in API response
+      displayName: `${dept.code} - ${dept.name}` // Add this for Dropdown
     }));
   } else {
     console.warn('No service departments found.');
-    divisionOptions.value = []; // Ensure it's an empty array to avoid errors
+    divisionOptions.value = []; 
   }
-
-  console.log('Filtered divisionOptions:', divisionOptions.value); // Debugging: Check the filtered options
 });
 
 const reloadData = () => {
@@ -738,9 +726,9 @@ const getCategoryName = (categoryId) => {
         : "Unknown";
 };
 
-const getDivisionName = (divisionId) => {
+const getDivisionDisplay = (divisionId) => {
     const division = divisionOptions.value.find((div) => div.id === divisionId);
-    return division ? division.name : "Unknown";
+    return division ? `${division.code} - ${division.name}` : "Unknown";
 };
 
 // Define columns for DataTable
