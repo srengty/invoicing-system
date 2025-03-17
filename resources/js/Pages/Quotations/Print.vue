@@ -59,48 +59,49 @@
 
         <!-- Print Section: Products Table -->
         <div ref="printTable" class="page-break">
-            <div v-if="quotation.products?.length" class="table-container">
+            <div
+                v-if="quotation.products && quotation.products.length"
+                class="table-container"
+            >
                 <!-- Table Header -->
                 <div
-                    class="grid grid-cols-5 bg-gray-200 py-2 px-4 font-bold text-center border-b"
+                    class="grid grid-cols-[70px_170px_110px_170px_150px] bg-gray-200 py-2 px-4 font-bold text-center border-b"
                 >
-                    <div class="w-1/5">No.</div>
-                    <div class="w-1/5">ITEM</div>
-                    <div class="w-1/5">QTY</div>
-                    <div class="w-3/5">Unit Price</div>
-                    <div class="w-3/5">Sub-Total</div>
+                    <div class="text-start">No.</div>
+                    <div class="text-start">ITEM</div>
+                    <div class="text-start">QTY</div>
+                    <div class="text-start">Unit Price</div>
+                    <div class="text-start">Sub-Total</div>
                 </div>
 
                 <!-- Table Body -->
                 <div
-                    v-for="(product, index) in quotation.products"
+                    v-for="(product, index) in formattedProducts"
                     :key="product.id"
-                    class="grid grid-cols-5 border-b py-2 px-4 text-start"
+                    class="grid grid-cols-[70px_170px_110px_170px_150px] border-b py-2 px-4 text-start"
                 >
-                    <div>{{ index + 1 }}</div>
+                    <div class="text-start">{{ index + 1 }}</div>
                     <div>
-                        <p>{{ isUSD ? product.name : product.name_kh }}</p>
-                        <p>{{ isUSD ? product.desc : product.desc_kh }}</p>
-                        <p>{{ isUSD ? product.remark : product.remark_kh }}</p>
+                        <p class="font-medium">
+                            {{ isUSD ? product.name : product.name_kh }}
+                        </p>
+                        <p class="text-gray-600 text-xs">
+                            {{ isUSD ? product.desc : product.desc_kh }}
+                        </p>
+                        <p class="text-gray-500 italic text-xs">
+                            {{ isUSD ? product.remark : product.remark_kh }}
+                        </p>
                     </div>
-                    <div>{{ product.pivot.quantity }}</div>
-                    <div>
-                        <div class="flex flex-col">
-                            <span class="font-semibold"
-                                >៛{{
-                                    formatNumber(
-                                        convertCurrency(product.pivot.price)
-                                    )
-                                }}</span
-                            >
-                        </div>
+                    <div class="text-start">{{ product.quantity }}</div>
+                    <div class="text-start font-semibold">
+                        ៛{{ formatNumber(convertCurrency(product.price)) }}
                     </div>
-                    <div class="font-semibold">
+                    <div class="text-start font-semibold">
                         ៛{{
                             formatNumber(
                                 convertCurrency(
-                                    product.pivot.price * product.pivot.quantity
-                                ).toFixed(2)
+                                    product.price * product.quantity
+                                )
                             )
                         }}
                     </div>
@@ -110,7 +111,7 @@
             <!-- Total Amount -->
             <p class="pt-6 flex justify-end">
                 Total ({{ currencyLabel }}): {{ currencySymbol
-                }}{{ formatNumber(convertCurrency(quotation.total)) }}
+                }}{{ formatNumber(convertCurrency(totalAmount)) }}
             </p>
 
             <!-- Terms and Conditions -->
@@ -179,44 +180,127 @@ const formatNumber = (value) => {
     );
 };
 
+const totalAmount = computed(() => {
+    return (
+        quotation.value.products?.reduce((sum, product) => {
+            const quantity = product.pivot?.quantity || 0;
+            const price = product.pivot?.price || 0;
+            return sum + quantity * price;
+        }, 0) || 0
+    );
+});
+
 const printPage = () => {
     window.print();
 };
+
+const formattedProducts = computed(() => {
+    if (!quotation.value.products) return [];
+
+    return quotation.value.products.map((product) => ({
+        id: product.id,
+        name: product.name || "Unknown",
+        name_kh: product.name_kh || "Unknown",
+        desc: product.desc || "",
+        desc_kh: product.desc_kh || "",
+        remark: product.remark || "",
+        remark_kh: product.remark_kh || "",
+        quantity: product.pivot?.quantity ?? 0, // ✅ Ensure quantity is never undefined
+        price: product.pivot?.price ?? 0, // ✅ Ensure price is never undefined
+    }));
+});
+
+watch(
+    () => quotation.value.products,
+    (newProducts) => {
+        console.log("🚀 Quotation Products Updated:", newProducts);
+    },
+    { immediate: true }
+);
+
+watch(
+    () => quotation.value.products,
+    (newProducts) => {
+        if (newProducts) {
+            newProducts.forEach((product) => {
+                if (!product.pivot) {
+                    console.warn("Product missing pivot object:", product);
+                    product.pivot = { quantity: 0, price: 0 }; // Add a default pivot object
+                }
+            });
+        }
+    },
+    { immediate: true }
+);
+const filteredProducts = computed(() => {
+    return quotation.value.products?.filter(product => product.includeCatalog) || [];
+});
 </script>
 
 <style scoped>
+/* Define a print-friendly A4 layout */
 .print-area {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 20mm;
+    width: 210mm; /* A4 width */
+    min-height: 297mm; /* A4 height */
+    padding: 10mm; /* Reduce padding to fit more content */
     background: white;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
     margin: auto;
 }
 
-/* Hide checkboxes in printed output if desired */
+/* Improve table layout for print */
+.table-container {
+    width: 100%;
+    font-size: 12px; /* Reduce font size slightly for better fit */
+    border-collapse: collapse;
+}
+
+/* Ensure tables do not break between pages */
+.table-container,
+.table-container div {
+    page-break-before: auto;
+    page-break-after: avoid;
+    page-break-inside: avoid;
+}
+
+/* Hide unnecessary elements when printing */
 @media print {
-    input[type="checkbox"] {
-        display: none;
-    }
+    /* Hide elements that should not appear in print */
+    input[type="checkbox"],
+    .buttons,
+    .non-printable,
     .mt-6 {
         display: none !important;
     }
+
+    /* Adjust print margins and spacing */
     .print-area {
         margin: 0;
-        padding: 0;
+        padding: 5mm; /* Reduce padding further */
         width: 100%;
         height: auto;
         box-shadow: none;
         page-break-after: avoid;
     }
+
+    /* Keep tables from breaking across pages */
     .table-container {
         page-break-before: auto;
-        page-break-after: auto;
-        page-break-inside: auto;
-    }
-    .table-container div {
+        page-break-after: avoid;
         page-break-inside: avoid;
+    }
+
+    /* Prevent rows from splitting across pages */
+    .table-container tr {
+        page-break-inside: avoid;
+        break-inside: avoid-column;
+    }
+
+    /* Reduce font size for better fitting */
+    .table-container th,
+    .table-container td {
+        font-size: 11px !important;
+        padding: 4px;
     }
 }
 </style>

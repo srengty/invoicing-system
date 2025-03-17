@@ -172,12 +172,7 @@
                             </span>
                             <br />
                             <span class="text-sm font-bold">
-                                {{
-                                    slotProps.data.remark.length > 15
-                                        ? slotProps.data.remark.slice(0, 15) +
-                                          "..."
-                                        : slotProps.data.remark
-                                }}
+                                {{ getRemarkSnippet(slotProps.data.remark) }}
                             </span>
                         </template>
                     </Column>
@@ -254,7 +249,11 @@
                     </Column>
                     <Column header="Print Catalog">
                         <template #body="slotProps">
-                            <Checkbox v-model="slotProps.data.includeCatalog" />
+                            <Checkbox
+                                v-model="slotProps.data.includeCatalog"
+                                :binary="true"
+                                @change="updateIncludeCatalog(slotProps.data)"
+                            />
                         </template>
                     </Column>
                 </DataTable>
@@ -519,21 +518,41 @@ const preventMinus = (event) => {
 };
 const pageProps = usePage().props;
 const quotation = ref(pageProps.quotation || null);
-const isEditing = ref(!!quotation.value);
+// const isEditing = ref(!!quotation.value);
+const isEditing = computed(() => !!props.quotation);
 
 onMounted(() => {
     if (props.quotation) {
-        form.quotation_no = props.quotation.quotation_no;
-        form.quotation_date = props.quotation.quotation_date;
-        form.customer_id = props.quotation.customer_id;
-        form.address = props.quotation.address;
-        form.phone_number = props.quotation.phone_number;
-        form.products = props.quotation.products || []; // Ensure products are assigned here
-        form.total = props.quotation.total;
-        form.tax = props.quotation.tax;
-        form.grand_total = props.quotation.grand_total;
+        console.log("🛠 Debug: Quotation received", props.quotation);
 
-        // Update the customer details
+        form.quotation_no = props.quotation.quotation_no || "";
+        form.quotation_date = props.quotation.quotation_date || "";
+        form.customer_id = props.quotation.customer_id || "";
+        form.address = props.quotation.address || "";
+        form.phone_number = props.quotation.phone_number || "";
+        form.total = props.quotation.total || 0;
+        form.tax = props.quotation.tax || 0;
+        form.grand_total = props.quotation.grand_total || 0;
+
+        // Populate selectedProductsData with existing products
+        if (
+            props.quotation.products &&
+            Array.isArray(props.quotation.products)
+        ) {
+            selectedProductsData.value = props.quotation.products.map(
+                (product) => ({
+                    ...product,
+                    quantity: product.quantity || 1,
+                    subTotal:
+                        (product.quantity || 1) * Number(product.price || 0),
+                    remark: product.remark || "",
+                    includeCatalog: product.includeCatalog ?? false,
+                })
+            );
+        } else {
+            selectedProductsData.value = [];
+        }
+
         updateCustomerDetails();
     }
 });
@@ -548,17 +567,15 @@ const props = defineProps({
 
 // Define the Inertia form
 const form = useForm({
-    quotation_no: quotation.value?.quotation_no || "", // Pre-fill for editing
-    quotation_date: quotation.value?.quotation_date || "",
-    status: quotation.value?.status || "Pending",
-    address: quotation.value?.address || "",
-    phone_number: quotation.value?.phone_number || "",
-    customer_id: quotation.value?.customer_id || "",
-    total: quotation.value?.total || 0,
-    tax: quotation.value?.tax || 0,
-    grand_total: quotation.value?.grand_total || 0,
-    products: quotation.value?.products || [], // Pre-fill products for editing
-    terms: quotation.value?.terms || "",
+    id: props.quotation?.id || null,
+    quotation_no: props.quotation?.quotation_no || "",
+    quotation_date: props.quotation?.quotation_date || "",
+    customer_id: props.quotation?.customer_id || "",
+    address: props.quotation?.address || "",
+    phone_number: props.quotation?.phone_number || "",
+    total: props.quotation?.total || 0,
+    products: props.quotation?.products || [],
+    terms: props.quotation?.terms || "",
 });
 
 const updateCustomerDetails = () => {
@@ -690,6 +707,8 @@ const addItemToTable = () => {
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
         remark: selectedProduct.value.remark || "",
+        includeCatalog: false,
+        isNew: true, // ✅ Mark this item as new
     };
 
     // Check if the same product name already exists
@@ -784,15 +803,30 @@ const selectCustomer = () => {
 const selectedProductIds = ref([]);
 const selectedProductsData = ref([]);
 
+watch(selectedProductsData, (newProducts) => {
+    newProducts.forEach((product) => {
+        if (typeof product.includeCatalog !== "boolean") {
+            product.includeCatalog = false; // ✅ Ensures boolean type
+        }
+    });
+});
+
+const updateIncludeCatalog = (product) => {
+    product.includeCatalog = !product.includeCatalog; // Toggle the state
+    console.log("Updated includeCatalog:", product.includeCatalog);
+};
+
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
         if (!selectedProductsData.value.find((prod) => prod.id === id)) {
             const prod = props.products.find((p) => p.id === id);
             if (prod) {
                 selectedProductsData.value.push({
-                    ...prod,
-                    quanity: 1,
-                    subTotal: Number(prod.price) * 1,
+                    id: product.id,
+                    quantity: 1,
+                    price: product.price,
+                    remark: "",
+                    includeCatalog: product.includeCatalog ?? 0, // ✅ Default state is unchecked (0)
                 });
             }
             console.log(prod);
@@ -846,9 +880,12 @@ watch(
 );
 
 const updateProductSubtotal = (row) => {
-    row.quantity = parseInt(row.quantity) || 0;
+    row.quantity = parseInt(row.quantity) || 1;
     row.subTotal = Number(row.price) * row.quantity || 0;
-    form.total = calculateTotal.value;
+    form.total = selectedProductsData.value.reduce(
+        (sum, prod) => sum + prod.subTotal,
+        0
+    );
     form.grand_total = calculateGrandTotal.value;
 
     const updatedProduct = selectedProductsData.value.find(
@@ -931,97 +968,53 @@ const editProduct = (productId) => {
     }
 };
 
-const submit = (event) => {
+const submit = async (event) => {
     if (event && typeof event.preventDefault === "function") {
         event.preventDefault();
     }
 
-    if (!validateForm()) {
-        return;
-    }
-
-    // If editing, update the existing quotation; otherwise, create a new one
-    if (form.id) {
-        form.put(route("quotations.update", { id: form.id }), {
-            onSuccess: () => {
-                showToast(
-                    "success",
-                    "Updated",
-                    "Quotation updated successfully!"
-                );
-                router.get(route("quotations.list"));
-            },
-        });
-    } else {
-        form.post(route("quotations.store"), {
-            onSuccess: () => {
-                showToast(
-                    "success",
-                    "Created",
-                    "Quotation created successfully!"
-                );
-                router.get(route("quotations.list"));
-            },
-        });
-    }
+    if (!validateForm()) return;
 
     // Prepare product data before submitting
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
-        remark: prod.remark ?? "add 1 day",
-        includeCatalog: prod.includeCatalog ?? false, // Store checkbox selection
+        remark: prod.remark ?? "",
+        includeCatalog: prod.includeCatalog ? 1 : 0, // ✅ Convert to 1 or 0
     }));
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-    // Determine if we're creating or updating
-    if (form.id) {
-        // Update existing quotation
-        form.put(route("quotations.update", { id: form.id }), {
+    console.log("Submitting Products:", JSON.stringify(form.products, null, 2));
+
+    const routePath = form.id
+        ? route("quotations.update", { id: form.id })
+        : route("quotations.store");
+
+    try {
+        await form.post(routePath, {
             onSuccess: () => {
                 showToast(
                     "success",
-                    "Updated",
-                    "Quotation updated successfully!",
-                    3000
+                    form.id ? "Updated" : "Created",
+                    `Quotation ${form.id ? "updated" : "created"} successfully!`
                 );
                 router.get(route("quotations.list"));
             },
             onError: (errors) => {
-                console.error(errors);
-                showToast(
-                    "error",
-                    "Update Failed",
-                    "Could not update quotation.",
-                    4000
-                );
-            },
-        });
-    } else {
-        // Create new quotation
-        form.post(route("quotations.store"), {
-            onSuccess: () => {
-                showToast(
-                    "success",
-                    "Created",
-                    "Quotation created successfully!",
-                    3000
-                );
-                router.get(route("quotations.list"));
-            },
-            onError: (errors) => {
-                console.error(errors);
+                console.error("Submission Error:", errors);
                 showToast(
                     "error",
                     "Submission Failed",
-                    "Could not create quotation.",
-                    4000
+                    `Could not ${form.id ? "update" : "create"} quotation.`
                 );
             },
         });
+    } catch (error) {
+        console.error("Unexpected Error:", error);
+        showToast("error", "Unexpected Error", "Something went wrong.");
     }
 };
 
@@ -1052,6 +1045,10 @@ const printCatalog = (product) => {
 
     const pdfUrl = `/pdfs/${product.pdf_url.split("/").pop()}`;
     window.open(pdfUrl, "_blank");
+};
+const getRemarkSnippet = (remark) => {
+    if (!remark) return "";
+    return remark.length > 15 ? remark.slice(0, 15) + "..." : remark;
 };
 </script>
 <style>

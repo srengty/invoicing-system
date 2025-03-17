@@ -141,8 +141,10 @@ class QuotationController extends Controller
             'products.*.category_id' => 'nullable|integer|min:0',
             'products.*.remark' => 'nullable|string|max:255',
             'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
+            'products.*.includeCatalog' => 'required|in:true,false,0,1',
         ]);
         if ($validated->fails()) {
+            \Log::error('Validation Error:', $validated->errors()->toArray());
             return response()->json(['message' => $validated->errors()], 422);
         }
 
@@ -196,6 +198,7 @@ class QuotationController extends Controller
                         'quantity'   => $product['quantity'],
                         'quotation_no' => $quotation->id,
                         'price'      => $product['price'],
+                        'include_catalog' => filter_var($product['includeCatalog'], FILTER_VALIDATE_BOOLEAN),
                     ]);
                 }
                 // $quotation->products()->attach($product['id'], [
@@ -223,20 +226,22 @@ class QuotationController extends Controller
             //     'quotation' => $quotation,
             //     'products' => $quotation->products,
             // ]);
+        $quotation = Quotation::with(['customer', 'products' => function($query) {
+            $query->withPivot(['quantity', 'price']); // ✅ Ensure pivot data is included
+        }])->where('id', $quotation_no)->firstOrFail();
         $formattedQuotationDate = $quotation->quotation_date
         ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
         : null;
-
         return Inertia::render('Quotations/Print', [
             'quotation' => [
                 'id' => $quotation->id,
                 'quotation_no' => $quotation->quotation_no ?? 'Pending',
-                'quotation_date' => $formattedQuotationDate,
+                'quotation_date' => $quotation->quotation_date ? Carbon::parse($quotation->quotation_date)->format('Y-m-d') : null,
                 'customer_id' => $quotation->customer_id,
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->address,
                 'phone_number' => $quotation->phone_number,
-                'products' => $quotation->products,
+                'products' => $quotation->products, // ✅ Ensures products with pivot data are passed
                 'total' => $quotation->total,
                 'terms' => $quotation->terms,
             ],
@@ -252,7 +257,7 @@ class QuotationController extends Controller
         // Render a form for editing an existing quotation
         return Inertia::render('Quotations/Edit', [
             'quotation' => $quotation,
-            'products' => $products,  
+            'products' => $products,
         ]);
     }
 
@@ -281,9 +286,27 @@ class QuotationController extends Controller
             'products.*.category_id' => 'nullable|integer|min:0',
             'products.*.remark' => 'nullable|string|max:255',
             // 'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // if needed
+           'products.*.includeCatalog' => 'required|in:true,false,0,1', // Ensure boolean validation
+
         ]);
 
         $quotation->update($validated);
+
+          // Update associated products
+        foreach ($validated['products'] as $product) {
+            $existingProduct = ProductQuotation::where([
+                'product_id' => $product['id'],
+                'quotation_no' => $quotation->id,
+            ])->first();
+
+            if ($existingProduct) {
+                $existingProduct->update([
+                    'quantity' => $product['quantity'],
+                    'price' => $product['price'],
+                    'include_catalog' => filter_var($product['includeCatalog'], FILTER_VALIDATE_BOOLEAN),
+                ]);
+            }
+        }
 
         return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully.');
     }
