@@ -524,31 +524,26 @@ const isEditing = computed(() => !!props.quotation);
 onMounted(() => {
     if (props.quotation) {
         console.log("🛠 Debug: Quotation received", props.quotation);
-
-        form.quotation_no = props.quotation.quotation_no || "";
-        form.quotation_date = props.quotation.quotation_date || "";
-        form.customer_id = props.quotation.customer_id || "";
-        form.address = props.quotation.address || "";
-        form.phone_number = props.quotation.phone_number || "";
-        form.total = props.quotation.total || 0;
-        form.tax = props.quotation.tax || 0;
-        form.grand_total = props.quotation.grand_total || 0;
+        const newProps = JSON.parse(props.quotation);
+        form.quotation_no = newProps.quotation_no || "";
+        form.quotation_date = newProps.quotation_date || "";
+        form.customer_id = String(newProps.customer_id) || "";
+        form.address = newProps.address || "";
+        form.phone_number = newProps.phone_number || "";
+        form.total = newProps.total || 0;
+        form.tax = newProps.tax || 0;
+        form.grand_total = newProps.grand_total || 0;
 
         // Populate selectedProductsData with existing products
-        if (
-            props.quotation.products &&
-            Array.isArray(props.quotation.products)
-        ) {
-            selectedProductsData.value = props.quotation.products.map(
-                (product) => ({
-                    ...product,
-                    quantity: product.quantity || 1,
-                    subTotal:
-                        (product.quantity || 1) * Number(product.price || 0),
-                    remark: product.remark || "",
-                    includeCatalog: product.includeCatalog ?? false,
-                })
-            );
+        if (newProps.products && Array.isArray(newProps.products)) {
+            selectedProductsData.value = newProps.products.map((product) => ({
+                ...product,
+                quantity: product.quantity || 1,
+                subTotal: (product.quantity || 1) * Number(product.price || 0),
+                remark: product.remark || "",
+                includeCatalog: product.includeCatalog ?? false,
+            }));
+            console.log(selectedProductsData.value);
         } else {
             selectedProductsData.value = [];
         }
@@ -579,9 +574,11 @@ const form = useForm({
 });
 
 const updateCustomerDetails = () => {
+    console.log("Customer id: ", form.customer_id);
     const selectedCustomer = formattedCustomers.value.find(
-        (customer) => customer.id == form.customer_id
+        (customer) => customer.id    == form.customer_id
     );
+    console.log("selected customer: ", selectedCustomer);
 
     if (selectedCustomer) {
         form.address = selectedCustomer.address || "";

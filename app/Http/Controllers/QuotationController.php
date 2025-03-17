@@ -42,7 +42,6 @@ class QuotationController extends Controller
     $products = Product::all();
     $customerCategories = CustomerCategory::all();
     $productCategories = Category::all();
-
     return inertia('Quotations/Create', [
        'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
         'products' => $products,
