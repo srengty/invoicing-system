@@ -40,7 +40,6 @@ Route::post('/quotations/{quotationId}/comments', [QuotationController::class, '
 Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
 Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
 
-
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);

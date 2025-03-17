@@ -382,6 +382,27 @@ const openForm = (quotations = null) => {
     isFormVisible.value = true;
 };
 const isFormVisible = ref(false);
+// const editQuotation = () => {
+//     if (selectedQuotation.value.status !== "Approved") {
+//         router.visit(route("quotations.create"), {
+//             method: "get",
+//             data: {
+//                 quotation: selectedQuotation.value,
+//             },
+//             preserveState: true,
+//             preserveScroll: true,
+//         });
+
+//         isViewDialogVisible.value = false;
+//     } else {
+//         showToast(
+//             "error",
+//             "Edit Disabled",
+//             "You cannot edit an approved quotation!",
+//             3000
+//         );
+//     }
+// };
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
         router.visit(route("quotations.create"), {
@@ -403,6 +424,7 @@ const editQuotation = () => {
         );
     }
 };
+
 
 const closeForm = () => {
     isFormVisible.value = false;
@@ -535,7 +557,7 @@ const reviseQuotation = () => {
         return;
     }
     selectedQuotation.value.status = "Revise";
-    selectedQuotation.value.customer_status = "Sent";
+    // selectedQuotation.value.customer_status = "Sent";
     selectedQuotation.value.comment = comment.value;
     selectedQuotation.value.role = userRole.value;
 
