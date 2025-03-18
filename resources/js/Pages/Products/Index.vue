@@ -16,28 +16,6 @@
                         <h1 class="text-xl text-green-600">Manage Items</h1>
                     </div>
                     <div class="flex items-center gap-2">
-
-                        <!-- Search Input -->
-                        <InputText
-                            v-model="searchTerm"
-                            placeholder="Search"
-                            class="w-64"
-                            size="small"
-                        />
-                        <!-- <Button
-                            v-model="searchType"
-                            :class="{'p-button-primary': searchType === 'name_kh', 'p-button-outlined': searchType !== 'name_kh'}"
-                            label="Search by Name"
-                            @click="searchType = 'name_kh'"
-                            size="small"
-                        />
-                        <Button
-                            v-model="searchType"
-                            :class="{'p-button-primary': searchType === 'code', 'p-button-outlined': searchType !== 'code'}"
-                            label="Search by Code"
-                            @click="searchType = 'code'"
-                            size="small"
-                        /> -->
                         <Dropdown 
                             v-model="searchType" 
                             :options="searchOptions" 
@@ -46,7 +24,13 @@
                             class="w-48 text-sm"
                             
                         />
-
+                        <!-- Search Input -->
+                        <InputText
+                            v-model="searchTerm"
+                            placeholder="Search"
+                            class="w-64"
+                            size="small"
+                        />
                     <Button
                         icon="pi pi-plus"
                         raised

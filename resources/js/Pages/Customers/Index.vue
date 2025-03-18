@@ -13,13 +13,6 @@
                         </h1>
                     </div>
                     <div class="flex items-center gap-2">
-                        <InputText
-                            v-model="searchTerm"
-                            placeholder="Search"
-                            class="w-64"
-                            size="small"
-                        />
-
                         <Dropdown
                             v-model="searchType"
                             :options="searchOptions"
@@ -28,7 +21,12 @@
                             class="w-48 text-sm"
                             placeholder="Search by"
                         />
-
+                        <InputText
+                            v-model="searchTerm"
+                            placeholder="Search"
+                            class="w-64"
+                            size="small"
+                        />
                         <Button
                             icon="pi pi-plus"
                             label="New Customer"
@@ -244,7 +242,6 @@ const searchOptions = [
     { label: "Email", value: "email" },
     { label: "Address", value: "address" },
     { label: "Credit Period", value: "credit_period" },
-    { label: "Status", value: "active" },
     { label: "Category", value: "customer_category_name" }, // Added
 ];
 
