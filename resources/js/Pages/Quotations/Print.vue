@@ -14,7 +14,7 @@
         </div>
 
         <!-- Print Button -->
-        <div class="flex justify-center mt-6">
+        <div class="flex justify-center mt-6 mb-2">
             <Button
                 label="Print Quotation"
                 icon="pi pi-print"
@@ -151,33 +151,6 @@
             </div>
         </div>
     </div>
-    <!-- Print Area: Catalog -->
-    <div
-        ref="catalogArea"
-        class="print-area mt-10"
-        v-if="filteredProducts.length"
-    >
-        <h1 class="text-3xl font-bold text-center mb-6">Product Catalog</h1>
-        <div class="grid grid-cols-3 gap-4">
-            <div
-                v-for="product in filteredProducts"
-                :key="product.id"
-                class="border p-4 rounded-md"
-            >
-                <img
-                    :src="product.image"
-                    alt="Product Image"
-                    class="w-full h-32 object-cover rounded-md mb-2"
-                />
-                <h3 class="text-md font-semibold">
-                    {{ isUSD ? product.name : product.name_kh }}
-                </h3>
-                <p class="text-gray-600 text-sm">
-                    {{ isUSD ? product.desc : product.desc_kh }}
-                </p>
-            </div>
-        </div>
-    </div>
 </template>
 
 <script setup>
@@ -220,12 +193,17 @@ const totalAmount = computed(() => {
     );
 });
 
-const printPage = async () => {
-    try {
-        await generateAndMergePDFs();
-    } catch (error) {
-        console.error("Error generating or merging PDFs:", error);
-    }
+// const printPage = () => {
+//     window.print();
+// };
+const printPage = () => {
+    const printContents = document.getElementById("printArea").innerHTML;
+    const originalContents = document.body.innerHTML;
+
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload(); // Reload to restore the original content
 };
 
 const formattedProducts = computed(() => {
@@ -241,26 +219,10 @@ const formattedProducts = computed(() => {
         remark_kh: product.remark_kh || "",
         quantity: product.pivot?.quantity ?? 0,
         price: product.pivot?.price ?? 0,
-        includeCatalog: product.includeCatalog || false, // Ensure this is set
+        includeCatalog: product.pivot?.include_catalog ?? false, // Use include_catalog from pivot
     }));
 });
 
-watch(
-    () => quotation.value.products,
-    (newProducts) => {
-        if (newProducts) {
-            newProducts.forEach((product) => {
-                if (!product.pivot) {
-                    console.warn("Product missing pivot object:", product);
-                    product.pivot = { quantity: 0, price: 0 };
-                }
-            });
-        }
-    },
-    { immediate: true }
-);
-
-// Filter products for catalog
 const filteredProducts = computed(() => {
     return (
         quotation.value.products?.filter((product) => product.includeCatalog) ||
@@ -268,14 +230,12 @@ const filteredProducts = computed(() => {
     );
 });
 
-// Generate & Merge PDFs
 const generateAndMergePDFs = async () => {
     try {
         const quotationPDF = await generatePDF(printArea.value);
         const catalogPDF = filteredProducts.value.length
             ? await generatePDF(catalogArea.value)
             : null;
-        console.log("Catalog PDF:", catalogPDF);
 
         if (catalogPDF) {
             const mergedPDFBytes = await mergePDFs(quotationPDF, catalogPDF);
@@ -288,23 +248,18 @@ const generateAndMergePDFs = async () => {
     }
 };
 
-// Convert HTML to PDF Blob
 const generatePDF = (element) => {
     return new Promise((resolve) => {
         html2pdf().from(element).toPdf().outputPdf("blob").then(resolve);
     });
 };
 
-// Merge PDFs using pdf-lib
 const mergePDFs = async (pdfBlob1, pdfBlob2) => {
     const pdfDoc = await PDFDocument.create();
     const [pdf1, pdf2] = await Promise.all([
         PDFDocument.load(await pdfBlob1.arrayBuffer()),
         PDFDocument.load(await pdfBlob2.arrayBuffer()),
     ]);
-
-    console.log("PDF1 Pages:", pdf1.getPageIndices());
-    console.log("PDF2 Pages:", pdf2.getPageIndices());
 
     const pages1 = await pdfDoc.copyPages(pdf1, pdf1.getPageIndices());
     const pages2 = await pdfDoc.copyPages(pdf2, pdf2.getPageIndices());
@@ -315,13 +270,11 @@ const mergePDFs = async (pdfBlob1, pdfBlob2) => {
     return pdfDoc.save();
 };
 
-// Download the final merged PDF
 const downloadPDF = (pdfBytes, filename) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     downloadBlob(blob, filename);
 };
 
-// Helper function to trigger download
 const downloadBlob = (blob, filename) => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -333,34 +286,28 @@ const downloadBlob = (blob, filename) => {
 </script>
 
 <style scoped>
-/* Define a print-friendly A4 layout */
 .print-area {
-    width: 210mm; /* A4 width */
-    min-height: 297mm; /* A4 height */
-    padding: 10mm; /* Reduce padding to fit more content */
+    width: 210mm;
+    /* min-height: 297mm; */
+    padding: 10mm;
+    margin: 0 auto;
     background: white;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-    margin: auto;
-}
-
-/* Improve table layout for print */
-.table-container {
-    width: 100%;
-    font-size: 12px; /* Reduce font size slightly for better fit */
-    border-collapse: collapse;
-}
-
-/* Ensure tables do not break between pages */
-.table-container,
-.table-container div {
-    page-break-before: auto;
-    page-break-after: avoid;
     page-break-inside: avoid;
 }
 
-/* Hide unnecessary elements when printing */
+.table-container {
+    width: 100%;
+    font-size: 12px;
+    border-collapse: collapse;
+}
+
+.table-container,
+.table-container div {
+    page-break-inside: avoid;
+}
+
 @media print {
-    /* Hide elements that should not appear in print */
     input[type="checkbox"],
     .buttons,
     .non-printable,
@@ -368,34 +315,39 @@ const downloadBlob = (blob, filename) => {
         display: none !important;
     }
 
-    /* Adjust print margins and spacing */
     .print-area {
         margin: 0;
-        padding: 5mm; /* Reduce padding further */
+        padding: 5mm;
         width: 100%;
         height: auto;
         box-shadow: none;
         page-break-after: avoid;
     }
 
-    /* Keep tables from breaking across pages */
     .table-container {
         page-break-before: auto;
         page-break-after: avoid;
         page-break-inside: avoid;
     }
 
-    /* Prevent rows from splitting across pages */
     .table-container tr {
         page-break-inside: avoid;
         break-inside: avoid-column;
     }
 
-    /* Reduce font size for better fitting */
     .table-container th,
     .table-container td {
         font-size: 11px !important;
         padding: 4px;
+    }
+
+    .catalog-area {
+        page-break-before: always; /* Ensure catalog starts on a new page */
+    }
+
+    .catalog-area img {
+        max-width: 100%;
+        height: auto;
     }
 }
 </style>

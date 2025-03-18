@@ -196,7 +196,7 @@ class QuotationController extends Controller
                         'quantity'   => $product['quantity'],
                         'quotation_no' => $quotation->id,
                         'price'      => $product['price'],
-                        'include_catalog' => filter_var($product['includeCatalog'], FILTER_VALIDATE_BOOLEAN),
+                        'include_catalog' => $product['include_catalog'] ?? false,
                     ]);
                 }
                 // $quotation->products()->attach($product['id'], [
@@ -225,7 +225,7 @@ class QuotationController extends Controller
             //     'products' => $quotation->products,
             // ]);
         $quotation = Quotation::with(['customer', 'products' => function($query) {
-            $query->withPivot(['quantity', 'price']); // ✅ Ensure pivot data is included
+            $query->withPivot(['quantity', 'price', 'include_catalog']);
         }])->where('id', $quotation_no)->firstOrFail();
         $formattedQuotationDate = $quotation->quotation_date
         ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
