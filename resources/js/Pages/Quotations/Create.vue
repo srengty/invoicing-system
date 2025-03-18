@@ -40,7 +40,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Customer & Product Selection -->
             <div class="pl-8 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div
@@ -115,6 +114,7 @@
                 </div>
                 <!-- </div> -->
             </div>
+            <!-- AddItem & Language -->
             <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
                     <div class="flex gap-32 items-center">
@@ -139,7 +139,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Selected Products Table -->
             <div class="pl-6 pt-5">
                 <DataTable
@@ -247,13 +246,19 @@
                             </div>
                         </template>
                     </Column>
-                    <Column header="Print Catalog">
+                    <Column header="Include Catalog">
                         <template #body="slotProps">
                             <Checkbox
                                 v-model="slotProps.data.includeCatalog"
                                 :binary="true"
-                                @change="updateIncludeCatalog(slotProps.data)"
                             />
+                            <span class="ml-2">
+                                {{
+                                    slotProps.data.includeCatalog
+                                        ? "Included"
+                                        : "Excluded"
+                                }}
+                            </span>
                         </template>
                     </Column>
                 </DataTable>
@@ -296,7 +301,7 @@
                     </div>
                 </div>
             </div>
-
+            <!-- Terms & Conditions -->
             <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-1 gap-4">
                 <label for="terms" class="font-bold"
                     >Terms &amp; Conditions:</label
@@ -311,7 +316,6 @@
                     size="small"
                 />
             </div>
-
             <!-- Form Buttons -->
             <div class="buttons mt-4 mr-4 mb-10 flex justify-end">
                 <Button
@@ -381,7 +385,6 @@
                     @change="updateSelectedProductDetails"
                 />
             </div>
-
             <!-- Item Category (Auto-complete, Read-Only) -->
             <div class="field">
                 <label for="item-category" class="required"
@@ -394,7 +397,6 @@
                     readonly
                 />
             </div>
-
             <!-- Unit Price (Auto-complete, Editable) -->
             <div class="field">
                 <label for="unit-price" class="required">Unit Price</label>
@@ -406,7 +408,6 @@
                     class="w-full text-sm"
                 />
             </div>
-
             <!-- Account Code (Auto-complete, Read-Only) -->
             <div class="field">
                 <label for="account-code" class="required">Account Code</label>
@@ -417,7 +418,6 @@
                     readonly
                 />
             </div>
-
             <!-- Quantity -->
             <div class="field">
                 <label for="quantity" class="required">Quantity</label>
@@ -428,7 +428,6 @@
                     :min="1"
                 />
             </div>
-
             <!-- View Catalog -->
             <div v-if="selectedProduct.pdf_url" class="text-start">
                 <label for="quantity">Catalog</label>
@@ -441,7 +440,6 @@
                 </a>
             </div>
             <p v-else class="text-center text-gray-400">No PDF available</p>
-
             <!-- Additional Remark -->
             <div class="field">
                 <label for="additional-remark">Additional Remark</label>
@@ -452,7 +450,6 @@
                 />
             </div>
         </div>
-
         <!-- Dialog Footer -->
         <template #footer>
             <Button
@@ -476,6 +473,12 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
+import { router } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
+import { Form } from "@primevue/forms";
+import { useToast } from "primevue/usetoast";
+import { Dialog, ToggleSwitch, Select, AutoComplete, Checkbox } from "primevue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import MultiSelect from "primevue/multiselect";
 import InputNumber from "primevue/inputnumber";
@@ -485,19 +488,23 @@ import IconField from "primevue/iconfield";
 import InputIcon from "primevue/inputicon";
 import Button from "primevue/button";
 import Dropdown from "primevue/dropdown";
-import { Dialog, ToggleSwitch, Select, AutoComplete, Checkbox } from "primevue";
-import { Form } from "@primevue/forms";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
 import Customers from "@/Components/Customers.vue";
-import { Inertia } from "@inertiajs/inertia";
-import { router } from "@inertiajs/vue3";
-import { usePage } from "@inertiajs/vue3";
+
+const props = defineProps({
+    customers: Array,
+    products: Array,
+    customerCategories: Array,
+    productCategories: Array,
+    quotation: Object, // Accept quotation data when editing
+});
 
 // Toast for notifications
 const toast = useToast();
+const selectedProductIds = ref([]);
+const selectedProductsData = ref([]);
 const showToast = (
     type = "success",
     title = "Success",
@@ -518,7 +525,6 @@ const preventMinus = (event) => {
 };
 const pageProps = usePage().props;
 const quotation = ref(pageProps.quotation || null);
-// const isEditing = ref(!!quotation.value);
 const isEditing = computed(() => !!props.quotation);
 
 onMounted(() => {
@@ -533,7 +539,6 @@ onMounted(() => {
         form.total = newProps.total || 0;
         form.tax = newProps.tax || 0;
         form.grand_total = newProps.grand_total || 0;
-
         // Populate selectedProductsData with existing products
         if (newProps.products && Array.isArray(newProps.products)) {
             selectedProductsData.value = newProps.products.map((product) => ({
@@ -547,17 +552,8 @@ onMounted(() => {
         } else {
             selectedProductsData.value = [];
         }
-
         updateCustomerDetails();
     }
-});
-
-const props = defineProps({
-    customers: Array,
-    products: Array,
-    customerCategories: Array,
-    productCategories: Array,
-    quotation: Object, // Accept quotation data when editing
 });
 
 // Define the Inertia form
@@ -576,7 +572,7 @@ const form = useForm({
 const updateCustomerDetails = () => {
     console.log("Customer id: ", form.customer_id);
     const selectedCustomer = formattedCustomers.value.find(
-        (customer) => customer.id    == form.customer_id
+        (customer) => customer.id == form.customer_id
     );
     console.log("selected customer: ", selectedCustomer);
 
@@ -631,9 +627,13 @@ watch(selectedProduct, (newVal) => {
 });
 
 const searchProducts = (event) => {
+    const selectedProductIds = selectedProductsData.value.map(
+        (prod) => prod.id
+    );
     filteredProducts.value = props.products.filter(
         (product) =>
             product.status === "approved" &&
+            !selectedProductIds.includes(product.id) && // Exclude already selected products
             product.name.toLowerCase().includes(event.query.toLowerCase())
     );
 };
@@ -688,6 +688,70 @@ const getCategoryName = (categoryId) => {
         : "Unknown";
 };
 
+// const addItemToTable = () => {
+//     if (!selectedProduct.value.name) {
+//         showToast("error", "Error", "Please select an item.", 3000);
+//         return;
+//     }
+
+//     if (!selectedProduct.value.quantity || selectedProduct.value.quantity < 1) {
+//         selectedProduct.value.quantity = 1;
+//     }
+
+//     const newItem = {
+//         ...selectedProduct.value,
+//         quantity: selectedProduct.value.quantity || 1,
+//         subTotal:
+//             Number(selectedProduct.value.price) *
+//             selectedProduct.value.quantity,
+//         remark: selectedProduct.value.remark || "",
+//         includeCatalog: false,
+//         isNew: true,
+//     };
+
+//     // Check if the same product name already exists
+//     const duplicateItem = selectedProductsData.value.find(
+//         (prod) => prod.name === newItem.name
+//     );
+
+//     if (duplicateItem && !editingProduct.value) {
+//         showToast(
+//             "error",
+//             "Error",
+//             "This item is already in the quotation.",
+//             3000
+//         );
+//         return;
+//     }
+
+//     if (editingProduct.value) {
+//         const existingIndex = selectedProductsData.value.findIndex(
+//             (prod) => prod.id === editingProduct.value.id
+//         );
+//         if (existingIndex !== -1) {
+//             selectedProductsData.value[existingIndex] = newItem;
+//         }
+//         editingProduct.value = null;
+//         showToast(
+//             "success",
+//             "Item Updated",
+//             "The item has been updated successfully.",
+//             3000
+//         );
+//     } else {
+//         selectedProductsData.value.push(newItem);
+//         showToast(
+//             "success",
+//             "Item Added",
+//             "The item has been added to the table.",
+//             3000
+//         );
+//     }
+
+//     closeAddItemDialog();
+// };
+
+// Close Add Item dialog
 const addItemToTable = () => {
     if (!selectedProduct.value.name) {
         showToast("error", "Error", "Please select an item.", 3000);
@@ -700,12 +764,13 @@ const addItemToTable = () => {
 
     const newItem = {
         ...selectedProduct.value,
+        quantity: selectedProduct.value.quantity || 1,
         subTotal:
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
         remark: selectedProduct.value.remark || "",
         includeCatalog: false,
-        isNew: true, // ✅ Mark this item as new
+        isNew: true,
     };
 
     // Check if the same product name already exists
@@ -750,7 +815,6 @@ const addItemToTable = () => {
     closeAddItemDialog();
 };
 
-// Close Add Item dialog
 const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
     resetAddItemDialog();
@@ -764,7 +828,9 @@ const resetAddItemDialog = () => {
     selectedAccountCode.value = "";
     editingProduct.value = null;
 };
-
+watch(selectedProductsData, () => {
+    searchProducts({ query: selectedItem.value?.name || "" });
+});
 // toggle language
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? "name_kh" : "name";
@@ -797,13 +863,10 @@ const selectCustomer = () => {
     form.customer_id = props.customers[props.customers.length - 1].id;
 };
 
-const selectedProductIds = ref([]);
-const selectedProductsData = ref([]);
-
 watch(selectedProductsData, (newProducts) => {
     newProducts.forEach((product) => {
         if (typeof product.includeCatalog !== "boolean") {
-            product.includeCatalog = false; // ✅ Ensures boolean type
+            product.includeCatalog = false;
         }
     });
 });
@@ -990,6 +1053,25 @@ const submit = async (event) => {
         ? route("quotations.update", { id: form.id })
         : route("quotations.store");
 
+    // Prepare the payload
+    const payload = {
+        ...form,
+        products: selectedProductsData.value.map((product) => ({
+            id: product.id,
+            quantity: product.quantity,
+            price: product.price,
+            remark: product.remark,
+            includeCatalog: product.includeCatalog, // Include the checkbox state
+        })),
+    };
+    // Submit the form
+    try {
+        await axios.post("/api/quotations", payload); // Replace with your API endpoint
+        showToast("success", "Success", "Quotation saved successfully!", 3000);
+    } catch (error) {
+        console.error("Error saving quotation:", error);
+        showToast("error", "Error", "Failed to save quotation.", 3000);
+    }
     try {
         await form.post(routePath, {
             onSuccess: () => {

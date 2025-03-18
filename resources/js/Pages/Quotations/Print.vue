@@ -151,6 +151,33 @@
             </div>
         </div>
     </div>
+    <!-- Print Area: Catalog -->
+    <div
+        ref="catalogArea"
+        class="print-area mt-10"
+        v-if="filteredProducts.length"
+    >
+        <h1 class="text-3xl font-bold text-center mb-6">Product Catalog</h1>
+        <div class="grid grid-cols-3 gap-4">
+            <div
+                v-for="product in filteredProducts"
+                :key="product.id"
+                class="border p-4 rounded-md"
+            >
+                <img
+                    :src="product.image"
+                    alt="Product Image"
+                    class="w-full h-32 object-cover rounded-md mb-2"
+                />
+                <h3 class="text-md font-semibold">
+                    {{ isUSD ? product.name : product.name_kh }}
+                </h3>
+                <p class="text-gray-600 text-sm">
+                    {{ isUSD ? product.desc : product.desc_kh }}
+                </p>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -158,10 +185,13 @@ import { ref, computed, watch } from "vue";
 import { Head } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
 import Button from "primevue/button";
+import html2pdf from "html2pdf.js";
+import { PDFDocument } from "pdf-lib";
 
 const { props } = usePage();
 const quotation = ref(props.quotation);
 const printArea = ref(null);
+const catalogArea = ref(null);
 
 const isUSD = ref(false);
 const exchangeRate = ref(4100);
@@ -190,8 +220,12 @@ const totalAmount = computed(() => {
     );
 });
 
-const printPage = () => {
-    window.print();
+const printPage = async () => {
+    try {
+        await generateAndMergePDFs();
+    } catch (error) {
+        console.error("Error generating or merging PDFs:", error);
+    }
 };
 
 const formattedProducts = computed(() => {
@@ -205,18 +239,11 @@ const formattedProducts = computed(() => {
         desc_kh: product.desc_kh || "",
         remark: product.remark || "",
         remark_kh: product.remark_kh || "",
-        quantity: product.pivot?.quantity ?? 0, // ✅ Ensure quantity is never undefined
-        price: product.pivot?.price ?? 0, // ✅ Ensure price is never undefined
+        quantity: product.pivot?.quantity ?? 0,
+        price: product.pivot?.price ?? 0,
+        includeCatalog: product.includeCatalog || false, // Ensure this is set
     }));
 });
-
-watch(
-    () => quotation.value.products,
-    (newProducts) => {
-        console.log("🚀 Quotation Products Updated:", newProducts);
-    },
-    { immediate: true }
-);
 
 watch(
     () => quotation.value.products,
@@ -225,16 +252,84 @@ watch(
             newProducts.forEach((product) => {
                 if (!product.pivot) {
                     console.warn("Product missing pivot object:", product);
-                    product.pivot = { quantity: 0, price: 0 }; // Add a default pivot object
+                    product.pivot = { quantity: 0, price: 0 };
                 }
             });
         }
     },
     { immediate: true }
 );
+
+// Filter products for catalog
 const filteredProducts = computed(() => {
-    return quotation.value.products?.filter(product => product.includeCatalog) || [];
+    return (
+        quotation.value.products?.filter((product) => product.includeCatalog) ||
+        []
+    );
 });
+
+// Generate & Merge PDFs
+const generateAndMergePDFs = async () => {
+    try {
+        const quotationPDF = await generatePDF(printArea.value);
+        const catalogPDF = filteredProducts.value.length
+            ? await generatePDF(catalogArea.value)
+            : null;
+        console.log("Catalog PDF:", catalogPDF);
+
+        if (catalogPDF) {
+            const mergedPDFBytes = await mergePDFs(quotationPDF, catalogPDF);
+            downloadPDF(mergedPDFBytes, "Quotation_Catalog.pdf");
+        } else {
+            downloadBlob(quotationPDF, "Quotation.pdf");
+        }
+    } catch (error) {
+        console.error("Error generating PDFs:", error);
+    }
+};
+
+// Convert HTML to PDF Blob
+const generatePDF = (element) => {
+    return new Promise((resolve) => {
+        html2pdf().from(element).toPdf().outputPdf("blob").then(resolve);
+    });
+};
+
+// Merge PDFs using pdf-lib
+const mergePDFs = async (pdfBlob1, pdfBlob2) => {
+    const pdfDoc = await PDFDocument.create();
+    const [pdf1, pdf2] = await Promise.all([
+        PDFDocument.load(await pdfBlob1.arrayBuffer()),
+        PDFDocument.load(await pdfBlob2.arrayBuffer()),
+    ]);
+
+    console.log("PDF1 Pages:", pdf1.getPageIndices());
+    console.log("PDF2 Pages:", pdf2.getPageIndices());
+
+    const pages1 = await pdfDoc.copyPages(pdf1, pdf1.getPageIndices());
+    const pages2 = await pdfDoc.copyPages(pdf2, pdf2.getPageIndices());
+
+    pages1.forEach((page) => pdfDoc.addPage(page));
+    pages2.forEach((page) => pdfDoc.addPage(page));
+
+    return pdfDoc.save();
+};
+
+// Download the final merged PDF
+const downloadPDF = (pdfBytes, filename) => {
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    downloadBlob(blob, filename);
+};
+
+// Helper function to trigger download
+const downloadBlob = (blob, filename) => {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 </script>
 
 <style scoped>
