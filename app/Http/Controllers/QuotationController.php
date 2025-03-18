@@ -143,7 +143,6 @@ class QuotationController extends Controller
             'products.*.includeCatalog' => 'required|in:true,false,0,1',
         ]);
         if ($validated->fails()) {
-            \Log::error('Validation Error:', $validated->errors()->toArray());
             return response()->json(['message' => $validated->errors()], 422);
         }
 

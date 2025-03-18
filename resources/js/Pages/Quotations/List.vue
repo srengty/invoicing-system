@@ -8,10 +8,25 @@
             <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
             </div>
-            <div class="flex justify-between items-center p-4">
-                Quotations are proposed to customer to bid for a project.
-            </div>
             <div class="flex justify-end p-4 gap-4">
+                <div>
+                    <Dropdown
+                        v-model="searchType"
+                        :options="searchOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-48 text-sm"
+                        placeholder="Select field to search"
+                    />
+                </div>
+                <div>
+                    <InputText
+                        v-model="searchTerm"
+                        placeholder="Search"
+                        class="w-64"
+                        size="small"
+                    />
+                </div>
                 <div>
                     <Link :href="route('quotations.create')"
                         ><Button
@@ -36,9 +51,10 @@
                         raised
                 /></Link>
             </div>
+
             <div>
                 <DataTable
-                    :value="quotations"
+                    :value="filteredQuotations"
                     paginator
                     :rows="5"
                     :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -91,37 +107,30 @@
                     >
                         <template #body="slotProps">
                             <span
-                                class="p-2 border rounded w-24 h-8 flex items-center justify-center"
+                                @click="handleStatusClick(slotProps.data)"
+                                v-tooltip.top="'Current customer status: ' + slotProps.data.customer_status"
+                                class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                 :class="{
                                     'bg-yellow-100 text-yellow-800 border-yellow-400':
-                                        slotProps.data.customer_status ===
-                                        'Pending',
+                                        slotProps.data.customer_status === 'Pending',
                                     'bg-blue-100 text-blue-800 border-blue-400':
-                                        slotProps.data.customer_status ===
-                                        'Sent',
+                                        slotProps.data.customer_status === 'Sent',
                                     'bg-green-100 text-green-800 border-green-400':
-                                        slotProps.data.customer_status ===
-                                        'Accept',
+                                        slotProps.data.customer_status === 'Accept',
                                     'bg-red-100 text-red-800 border-red-400':
-                                        slotProps.data.customer_status ===
-                                        'Reject',
+                                        slotProps.data.customer_status === 'Reject',
                                 }"
                             >
-                                <!-- PrimeVue icons in front of the text -->
                                 <i
                                     :class="{
                                         'pi pi-clock':
-                                            slotProps.data.customer_status ===
-                                            'Pending',
+                                            slotProps.data.customer_status === 'Pending',
                                         'pi pi-send':
-                                            slotProps.data.customer_status ===
-                                            'Sent',
+                                            slotProps.data.customer_status === 'Sent',
                                         'pi pi-check':
-                                            slotProps.data.customer_status ===
-                                            'Accept',
+                                            slotProps.data.customer_status === 'Accept',
                                         'pi pi-times':
-                                            slotProps.data.customer_status ===
-                                            'Reject',
+                                            slotProps.data.customer_status === 'Reject',
                                     }"
                                     style="margin-right: 8px"
                                 ></i>
@@ -138,7 +147,6 @@
                                     slotProps.data.comments.length
                                 "
                             >
-                                <!-- We'll show the last comment in the array -->
                                 <p>
                                     <strong>Comment:</strong>
                                     {{
@@ -198,7 +206,6 @@
                         v-if="selectedQuotation"
                         class="flex flex-col gap-2 text-sm pl-6"
                     >
-                        <p><strong>ID:</strong> {{ selectedQuotation.id }}</p>
                         <p>
                             <strong>Quotation No.:</strong>
                             {{ selectedQuotation.quotation_no }}
@@ -250,7 +257,6 @@
                             <strong>Total:</strong>
                             {{ selectedQuotation.total }}
                         </p>
-                        <!-- Display the comment and role if available -->
                         <p v-if="selectedQuotation.comment">
                             <strong>Comment:</strong>
                             {{ selectedQuotation.comment }}
@@ -308,38 +314,184 @@
                         />
                     </template>
                 </Dialog>
+
+                <Dialog
+                    v-model:visible="isSendDialogVisible"
+                    header="Send Quotation to Customer"
+                    modal
+                    :style="{ width: '30rem' }"
+                    class="text-sm"
+                >
+                    <div v-if="selectedQuotation" class="flex flex-col gap-4">
+                        <p><strong>Customer Email:</strong> {{ selectedQuotation.customer?.email || "N/A" }}</p>
+                        <p><strong>Customer Telegram:</strong> {{ selectedQuotation.customer?.telegram || "N/A" }}</p>
+
+                        <div class="flex justify-end gap-2">
+                            <Button
+                                label="Send via Email"
+                                severity="info"
+                                @click="sendViaEmail"
+                                :disabled="!selectedQuotation.customer?.email"
+                            />
+                            <Button
+                                label="Send via Telegram"
+                                severity="secondary"
+                                @click="sendViaTelegram"
+                                :disabled="!selectedQuotation.customer?.telegram"
+                            />
+                        </div>
+                    </div>
+                </Dialog>
+
+                <!-- Feedback Dialog display -->
+                <Dialog
+                    v-model:visible="isFeedbackDialogVisible"
+                    header="Customer Feedback"
+                    modal
+                    :style="{ width: '30rem' }"
+                    class="text-sm"
+                >
+                    <div v-if="selectedQuotation" class="flex flex-col gap-4">
+                        <p><strong>Quotation No.:</strong> {{ selectedQuotation.quotation_no }}</p>
+                        <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || "N/A" }}</p>
+                        <p><strong>Total:</strong> {{ selectedQuotation.total }}</p>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="feedbackComment" class="block font-bold">Comment:</label>
+                            <textarea
+                                id="feedbackComment"
+                                v-model="feedbackComment"
+                                rows="3"
+                                class="w-full border rounded p-2"
+                                placeholder="Enter your feedback here..."
+                            ></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <Button
+                                label="Approve"
+                                severity="success"
+                                @click="handleApprove"
+                            />
+                            <Button
+                                label="Reject"
+                                severity="danger"
+                                @click="handleReject"
+                            />
+                        </div>
+                    </div>
+                </Dialog>
             </div>
         </div>
     </GuestLayout>
 </template>
 
 <script setup>
-``;
+import { ref, computed } from "vue";
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
-import { onMounted, ref } from "vue";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import { useForm } from "@inertiajs/vue3";
-import VirtualScroller from "primevue/virtualscroller";
-import moment from "moment";
 import Dropdown from "primevue/dropdown";
-import { router, usePage } from "@inertiajs/vue3"; // for printing
+import { router } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
+import { InputText } from "primevue";
 
 const toast = useToast();
+
+// Reactive properties
 const isViewDialogVisible = ref(false);
-const selectedQuotation = ref({});
-const selectedQuo_customer = ref([]);
+const isSendDialogVisible = ref(false);
+const isFeedbackDialogVisible = ref(false);
+const selectedQuotation = ref(null);
 const userRole = ref("manager");
 const comment = ref("");
+const feedbackComment = ref("");
 
-const formMode = ref("create");
-const quotationData = ref({});
+const searchType = ref("");
+const searchTerm = ref("");
+const searchOptions = ref([
+    { label: "Customer Name", value: "customer.name" },
+    { label: "Total", value: "total" },
+    { label: "Status", value: "status" },
+    { label: "Customer Status", value: "customer_status" },
+]);
+
+const filteredQuotations = computed(() => {
+    if (!searchTerm.value || !searchType.value) {
+        return props.quotations;
+    }
+
+    return props.quotations.filter((quotation) => {
+        const fieldValue = getFieldValue(quotation, searchType.value);
+        if (typeof fieldValue === "number") {
+            return fieldValue.toString().includes(searchTerm.value.toLowerCase());
+        }
+        return fieldValue.toLowerCase().includes(searchTerm.value.toLowerCase());
+    });
+});
+
+const getFieldValue = (obj, path) => {
+    return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
+};
+
+const clearFilters = () => {
+    searchType.value = "";
+    searchTerm.value = "";
+};
+
+const sendQuotationToCustomer = (quotation) => {
+    if (quotation.customer_status === "Pending") {
+        selectedQuotation.value = quotation;
+        isSendDialogVisible.value = true;
+    }
+};
+
+const sendViaEmail = () => {
+    if (selectedQuotation.value.customer?.email) {
+        selectedQuotation.value.customer_status = "Sent";
+        updateQuotationStatus(
+            selectedQuotation.value,
+            "Quotation sent to customer via email!"
+        );
+        isSendDialogVisible.value = false;
+        showToast(
+            "success",
+            "Sent",
+            "Quotation has been sent to the customer via email!",
+            3000
+        );
+    }
+};
+
+const sendViaTelegram = () => {
+    if (selectedQuotation.value.customer?.telegram) {
+        selectedQuotation.value.customer_status = "Sent";
+        updateQuotationStatus(
+            selectedQuotation.value,
+            "Quotation sent to customer via Telegram!"
+        );
+        isSendDialogVisible.value = false;
+        showToast(
+            "success",
+            "Sent",
+            "Quotation has been sent to the customer via Telegram!",
+            3000
+        );
+    }
+};
+
+const openFeedbackDialog = (quotation) => {
+    if (quotation.customer_status === "Sent") {
+        selectedQuotation.value = quotation;
+        isFeedbackDialogVisible.value = true;
+    }
+};
 
 const showToast = (
     type = "success",
@@ -370,7 +522,6 @@ const form = useForm({
     customer_id: "",
     total: 0,
     tax: 0,
-    // grand_total: 0,
     products: [],
 });
 
@@ -381,12 +532,12 @@ const openForm = (quotations = null) => {
         form.address = quotations.address;
         form.phone_number = quotations.phone_number;
         form.customer_id = quotations.customer_id;
-        // form.grand_total = quotations.grand_total;
     } else {
         form.reset();
     }
     isFormVisible.value = true;
 };
+
 const isFormVisible = ref(false);
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
@@ -415,7 +566,11 @@ const closeForm = () => {
     form.reset();
 };
 
-// Open view quotation dialog
+const handleStatusClick = (quotation) => {
+    selectedQuotation.value = quotation;
+    isSendDialogVisible.value = true;
+};
+
 const viewQuotation = (quotation) => {
     selectedQuotation.value = quotation;
     if (quotation.comments && quotation.comments.length) {
@@ -427,17 +582,6 @@ const viewQuotation = (quotation) => {
         userRole.value = "manager";
     }
     isViewDialogVisible.value = true;
-
-    // When Edit is clicked, navigate to create.vue with quotation data
-    const navigateToEditQuotation = () => {
-        router.visit(route("quotations.create"), {
-            method: "get",
-            data: { quotation: selectedQuotation.value }, // Pass selected quotation data
-            preserveState: true,
-            preserveScroll: true,
-        });
-        isViewDialogVisible.value = false; // Close the dialog
-    };
 };
 
 const columns = [
@@ -449,27 +593,25 @@ const columns = [
     { field: "terms", header: "Terms" },
     { field: "total", header: "Total" },
     { field: "tax", header: "Tax" },
-    // { field: 'grand_total', header: 'Grand Total' },
     { field: "status", header: "Status" },
     { field: "customer_status", header: "Customer Status" },
 ];
 
-// Printing quotations
 const printQuotation = (quotation_no) => {
     const quotUrl = `/quotations/${quotation_no}`;
-    const printWindow = window.open(quotUrl, "_blank"); //create new tab
+    const printWindow = window.open(quotUrl, "_blank");
 
     printWindow.onload = () => {
         printWindow.print();
     };
 };
+
 const selectedColumns = ref(columns);
 const showColumns = ref(columns);
 const updateColumns = (columns) => {
     showColumns.value = selectedColumns.value;
 };
 
-// quotations status
 const selectedStatus = ref();
 const StatusOptions = ref([
     { name: "Pending", code: "Pending" },
@@ -477,7 +619,6 @@ const StatusOptions = ref([
     { name: "Revise", code: "Revise" },
 ]);
 
-// Update Quotation Status (called by Approve/Revise)
 const updateQuotationStatus = (quotation, message) => {
     router.put(
         `/quotations/${quotation.id}/update-status`,
@@ -505,7 +646,6 @@ const updateQuotationStatus = (quotation, message) => {
     );
 };
 
-// Approve Quotation
 const approveQuotation = () => {
     if (!comment.value.trim()) {
         showToast(
@@ -529,7 +669,6 @@ const approveQuotation = () => {
     comment.value = "";
 };
 
-// Revise Quotation
 const reviseQuotation = () => {
     if (!comment.value.trim()) {
         showToast(
@@ -541,7 +680,6 @@ const reviseQuotation = () => {
         return;
     }
     selectedQuotation.value.status = "Revise";
-    // selectedQuotation.value.customer_status = "Sent";
     selectedQuotation.value.comment = comment.value;
     selectedQuotation.value.role = userRole.value;
 
@@ -552,6 +690,7 @@ const reviseQuotation = () => {
     isViewDialogVisible.value = false;
     comment.value = "";
 };
+
 const showCancel = () => {
     toast.add({
         severity: "secondary",
@@ -561,6 +700,89 @@ const showCancel = () => {
         group: "tr",
     });
     isViewDialogVisible.value = false;
+};
+
+const sendForm = ref({
+    emailChecked: false,
+    telegramChecked: false,
+});
+
+const handleApprove = async () => {
+    if (!feedbackComment.value.trim()) {
+        showToast(
+            "error",
+            "Error",
+            "Please enter a comment before approving!",
+            3000
+        );
+        return;
+    }
+
+    try {
+        await router.put(
+            `/quotations/${selectedQuotation.value.id}/update-status`,
+            {
+                status: "Approved",
+                comment: feedbackComment.value,
+            }
+        );
+
+        showToast(
+            "success",
+            "Success",
+            "Quotation approved successfully!",
+            3000
+        );
+
+        isFeedbackDialogVisible.value = false;
+        feedbackComment.value = "";
+    } catch (error) {
+        showToast(
+            "error",
+            "Error",
+            "Failed to approve quotation.",
+            3000
+        );
+    }
+};
+
+const handleReject = async () => {
+    if (!feedbackComment.value.trim()) {
+        showToast(
+            "error",
+            "Error",
+            "Please enter a comment before rejecting!",
+            3000
+        );
+        return;
+    }
+
+    try {
+        await router.put(
+            `/quotations/${selectedQuotation.value.id}/update-status`,
+            {
+                status: "Rejected",
+                comment: feedbackComment.value,
+            }
+        );
+
+        showToast(
+            "success",
+            "Success",
+            "Quotation rejected successfully!",
+            3000
+        );
+
+        isFeedbackDialogVisible.value = false;
+        feedbackComment.value = "";
+    } catch (error) {
+        showToast(
+            "error",
+            "Error",
+            "Failed to reject quotation.",
+            3000
+        );
+    }
 };
 </script>
 
