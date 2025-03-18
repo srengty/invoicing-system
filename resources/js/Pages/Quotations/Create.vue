@@ -391,7 +391,7 @@
                     >Item Category</label
                 >
                 <InputText
-                    :value="getCategoryName(selectedProduct.category_id)"
+                    :value="selectedProduct.category_id"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -500,7 +500,6 @@ const props = defineProps({
     productCategories: Array,
     quotation: Object, // Accept quotation data when editing
 });
-
 // Toast for notifications
 const toast = useToast();
 const selectedProductIds = ref([]);
@@ -526,7 +525,33 @@ const preventMinus = (event) => {
 const pageProps = usePage().props;
 const quotation = ref(pageProps.quotation || null);
 const isEditing = computed(() => !!props.quotation);
-
+// Define the Inertia form
+const form = useForm({
+    id: props.quotation?.id || null,
+    quotation_no: props.quotation?.quotation_no || "",
+    quotation_date: props.quotation?.quotation_date || "",
+    customer_id: props.quotation?.customer_id || "",
+    address: props.quotation?.address || "",
+    phone_number: props.quotation?.phone_number || "",
+    total: props.quotation?.total || 0,
+    products: props.quotation?.products || [],
+    terms: props.quotation?.terms || "",
+});
+const status = ref("");
+const isApproved = ref(false);
+const today = new Date();
+const isKhmer = ref(false);
+const statusOptions = ref(["Pending", "Approved"]);
+const isAddItemDialogVisible = ref(false);
+const selectedItemIds = ref([]);
+const selectedProduct = ref({});
+const selectedQuantity = ref(1);
+const additionalRemark = ref("");
+const selectedAccountCode = ref("");
+const selectedItemId = ref(null);
+const filteredProducts = ref([]);
+const selectedItem = ref(null);
+const customerCategories = ref(props.customerCategories);
 onMounted(() => {
     if (props.quotation) {
         console.log("🛠 Debug: Quotation received", props.quotation);
@@ -556,19 +581,6 @@ onMounted(() => {
     }
 });
 
-// Define the Inertia form
-const form = useForm({
-    id: props.quotation?.id || null,
-    quotation_no: props.quotation?.quotation_no || "",
-    quotation_date: props.quotation?.quotation_date || "",
-    customer_id: props.quotation?.customer_id || "",
-    address: props.quotation?.address || "",
-    phone_number: props.quotation?.phone_number || "",
-    total: props.quotation?.total || 0,
-    products: props.quotation?.products || [],
-    terms: props.quotation?.terms || "",
-});
-
 const updateCustomerDetails = () => {
     console.log("Customer id: ", form.customer_id);
     const selectedCustomer = formattedCustomers.value.find(
@@ -581,30 +593,12 @@ const updateCustomerDetails = () => {
         form.phone_number = selectedCustomer.phone_number || "";
     }
 };
-
 watch(
     () => form.customer_id,
     () => {
         updateCustomerDetails();
     }
 );
-
-const status = ref("");
-const isApproved = ref(false);
-const today = new Date();
-const isKhmer = ref(false);
-const statusOptions = ref(["Pending", "Approved"]);
-const isAddItemDialogVisible = ref(false);
-const selectedItemIds = ref([]);
-const selectedProduct = ref({});
-const selectedQuantity = ref(1);
-const additionalRemark = ref("");
-const selectedAccountCode = ref("");
-const selectedItemId = ref(null);
-const filteredProducts = ref([]);
-const selectedItem = ref(null);
-const customerCategories = ref(props.customerCategories);
-
 const updateSelectedProductDetails = () => {
     if (selectedItem.value) {
         const product = props.products.find(
@@ -637,119 +631,9 @@ const searchProducts = (event) => {
             product.name.toLowerCase().includes(event.query.toLowerCase())
     );
 };
-
-const validateForm = () => {
-    if (!form.address) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Customer address is required!",
-            4000
-        );
-        return false;
-    }
-    if (!form.phone_number) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Customer phone number is required!",
-            4000
-        );
-        return false;
-    }
-    if (!form.customer_id) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Please select a customer!",
-            4000
-        );
-        return false;
-    }
-    if (selectedProductsData.value.length === 0) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Please add at least one product!",
-            4000
-        );
-        return false;
-    }
-    return true;
-};
-
-const getCategoryName = (categoryId) => {
-    if (!categoryId) return "Unknown";
-    const category = props.productCategories.find(
-        (cat) => cat.id === categoryId
-    );
-    return category
-        ? category.category_name_english || category.category_name_khmer
-        : "Unknown";
-};
-
-// const addItemToTable = () => {
-//     if (!selectedProduct.value.name) {
-//         showToast("error", "Error", "Please select an item.", 3000);
-//         return;
-//     }
-
-//     if (!selectedProduct.value.quantity || selectedProduct.value.quantity < 1) {
-//         selectedProduct.value.quantity = 1;
-//     }
-
-//     const newItem = {
-//         ...selectedProduct.value,
-//         quantity: selectedProduct.value.quantity || 1,
-//         subTotal:
-//             Number(selectedProduct.value.price) *
-//             selectedProduct.value.quantity,
-//         remark: selectedProduct.value.remark || "",
-//         includeCatalog: false,
-//         isNew: true,
-//     };
-
-//     // Check if the same product name already exists
-//     const duplicateItem = selectedProductsData.value.find(
-//         (prod) => prod.name === newItem.name
-//     );
-
-//     if (duplicateItem && !editingProduct.value) {
-//         showToast(
-//             "error",
-//             "Error",
-//             "This item is already in the quotation.",
-//             3000
-//         );
-//         return;
-//     }
-
-//     if (editingProduct.value) {
-//         const existingIndex = selectedProductsData.value.findIndex(
-//             (prod) => prod.id === editingProduct.value.id
-//         );
-//         if (existingIndex !== -1) {
-//             selectedProductsData.value[existingIndex] = newItem;
-//         }
-//         editingProduct.value = null;
-//         showToast(
-//             "success",
-//             "Item Updated",
-//             "The item has been updated successfully.",
-//             3000
-//         );
-//     } else {
-//         selectedProductsData.value.push(newItem);
-//         showToast(
-//             "success",
-//             "Item Added",
-//             "The item has been added to the table.",
-//             3000
-//         );
-//     }
-
-//     closeAddItemDialog();
-// };
+watch(selectedProductsData, () => {
+    searchProducts({ query: selectedItem.value?.name || "" });
+});
 
 // Close Add Item dialog
 const addItemToTable = () => {
@@ -828,9 +712,7 @@ const resetAddItemDialog = () => {
     selectedAccountCode.value = "";
     editingProduct.value = null;
 };
-watch(selectedProductsData, () => {
-    searchProducts({ query: selectedItem.value?.name || "" });
-});
+
 // toggle language
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? "name_kh" : "name";
@@ -863,19 +745,6 @@ const selectCustomer = () => {
     form.customer_id = props.customers[props.customers.length - 1].id;
 };
 
-watch(selectedProductsData, (newProducts) => {
-    newProducts.forEach((product) => {
-        if (typeof product.includeCatalog !== "boolean") {
-            product.includeCatalog = false;
-        }
-    });
-});
-
-const updateIncludeCatalog = (product) => {
-    product.includeCatalog = !product.includeCatalog; // Toggle the state
-    console.log("Updated includeCatalog:", product.includeCatalog);
-};
-
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
         if (!selectedProductsData.value.find((prod) => prod.id === id)) {
@@ -886,13 +755,12 @@ watch(selectedProductIds, (newIds) => {
                     quantity: 1,
                     price: product.price,
                     remark: "",
-                    includeCatalog: product.includeCatalog ?? 0, // ✅ Default state is unchecked (0)
+                    includeCatalog: product.includeCatalog ?? 0,
                 });
             }
             console.log(prod);
         }
     });
-    // Remove products that have been deselected
     selectedProductsData.value = selectedProductsData.value.filter((prod) =>
         newIds.includes(prod.id)
     );
@@ -906,7 +774,6 @@ const formattedCustomers = computed(() => {
         phone_number: customer.phone_number,
     }));
 });
-
 watch(
     () => form.customer_id,
     (newVal) => {
@@ -1027,7 +894,45 @@ const editProduct = (productId) => {
         isAddItemDialogVisible.value = true;
     }
 };
-
+const validateForm = () => {
+    if (!form.address) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer address is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.phone_number) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer phone number is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.customer_id) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please select a customer!",
+            4000
+        );
+        return false;
+    }
+    if (selectedProductsData.value.length === 0) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please add at least one product!",
+            4000
+        );
+        return false;
+    }
+    return true;
+};
 const submit = async (event) => {
     if (event && typeof event.preventDefault === "function") {
         event.preventDefault();
@@ -1041,7 +946,7 @@ const submit = async (event) => {
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
         remark: prod.remark ?? "",
-        includeCatalog: prod.includeCatalog ? 1 : 0, // ✅ Convert to 1 or 0
+        includeCatalog: prod.includeCatalog ? 1 : 0,
     }));
 
     form.total = calculateTotal.value;
@@ -1061,40 +966,9 @@ const submit = async (event) => {
             quantity: product.quantity,
             price: product.price,
             remark: product.remark,
-            includeCatalog: product.includeCatalog, // Include the checkbox state
+            includeCatalog: product.includeCatalog,
         })),
     };
-    // Submit the form
-    try {
-        await axios.post("/api/quotations", payload); // Replace with your API endpoint
-        showToast("success", "Success", "Quotation saved successfully!", 3000);
-    } catch (error) {
-        console.error("Error saving quotation:", error);
-        showToast("error", "Error", "Failed to save quotation.", 3000);
-    }
-    try {
-        await form.post(routePath, {
-            onSuccess: () => {
-                showToast(
-                    "success",
-                    form.id ? "Updated" : "Created",
-                    `Quotation ${form.id ? "updated" : "created"} successfully!`
-                );
-                router.get(route("quotations.list"));
-            },
-            onError: (errors) => {
-                console.error("Submission Error:", errors);
-                showToast(
-                    "error",
-                    "Submission Failed",
-                    `Could not ${form.id ? "update" : "create"} quotation.`
-                );
-            },
-        });
-    } catch (error) {
-        console.error("Unexpected Error:", error);
-        showToast("error", "Unexpected Error", "Something went wrong.");
-    }
 };
 
 const cancelOperation = () => {
