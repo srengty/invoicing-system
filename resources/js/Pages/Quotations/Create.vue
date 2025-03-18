@@ -957,7 +957,7 @@ const submit = async (event) => {
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
         remark: prod.remark ?? "",
-        includeCatalog: prod.includeCatalog ? 1 : 0,
+        include_catalog: prod.includeCatalog ?? false, 
     }));
 
     form.total = calculateTotal.value;

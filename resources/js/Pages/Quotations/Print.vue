@@ -151,33 +151,6 @@
             </div>
         </div>
     </div>
-    <!-- Catalog Section -->
-    <div
-        ref="catalogArea"
-        class="print-area mt-10"
-        v-if="filteredProducts.length"
-    >
-        <h1 class="text-3xl font-bold text-center mb-6">Product Catalog</h1>
-        <div class="grid grid-cols-3 gap-4">
-            <div
-                v-for="product in filteredProducts"
-                :key="product.id"
-                class="border p-4 rounded-md"
-            >
-                <img
-                    :src="product.image"
-                    alt="Product Image"
-                    class="w-full h-32 object-cover rounded-md mb-2"
-                />
-                <h3 class="text-md font-semibold">
-                    {{ isUSD ? product.name : product.name_kh }}
-                </h3>
-                <p class="text-gray-600 text-sm">
-                    {{ isUSD ? product.desc : product.desc_kh }}
-                </p>
-            </div>
-        </div>
-    </div>
 </template>
 
 <script setup>
@@ -220,8 +193,17 @@ const totalAmount = computed(() => {
     );
 });
 
+// const printPage = () => {
+//     window.print();
+// };
 const printPage = () => {
+    const printContents = document.getElementById("printArea").innerHTML;
+    const originalContents = document.body.innerHTML;
+
+    document.body.innerHTML = printContents;
     window.print();
+    document.body.innerHTML = originalContents;
+    window.location.reload(); // Reload to restore the original content
 };
 
 const formattedProducts = computed(() => {
@@ -237,7 +219,7 @@ const formattedProducts = computed(() => {
         remark_kh: product.remark_kh || "",
         quantity: product.pivot?.quantity ?? 0,
         price: product.pivot?.price ?? 0,
-        includeCatalog: product.includeCatalog || false,
+        includeCatalog: product.pivot?.include_catalog ?? false, // Use include_catalog from pivot
     }));
 });
 
