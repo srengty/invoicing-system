@@ -19,7 +19,7 @@
                 label="Print Quotation"
                 icon="pi pi-print"
                 class="px-4 py-2"
-                @click="printPage"
+                @click="generateAndMergePDFs"
                 size="small"
             />
         </div>
@@ -150,6 +150,7 @@
                 </div>
             </div>
         </div>
+    
     </div>
 </template>
 
@@ -193,19 +194,6 @@ const totalAmount = computed(() => {
     );
 });
 
-// const printPage = () => {
-//     window.print();
-// };
-const printPage = () => {
-    const printContents = document.getElementById("printArea").innerHTML;
-    const originalContents = document.body.innerHTML;
-
-    document.body.innerHTML = printContents;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload(); // Reload to restore the original content
-};
-
 const formattedProducts = computed(() => {
     if (!quotation.value.products) return [];
 
@@ -219,30 +207,54 @@ const formattedProducts = computed(() => {
         remark_kh: product.remark_kh || "",
         quantity: product.pivot?.quantity ?? 0,
         price: product.pivot?.price ?? 0,
-        includeCatalog: product.pivot?.include_catalog ?? false, // Use include_catalog from pivot
+        includeCatalog: product.pivot?.include_catalog ?? false,
+        pdf_url: product.pdf_url || null, // Include pdf_url
     }));
-});
-
-const filteredProducts = computed(() => {
-    return (
-        quotation.value.products?.filter((product) => product.includeCatalog) ||
-        []
-    );
 });
 
 const generateAndMergePDFs = async () => {
     try {
+        // Step 1: Generate the quotation PDF
         const quotationPDF = await generatePDF(printArea.value);
-        const catalogPDF = filteredProducts.value.length
-            ? await generatePDF(catalogArea.value)
-            : null;
 
-        if (catalogPDF) {
-            const mergedPDFBytes = await mergePDFs(quotationPDF, catalogPDF);
-            downloadPDF(mergedPDFBytes, "Quotation_Catalog.pdf");
-        } else {
-            downloadBlob(quotationPDF, "Quotation.pdf");
-        }
+        // Step 2: Fetch catalog PDFs from pdf_url for each product with a PDF URL
+        const productsWithPDF = formattedProducts.value.filter(
+            (product) => product.pdf_url
+        );
+
+        const catalogPDFs = await Promise.all(
+            productsWithPDF.map(async (product) => {
+                try {
+                    const response = await fetch(product.pdf_url);
+                    if (!response.ok) {
+                        console.warn(
+                            `Failed to fetch catalog PDF for product ${product.id}: ${response.status} ${response.statusText}`
+                        );
+                        return null;
+                    }
+                    const blob = await response.blob();
+                    return blob; // Return the blob for the catalog PDF
+                } catch (error) {
+                    console.warn(
+                        `Error fetching catalog PDF for product ${product.id}:`,
+                        error
+                    );
+                    return null; // Return null in case of error
+                }
+            })
+        );
+
+        // Step 3: Filter out any failed catalog fetches (null values)
+        const validCatalogPDFs = catalogPDFs.filter((pdf) => pdf !== null);
+
+        // Step 4: Merge the quotation PDF and catalog PDFs
+        const mergedPDFBytes = await mergePDFs([
+            quotationPDF,
+            ...validCatalogPDFs,
+        ]);
+
+        // Step 5: Display or download the merged PDF
+        displayMergedPDF(mergedPDFBytes);
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -254,20 +266,24 @@ const generatePDF = (element) => {
     });
 };
 
-const mergePDFs = async (pdfBlob1, pdfBlob2) => {
-    const pdfDoc = await PDFDocument.create();
-    const [pdf1, pdf2] = await Promise.all([
-        PDFDocument.load(await pdfBlob1.arrayBuffer()),
-        PDFDocument.load(await pdfBlob2.arrayBuffer()),
-    ]);
+const mergePDFs = async (pdfBlobs) => {
+    const pdfDoc = await PDFDocument.create(); // Create a new PDF document
 
-    const pages1 = await pdfDoc.copyPages(pdf1, pdf1.getPageIndices());
-    const pages2 = await pdfDoc.copyPages(pdf2, pdf2.getPageIndices());
+    for (const pdfBlob of pdfBlobs) {
+        const pdf = await PDFDocument.load(await pdfBlob.arrayBuffer()); // Load each PDF
+        const pages = await pdfDoc.copyPages(pdf, pdf.getPageIndices()); // Copy pages from the original PDF
+        pages.forEach((page) => pdfDoc.addPage(page)); // Add pages to the new PDF
+    }
 
-    pages1.forEach((page) => pdfDoc.addPage(page));
-    pages2.forEach((page) => pdfDoc.addPage(page));
+    return pdfDoc.save(); // Save the merged PDF and return it
+};
 
-    return pdfDoc.save();
+const displayMergedPDF = (pdfBytes) => {
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+
+    // Option 1: Open the merged PDF in a new tab
+    window.open(url, "_blank");
 };
 
 const downloadPDF = (pdfBytes, filename) => {
@@ -288,7 +304,6 @@ const downloadBlob = (blob, filename) => {
 <style scoped>
 .print-area {
     width: 210mm;
-    /* min-height: 297mm; */
     padding: 10mm;
     margin: 0 auto;
     background: white;
@@ -342,7 +357,7 @@ const downloadBlob = (blob, filename) => {
     }
 
     .catalog-area {
-        page-break-before: always; /* Ensure catalog starts on a new page */
+        page-break-before: always;
     }
 
     .catalog-area img {
