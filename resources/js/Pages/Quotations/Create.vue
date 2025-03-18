@@ -350,7 +350,7 @@
         </template>
         <Customers
             :customerCategories="customerCategories"
-            redirect_route="customers.index"
+            redirect_route="quotations.create"
             :mode="'create'"
         />
     </Dialog>
@@ -391,7 +391,7 @@
                     >Item Category</label
                 >
                 <InputText
-                    :value="selectedProduct.category_id"
+                    :value="getCategoryName(selectedProduct.category_id)"
                     class="w-full text-sm"
                     size="small"
                     readonly
@@ -619,7 +619,15 @@ const updateSelectedProductDetails = () => {
 watch(selectedProduct, (newVal) => {
     console.log("Updated selected product:", newVal);
 });
-
+const getCategoryName = (categoryId) => {
+    if (!categoryId) return "";
+    const category = props.productCategories.find(
+        (cat) => cat.id === categoryId
+    );
+    return category
+        ? category.category_name_english || category.category_name_khmer
+        : "";
+};
 const searchProducts = (event) => {
     const selectedProductIds = selectedProductsData.value.map(
         (prod) => prod.id
@@ -627,10 +635,11 @@ const searchProducts = (event) => {
     filteredProducts.value = props.products.filter(
         (product) =>
             product.status === "approved" &&
-            !selectedProductIds.includes(product.id) && // Exclude already selected products
+            !selectedProductIds.includes(product.id) &&
             product.name.toLowerCase().includes(event.query.toLowerCase())
     );
 };
+
 watch(selectedProductsData, () => {
     searchProducts({ query: selectedItem.value?.name || "" });
 });
@@ -695,13 +704,15 @@ const addItemToTable = () => {
             3000
         );
     }
-
+    selectedItem.value = null;
+    filteredProducts.value = [];
     closeAddItemDialog();
 };
 
 const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
     resetAddItemDialog();
+    filteredProducts.value = [];
 };
 
 const resetAddItemDialog = () => {
@@ -969,6 +980,30 @@ const submit = async (event) => {
             includeCatalog: product.includeCatalog,
         })),
     };
+    // Submit the form
+    try {
+        await form.post(routePath, {
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    form.id ? "Updated" : "Created",
+                    `Quotation ${form.id ? "updated" : "created"} successfully!`
+                );
+                router.get(route("quotations.list"));
+            },
+            onError: (errors) => {
+                console.error("Submission Error:", errors);
+                showToast(
+                    "error",
+                    "Submission Failed",
+                    `Could not ${form.id ? "update" : "create"} quotation.`
+                );
+            },
+        });
+    } catch (error) {
+        console.error("Unexpected Error:", error);
+        showToast("error", "Unexpected Error", "Something went wrong.");
+    }
 };
 
 const cancelOperation = () => {

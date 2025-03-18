@@ -226,7 +226,7 @@ class QuotationController extends Controller
             //     'products' => $quotation->products,
             // ]);
         $quotation = Quotation::with(['customer', 'products' => function($query) {
-            $query->withPivot(['quantity', 'price']); // ✅ Ensure pivot data is included
+            $query->withPivot(['quantity', 'price']);
         }])->where('id', $quotation_no)->firstOrFail();
         $formattedQuotationDate = $quotation->quotation_date
         ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
