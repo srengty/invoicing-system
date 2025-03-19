@@ -1054,7 +1054,6 @@ const submit = async (event) => {
 
     if (!validateForm()) return;
 
-    // Validate catalog availability for products with include_catalog checked
     for (let product of selectedProductsData.value) {
         if (product.include_catalog && !product.pdf_url) {
             showToast(
