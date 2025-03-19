@@ -150,7 +150,6 @@
                 </div>
             </div>
         </div>
-    
     </div>
 </template>
 
@@ -197,7 +196,7 @@ const totalAmount = computed(() => {
 const formattedProducts = computed(() => {
     if (!quotation.value.products) return [];
 
-    return quotation.value.products.map((product) => ({
+    const products = quotation.value.products.map((product) => ({
         id: product.id,
         name: product.name || "Unknown",
         name_kh: product.name_kh || "Unknown",
@@ -207,24 +206,30 @@ const formattedProducts = computed(() => {
         remark_kh: product.remark_kh || "",
         quantity: product.pivot?.quantity ?? 0,
         price: product.pivot?.price ?? 0,
-        includeCatalog: product.pivot?.include_catalog ?? false,
-        pdf_url: product.pdf_url || null, // Include pdf_url
+        include_catalog: product.pivot?.include_catalog ?? 0,
+        pdf_url: product.pdf_url || null,
     }));
+
+    console.log("Formatted Products:", products);
+    return products;
 });
 
 const generateAndMergePDFs = async () => {
     try {
-        // Step 1: Generate the quotation PDF
         const quotationPDF = await generatePDF(printArea.value);
-
-        // Step 2: Fetch catalog PDFs from pdf_url for each product with a PDF URL
-        const productsWithPDF = formattedProducts.value.filter(
-            (product) => product.pdf_url
-        );
-
+        const productsWithPDF = formattedProducts.value.filter((product) => {
+            const include = product.pdf_url && product.include_catalog === 1;
+            console.log(
+                `Product ${product.id}: include_catalog=${product.include_catalog}, pdf_url=${product.pdf_url}, include=${include}`
+            );
+            return include; 
+        });
         const catalogPDFs = await Promise.all(
             productsWithPDF.map(async (product) => {
                 try {
+                    console.log(
+                        `Fetching catalog PDF for product ${product.id} from ${product.pdf_url}...`
+                    );
                     const response = await fetch(product.pdf_url);
                     if (!response.ok) {
                         console.warn(
@@ -233,27 +238,21 @@ const generateAndMergePDFs = async () => {
                         return null;
                     }
                     const blob = await response.blob();
-                    return blob; // Return the blob for the catalog PDF
+                    return blob;
                 } catch (error) {
                     console.warn(
                         `Error fetching catalog PDF for product ${product.id}:`,
                         error
                     );
-                    return null; // Return null in case of error
+                    return null;
                 }
             })
         );
-
-        // Step 3: Filter out any failed catalog fetches (null values)
         const validCatalogPDFs = catalogPDFs.filter((pdf) => pdf !== null);
-
-        // Step 4: Merge the quotation PDF and catalog PDFs
         const mergedPDFBytes = await mergePDFs([
             quotationPDF,
             ...validCatalogPDFs,
         ]);
-
-        // Step 5: Display or download the merged PDF
         displayMergedPDF(mergedPDFBytes);
     } catch (error) {
         console.error("Error generating PDFs:", error);
@@ -267,22 +266,20 @@ const generatePDF = (element) => {
 };
 
 const mergePDFs = async (pdfBlobs) => {
-    const pdfDoc = await PDFDocument.create(); // Create a new PDF document
+    const pdfDoc = await PDFDocument.create();
 
     for (const pdfBlob of pdfBlobs) {
-        const pdf = await PDFDocument.load(await pdfBlob.arrayBuffer()); // Load each PDF
-        const pages = await pdfDoc.copyPages(pdf, pdf.getPageIndices()); // Copy pages from the original PDF
-        pages.forEach((page) => pdfDoc.addPage(page)); // Add pages to the new PDF
+        const pdf = await PDFDocument.load(await pdfBlob.arrayBuffer());
+        const pages = await pdfDoc.copyPages(pdf, pdf.getPageIndices());
+        pages.forEach((page) => pdfDoc.addPage(page));
     }
 
-    return pdfDoc.save(); // Save the merged PDF and return it
+    return pdfDoc.save();
 };
 
 const displayMergedPDF = (pdfBytes) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-
-    // Option 1: Open the merged PDF in a new tab
     window.open(url, "_blank");
 };
 

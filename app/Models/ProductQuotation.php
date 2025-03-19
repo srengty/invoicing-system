@@ -20,6 +20,7 @@ class ProductQuotation extends Model
         'price',
         'remark',
         'product_unit_prices',
+        'include_catalog',
     ];
 
     public function product()

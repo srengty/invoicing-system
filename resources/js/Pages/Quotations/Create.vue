@@ -249,12 +249,15 @@
                     <Column header="Include Catalog">
                         <template #body="slotProps">
                             <Checkbox
-                                v-model="slotProps.data.includeCatalog"
+                                v-model="slotProps.data.include_catalog"
                                 :binary="true"
+                                @change="
+                                    checkCatalogAvailability(slotProps.data)
+                                "
                             />
                             <span class="ml-2">
                                 {{
-                                    slotProps.data.includeCatalog
+                                    slotProps.data.include_catalog
                                         ? "Included"
                                         : "Excluded"
                                 }}
@@ -556,6 +559,7 @@ onMounted(() => {
     if (props.quotation) {
         console.log("🛠 Debug: Quotation received", props.quotation);
         const newProps = JSON.parse(props.quotation);
+        form.id = props.quotation.id || null;
         form.quotation_no = newProps.quotation_no || "";
         form.quotation_date = newProps.quotation_date || "";
         form.customer_id = String(newProps.customer_id) || "";
@@ -571,7 +575,7 @@ onMounted(() => {
                 quantity: product.quantity || 1,
                 subTotal: (product.quantity || 1) * Number(product.price || 0),
                 remark: product.remark || "",
-                includeCatalog: product.includeCatalog ?? false,
+                include_catalog: product.include_catalog ?? false,
             }));
             console.log(selectedProductsData.value);
         } else {
@@ -662,7 +666,7 @@ const addItemToTable = () => {
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
         remark: selectedProduct.value.remark || "",
-        includeCatalog: false,
+        include_catalog: false,
         isNew: true,
     };
 
@@ -766,7 +770,7 @@ watch(selectedProductIds, (newIds) => {
                     quantity: 1,
                     price: product.price,
                     remark: "",
-                    includeCatalog: product.includeCatalog ?? 0,
+                    include_catalog: product.include_catalog ?? 0,
                 });
             }
             console.log(prod);
@@ -944,6 +948,105 @@ const validateForm = () => {
     }
     return true;
 };
+// const submit = async (event) => {
+//     if (event && typeof event.preventDefault === "function") {
+//         event.preventDefault();
+//     }
+
+//     if (!validateForm()) return;
+
+//     // Validate catalog availability for products with include_catalog checked
+//     for (let product of selectedProductsData.value) {
+//         if (product.include_catalog && !product.pdf_url) {
+//             showToast(
+//                 "error",
+//                 "Error",
+//                 "Catalog PDF is missing for an included product.",
+//                 3000
+//             );
+//             return;
+//         }
+//     }
+
+//     // Prepare the payload
+//     form.products = selectedProductsData.value.map((prod) => ({
+//         id: prod.id,
+//         quantity: prod.quantity ?? 1,
+//         price: prod.price ?? 0,
+//         remark: prod.remark ?? "",
+//         include_catalog: prod.include_catalog ?? false,
+//         pdf_url: prod.pdf_url ?? null,
+//     }));
+
+//     form.total = calculateTotal.value;
+//     form.grand_total = calculateGrandTotal.value;
+
+//     // Debugging: Log form data before submission
+//     console.log("Submitting Quotation ID:", form.id);
+//     console.log("Final Form Data:", JSON.stringify(form, null, 2));
+
+//     // Check if we are editing or creating
+//     if (form.id) {
+//         // PUT request for updating existing quotation
+//         try {
+//             await form.put(route("quotations.update", { id: form.id }), {
+//                 onSuccess: () => {
+//                     showToast(
+//                         "success",
+//                         "Updated",
+//                         "Quotation updated successfully!"
+//                     );
+//                     router.get(route("quotations.list"));
+//                 },
+//                 onError: (errors) => {
+//                     console.error("Update Error:", errors);
+//                     showToast(
+//                         "error",
+//                         "Update Failed",
+//                         "Could not update quotation."
+//                     );
+//                 },
+//             });
+//         } catch (error) {
+//             console.error("Unexpected Error in Update:", error);
+//             showToast(
+//                 "error",
+//                 "Unexpected Error",
+//                 "Could not update quotation."
+//             );
+//         }
+//     } else {
+//         // POST request for creating new quotation
+//         try {
+//             await form.post(route("quotations.store"), {
+//                 onSuccess: () => {
+//                     showToast(
+//                         "success",
+//                         "Created",
+//                         "Quotation created successfully!"
+//                     );
+//                     router.get(route("quotations.list"));
+//                 },
+//                 onError: (errors) => {
+//                     console.error("Creation Error:", errors);
+//                     showToast(
+//                         "error",
+//                         "Creation Failed",
+//                         "Could not create quotation."
+//                     );
+//                 },
+//             });
+//         } catch (error) {
+//             console.error("Unexpected Error in Create:", error);
+//             showToast(
+//                 "error",
+//                 "Unexpected Error",
+//                 "Could not create quotation."
+//             );
+//         }
+//     }
+// };
+
 const submit = async (event) => {
     if (event && typeof event.preventDefault === "function") {
         event.preventDefault();
@@ -951,59 +1054,111 @@ const submit = async (event) => {
 
     if (!validateForm()) return;
 
-    // Prepare product data before submitting
+    // Validate catalog availability for products with include_catalog checked
+    for (let product of selectedProductsData.value) {
+        if (product.include_catalog && !product.pdf_url) {
+            showToast(
+                "error",
+                "Error",
+                "Catalog PDF is missing for an included product.",
+                3000
+            );
+            return;
+        }
+    }
+
+    // Prepare the payload
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
         remark: prod.remark ?? "",
-        include_catalog: prod.includeCatalog ?? false, 
+        include_catalog: prod.include_catalog ?? false,
+        pdf_url: prod.pdf_url ?? null,
     }));
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-    console.log("Submitting Products:", JSON.stringify(form.products, null, 2));
+    // Debugging: Log form data before submission
+    console.log("Submitting Quotation ID:", form.id);
+    console.log("Final Form Data:", JSON.stringify(form, null, 2));
 
-    const routePath = form.id
-        ? route("quotations.update", { id: form.id })
-        : route("quotations.store");
-
-    // Prepare the payload
-    const payload = {
-        ...form,
-        products: selectedProductsData.value.map((product) => ({
-            id: product.id,
-            quantity: product.quantity,
-            price: product.price,
-            remark: product.remark,
-            includeCatalog: product.includeCatalog,
-        })),
-    };
-    // Submit the form
-    try {
-        await form.post(routePath, {
-            onSuccess: () => {
-                showToast(
-                    "success",
-                    form.id ? "Updated" : "Created",
-                    `Quotation ${form.id ? "updated" : "created"} successfully!`
-                );
-                router.get(route("quotations.list"));
-            },
-            onError: (errors) => {
-                console.error("Submission Error:", errors);
-                showToast(
-                    "error",
-                    "Submission Failed",
-                    `Could not ${form.id ? "update" : "create"} quotation.`
-                );
-            },
-        });
-    } catch (error) {
-        console.error("Unexpected Error:", error);
-        showToast("error", "Unexpected Error", "Something went wrong.");
+    // Check if we are editing or creating
+    if (form.id) {
+        // PUT request for updating existing quotation
+        try {
+            await form.put(route("quotations.update", { id: form.id }), {
+                onSuccess: () => {
+                    showToast(
+                        "success",
+                        "Updated",
+                        "Quotation updated successfully!"
+                    );
+                    router.get(route("quotations.list"));
+                },
+                onError: (errors) => {
+                    console.error("Update Error:", errors);
+                    showToast(
+                        "error",
+                        "Update Failed",
+                        "Could not update quotation."
+                    );
+                },
+            });
+        } catch (error) {
+            console.error("Unexpected Error in Update:", error);
+            showToast(
+                "error",
+                "Unexpected Error",
+                "Could not update quotation."
+            );
+        }
+    } else {
+        // POST request for creating new quotation
+        try {
+            await form.post(route("quotations.store"), {
+                onSuccess: () => {
+                    showToast(
+                        "success",
+                        "Created",
+                        "Quotation created successfully!"
+                    );
+                    router.get(route("quotations.list"));
+                },
+                onError: (errors) => {
+                    console.error("Creation Error:", errors);
+                    showToast(
+                        "error",
+                        "Creation Failed",
+                        "Could not create quotation."
+                    );
+                },
+            });
+        } catch (error) {
+            console.error("Unexpected Error in Create:", error);
+            showToast(
+                "error",
+                "Unexpected Error",
+                "Could not create quotation."
+            );
+        }
     }
+};
+
+const checkCatalogAvailability = (product) => {
+    if (product.include_catalog && !product.pdf_url) {
+        console.warn("Product does not include catalog or missing PDF URL.");
+        showToast(
+            "error",
+            "Error",
+            "Catalog PDF is missing for an included product.",
+            3000
+        );
+        return false;
+    }
+    console.log("Product is ready for catalog PDF.");
+    return true;
 };
 
 const cancelOperation = () => {
