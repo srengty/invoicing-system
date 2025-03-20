@@ -557,7 +557,7 @@ const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
 onMounted(() => {
     if (props.quotation) {
-        console.log("🛠 Debug: Quotation received", props.quotation);
+        // console.log("🛠 Debug: Quotation received", props.quotation);
         const newProps = JSON.parse(props.quotation);
         form.id = newProps.id || null;
         form.quotation_no = newProps.quotation_no || "";
@@ -568,16 +568,17 @@ onMounted(() => {
         form.total = newProps.total || 0;
         form.tax = newProps.tax || 0;
         form.grand_total = newProps.grand_total || 0;
+
         // Populate selectedProductsData with existing products
         if (newProps.products && Array.isArray(newProps.products)) {
             selectedProductsData.value = newProps.products.map((product) => ({
                 ...product,
-                quantity: product.quantity || 1,
-                subTotal: (product.quantity || 1) * Number(product.price || 0),
+                quantity: product.pivot?.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
+                subTotal: (product.pivot?.quantity ?? 1) * Number(product.price || 0),
                 remark: product.remark || "",
                 include_catalog: product.include_catalog ?? false,
             }));
-            console.log(selectedProductsData.value);
+            console.log("Selected Products Data:", selectedProductsData.value); // Debugging log
         } else {
             selectedProductsData.value = [];
         }
@@ -586,11 +587,9 @@ onMounted(() => {
 });
 
 const updateCustomerDetails = () => {
-    console.log("Customer id: ", form.customer_id);
     const selectedCustomer = formattedCustomers.value.find(
         (customer) => customer.id == form.customer_id
     );
-    console.log("selected customer: ", selectedCustomer);
 
     if (selectedCustomer) {
         form.address = selectedCustomer.address || "";
@@ -620,9 +619,6 @@ const updateSelectedProductDetails = () => {
         selectedProduct.value = {};
     }
 };
-watch(selectedProduct, (newVal) => {
-    console.log("Updated selected product:", newVal);
-});
 const getCategoryName = (categoryId) => {
     if (!categoryId) return "";
     const category = props.productCategories.find(
@@ -792,7 +788,7 @@ const formattedCustomers = computed(() => {
 watch(
     () => form.customer_id,
     (newVal) => {
-        console.log("Selected Customer ID:", newVal);
+        // console.log("Selected Customer ID:", newVal);
     }
 );
 const selectedCustomer = computed(() => {
@@ -892,22 +888,41 @@ const editProduct = (productId) => {
     const productToEdit = selectedProductsData.value.find(
         (prod) => prod.id === productId
     );
+       if (productToEdit) {
+        console.log("Editing Product:", productToEdit); // Debugging log
+        console.log("Quantity from Backend:", productToEdit.quantity); // Debugging log
+        selectedProduct.value = {
+            ...productToEdit,
+            quantity: productToEdit.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
+            subTotal: productToEdit.subTotal ?? 0,
+            remark: productToEdit.remark || "",
+            include_catalog: productToEdit.include_catalog ?? false,
+        };
 
-    if (productToEdit) {
-        selectedProduct.value = { ...productToEdit };
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
-        // const selectedCustomer = props.customers.find(
-        //     (customer) => customer.id === productToEdit.customer_id
-        // );
-        // if (selectedCustomer) {
-        //     form.customer_id = selectedCustomer.id;
-        //     form.address = selectedCustomer.address || "";
-        //     form.phone_number = selectedCustomer.phone_number || "";
-        // }
-
-        // isAddItemDialogVisible.value = true;
     }
+    // if (productToEdit) {
+    //     selectedProduct.value = {
+    //         ...productToEdit,
+    //         quantity: productToEdit.quantity || 1, // Ensure quantity is taken from the database
+    //         subTotal: productToEdit.subTotal || 0,
+    //         remark: productToEdit.remark || "",
+    //         include_catalog: productToEdit.include_catalog || false,
+    //     };
+    //     isAddItemDialogVisible.value = true;
+    //     editingProduct.value = productToEdit;
+    //     // const selectedCustomer = props.customers.find(
+    //     //     (customer) => customer.id === productToEdit.customer_id
+    //     // );
+    //     // if (selectedCustomer) {
+    //     //     form.customer_id = selectedCustomer.id;
+    //     //     form.address = selectedCustomer.address || "";
+    //     //     form.phone_number = selectedCustomer.phone_number || "";
+    //     // }
+
+    //     // isAddItemDialogVisible.value = true;
+    // }
 };
 const validateForm = () => {
     if (!form.address) {

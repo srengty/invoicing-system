@@ -222,7 +222,7 @@ const generateAndMergePDFs = async () => {
             console.log(
                 `Product ${product.id}: include_catalog=${product.include_catalog}, pdf_url=${product.pdf_url}, include=${include}`
             );
-            return include; 
+            return include;
         });
         const catalogPDFs = await Promise.all(
             productsWithPDF.map(async (product) => {
