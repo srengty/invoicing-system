@@ -11,6 +11,7 @@ use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
 use App\Models\CustomerCategory; // Import Customer model
 use App\Models\ProductQuotation;
+use App\Models\Division;
 use App\Models\Category;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +40,7 @@ class QuotationController extends Controller
     $quotation = $request->input('quotation', null);
 
     $customers = Customer::all();
+    $divisions = Division::all();
     $products = Product::all();
     $customerCategories = CustomerCategory::all();
     $productCategories = Category::all();
@@ -49,6 +51,7 @@ class QuotationController extends Controller
         'customerCategories' => CustomerCategory::all(),
         'productCategories' => Category::all(),
         'quotation' => $quotation,
+        'divisions' => $divisions,
     ]);
 }
 

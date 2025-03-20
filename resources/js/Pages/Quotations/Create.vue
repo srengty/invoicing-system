@@ -370,10 +370,26 @@
         v-model:visible="isAddItemDialogVisible"
         modal
         header="Add Item (Popup)"
-        :style="{ width: '400px' }"
+        :style="{ width: '450px' }"
         class="text-sm"
     >
         <div class="p-fluid grid gap-4 text-sm">
+            <!-- Division Selection -->
+            <div class="field w-full">
+                <label for="division" class="required">Division</label> <br />
+                <Dropdown
+                    v-model="selectedDivision"
+                    :options="divisionOptions"
+                    optionLabel="displayName"
+                    optionValue="id"
+                    placeholder="Select a Division"
+                    :filter="true"
+                    filterPlaceholder="Search divisions..."
+                    class="w-full"
+                    @change="filterProductsByDivision"
+                />
+            </div>
+
             <!-- Item Selection -->
             <div class="field w-full">
                 <label for="item" class="required">Item</label> <br />
@@ -495,6 +511,7 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
+import { getDepartment } from "../../data";
 
 const props = defineProps({
     customers: Array,
@@ -502,7 +519,9 @@ const props = defineProps({
     customerCategories: Array,
     productCategories: Array,
     quotation: Object, // Accept quotation data when editing
+    divisions: Array,
 });
+console.log("Heeli", props.divisions);
 // Toast for notifications
 const toast = useToast();
 const selectedProductIds = ref([]);
@@ -552,6 +571,8 @@ const selectedQuantity = ref(1);
 const additionalRemark = ref("");
 const selectedAccountCode = ref("");
 const selectedItemId = ref(null);
+const selectedDivision = ref(null);
+const divisionOptions = ref(props.divisions); // Populate division options from props
 const filteredProducts = ref([]);
 const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
@@ -574,7 +595,8 @@ onMounted(() => {
             selectedProductsData.value = newProps.products.map((product) => ({
                 ...product,
                 quantity: product.pivot?.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
-                subTotal: (product.pivot?.quantity ?? 1) * Number(product.price || 0),
+                subTotal:
+                    (product.pivot?.quantity ?? 1) * Number(product.price || 0),
                 remark: product.remark || "",
                 include_catalog: product.include_catalog ?? false,
             }));
@@ -583,6 +605,25 @@ onMounted(() => {
             selectedProductsData.value = [];
         }
         updateCustomerDetails();
+    }
+});
+onMounted(async () => {
+    const response = await getDepartment();
+    const data = response.data;
+
+    // Filter departments with status === "service"
+    const serviceDepartments = data.filter((dept) => dept.status === "service");
+
+    if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
+        divisionOptions.value = serviceDepartments.map((dept) => ({
+            name: dept.name,
+            id: dept.id,
+            code: dept.code, // Assuming `code` exists in API response
+            displayName: `${dept.code} - ${dept.name}`, // Add this for Dropdown
+        }));
+    } else {
+        console.warn("No service departments found.");
+        divisionOptions.value = [];
     }
 });
 
@@ -628,18 +669,31 @@ const getCategoryName = (categoryId) => {
         ? category.category_name_english || category.category_name_khmer
         : "";
 };
+const filterProductsByDivision = () => {
+    if (selectedDivision.value) {
+        filteredProducts.value = props.products.filter(
+            (product) => product.division_id === selectedDivision.value
+        );
+    } else {
+        filteredProducts.value = []; // Clear filtered products if no division is selected
+    }
+};
+
 const searchProducts = (event) => {
     const selectedProductIds = selectedProductsData.value.map(
         (prod) => prod.id
     );
+
     filteredProducts.value = props.products.filter(
         (product) =>
             product.status === "approved" &&
             !selectedProductIds.includes(product.id) &&
-            product.name.toLowerCase().includes(event.query.toLowerCase())
+            product.name.toLowerCase().includes(event.query.toLowerCase()) &&
+            (selectedDivision.value
+                ? product.division_id === selectedDivision.value
+                : true)
     );
 };
-
 watch(selectedProductsData, () => {
     searchProducts({ query: selectedItem.value?.name || "" });
 });
@@ -663,6 +717,7 @@ const addItemToTable = () => {
             selectedProduct.value.quantity,
         remark: selectedProduct.value.remark || "",
         include_catalog: false,
+        division_id: selectedDivision.value, // Include the selected division
         isNew: true,
     };
 
@@ -713,6 +768,7 @@ const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
     resetAddItemDialog();
     filteredProducts.value = [];
+    selectedDivision.value = null; // Reset division selection
 };
 
 const resetAddItemDialog = () => {
@@ -888,7 +944,7 @@ const editProduct = (productId) => {
     const productToEdit = selectedProductsData.value.find(
         (prod) => prod.id === productId
     );
-       if (productToEdit) {
+    if (productToEdit) {
         console.log("Editing Product:", productToEdit); // Debugging log
         console.log("Quantity from Backend:", productToEdit.quantity); // Debugging log
         selectedProduct.value = {
