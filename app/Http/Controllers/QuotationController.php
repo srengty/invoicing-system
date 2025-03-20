@@ -11,6 +11,7 @@ use App\Models\Customer; // Import Customer model
 use App\Models\Agreement; // Import Customer model
 use App\Models\CustomerCategory; // Import Customer model
 use App\Models\ProductQuotation;
+use App\Models\Division;
 use App\Models\Category;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
@@ -43,15 +44,18 @@ class QuotationController extends Controller
     $quotation = $request->input('quotation', null);
 
     $customers = Customer::all();
+    $divisions = Division::all();
     $products = Product::all();
     $customerCategories = CustomerCategory::all();
     $productCategories = Category::all();
     return inertia('Quotations/Create', [
-       'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
-        'products' => $products,
+        'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
+        // 'products' => $products,
+        'products' => Product::where('status', 'approved')->get(),
         'customerCategories' => CustomerCategory::all(),
         'productCategories' => Category::all(),
         'quotation' => $quotation,
+        'divisions' => $divisions,
     ]);
 }
 
@@ -144,7 +148,8 @@ class QuotationController extends Controller
             'products.*.category_id' => 'nullable|integer|min:0',
             'products.*.remark' => 'nullable|string|max:255',
             'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
-            'products.*.includeCatalog' => 'required|in:true,false,0,1',
+            'products.*.include_catalog' => 'required|boolean', // Ensure include_catalog is validated
+            'products.*.pdf_url' => 'nullable|string|max:255',
         ]);
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
@@ -175,8 +180,15 @@ class QuotationController extends Controller
         : now()->format('Y-m-d H:i:s');
 
         // Get the last used quotation_no and increment it
-        $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
-        $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;  // Start from a default value if none exists
+        // $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
+        // $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;
+
+        $currentYear = date('Y');
+        $baseQuotationNo = ($currentYear - 2025) * 1000000 + 25000001;
+        $lastQuotation = Quotation::where('quotation_no', '>=', $baseQuotationNo)
+                                ->orderBy('quotation_no', 'desc')
+                                ->first();
+        $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : $baseQuotationNo;
 
         // dd(json_encode($validated["products"], true));
         // Create the quotation
@@ -193,14 +205,18 @@ class QuotationController extends Controller
         if (isset($validated['products'])) {
             foreach ($validated['products'] as $product) {
                 $productData = Product::find($product['id']);
+
                 // Only attach approved products
                 if ($productData && $productData->status === 'approved') {
+                    // Debug the product data
+                    \Log::info('Product Data:', $product);
                     ProductQuotation::create([
                         'product_id' => $product['id'],
                         'quantity'   => $product['quantity'],
                         'quotation_no' => $quotation->id,
                         'price'      => $product['price'],
-                        'include_catalog' => filter_var($product['includeCatalog'], FILTER_VALIDATE_BOOLEAN),
+                        'include_catalog' => $product['include_catalog'],
+                        'pdf_url'    => $product['pdf_url'] ?? null,
                     ]);
                 }
                 // $quotation->products()->attach($product['id'], [
@@ -229,7 +245,7 @@ class QuotationController extends Controller
             //     'products' => $quotation->products,
             // ]);
         $quotation = Quotation::with(['customer', 'products' => function($query) {
-            $query->withPivot(['quantity', 'price']); // ✅ Ensure pivot data is included
+            $query->withPivot(['quantity', 'price', 'include_catalog']);
         }])->where('id', $quotation_no)->firstOrFail();
         $formattedQuotationDate = $quotation->quotation_date
         ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
@@ -270,8 +286,8 @@ class QuotationController extends Controller
     {
         // Validate and update the quotation data
         $validated = $request->validate([
-            'quotation_no' => 'required|integer|unique:quotations,quotation_no,' . $quotation->id,
-            'quotation_date' => 'required|date',
+            // 'quotation_no' => 'sometimes|integer',
+            // 'quotation_date' => 'sometimes|date',
             'customer_id' => 'required|exists:customers,id',
             'address' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:20',
@@ -279,7 +295,7 @@ class QuotationController extends Controller
             'total' => 'required|numeric|min:0',
             // 'tax' => 'required|numeric|min:0',
             // 'grand_total' => 'required|numeric|min:0',
-            'status' => 'required|string|max:20',
+            // 'status' => 'sometimes|string|max:20',
             'products'        => 'nullable|array',
             'products.*.id'   => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:1',
@@ -288,13 +304,14 @@ class QuotationController extends Controller
             'products.*.category_id' => 'nullable|integer|min:0',
             'products.*.remark' => 'nullable|string|max:255',
             // 'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // if needed
-           'products.*.includeCatalog' => 'required|in:true,false,0,1', // Ensure boolean validation
+            'products.*.include_catalog' => 'required|boolean',
+            'products.*.pdf_url' => 'nullable|string|max:255',
 
         ]);
 
         $quotation->update($validated);
 
-          // Update associated products
+        // Update associated products
         foreach ($validated['products'] as $product) {
             $existingProduct = ProductQuotation::where([
                 'product_id' => $product['id'],
@@ -305,12 +322,13 @@ class QuotationController extends Controller
                 $existingProduct->update([
                     'quantity' => $product['quantity'],
                     'price' => $product['price'],
-                    'include_catalog' => filter_var($product['includeCatalog'], FILTER_VALIDATE_BOOLEAN),
+                    'include_catalog' => $product['include_catalog'],
+                    'pdf_url' => $product['pdf_url'] ?? null,
                 ]);
             }
         }
 
-        return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully.');
+        return redirect()->route('quotations.list')->with('success', 'Quotation updated successfully.');
     }
 
     /**

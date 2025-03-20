@@ -110,29 +110,40 @@
                         <template #body="slotProps">
                             <span
                                 @click="handleStatusClick(slotProps.data)"
-                                v-tooltip.top="'Current customer status: ' + slotProps.data.customer_status"
+                                v-tooltip.top="
+                                    'Current customer status: ' +
+                                    slotProps.data.customer_status
+                                "
                                 class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                 :class="{
                                     'bg-yellow-100 text-yellow-800 border-yellow-400':
-                                        slotProps.data.customer_status === 'Pending',
+                                        slotProps.data.customer_status ===
+                                        'Pending',
                                     'bg-blue-100 text-blue-800 border-blue-400':
-                                        slotProps.data.customer_status === 'Sent',
+                                        slotProps.data.customer_status ===
+                                        'Sent',
                                     'bg-green-100 text-green-800 border-green-400':
-                                        slotProps.data.customer_status === 'Accept',
+                                        slotProps.data.customer_status ===
+                                        'Accept',
                                     'bg-red-100 text-red-800 border-red-400':
-                                        slotProps.data.customer_status === 'Reject',
+                                        slotProps.data.customer_status ===
+                                        'Reject',
                                 }"
                             >
                                 <i
                                     :class="{
                                         'pi pi-clock':
-                                            slotProps.data.customer_status === 'Pending',
+                                            slotProps.data.customer_status ===
+                                            'Pending',
                                         'pi pi-send':
-                                            slotProps.data.customer_status === 'Sent',
+                                            slotProps.data.customer_status ===
+                                            'Sent',
                                         'pi pi-check':
-                                            slotProps.data.customer_status === 'Accept',
+                                            slotProps.data.customer_status ===
+                                            'Accept',
                                         'pi pi-times':
-                                            slotProps.data.customer_status === 'Reject',
+                                            slotProps.data.customer_status ===
+                                            'Reject',
                                     }"
                                     style="margin-right: 8px"
                                 ></i>
@@ -358,6 +369,7 @@
                         </div>
                     </div>
 
+
                     <template #footer>
                         <Button
                             label="Cancel"
@@ -382,12 +394,23 @@
                     class="text-sm"
                 >
                     <div v-if="selectedQuotation" class="flex flex-col gap-4">
-                        <p><strong>Quotation No.:</strong> {{ selectedQuotation.quotation_no }}</p>
-                        <p><strong>Customer Name:</strong> {{ selectedQuotation.customer?.name || "N/A" }}</p>
-                        <p><strong>Total:</strong> {{ selectedQuotation.total }}</p>
+                        <p>
+                            <strong>Quotation No.:</strong>
+                            {{ selectedQuotation.quotation_no }}
+                        </p>
+                        <p>
+                            <strong>Customer Name:</strong>
+                            {{ selectedQuotation.customer?.name || "N/A" }}
+                        </p>
+                        <p>
+                            <strong>Total:</strong>
+                            {{ selectedQuotation.total }}
+                        </p>
 
                         <div class="flex flex-col gap-2">
-                            <label for="feedbackComment" class="block font-bold">Comment:</label>
+                            <label for="feedbackComment" class="block font-bold"
+                                >Comment:</label
+                            >
                             <textarea
                                 id="feedbackComment"
                                 v-model="feedbackComment"
@@ -461,9 +484,13 @@ const filteredQuotations = computed(() => {
     return props.quotations.filter((quotation) => {
         const fieldValue = getFieldValue(quotation, searchType.value);
         if (typeof fieldValue === "number") {
-            return fieldValue.toString().includes(searchTerm.value.toLowerCase());
+            return fieldValue
+                .toString()
+                .includes(searchTerm.value.toLowerCase());
         }
-        return fieldValue.toLowerCase().includes(searchTerm.value.toLowerCase());
+        return fieldValue
+            .toLowerCase()
+            .includes(searchTerm.value.toLowerCase());
     });
 });
 
@@ -506,6 +533,7 @@ const props = defineProps({
 });
 
 const form = useForm({
+    id: "",
     quotation_no: "",
     quotation_date: "",
     address: "",
@@ -532,6 +560,7 @@ const openForm = (quotations = null) => {
 const isFormVisible = ref(false);
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
+        console.log(selectedQuotation.value);
         router.visit(route("quotations.create"), {
             method: "get",
             data: {
@@ -728,12 +757,7 @@ const handleApprove = async () => {
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
     } catch (error) {
-        showToast(
-            "error",
-            "Error",
-            "Failed to approve quotation.",
-            3000
-        );
+        showToast("error", "Error", "Failed to approve quotation.", 3000);
     }
 };
 
@@ -767,12 +791,7 @@ const handleReject = async () => {
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
     } catch (error) {
-        showToast(
-            "error",
-            "Error",
-            "Failed to reject quotation.",
-            3000
-        );
+        showToast("error", "Error", "Failed to reject quotation.", 3000);
     }
 };
 

@@ -249,12 +249,15 @@
                     <Column header="Include Catalog">
                         <template #body="slotProps">
                             <Checkbox
-                                v-model="slotProps.data.includeCatalog"
+                                v-model="slotProps.data.include_catalog"
                                 :binary="true"
+                                @change="
+                                    checkCatalogAvailability(slotProps.data)
+                                "
                             />
                             <span class="ml-2">
                                 {{
-                                    slotProps.data.includeCatalog
+                                    slotProps.data.include_catalog
                                         ? "Included"
                                         : "Excluded"
                                 }}
@@ -350,7 +353,7 @@
         </template>
         <Customers
             :customerCategories="customerCategories"
-            redirect_route="customers.index"
+            redirect_route="quotations.create"
             :mode="'create'"
         />
     </Dialog>
@@ -367,10 +370,26 @@
         v-model:visible="isAddItemDialogVisible"
         modal
         header="Add Item (Popup)"
-        :style="{ width: '400px' }"
+        :style="{ width: '450px' }"
         class="text-sm"
     >
         <div class="p-fluid grid gap-4 text-sm">
+            <!-- Division Selection -->
+            <div class="field w-full">
+                <label for="division" class="required">Division</label> <br />
+                <Dropdown
+                    v-model="selectedDivision"
+                    :options="divisionOptions"
+                    optionLabel="displayName"
+                    optionValue="id"
+                    placeholder="Select a Division"
+                    :filter="true"
+                    filterPlaceholder="Search divisions..."
+                    class="w-full"
+                    @change="filterProductsByDivision"
+                />
+            </div>
+
             <!-- Item Selection -->
             <div class="field w-full">
                 <label for="item" class="required">Item</label> <br />
@@ -492,6 +511,7 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
+import { getDepartment } from "../../data";
 
 
 const props = defineProps({
@@ -500,8 +520,9 @@ const props = defineProps({
     customerCategories: Array,
     productCategories: Array,
     quotation: Object, // Accept quotation data when editing
+    divisions: Array,
 });
-
+console.log("Heeli", props.divisions);
 // Toast for notifications
 const toast = useToast();
 const selectedProductIds = ref([]);
@@ -527,36 +548,6 @@ const preventMinus = (event) => {
 const pageProps = usePage().props;
 const quotation = ref(pageProps.quotation || null);
 const isEditing = computed(() => !!props.quotation);
-
-onMounted(() => {
-    if (props.quotation) {
-        console.log("🛠 Debug: Quotation received", props.quotation);
-        const newProps = JSON.parse(props.quotation);
-        form.quotation_no = newProps.quotation_no || "";
-        form.quotation_date = newProps.quotation_date || "";
-        form.customer_id = String(newProps.customer_id) || "";
-        form.address = newProps.address || "";
-        form.phone_number = newProps.phone_number || "";
-        form.total = newProps.total || 0;
-        form.tax = newProps.tax || 0;
-        form.grand_total = newProps.grand_total || 0;
-        // Populate selectedProductsData with existing products
-        if (newProps.products && Array.isArray(newProps.products)) {
-            selectedProductsData.value = newProps.products.map((product) => ({
-                ...product,
-                quantity: product.quantity || 1,
-                subTotal: (product.quantity || 1) * Number(product.price || 0),
-                remark: product.remark || "",
-                includeCatalog: product.includeCatalog ?? false,
-            }));
-            console.log(selectedProductsData.value);
-        } else {
-            selectedProductsData.value = [];
-        }
-        updateCustomerDetails();
-    }
-});
-
 // Define the Inertia form
 const form = useForm({
     id: props.quotation?.id || null,
@@ -569,27 +560,6 @@ const form = useForm({
     products: props.quotation?.products || [],
     terms: props.quotation?.terms || "",
 });
-
-const updateCustomerDetails = () => {
-    console.log("Customer id: ", form.customer_id);
-    const selectedCustomer = formattedCustomers.value.find(
-        (customer) => customer.id == form.customer_id
-    );
-    console.log("selected customer: ", selectedCustomer);
-
-    if (selectedCustomer) {
-        form.address = selectedCustomer.address || "";
-        form.phone_number = selectedCustomer.phone_number || "";
-    }
-};
-
-watch(
-    () => form.customer_id,
-    () => {
-        updateCustomerDetails();
-    }
-);
-
 const status = ref("");
 const isApproved = ref(false);
 const today = new Date();
@@ -602,10 +572,78 @@ const selectedQuantity = ref(1);
 const additionalRemark = ref("");
 const selectedAccountCode = ref("");
 const selectedItemId = ref(null);
+const selectedDivision = ref(null);
+const divisionOptions = ref(props.divisions); // Populate division options from props
 const filteredProducts = ref([]);
 const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
+onMounted(() => {
+    if (props.quotation) {
+        // console.log("🛠 Debug: Quotation received", props.quotation);
+        const newProps = JSON.parse(props.quotation);
+        form.id = newProps.id || null;
+        form.quotation_no = newProps.quotation_no || "";
+        form.quotation_date = newProps.quotation_date || "";
+        form.customer_id = String(newProps.customer_id) || "";
+        form.address = newProps.address || "";
+        form.phone_number = newProps.phone_number || "";
+        form.total = newProps.total || 0;
+        form.tax = newProps.tax || 0;
+        form.grand_total = newProps.grand_total || 0;
 
+        // Populate selectedProductsData with existing products
+        if (newProps.products && Array.isArray(newProps.products)) {
+            selectedProductsData.value = newProps.products.map((product) => ({
+                ...product,
+                quantity: product.pivot?.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
+                subTotal:
+                    (product.pivot?.quantity ?? 1) * Number(product.price || 0),
+                remark: product.remark || "",
+                include_catalog: product.include_catalog ?? false,
+            }));
+            console.log("Selected Products Data:", selectedProductsData.value); // Debugging log
+        } else {
+            selectedProductsData.value = [];
+        }
+        updateCustomerDetails();
+    }
+});
+onMounted(async () => {
+    const response = await getDepartment();
+    const data = response.data;
+
+    // Filter departments with status === "service"
+    const serviceDepartments = data.filter((dept) => dept.status === "service");
+
+    if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
+        divisionOptions.value = serviceDepartments.map((dept) => ({
+            name: dept.name,
+            id: dept.id,
+            code: dept.code, // Assuming `code` exists in API response
+            displayName: `${dept.code} - ${dept.name}`, // Add this for Dropdown
+        }));
+    } else {
+        console.warn("No service departments found.");
+        divisionOptions.value = [];
+    }
+});
+
+const updateCustomerDetails = () => {
+    const selectedCustomer = formattedCustomers.value.find(
+        (customer) => customer.id == form.customer_id
+    );
+
+    if (selectedCustomer) {
+        form.address = selectedCustomer.address || "";
+        form.phone_number = selectedCustomer.phone_number || "";
+    }
+};
+watch(
+    () => form.customer_id,
+    () => {
+        updateCustomerDetails();
+    }
+);
 const updateSelectedProductDetails = () => {
     if (selectedItem.value) {
         const product = props.products.find(
@@ -623,71 +661,44 @@ const updateSelectedProductDetails = () => {
         selectedProduct.value = {};
     }
 };
-watch(selectedProduct, (newVal) => {
-    console.log("Updated selected product:", newVal);
-});
-
-const searchProducts = (event) => {
-    const selectedProductIds = selectedProductsData.value.map(
-        (prod) => prod.id
-    );
-    filteredProducts.value = props.products.filter(
-        (product) =>
-            product.status === "approved" &&
-            !selectedProductIds.includes(product.id) && // Exclude already selected products
-            product.name.toLowerCase().includes(event.query.toLowerCase())
-    );
-};
-
-const validateForm = () => {
-    if (!form.address) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Customer address is required!",
-            4000
-        );
-        return false;
-    }
-    if (!form.phone_number) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Customer phone number is required!",
-            4000
-        );
-        return false;
-    }
-    if (!form.customer_id) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Please select a customer!",
-            4000
-        );
-        return false;
-    }
-    if (selectedProductsData.value.length === 0) {
-        showToast(
-            "warn",
-            "Validation Error",
-            "Please add at least one product!",
-            4000
-        );
-        return false;
-    }
-    return true;
-};
-
 const getCategoryName = (categoryId) => {
-    if (!categoryId) return "Unknown";
+    if (!categoryId) return "";
     const category = props.productCategories.find(
         (cat) => cat.id === categoryId
     );
     return category
         ? category.category_name_english || category.category_name_khmer
-        : "Unknown";
+        : "";
 };
+const filterProductsByDivision = () => {
+    if (selectedDivision.value) {
+        filteredProducts.value = props.products.filter(
+            (product) => product.division_id === selectedDivision.value
+        );
+    } else {
+        filteredProducts.value = []; // Clear filtered products if no division is selected
+    }
+};
+
+
+const searchProducts = (event) => {
+    const selectedProductIds = selectedProductsData.value.map(
+        (prod) => prod.id
+    );
+
+    filteredProducts.value = props.products.filter(
+        (product) =>
+            product.status === "approved" &&
+            !selectedProductIds.includes(product.id) &&
+            product.name.toLowerCase().includes(event.query.toLowerCase()) &&
+            (selectedDivision.value
+                ? product.division_id === selectedDivision.value
+                : true)
+    );
+};
+watch(selectedProductsData, () => {
+    searchProducts({ query: selectedItem.value?.name || "" });
+});
 
 // Close Add Item dialog
 const addItemToTable = () => {
@@ -707,7 +718,8 @@ const addItemToTable = () => {
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
         remark: selectedProduct.value.remark || "",
-        includeCatalog: false,
+        include_catalog: false,
+        division_id: selectedDivision.value, // Include the selected division
         isNew: true,
     };
 
@@ -749,13 +761,16 @@ const addItemToTable = () => {
             3000
         );
     }
-
+    selectedItem.value = null;
+    filteredProducts.value = [];
     closeAddItemDialog();
 };
 
 const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
     resetAddItemDialog();
+    filteredProducts.value = [];
+    selectedDivision.value = null; // Reset division selection
 };
 
 const resetAddItemDialog = () => {
@@ -766,9 +781,7 @@ const resetAddItemDialog = () => {
     selectedAccountCode.value = "";
     editingProduct.value = null;
 };
-watch(selectedProductsData, () => {
-    searchProducts({ query: selectedItem.value?.name || "" });
-});
+
 // toggle language
 const toggleLanguage = () => {
     locale.value = isKhmer.value ? "name_kh" : "name";
@@ -801,19 +814,6 @@ const selectCustomer = () => {
     form.customer_id = props.customers[props.customers.length - 1].id;
 };
 
-watch(selectedProductsData, (newProducts) => {
-    newProducts.forEach((product) => {
-        if (typeof product.includeCatalog !== "boolean") {
-            product.includeCatalog = false;
-        }
-    });
-});
-
-const updateIncludeCatalog = (product) => {
-    product.includeCatalog = !product.includeCatalog; // Toggle the state
-    console.log("Updated includeCatalog:", product.includeCatalog);
-};
-
 watch(selectedProductIds, (newIds) => {
     newIds.forEach((id) => {
         if (!selectedProductsData.value.find((prod) => prod.id === id)) {
@@ -824,13 +824,12 @@ watch(selectedProductIds, (newIds) => {
                     quantity: 1,
                     price: product.price,
                     remark: "",
-                    includeCatalog: product.includeCatalog ?? 0, // ✅ Default state is unchecked (0)
+                    include_catalog: product.include_catalog ?? 0,
                 });
             }
             console.log(prod);
         }
     });
-    // Remove products that have been deselected
     selectedProductsData.value = selectedProductsData.value.filter((prod) =>
         newIds.includes(prod.id)
     );
@@ -844,11 +843,10 @@ const formattedCustomers = computed(() => {
         phone_number: customer.phone_number,
     }));
 });
-
 watch(
     () => form.customer_id,
     (newVal) => {
-        console.log("Selected Customer ID:", newVal);
+        // console.log("Selected Customer ID:", newVal);
     }
 );
 const selectedCustomer = computed(() => {
@@ -948,22 +946,60 @@ const editProduct = (productId) => {
     const productToEdit = selectedProductsData.value.find(
         (prod) => prod.id === productId
     );
-
     if (productToEdit) {
-        selectedProduct.value = { ...productToEdit };
+        console.log("Editing Product:", productToEdit); // Debugging log
+        console.log("Quantity from Backend:", productToEdit.quantity); // Debugging log
+        selectedProduct.value = {
+            ...productToEdit,
+            quantity: productToEdit.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
+            subTotal: productToEdit.subTotal ?? 0,
+            remark: productToEdit.remark || "",
+            include_catalog: productToEdit.include_catalog ?? false,
+        };
+
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
-        const selectedCustomer = props.customers.find(
-            (customer) => customer.id === productToEdit.customer_id
-        );
-        if (selectedCustomer) {
-            form.customer_id = selectedCustomer.id;
-            form.address = selectedCustomer.address || "";
-            form.phone_number = selectedCustomer.phone_number || "";
-        }
-
-        isAddItemDialogVisible.value = true;
     }
+
+};
+const validateForm = () => {
+    if (!form.address) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer address is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.phone_number) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Customer phone number is required!",
+            4000
+        );
+        return false;
+    }
+    if (!form.customer_id) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please select a customer!",
+            4000
+        );
+        return false;
+    }
+    if (selectedProductsData.value.length === 0) {
+        showToast(
+            "warn",
+            "Validation Error",
+            "Please add at least one product!",
+            4000
+        );
+        return false;
+    }
+    return true;
 };
 
 const submit = async (event) => {
@@ -973,66 +1009,110 @@ const submit = async (event) => {
 
     if (!validateForm()) return;
 
-    // Prepare product data before submitting
+    for (let product of selectedProductsData.value) {
+        if (product.include_catalog && !product.pdf_url) {
+            showToast(
+                "error",
+                "Error",
+                "Catalog PDF is missing for an included product.",
+                3000
+            );
+            return;
+        }
+    }
+
+    // Prepare the payload
     form.products = selectedProductsData.value.map((prod) => ({
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
         remark: prod.remark ?? "",
-        includeCatalog: prod.includeCatalog ? 1 : 0, // ✅ Convert to 1 or 0
+        include_catalog: prod.include_catalog ?? false,
+        pdf_url: prod.pdf_url ?? null,
     }));
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
 
-    console.log("Submitting Products:", JSON.stringify(form.products, null, 2));
+    // Debugging: Log form data before submission
+    console.log("Submitting Quotation ID:", form.id);
+    console.log("Final Form Data:", JSON.stringify(form, null, 2));
 
-    const routePath = form.id
-        ? route("quotations.update", { id: form.id })
-        : route("quotations.store");
+    // Check if we are editing or creating
+    if (form.id) {
+        // PUT request for updating existing quotation
+        try {
+            await form.put(route("quotations.update", { id: form.id }), {
+                onSuccess: () => {
+                    showToast(
+                        "success",
+                        "Updated",
+                        "Quotation updated successfully!"
+                    );
+                    router.get(route("quotations.list"));
+                },
+                onError: (errors) => {
+                    console.error("Update Error:", errors);
+                    showToast(
+                        "error",
+                        "Update Failed",
+                        "Could not update quotation."
+                    );
+                },
+            });
+        } catch (error) {
+            console.error("Unexpected Error in Update:", error);
+            showToast(
+                "error",
+                "Unexpected Error",
+                "Could not update quotation."
+            );
+        }
+    } else {
+        // POST request for creating new quotation
+        try {
+            await form.post(route("quotations.store"), {
+                onSuccess: () => {
+                    showToast(
+                        "success",
+                        "Created",
+                        "Quotation created successfully!"
+                    );
+                    router.get(route("quotations.list"));
+                },
+                onError: (errors) => {
+                    console.error("Creation Error:", errors);
+                    showToast(
+                        "error",
+                        "Creation Failed",
+                        "Could not create quotation."
+                    );
+                },
+            });
+        } catch (error) {
+            console.error("Unexpected Error in Create:", error);
+            showToast(
+                "error",
+                "Unexpected Error",
+                "Could not create quotation."
+            );
+        }
+    }
+};
 
-    // Prepare the payload
-    const payload = {
-        ...form,
-        products: selectedProductsData.value.map((product) => ({
-            id: product.id,
-            quantity: product.quantity,
-            price: product.price,
-            remark: product.remark,
-            includeCatalog: product.includeCatalog, // Include the checkbox state
-        })),
-    };
-    // Submit the form
-    try {
-        await axios.post("/api/quotations", payload); // Replace with your API endpoint
-        showToast("success", "Success", "Quotation saved successfully!", 3000);
-    } catch (error) {
-        console.error("Error saving quotation:", error);
-        showToast("error", "Error", "Failed to save quotation.", 3000);
+const checkCatalogAvailability = (product) => {
+    if (product.include_catalog && !product.pdf_url) {
+        console.warn("Product does not include catalog or missing PDF URL.");
+        showToast(
+            "error",
+            "Error",
+            "Catalog PDF is missing for an included product.",
+            3000
+        );
+        return false;
     }
-    try {
-        await form.post(routePath, {
-            onSuccess: () => {
-                showToast(
-                    "success",
-                    form.id ? "Updated" : "Created",
-                    `Quotation ${form.id ? "updated" : "created"} successfully!`
-                );
-                router.get(route("quotations.list"));
-            },
-            onError: (errors) => {
-                console.error("Submission Error:", errors);
-                showToast(
-                    "error",
-                    "Submission Failed",
-                    `Could not ${form.id ? "update" : "create"} quotation.`
-                );
-            },
-        });
-    } catch (error) {
-        console.error("Unexpected Error:", error);
-        showToast("error", "Unexpected Error", "Something went wrong.");
-    }
+    console.log("Product is ready for catalog PDF.");
+    return true;
 };
 
 const cancelOperation = () => {
