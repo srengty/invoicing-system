@@ -493,6 +493,7 @@ import Column from "primevue/column";
 import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
 
+
 const props = defineProps({
     customers: Array,
     products: Array,
@@ -687,69 +688,6 @@ const getCategoryName = (categoryId) => {
         ? category.category_name_english || category.category_name_khmer
         : "Unknown";
 };
-
-// const addItemToTable = () => {
-//     if (!selectedProduct.value.name) {
-//         showToast("error", "Error", "Please select an item.", 3000);
-//         return;
-//     }
-
-//     if (!selectedProduct.value.quantity || selectedProduct.value.quantity < 1) {
-//         selectedProduct.value.quantity = 1;
-//     }
-
-//     const newItem = {
-//         ...selectedProduct.value,
-//         quantity: selectedProduct.value.quantity || 1,
-//         subTotal:
-//             Number(selectedProduct.value.price) *
-//             selectedProduct.value.quantity,
-//         remark: selectedProduct.value.remark || "",
-//         includeCatalog: false,
-//         isNew: true,
-//     };
-
-//     // Check if the same product name already exists
-//     const duplicateItem = selectedProductsData.value.find(
-//         (prod) => prod.name === newItem.name
-//     );
-
-//     if (duplicateItem && !editingProduct.value) {
-//         showToast(
-//             "error",
-//             "Error",
-//             "This item is already in the quotation.",
-//             3000
-//         );
-//         return;
-//     }
-
-//     if (editingProduct.value) {
-//         const existingIndex = selectedProductsData.value.findIndex(
-//             (prod) => prod.id === editingProduct.value.id
-//         );
-//         if (existingIndex !== -1) {
-//             selectedProductsData.value[existingIndex] = newItem;
-//         }
-//         editingProduct.value = null;
-//         showToast(
-//             "success",
-//             "Item Updated",
-//             "The item has been updated successfully.",
-//             3000
-//         );
-//     } else {
-//         selectedProductsData.value.push(newItem);
-//         showToast(
-//             "success",
-//             "Item Added",
-//             "The item has been added to the table.",
-//             3000
-//         );
-//     }
-
-//     closeAddItemDialog();
-// };
 
 // Close Add Item dialog
 const addItemToTable = () => {

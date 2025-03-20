@@ -10,6 +10,9 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductCommentController;
+use App\Http\Controllers\QuotationEmailController;
+use App\Mail\TestMail;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -70,6 +73,23 @@ Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');
 Route::get('/settings/product-categories', [ProductCategoryController::class, 'index'])->name('productCategory.index');
+
+// routes/api.php
+Route::post('/quotations/send',[QuotationController::class, 'sendQuotation']);
+Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
+Route::get('/send-test-email', function () {
+    $data = [
+        'name' => 'John Doe',
+        'message' => 'This is a test email from Laravel.',
+    ];
+
+    // Assuming the PDF file is located in the storage path
+    $filePath = storage_path('app/public/pdfs/1740554871_67bec27779d17_DourngDariya_CV.pdf');
+
+    Mail::to('monopich1823@gmail.com')->send(new TestMail($data, $filePath));
+
+    return 'Test email sent with attachment!';
+});
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
