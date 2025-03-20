@@ -897,16 +897,16 @@ const editProduct = (productId) => {
         selectedProduct.value = { ...productToEdit };
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
-        const selectedCustomer = props.customers.find(
-            (customer) => customer.id === productToEdit.customer_id
-        );
-        if (selectedCustomer) {
-            form.customer_id = selectedCustomer.id;
-            form.address = selectedCustomer.address || "";
-            form.phone_number = selectedCustomer.phone_number || "";
-        }
+        // const selectedCustomer = props.customers.find(
+        //     (customer) => customer.id === productToEdit.customer_id
+        // );
+        // if (selectedCustomer) {
+        //     form.customer_id = selectedCustomer.id;
+        //     form.address = selectedCustomer.address || "";
+        //     form.phone_number = selectedCustomer.phone_number || "";
+        // }
 
-        isAddItemDialogVisible.value = true;
+        // isAddItemDialogVisible.value = true;
     }
 };
 const validateForm = () => {
