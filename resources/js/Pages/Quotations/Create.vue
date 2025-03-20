@@ -559,7 +559,7 @@ onMounted(() => {
     if (props.quotation) {
         console.log("🛠 Debug: Quotation received", props.quotation);
         const newProps = JSON.parse(props.quotation);
-        form.id = props.quotation.id || null;
+        form.id = newProps.id || null;
         form.quotation_no = newProps.quotation_no || "";
         form.quotation_date = newProps.quotation_date || "";
         form.customer_id = String(newProps.customer_id) || "";
@@ -948,104 +948,6 @@ const validateForm = () => {
     }
     return true;
 };
-// const submit = async (event) => {
-//     if (event && typeof event.preventDefault === "function") {
-//         event.preventDefault();
-//     }
-
-//     if (!validateForm()) return;
-
-//     // Validate catalog availability for products with include_catalog checked
-//     for (let product of selectedProductsData.value) {
-//         if (product.include_catalog && !product.pdf_url) {
-//             showToast(
-//                 "error",
-//                 "Error",
-//                 "Catalog PDF is missing for an included product.",
-//                 3000
-//             );
-//             return;
-//         }
-//     }
-
-//     // Prepare the payload
-//     form.products = selectedProductsData.value.map((prod) => ({
-//         id: prod.id,
-//         quantity: prod.quantity ?? 1,
-//         price: prod.price ?? 0,
-//         remark: prod.remark ?? "",
-//         include_catalog: prod.include_catalog ?? false,
-//         pdf_url: prod.pdf_url ?? null,
-//     }));
-
-//     form.total = calculateTotal.value;
-//     form.grand_total = calculateGrandTotal.value;
-
-//     // Debugging: Log form data before submission
-//     console.log("Submitting Quotation ID:", form.id);
-//     console.log("Final Form Data:", JSON.stringify(form, null, 2));
-
-//     // Check if we are editing or creating
-//     if (form.id) {
-//         // PUT request for updating existing quotation
-//         try {
-//             await form.put(route("quotations.update", { id: form.id }), {
-//                 onSuccess: () => {
-//                     showToast(
-//                         "success",
-//                         "Updated",
-//                         "Quotation updated successfully!"
-//                     );
-//                     router.get(route("quotations.list"));
-//                 },
-//                 onError: (errors) => {
-//                     console.error("Update Error:", errors);
-//                     showToast(
-//                         "error",
-//                         "Update Failed",
-//                         "Could not update quotation."
-//                     );
-//                 },
-//             });
-//         } catch (error) {
-//             console.error("Unexpected Error in Update:", error);
-//             showToast(
-//                 "error",
-//                 "Unexpected Error",
-//                 "Could not update quotation."
-//             );
-//         }
-//     } else {
-//         // POST request for creating new quotation
-//         try {
-//             await form.post(route("quotations.store"), {
-//                 onSuccess: () => {
-//                     showToast(
-//                         "success",
-//                         "Created",
-//                         "Quotation created successfully!"
-//                     );
-//                     router.get(route("quotations.list"));
-//                 },
-//                 onError: (errors) => {
-//                     console.error("Creation Error:", errors);
-//                     showToast(
-//                         "error",
-//                         "Creation Failed",
-//                         "Could not create quotation."
-//                     );
-//                 },
-//             });
-//         } catch (error) {
-//             console.error("Unexpected Error in Create:", error);
-//             showToast(
-//                 "error",
-//                 "Unexpected Error",
-//                 "Could not create quotation."
-//             );
-//         }
-//     }
-// };
 
 const submit = async (event) => {
     if (event && typeof event.preventDefault === "function") {

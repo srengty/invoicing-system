@@ -43,8 +43,9 @@ class QuotationController extends Controller
     $customerCategories = CustomerCategory::all();
     $productCategories = Category::all();
     return inertia('Quotations/Create', [
-       'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
-        'products' => $products,
+        'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
+        // 'products' => $products,
+        'products' => Product::where('status', 'approved')->get(),
         'customerCategories' => CustomerCategory::all(),
         'productCategories' => Category::all(),
         'quotation' => $quotation,
@@ -174,18 +175,12 @@ class QuotationController extends Controller
         // Get the last used quotation_no and increment it
         // $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
         // $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : 25000001;
-        // Get the current year
+
         $currentYear = date('Y');
-
-        // Calculate the base quotation number for the current year
         $baseQuotationNo = ($currentYear - 2025) * 1000000 + 25000001;
-
-        // Get the last quotation for the current year
         $lastQuotation = Quotation::where('quotation_no', '>=', $baseQuotationNo)
                                 ->orderBy('quotation_no', 'desc')
                                 ->first();
-
-        // Calculate the new quotation number
         $newQuotationNo = $lastQuotation ? $lastQuotation->quotation_no + 1 : $baseQuotationNo;
 
         // dd(json_encode($validated["products"], true));
@@ -284,8 +279,8 @@ class QuotationController extends Controller
     {
         // Validate and update the quotation data
         $validated = $request->validate([
-            'quotation_no' => 'required|integer|unique:quotations,quotation_no,' . $quotation->id,
-            'quotation_date' => 'required|date',
+            // 'quotation_no' => 'sometimes|integer',
+            // 'quotation_date' => 'sometimes|date',
             'customer_id' => 'required|exists:customers,id',
             'address' => 'nullable|string|max:255',
             'phone_number' => 'nullable|string|max:20',
@@ -293,7 +288,7 @@ class QuotationController extends Controller
             'total' => 'required|numeric|min:0',
             // 'tax' => 'required|numeric|min:0',
             // 'grand_total' => 'required|numeric|min:0',
-            'status' => 'required|string|max:20',
+            // 'status' => 'sometimes|string|max:20',
             'products'        => 'nullable|array',
             'products.*.id'   => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:1',
@@ -309,8 +304,6 @@ class QuotationController extends Controller
 
         $quotation->update($validated);
 
-         // Sync the products
-        $productsData = [];
         // Update associated products
         foreach ($validated['products'] as $product) {
             $existingProduct = ProductQuotation::where([
@@ -327,10 +320,8 @@ class QuotationController extends Controller
                 ]);
             }
         }
-        // Sync the products with the quotation
-        $quotation->products()->sync($productsData);
 
-        return redirect()->route('quotations.index')->with('success', 'Quotation updated successfully.');
+        return redirect()->route('quotations.list')->with('success', 'Quotation updated successfully.');
     }
 
     /**
