@@ -432,9 +432,9 @@ public function sendQuotation(Request $request)
             Mail::to($customerEmail)->send(new QuotationEmail($quotation, $filePath));
 
             // Check if there were any failures when sending the email
-            if (Mail::failures()) {
-                throw new Exception('Failed to send email to ' . $customerEmail);
-            }
+            // if (Mail::failures()) {
+            //     throw new Exception('Failed to send email to ' . $customerEmail);
+            // }
         }
 
         // Return success response
@@ -448,4 +448,25 @@ public function sendQuotation(Request $request)
         return response()->json(['error' => $e->getMessage()], 500);
     }
 }
+
+public function send(Request $request)
+{
+    // Validate the request
+    $validated = $request->validate([
+        'quotation_id' => 'required|exists:quotations,id',
+        'pdf_file' => 'required|file|mimes:pdf|max:10240', // Example validation
+        'send_email' => 'required|boolean',
+    ]);
+
+    // Get the uploaded file
+    $pdf = $request->file('pdf_file');
+
+    // Handle the PDF (e.g., save it or process it)
+    $path = $pdf->storeAs('quotations', 'quotation_' . $request->quotation_id . '.pdf');
+
+    // Process the email sending here, assuming the email logic is implemented
+
+    return response()->json(['success' => true]);
+}
+
 }

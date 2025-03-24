@@ -116,34 +116,26 @@
                                 "
                                 class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                 :class="{
-                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
-                                        slotProps.data.customer_status ===
-                                        'Pending',
                                     'bg-blue-100 text-blue-800 border-blue-400':
-                                        slotProps.data.customer_status ===
-                                        'Sent',
+                                        slotProps.data.customer_status === 'Sent',
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.customer_status === 'Pending',
                                     'bg-green-100 text-green-800 border-green-400':
-                                        slotProps.data.customer_status ===
-                                        'Accept',
+                                        slotProps.data.customer_status === 'Accept',
                                     'bg-red-100 text-red-800 border-red-400':
-                                        slotProps.data.customer_status ===
-                                        'Reject',
+                                        slotProps.data.customer_status === 'Reject',
                                 }"
                             >
                                 <i
                                     :class="{
-                                        'pi pi-clock':
-                                            slotProps.data.customer_status ===
-                                            'Pending',
                                         'pi pi-send':
-                                            slotProps.data.customer_status ===
-                                            'Sent',
+                                            slotProps.data.customer_status === 'Sent',
+                                        'pi pi-clock':
+                                            slotProps.data.customer_status === 'Pending',
                                         'pi pi-check':
-                                            slotProps.data.customer_status ===
-                                            'Accept',
+                                            slotProps.data.customer_status === 'Accept',
                                         'pi pi-times':
-                                            slotProps.data.customer_status ===
-                                            'Reject',
+                                            slotProps.data.customer_status === 'Reject',
                                     }"
                                     style="margin-right: 8px"
                                 ></i>
@@ -407,10 +399,9 @@
                             {{ selectedQuotation.total }}
                         </p>
 
+                        <!-- Comment Input -->
                         <div class="flex flex-col gap-2">
-                            <label for="feedbackComment" class="block font-bold"
-                                >Comment:</label
-                            >
+                            <label for="feedbackComment" class="block font-bold">Comment:</label>
                             <textarea
                                 id="feedbackComment"
                                 v-model="feedbackComment"
@@ -420,6 +411,7 @@
                             ></textarea>
                         </div>
 
+                        <!-- Approve/Reject Buttons -->
                         <div class="flex justify-end gap-2">
                             <Button
                                 label="Approve"
@@ -677,7 +669,7 @@ const approveQuotation = () => {
         return;
     }
     selectedQuotation.value.status = "Approved";
-    selectedQuotation.value.customer_status = "Pending";
+    selectedQuotation.value.customer_status = "Sent";
     selectedQuotation.value.comment = comment.value;
     selectedQuotation.value.role = userRole.value;
 
@@ -739,14 +731,16 @@ const handleApprove = async () => {
     }
 
     try {
+        // Update the quotation status to "Approved"
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                status: "Approved",
+                customer_status: "Accept",
                 comment: feedbackComment.value,
             }
         );
 
+        // Show success message
         showToast(
             "success",
             "Success",
@@ -754,8 +748,9 @@ const handleApprove = async () => {
             3000
         );
 
+        // Close the feedback dialog
         isFeedbackDialogVisible.value = false;
-        feedbackComment.value = "";
+        feedbackComment.value = ""; // Clear the comment input
     } catch (error) {
         showToast("error", "Error", "Failed to approve quotation.", 3000);
     }
@@ -773,14 +768,16 @@ const handleReject = async () => {
     }
 
     try {
+        // Update the quotation status to "Rejected"
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                status: "Rejected",
+                customer_status: "Reject",
                 comment: feedbackComment.value,
             }
         );
 
+        // Show success message
         showToast(
             "success",
             "Success",
@@ -788,8 +785,9 @@ const handleReject = async () => {
             3000
         );
 
+        // Close the feedback dialog
         isFeedbackDialogVisible.value = false;
-        feedbackComment.value = "";
+        feedbackComment.value = ""; // Clear the comment input
     } catch (error) {
         showToast("error", "Error", "Failed to reject quotation.", 3000);
     }
@@ -902,13 +900,25 @@ const sendQuotationToCustomer = async () => {
         const responseData = await response.json();
 
         if (responseData.success) {
+            // Update the status to "Sent"
+            selectedQuotation.value.customer_status = "Sent";
+
+            // Update the quotation status on the server
+            await updateQuotationStatus(
+                selectedQuotation.value,
+                "Quotation sent successfully via email!"
+            );
+
+            // Close the send dialog
+            isSendDialogVisible.value = false;
+
+            // Show success message
             toast.add({
                 severity: "success",
                 summary: "Success",
                 detail: "Quotation sent successfully via email!",
                 life: 3000,
             });
-            isSendDialogVisible.value = false;
         } else {
             throw new Error(responseData.error || 'Unknown error');
         }
@@ -923,6 +933,7 @@ const sendQuotationToCustomer = async () => {
         isSending.value = false;
     }
 };
+
 </script>
 
 <style>

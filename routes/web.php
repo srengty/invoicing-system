@@ -76,7 +76,7 @@ Route::get('/settings/customer-categories', [CustomerCategoryController::class, 
 Route::get('/settings/product-categories', [ProductCategoryController::class, 'index'])->name('productCategory.index');
 
 // routes/api.php
-Route::post('/quotations/send',[QuotationController::class, 'sendQuotation']);
+Route::post('/quotations/send',[QuotationController::class, 'sendQuotation'])->name('quotations.send');
 Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
 Route::get('/send-test-email', function () {
     $data = [
