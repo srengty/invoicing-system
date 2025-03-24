@@ -15,6 +15,11 @@ use App\Models\Division;
 use App\Models\Category;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\QuotationEmail;
+use Illuminate\Mail\Mailer;
+use Illuminate\Support\Facades\Http;
+use Exception;
 
 class QuotationController extends Controller
 {
@@ -207,7 +212,7 @@ class QuotationController extends Controller
                 // Only attach approved products
                 if ($productData && $productData->status === 'approved') {
                     // Debug the product data
-                    \Log::info('Product Data:', $product);
+                    // \Log::info('Product Data:', $product);
                     ProductQuotation::create([
                         'product_id' => $product['id'],
                         'quantity'   => $product['quantity'],
@@ -364,22 +369,108 @@ class QuotationController extends Controller
         return response()->json($agreement);
     }
 
-    // public function show($id)
-    // {
-    //     $quotation = Quotation::with(['customer', 'items', 'agreement'])->findOrFail($id);
+    public function savePDF(Request $request)
+{
+    // Validate the uploaded file (optional)
+    $request->validate([
+        'pdf_file' => 'required|file|mimes:pdf|max:2048',
+    ]);
 
-    //     return response()->json([
-    //         'customer_name' => $quotation->customer->name,
-    //         'customer_address' => $quotation->customer->address,
-    //         'customer_phone' => $quotation->customer->phone,
-    //         'agreement' => $quotation->agreement ? ['agreement_no' => $quotation->agreement->number] : null,
-    //         'items' => $quotation->items->map(function ($item) {
-    //             return [
-    //                 'id' => $item->id,
-    //                 'name' => $item->name,
-    //                 'unit_price' => $item->unit_price,
-    //             ];
-    //         }),
-    //     ]);
-    // }
+    // Generate a custom filename based on quotation ID or timestamp
+    $quotation = Quotation::find($request->input('quotation_id'));
+    $fileName = 'quotation_' . $quotation->id . '.pdf';  // Use the quotation ID or any other unique identifier
+
+    // Store the PDF in the public/quotations folder with a custom filename
+    $pdfPath = $request->file('pdf_file')->storeAs('public/quotations', $fileName);
+
+    // Log the saved file path for debugging
+    Log::info('PDF saved to: ' . $pdfPath);
+
+    // If you want to get the absolute path
+    $fullPath = storage_path('app/' . $pdfPath);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'PDF saved successfully!',
+        'path' => $pdfPath, // Return the path if needed for later use
+        'full_path' => $fullPath // Include the absolute path for the file
+    ]);
+}
+
+
+public function sendQuotation(Request $request)
+{
+    // Find the quotation by ID
+    $quotation = Quotation::with('customer')->find($request->input('quotation_id'));
+
+    if (!$quotation) {
+        return response()->json(['error' => 'Quotation not found'], 404);
+    }
+
+    try {
+        // Ensure the customer has a valid email
+        $customerEmail = $quotation->customer->email;
+
+        if (!$customerEmail) {
+            throw new Exception('Customer email not found.');
+        }
+
+        // Save the PDF file to storage
+        if ($request->hasFile('pdf_file')) {
+            $pdfFile = $request->file('pdf_file');
+            $pdfPath = $pdfFile->store('quotations', 'public'); // Save to 'storage/app/public/quotations'
+            Log::info('PDF saved to: ' . $pdfPath); // Log the saved path
+        } else {
+            throw new Exception('PDF file not found.');
+        }
+
+        // Send email if requested
+        if ($request->input('send_email')) {
+            // Log email sending attempt
+            Log::info('Sending email to: ' . $customerEmail);
+
+            // Ensure the file path for email is correct and accessible
+            $filePath = storage_path('app/public/' . $pdfPath);
+
+            // Send the email with the saved PDF file
+            Mail::to($customerEmail)->send(new QuotationEmail($quotation, $filePath));
+
+            // Check if there were any failures when sending the email
+            // if (Mail::failures()) {
+            //     throw new Exception('Failed to send email to ' . $customerEmail);
+            // }
+        }
+
+        // Return success response
+        return response()->json([
+            'success' => 'Quotation sent successfully via email',
+            'pdf_path' => $pdfPath, // Optional: Return the saved PDF path
+        ]);
+    } catch (Exception $e) {
+        // Log any error and return a failure response
+        Log::error('Failed to send quotation: ' . $e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
+
+public function send(Request $request)
+{
+    // Validate the request
+    $validated = $request->validate([
+        'quotation_id' => 'required|exists:quotations,id',
+        'pdf_file' => 'required|file|mimes:pdf|max:10240', // Example validation
+        'send_email' => 'required|boolean',
+    ]);
+
+    // Get the uploaded file
+    $pdf = $request->file('pdf_file');
+
+    // Handle the PDF (e.g., save it or process it)
+    $path = $pdf->storeAs('quotations', 'quotation_' . $request->quotation_id . '.pdf');
+
+    // Process the email sending here, assuming the email logic is implemented
+
+    return response()->json(['success' => true]);
+}
+
 }

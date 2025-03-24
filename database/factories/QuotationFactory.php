@@ -34,7 +34,7 @@ class QuotationFactory extends Factory
             'customer_id' => Customer::inRandomOrder()->value('id') ?? Customer::factory(),
             'address' => $this->faker->address,
             'phone_number' => $this->faker->phoneNumber,
-            'terms' => $this->faker->sentence(10),
+            'terms' => $this->faker->sentence(2),
             'total' => $this->faker->randomFloat(2, 100, 1000),
             'status' => $this->faker->randomElement(['Pending', 'Approved', 'Revise']),
         ];

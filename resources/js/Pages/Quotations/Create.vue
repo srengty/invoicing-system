@@ -514,6 +514,7 @@ import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
 import { getDepartment } from "../../data";
 
+
 const props = defineProps({
     customers: Array,
     products: Array,
@@ -678,6 +679,7 @@ const filterProductsByDivision = () => {
         filteredProducts.value = []; // Clear filtered products if no division is selected
     }
 };
+
 
 const searchProducts = (event) => {
     const selectedProductIds = selectedProductsData.value.map(
@@ -976,27 +978,7 @@ const editProduct = (productId) => {
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
     }
-    // if (productToEdit) {
-    //     selectedProduct.value = {
-    //         ...productToEdit,
-    //         quantity: productToEdit.quantity || 1, // Ensure quantity is taken from the database
-    //         subTotal: productToEdit.subTotal || 0,
-    //         remark: productToEdit.remark || "",
-    //         include_catalog: productToEdit.include_catalog || false,
-    //     };
-    //     isAddItemDialogVisible.value = true;
-    //     editingProduct.value = productToEdit;
-    //     // const selectedCustomer = props.customers.find(
-    //     //     (customer) => customer.id === productToEdit.customer_id
-    //     // );
-    //     // if (selectedCustomer) {
-    //     //     form.customer_id = selectedCustomer.id;
-    //     //     form.address = selectedCustomer.address || "";
-    //     //     form.phone_number = selectedCustomer.phone_number || "";
-    //     // }
 
-    //     // isAddItemDialogVisible.value = true;
-    // }
 };
 const validateForm = () => {
     if (!form.address) {

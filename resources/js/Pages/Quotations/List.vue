@@ -1,5 +1,8 @@
 <template>
     <Head title="Quotations" />
+    <meta name="_token" content="{{ csrf_token() }}" />
+
+
     <GuestLayout>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
@@ -91,8 +94,7 @@
                                         'pi pi-times':
                                             slotProps.data.status === 'Revise',
                                         'pi pi-check':
-                                            slotProps.data.status ===
-                                            'Approved',
+                                            slotProps.data.status === 'Approved',
                                     }"
                                 ></i>
                                 {{ slotProps.data.status }}
@@ -114,34 +116,26 @@
                                 "
                                 class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                 :class="{
-                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
-                                        slotProps.data.customer_status ===
-                                        'Pending',
                                     'bg-blue-100 text-blue-800 border-blue-400':
-                                        slotProps.data.customer_status ===
-                                        'Sent',
+                                        slotProps.data.customer_status === 'Sent',
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.customer_status === 'Pending',
                                     'bg-green-100 text-green-800 border-green-400':
-                                        slotProps.data.customer_status ===
-                                        'Accept',
+                                        slotProps.data.customer_status === 'Accept',
                                     'bg-red-100 text-red-800 border-red-400':
-                                        slotProps.data.customer_status ===
-                                        'Reject',
+                                        slotProps.data.customer_status === 'Reject',
                                 }"
                             >
                                 <i
                                     :class="{
-                                        'pi pi-clock':
-                                            slotProps.data.customer_status ===
-                                            'Pending',
                                         'pi pi-send':
-                                            slotProps.data.customer_status ===
-                                            'Sent',
+                                            slotProps.data.customer_status === 'Sent',
+                                        'pi pi-clock':
+                                            slotProps.data.customer_status === 'Pending',
                                         'pi pi-check':
-                                            slotProps.data.customer_status ===
-                                            'Accept',
+                                            slotProps.data.customer_status === 'Accept',
                                         'pi pi-times':
-                                            slotProps.data.customer_status ===
-                                            'Reject',
+                                            slotProps.data.customer_status === 'Reject',
                                     }"
                                     style="margin-right: 8px"
                                 ></i>
@@ -187,7 +181,7 @@
                                     icon="pi pi-eye"
                                     aria-label="View"
                                     severity="info"
-                                    class="custom-butto"
+                                    class="custom-button"
                                     @click="viewQuotation(slotProps.data)"
                                     size="small"
                                     raised
@@ -328,40 +322,61 @@
                     </template>
                 </Dialog>
 
+                <!-- Send Dialog display -->
                 <Dialog
                     v-model:visible="isSendDialogVisible"
-                    header="Send Quotation to Customer"
+                    header="Send Quotation"
                     modal
-                    :style="{ width: '30rem' }"
-                    class="text-sm"
+                    class="text-sm w-64"
                 >
-                    <div v-if="selectedQuotation" class="flex flex-col gap-4">
-                        <p>
-                            <strong>Customer Email:</strong>
-                            {{ selectedQuotation.customer?.email || "N/A" }}
-                        </p>
-                        <p>
-                            <strong>Customer Telegram:</strong>
-                            {{ selectedQuotation.customer?.telegram || "N/A" }}
-                        </p>
+                    <div v-if="selectedQuotation" class="flex flex-col gap-4 ml-2 mr-2">
+                        <!-- Display Selected Quotation Info -->
+                        <div>
+                            <strong>Quotation No:</strong>
+                            <p>{{ selectedQuotation.quotation_no }}</p>
+                        </div>
+                        <div>
+                            <strong>Customer Name:</strong>
+                            <p>{{ selectedQuotation.customer?.name || "N/A" }}</p>
+                        </div>
 
-                        <div class="flex justify-end gap-2">
-                            <Button
-                                label="Send via Email"
-                                severity="info"
-                                @click="sendViaEmail"
-                                :disabled="!selectedQuotation.customer?.email"
+                        <!-- Email Checkbox -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="emailCheckbox"
+                                v-model="sendForm.emailChecked"
+                                class="mr-2"
                             />
-                            <Button
-                                label="Send via Telegram"
-                                severity="secondary"
-                                @click="sendViaTelegram"
-                                :disabled="
-                                    !selectedQuotation.customer?.telegram
-                                "
+                            <label for="emailCheckbox" class="font-bold">Email:</label>
+                        </div>
+
+                        <!-- Telegram Checkbox -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="telegramCheckbox"
+                                v-model="sendForm.telegramChecked"
+                                class="mr-2"
                             />
+                            <label for="telegramCheckbox" class="font-bold">Telegram:</label>
                         </div>
                     </div>
+
+
+                    <template #footer>
+                        <Button
+                            label="Cancel"
+                            severity="secondary"
+                            @click="isSendDialogVisible = false"
+                        />
+                        <Button
+                            label="Send"
+                            severity="success"
+                            @click="sendQuotationToCustomer"
+                            :loading="isSending"
+                        />
+                    </template>
                 </Dialog>
 
                 <!-- Feedback Dialog display -->
@@ -386,10 +401,9 @@
                             {{ selectedQuotation.total }}
                         </p>
 
+                        <!-- Comment Input -->
                         <div class="flex flex-col gap-2">
-                            <label for="feedbackComment" class="block font-bold"
-                                >Comment:</label
-                            >
+                            <label for="feedbackComment" class="block font-bold">Comment:</label>
                             <textarea
                                 id="feedbackComment"
                                 v-model="feedbackComment"
@@ -399,6 +413,7 @@
                             ></textarea>
                         </div>
 
+                        <!-- Approve/Reject Buttons -->
                         <div class="flex justify-end gap-2">
                             <Button
                                 label="Approve"
@@ -420,7 +435,6 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import DataTable from "primevue/datatable";
@@ -433,6 +447,7 @@ import { router } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import { InputText } from "primevue";
+import html2pdf from "html2pdf.js";
 
 const toast = useToast();
 
@@ -444,6 +459,7 @@ const selectedQuotation = ref(null);
 const userRole = ref("manager");
 const comment = ref("");
 const feedbackComment = ref("");
+const isSending = ref(false);
 
 const searchType = ref("");
 const searchTerm = ref("");
@@ -476,50 +492,10 @@ const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
 };
 
-const clearFilters = () => {
-    searchType.value = "";
-    searchTerm.value = "";
-};
-
-const sendQuotationToCustomer = (quotation) => {
-    if (quotation.customer_status === "Pending") {
-        selectedQuotation.value = quotation;
-        isSendDialogVisible.value = true;
-    }
-};
-
-const sendViaEmail = () => {
-    if (selectedQuotation.value.customer?.email) {
-        selectedQuotation.value.customer_status = "Sent";
-        updateQuotationStatus(
-            selectedQuotation.value,
-            "Quotation sent to customer via email!"
-        );
-        isSendDialogVisible.value = false;
-        showToast(
-            "success",
-            "Sent",
-            "Quotation has been sent to the customer via email!",
-            3000
-        );
-    }
-};
-
-const sendViaTelegram = () => {
-    if (selectedQuotation.value.customer?.telegram) {
-        selectedQuotation.value.customer_status = "Sent";
-        updateQuotationStatus(
-            selectedQuotation.value,
-            "Quotation sent to customer via Telegram!"
-        );
-        isSendDialogVisible.value = false;
-        showToast(
-            "success",
-            "Sent",
-            "Quotation has been sent to the customer via Telegram!",
-            3000
-        );
-    }
+const openSendDialog = (quotation) => {
+    selectedQuotation.value = quotation;
+    sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
+    isSendDialogVisible.value = true;
 };
 
 const openFeedbackDialog = (quotation) => {
@@ -706,7 +682,7 @@ const approveQuotation = () => {
         return;
     }
     selectedQuotation.value.status = "Approved";
-    selectedQuotation.value.customer_status = "Pending";
+    selectedQuotation.value.customer_status = "Sent";
     selectedQuotation.value.comment = comment.value;
     selectedQuotation.value.role = userRole.value;
 
@@ -768,14 +744,16 @@ const handleApprove = async () => {
     }
 
     try {
+        // Update the quotation status to "Approved"
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                status: "Approved",
+                customer_status: "Accept",
                 comment: feedbackComment.value,
             }
         );
 
+        // Show success message
         showToast(
             "success",
             "Success",
@@ -783,8 +761,9 @@ const handleApprove = async () => {
             3000
         );
 
+        // Close the feedback dialog
         isFeedbackDialogVisible.value = false;
-        feedbackComment.value = "";
+        feedbackComment.value = ""; // Clear the comment input
     } catch (error) {
         showToast("error", "Error", "Failed to approve quotation.", 3000);
     }
@@ -802,14 +781,16 @@ const handleReject = async () => {
     }
 
     try {
+        // Update the quotation status to "Rejected"
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                status: "Rejected",
+                customer_status: "Reject",
                 comment: feedbackComment.value,
             }
         );
 
+        // Show success message
         showToast(
             "success",
             "Success",
@@ -817,12 +798,155 @@ const handleReject = async () => {
             3000
         );
 
+        // Close the feedback dialog
         isFeedbackDialogVisible.value = false;
-        feedbackComment.value = "";
+        feedbackComment.value = ""; // Clear the comment input
     } catch (error) {
         showToast("error", "Error", "Failed to reject quotation.", 3000);
     }
 };
+
+const generatePDF = (quotation) => {
+    const element = document.createElement("div");
+    element.innerHTML = `
+        <h1>Quotation Details</h1>
+        <p><strong>Quotation No.:</strong> ${quotation.quotation_no}</p>
+        <p><strong>Customer Name:</strong> ${quotation.customer?.name || "N/A"}</p>
+        <p><strong>Total:</strong> ${quotation.total}</p>
+        <h2>Items</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>QTY</th>
+                    <th>Unit Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${quotation.products
+                    .map(
+                        (product) => `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td>${product.pivot.quantity}</td>
+                        <td>${product.pivot.price}</td>
+                    </tr>
+                `
+                    )
+                    .join("")}
+            </tbody>
+        </table>
+    `;
+
+    // Generate PDF and get it as a Blob
+    html2pdf()
+        .from(element)
+        .get('blob') // Get the generated PDF as a Blob
+        .then((pdfBlob) => {
+            console.log("PDF generated successfully!");
+
+            // Create a FormData object to send the PDF to the server
+            const formData = new FormData();
+            formData.append("pdf_file", pdfBlob, `quotation_${quotation.quotation_no}.pdf`);
+
+            // Send the PDF to the server via an AJAX POST request
+            fetch('/save-pdf', {
+                method: 'POST',
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        console.log("PDF saved successfully!");
+                    } else {
+                        console.error("Error saving PDF on server.");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error sending PDF to server:", error);
+                });
+        });
+};
+
+const sendQuotationToCustomer = async () => {
+    // Ensure the email option is selected
+    if (!sendForm.value.emailChecked) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Please select the email option.",
+            life: 3000,
+        });
+        return;
+    }
+
+    isSending.value = true;
+
+    try {
+        // Generate the PDF
+        generatePDF(selectedQuotation.value);
+
+        // Prepare the form data for sending
+        const formData = new FormData();
+        formData.append("quotation_id", selectedQuotation.value.id);
+        formData.append("send_email", sendForm.value.emailChecked);
+
+        // Add the generated PDF to the form data
+        const pdfBlob = await html2pdf()
+            .from(document.createElement("div"))
+            .outputPdf("blob");
+        formData.append("pdf_file", pdfBlob, `quotation_${selectedQuotation.value.quotation_no}.pdf`);
+
+        // Get CSRF token from the meta tag
+        const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
+
+        // Send the request to the backend
+        const response = await fetch("/quotations/send", {
+            method: "POST",
+            body: formData,  // Send the FormData directly
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,  // CSRF token for security
+            },
+        });
+
+        // Parse the JSON response from the server
+        const responseData = await response.json();
+
+        if (responseData.success) {
+            // Update the status to "Sent"
+            selectedQuotation.value.customer_status = "Sent";
+
+            // Update the quotation status on the server
+            await updateQuotationStatus(
+                selectedQuotation.value,
+                "Quotation sent successfully via email!"
+            );
+
+            // Close the send dialog
+            isSendDialogVisible.value = false;
+
+            // Show success message
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: "Quotation sent successfully via email!",
+                life: 3000,
+            });
+        } else {
+            throw new Error(responseData.error || 'Unknown error');
+        }
+    } catch (error) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: error.message || "Failed to send quotation. Please try again.",
+            life: 3000,
+        });
+    } finally {
+        isSending.value = false;
+    }
+};
+
 </script>
 
 <style>
