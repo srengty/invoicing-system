@@ -10,6 +10,8 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Address;
 use App\Models\Quotation;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Mail\Mailer;
 
 class QuotationEmail extends Mailable
 {

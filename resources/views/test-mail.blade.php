@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Laravel Mail</title>
+    <title>Quotation Details</title>
 </head>
 <body>
-    <p>Thank you</p>
-    <object data="cid:pdf_attachment" type="application/pdf" width="600" height="400">
-        <p>Your email client does not support embedded PDFs.</p>
-    </object>
+    <p>Dear Customer,</p>
+    <p>Thank you for your quotation request. Please find the attached PDF quotation for your reference.</p>
+    
+    <p>If you have any questions or need further assistance, feel free to reach out to us.</p>
+    
+    <p>Best regards,</p>
+    <p><strong>ITC Finance</strong></p>
 </body>
 </html>

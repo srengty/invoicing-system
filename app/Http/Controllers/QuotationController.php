@@ -17,6 +17,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\QuotationEmail;
+use Illuminate\Mail\Mailer;
 use Illuminate\Support\Facades\Http;
 use Exception;
 
@@ -209,7 +210,7 @@ class QuotationController extends Controller
                 // Only attach approved products
                 if ($productData && $productData->status === 'approved') {
                     // Debug the product data
-                    \Log::info('Product Data:', $product);
+                    // \Log::info('Product Data:', $product);
                     ProductQuotation::create([
                         'product_id' => $product['id'],
                         'quantity'   => $product['quantity'],
