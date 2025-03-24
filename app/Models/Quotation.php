@@ -20,6 +20,7 @@ class Quotation extends Model
         'phone_number',
         'terms',
         'total',
+        'total_usd',
         'status',
     ];
 

@@ -280,12 +280,13 @@
                             <!-- The v-model binding automatically updates calculateTotalUSD -->
                             <input
                                 type="number"
-                                v-model.number="calculateTotalUSD"
+                                v-model.number="form.total_usd"
                                 placeholder="Enter USD"
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
                                 class="w-1/7 h-9 text-sm"
                             />
+
                             <!-- <InputNumber
                                 v-model.number="calculateTotalUSD"
                                 class="text-right"
@@ -555,6 +556,7 @@ const form = useForm({
     address: props.quotation?.address || "",
     phone_number: props.quotation?.phone_number || "",
     total: props.quotation?.total || 0,
+    total_usd: props.quotation?.total_usd || 0, // Add this field for USD input
     products: props.quotation?.products || [],
     terms: props.quotation?.terms || "",
 });
@@ -901,12 +903,24 @@ const calculateTotal = computed(() => {
 
 const calculateTotalUSD = ref(null);
 const calculateExchangeRate = computed(() => {
-    if (!calculateTotalUSD.value || !calculateTotal.value) return "";
-    return (calculateTotal.value / calculateTotalUSD.value).toFixed(2);
+    if (form.total_usd && calculateTotalKHR.value) {
+        return (calculateTotalKHR.value / form.total_usd).toFixed(2); // Exchange Rate = Total KHR / Total USD
+    }
+    return "";
 });
 
 const calculateTotalKHR = computed(() => {
-    return calculateTotal.value.toFixed(2);
+    // Sum all subtotals in KHR
+    const totalInKHR = selectedProductsData.value.reduce((sum, product) => {
+        return sum + (product.subTotal || 0); // Make sure subTotal is being computed correctly for each product
+    }, 0);
+
+    // Apply the exchange rate
+    if (form.exchange_rate) {
+        return (totalInKHR * form.exchange_rate).toFixed(2); // Convert to KHR using the exchange rate
+    }
+
+    return totalInKHR.toFixed(2); // Return the KHR total without conversion if no exchange rate
 });
 
 watch(calculateTotalUSD, (newValue) => {
@@ -917,6 +931,11 @@ watch(calculateTotalUSD, (newValue) => {
     } else {
         calculateExchangeRate.value = "";
     }
+});
+watch([calculateTotal, calculateTotalUSD], () => {
+    console.log("Total KHR: ", calculateTotal.value);
+    console.log("Total USD: ", calculateTotalUSD.value);
+    console.log("Exchange rate: ", calculateExchangeRate.value);
 });
 
 const formatCurrency = (value) => {
@@ -1050,6 +1069,8 @@ const submit = async (event) => {
 
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
+    form.total_usd = form.total_usd || 0;
+    form.exchange_rate = form.exchange_rate || 0;
 
     // Debugging: Log form data before submission
     console.log("Submitting Quotation ID:", form.id);

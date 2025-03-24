@@ -173,7 +173,7 @@ const currencySymbol = computed(() => (isUSD.value ? "$" : "៛"));
 const currencyLabel = computed(() => (isUSD.value ? "USD" : "KHR"));
 
 const convertCurrency = (amount) => {
-    return isUSD.value ? amount / exchangeRate.value : amount;
+    return isUSD.value ? amount / exchangeRate.value : amount; // Convert to USD if selected
 };
 
 const formatNumber = (value) => {
@@ -196,7 +196,7 @@ const totalAmount = computed(() => {
 const formattedProducts = computed(() => {
     if (!quotation.value.products) return [];
 
-    const products = quotation.value.products.map((product) => ({
+    return quotation.value.products.map((product) => ({
         id: product.id,
         name: product.name || "Unknown",
         name_kh: product.name_kh || "Unknown",
@@ -208,10 +208,8 @@ const formattedProducts = computed(() => {
         price: product.pivot?.price ?? 0,
         include_catalog: product.pivot?.include_catalog ?? 0,
         pdf_url: product.pdf_url || null,
+        total_usd: product.total_usd || "",
     }));
-
-    console.log("Formatted Products:", products);
-    return products;
 });
 
 const generateAndMergePDFs = async () => {

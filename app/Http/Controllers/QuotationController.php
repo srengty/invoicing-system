@@ -135,6 +135,7 @@ class QuotationController extends Controller
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
             'terms'          => 'nullable|string|max:255',
+            'total_usd' => 'nullable|numeric',
             // 'tax'            => 'required|numeric',
             'products'       => 'nullable|array', // Make products optional
             'products.*.id' => 'required|exists:products,id', // Validate product IDs
@@ -195,6 +196,7 @@ class QuotationController extends Controller
             'phone_number'   => $validated['phone_number'] ?? null,
             'terms'          => $validated['terms'] ?? null,
             'total'          => $total,
+            'total_usd'      => $validated['total_usd'] ?? 0,
 
         ]);
         // Attach products to the quotation
@@ -258,6 +260,8 @@ class QuotationController extends Controller
                 'products' => $quotation->products, // ✅ Ensures products with pivot data are passed
                 'total' => $quotation->total,
                 'terms' => $quotation->terms,
+                'total_usd' => $quotation->total_usd,
+                'exchange_rate' => $quotation->exchange_rate,
             ],
         ]);
     }

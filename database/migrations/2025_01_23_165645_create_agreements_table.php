@@ -42,7 +42,7 @@ return new class extends Migration
 
             // Add the active column here with a default value
             $table->boolean('active')->default(true);
-            
+
             $table->timestamps();
         });
         Schema::create('quotations', function (Blueprint $table) {
@@ -55,6 +55,7 @@ return new class extends Migration
             $table->string('phone_number', 20)->nullable();
             $table->string('terms', 255)->nullable();
             $table->double('total')->default(0)->comment('no tax');
+            $table->double('total_usd', 15, 2)->nullable(); // Remove 'after' here
             $table->string('status', 20)->default('Pending');
             $table->string('customer_status')->nullable();
             $table->timestamps();
