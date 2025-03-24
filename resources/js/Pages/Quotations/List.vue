@@ -196,7 +196,9 @@
                                     icon="pi pi-print"
                                     aria-label="Print out"
                                     class="custom-button"
-                                    @click="printQuotation(slotProps.data.id)"
+                                    @click="
+                                        printQuotation(slotProps.data.id, 1)
+                                    "
                                     size="small"
                                     raised
                                 />
@@ -633,10 +635,21 @@ const columns = [
     { field: "customer_status", header: "Customer Status" },
 ];
 
-const printQuotation = (quotation_no) => {
-    const quotUrl = `/quotations/${quotation_no}`;
+// const printQuotation = (quotation_no) => {
+//     const quotUrl = `/quotations/${quotation_no}`;
+//     const printWindow = window.open(quotUrl, "_blank");
+//     printWindow.onload = () => {
+//         printWindow.print();
+//     };
+// };
+const printQuotation = (quotation_no, include_catelog = 0) => {
+    // Construct the URL with include_catelog parameter
+    const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
+
+    // Open the quotation in a new window for printing
     const printWindow = window.open(quotUrl, "_blank");
 
+    // Print the quotation once the window has loaded
     printWindow.onload = () => {
         printWindow.print();
     };

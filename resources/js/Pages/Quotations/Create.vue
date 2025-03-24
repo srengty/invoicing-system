@@ -271,7 +271,7 @@
                     <div class="total-container mt-4 flex justify-between">
                         <p class="font-bold">Total KHR</p>
                         <p class="font-bold">
-                            ៛{{ formatCurrency(calculateTotal.toFixed(2)) }}
+                            ៛{{ formatCurrency(calculateTotalKHR) }}
                         </p>
                     </div>
                     <div class="total-container mt-4 flex justify-between">
@@ -521,7 +521,6 @@ const props = defineProps({
     quotation: Object, // Accept quotation data when editing
     divisions: Array,
 });
-console.log("Heeli", props.divisions);
 // Toast for notifications
 const toast = useToast();
 const selectedProductIds = ref([]);
@@ -578,7 +577,6 @@ const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
 onMounted(() => {
     if (props.quotation) {
-        // console.log("🛠 Debug: Quotation received", props.quotation);
         const newProps = JSON.parse(props.quotation);
         form.id = newProps.id || null;
         form.quotation_no = newProps.quotation_no || "";
@@ -594,11 +592,11 @@ onMounted(() => {
         if (newProps.products && Array.isArray(newProps.products)) {
             selectedProductsData.value = newProps.products.map((product) => ({
                 ...product,
-                quantity: product.pivot?.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
+                quantity: product.pivot?.quantity ?? 1,
                 subTotal:
                     (product.pivot?.quantity ?? 1) * Number(product.price || 0),
                 remark: product.remark || "",
-                include_catalog: product.include_catalog ?? false,
+                include_catalog: Boolean(product.pivot?.include_catalog),
             }));
             console.log("Selected Products Data:", selectedProductsData.value); // Debugging log
         } else {
@@ -716,7 +714,7 @@ const addItemToTable = () => {
             Number(selectedProduct.value.price) *
             selectedProduct.value.quantity,
         remark: selectedProduct.value.remark || "",
-        include_catalog: false,
+        include_catalog: selectedProduct.value.include_catalog ?? false,
         division_id: selectedDivision.value, // Include the selected division
         isNew: true,
     };
@@ -894,28 +892,31 @@ const updateTax = () => {
     form.grand_total = calculateGrandTotal.value;
 };
 
-const calculateTotalUSD = ref(null);
-const calculateExchangeRate = computed(() => {
-    if (!calculateTotalUSD.value) {
-        return "";
-    }
-    const exchangeRate = calculateTotal.value / calculateTotalUSD.value;
-    return exchangeRate.toFixed(2);
-});
 const calculateTotal = computed(() => {
     return selectedProductsData.value.reduce(
-        (sum, prod) => sum + prod.subTotal,
+        (sum, prod) => sum + (prod.subTotal || 0),
         0
     );
 });
-const handleUSDInput = (value) => {
-    calculateTotalUSD.value = value;
-};
 
-const exchangeRate = ref(4100);
+const calculateTotalUSD = ref(null);
+const calculateExchangeRate = computed(() => {
+    if (!calculateTotalUSD.value || !calculateTotal.value) return "";
+    return (calculateTotal.value / calculateTotalUSD.value).toFixed(2);
+});
+
 const calculateTotalKHR = computed(() => {
-    if (!calculateTotal.value || !calculateExchangeRate.value) return "0.00";
-    return (calculateTotal.value * calculateExchangeRate.value).toFixed(2);
+    return calculateTotal.value.toFixed(2);
+});
+
+watch(calculateTotalUSD, (newValue) => {
+    if (newValue && calculateTotal.value) {
+        calculateExchangeRate.value = (calculateTotal.value / newValue).toFixed(
+            2
+        );
+    } else {
+        calculateExchangeRate.value = "";
+    }
 });
 
 const formatCurrency = (value) => {
@@ -945,14 +946,12 @@ const editProduct = (productId) => {
         (prod) => prod.id === productId
     );
     if (productToEdit) {
-        console.log("Editing Product:", productToEdit); // Debugging log
-        console.log("Quantity from Backend:", productToEdit.quantity); // Debugging log
         selectedProduct.value = {
             ...productToEdit,
-            quantity: productToEdit.quantity ?? 1, // Use ?? to avoid defaulting to 1 for 0
+            quantity: productToEdit.quantity ?? 1,
             subTotal: productToEdit.subTotal ?? 0,
             remark: productToEdit.remark || "",
-            include_catalog: productToEdit.include_catalog ?? false,
+            include_catalog: Boolean(productToEdit.include_catalog),
         };
 
         isAddItemDialogVisible.value = true;
@@ -1045,7 +1044,7 @@ const submit = async (event) => {
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
         remark: prod.remark ?? "",
-        include_catalog: prod.include_catalog ?? false,
+        include_catalog: Boolean(prod.include_catalog),
         pdf_url: prod.pdf_url ?? null,
     }));
 
@@ -1171,5 +1170,8 @@ const getRemarkSnippet = (remark) => {
     padding: 7px 7px !important; /* Smaller padding */
     font-size: 12px !important; /* Smaller icon size */
     min-width: 30px !important; /* Reduce button width */
+}
+.p-checkbox .p-checkbox-box {
+    visibility: visible !important;
 }
 </style>

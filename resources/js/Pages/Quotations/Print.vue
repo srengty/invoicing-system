@@ -253,12 +253,14 @@ const generateAndMergePDFs = async () => {
             quotationPDF,
             ...validCatalogPDFs,
         ]);
-        displayMergedPDF(mergedPDFBytes);
+
+        // Pass the quotation_no to the displayMergedPDF function
+        const filename = `quotation_${quotation.value.quotation_no}.pdf`;
+        displayMergedPDF(mergedPDFBytes, filename);
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
 };
-
 const generatePDF = (element) => {
     return new Promise((resolve) => {
         html2pdf().from(element).toPdf().outputPdf("blob").then(resolve);
@@ -277,10 +279,22 @@ const mergePDFs = async (pdfBlobs) => {
     return pdfDoc.save();
 };
 
-const displayMergedPDF = (pdfBytes) => {
+// const displayMergedPDF = (pdfBytes) => {
+//     const blob = new Blob([pdfBytes], { type: "application/pdf" });
+//     const url = URL.createObjectURL(blob);
+//     window.open(url, "_blank");
+// };
+const displayMergedPDF = (pdfBytes, filename) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
+
+    // Open the PDF in a new tab with the filename
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename; // Set the filename
+    document.body.appendChild(link);
+    link.click(); // Trigger the download
+    document.body.removeChild(link); // Clean up
 };
 
 const downloadPDF = (pdfBytes, filename) => {
@@ -304,7 +318,7 @@ const downloadBlob = (blob, filename) => {
     padding: 10mm;
     margin: 0 auto;
     background: white;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    /* box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); */
     page-break-inside: avoid;
 }
 
