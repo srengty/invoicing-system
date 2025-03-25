@@ -4,15 +4,16 @@
     <div class="flex justify-start items-center gap-4 ml-10">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
-            <p class="text-sm font-semibold">Amount ({{ currencyLabel }})</p>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="isUSD" class="sr-only peer" />
-                <div
-                    class="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#10B981] dark:peer-focus:ring-[#10B981] rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#10B981]"
-                ></div>
-            </label>
+            <p class="text-sm font-semibold">{{ toggleLabel }}</p>
+            <ToggleSwitch
+                v-model="isKhmer"
+                onLabel="KH/៛"
+                offLabel="EN/$"
+                class="w-20"
+                @change="handleToggleChange"
+            />
         </div>
-
+        <Toast position="top-right" group="tr" />
         <!-- Print Button -->
         <div class="flex justify-center mt-6 mb-2">
             <Button
@@ -53,6 +54,10 @@
                         <strong>Quotation Date:</strong>
                         {{ quotation.quotation_date }}
                     </p>
+                    <!-- <p v-if="exchangeRate">
+                        <strong>Exchange Rate:</strong>
+                        1 USD = {{ exchangeRate }} KHR
+                    </p> -->
                 </div>
             </div>
         </div>
@@ -82,9 +87,13 @@
                 >
                     <div class="text-start">{{ index + 1 }}</div>
                     <div>
-                        <p class="font-medium">
-                            {{ isUSD ? product.name : product.name_kh }}
-                        </p>
+                        <div class="font-medium">
+                            {{
+                                isKhmer
+                                    ? product.name_kh || "No English name"
+                                    : product.name || "No Khmer name"
+                            }}
+                        </div>
                         <p class="text-gray-600 text-xs">
                             {{ isUSD ? product.desc : product.desc_kh }}
                         </p>
@@ -94,10 +103,10 @@
                     </div>
                     <div class="text-start">{{ product.quantity }}</div>
                     <div class="text-start font-semibold">
-                        ៛{{ formatNumber(convertCurrency(product.price)) }}
+                        {{ formatNumber(convertCurrency(product.price)) }}
                     </div>
                     <div class="text-start font-semibold">
-                        ៛{{
+                        {{
                             formatNumber(
                                 convertCurrency(
                                     product.price * product.quantity
@@ -108,11 +117,22 @@
                 </div>
             </div>
 
-            <!-- Total Amount -->
-            <p class="pt-6 flex justify-end">
-                Total ({{ currencyLabel }}): {{ currencySymbol
-                }}{{ formatNumber(convertCurrency(totalAmount)) }}
-            </p>
+            <!-- Total Amount Section -->
+            <div class="pt-6">
+                <div class="pt-6 flex justify-end">
+                    <p class="font-bold">
+                        Total ({{ currencyLabel }}):
+                        {{ formatNumber(totalAmount) }}
+                    </p>
+                    <!-- <p class="text-sm text-gray-600">
+                        Equivalent {{ isUSD ? "KHR" : "USD" }}:
+                        {{ formatNumber(alternateTotal) }}
+                    </p> -->
+                </div>
+                <!-- <div class="text-sm">
+                    <p>Exchange Rate: 1 USD = {{ exchangeRate }} KHR</p>
+                </div> -->
+            </div>
 
             <!-- Terms and Conditions -->
             <div class="mt-8">
@@ -160,46 +180,89 @@ import { usePage } from "@inertiajs/vue3";
 import Button from "primevue/button";
 import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";
+import ToggleSwitch from "primevue/toggleswitch";
+import { useToast } from "primevue/usetoast";
 
+const toast = useToast();
 const { props } = usePage();
-const quotation = ref(props.quotation);
+const quotation = ref({
+    ...props.quotation,
+    total: props.quotation?.total || 0,
+    total_usd: props.quotation?.total_usd || 0,
+    exchange_rate: props.quotation?.exchange_rate || 4100,
+});
 const printArea = ref(null);
 const catalogArea = ref(null);
 
 const isUSD = ref(false);
-const exchangeRate = ref(4100);
+const isKhmer = ref(true);
+const combinedToggle = ref(false);
+const toggleLabel = computed(() => {
+    return isKhmer.value ? "Khmer/៛" : "English/$";
+});
+const handleToggleChange = () => {
+    if (
+        !isKhmer.value &&
+        (!quotation.value.total_usd || !quotation.value.exchange_rate)
+    ) {
+        toast.add({
+            severity: "warn",
+            summary: "Missing Information",
+            detail: "Please edit this quotation to add USD total and exchange rate before switching to USD view.",
+            group: "tr",
+            life: 5000,
+        });
+        isKhmer.value = true;
+        return;
+    }
+    isUSD.value = !isKhmer.value;
+};
+watch([isKhmer, isUSD], ([newUSD, newKhmer]) => {
+    combinedToggle.value = newKhmer && newUSD;
+});
 
-const currencySymbol = computed(() => (isUSD.value ? "$" : "៛"));
-const currencyLabel = computed(() => (isUSD.value ? "USD" : "KHR"));
+const exchangeRate = computed(() => quotation.value.exchange_rate || 0);
+const currencySymbol = computed(() => (isUSD.value ? "៛" : "$"));
+const currencyLabel = computed(() => (isUSD.value ? "KHR" : "USD"));
 
 const convertCurrency = (amount) => {
-    return isUSD.value ? amount / exchangeRate.value : amount; // Convert to USD if selected
+    if (isUSD.value) {
+        return amount / exchangeRate.value;
+    }
+    return amount;
 };
-
 const formatNumber = (value) => {
     if (!value) return "0.00";
-    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(
-        value
-    );
-};
+    const formatted = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
 
+    return isUSD.value ? `$${formatted}` : `៛${formatted}`;
+};
 const totalAmount = computed(() => {
-    return (
+    const totalKHR =
         quotation.value.products?.reduce((sum, product) => {
             const quantity = product.pivot?.quantity || 0;
             const price = product.pivot?.price || 0;
             return sum + quantity * price;
-        }, 0) || 0
-    );
-});
+        }, 0) || 0;
 
+    return isUSD.value ? totalKHR / exchangeRate.value : totalKHR;
+});
+const alternateTotal = computed(() => {
+    const totalKHR = quotation.value.total || totalAmount.value;
+    return isUSD.value
+        ? totalKHR * exchangeRate.value
+        : totalKHR / exchangeRate.value;
+});
 const formattedProducts = computed(() => {
     if (!quotation.value.products) return [];
 
     return quotation.value.products.map((product) => ({
         id: product.id,
-        name: product.name || "Unknown",
-        name_kh: product.name_kh || "Unknown",
+        name: product.name || "No English name",
+        name_kh: product.name_kh || "No Khmer name",
         desc: product.desc || "",
         desc_kh: product.desc_kh || "",
         remark: product.remark || "",
@@ -208,7 +271,6 @@ const formattedProducts = computed(() => {
         price: product.pivot?.price ?? 0,
         include_catalog: product.pivot?.include_catalog ?? 0,
         pdf_url: product.pdf_url || null,
-        total_usd: product.total_usd || "",
     }));
 });
 
@@ -276,16 +338,9 @@ const mergePDFs = async (pdfBlobs) => {
 
     return pdfDoc.save();
 };
-
-// const displayMergedPDF = (pdfBytes) => {
-//     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-//     const url = URL.createObjectURL(blob);
-//     window.open(url, "_blank");
-// };
 const displayMergedPDF = (pdfBytes, filename) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-
     // Open the PDF in a new tab with the filename
     const link = document.createElement("a");
     link.href = url;
@@ -329,6 +384,76 @@ const downloadBlob = (blob, filename) => {
 .table-container,
 .table-container div {
     page-break-inside: avoid;
+}
+
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.toggle-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 3.5rem;
+    height: 1.75rem;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 1.75rem;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 1.25rem;
+    width: 1.25rem;
+    left: 0.25rem;
+    bottom: 0.25rem;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #10b981;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(1.75rem);
+}
+
+.toggle-labels {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    pointer-events: none;
 }
 
 @media print {
