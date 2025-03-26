@@ -60,15 +60,18 @@ class QuotationController extends Controller
     ]);
 }
 
-    public function updateStatus(Request $request, $id)
+public function updateStatus(Request $request, $id)
 {
     $quotation = Quotation::findOrFail($id);
 
-    $newStatus         = $request->input('status');
+    // Validate required fields
+    $validated = $request->validate([
+        'status' => 'required|string', // Ensure status is provided
+    ]);
+
+    $newStatus = $request->input('status');
     $newCustomerStatus = $request->input('customer_status');
-    $comment           = $request->input('comment');
-    $userRole          = $request->input('role');
-    // If you're using authentication with roles, you could do: $userRole = $request->user()->role
+    $comment = $request->input('comment');
 
     // 1. If status is Approved or Revised, and there's no quotation_no yet, assign one
     if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_no) {
@@ -90,9 +93,13 @@ class QuotationController extends Controller
 
     // 4. Update the Quotation status and customer status
     $quotation->status = $newStatus;
-    if ($newCustomerStatus) {
-        $quotation->customer_status = $newCustomerStatus;
-    }
+    
+    // Set customer_status based on newStatus if newCustomerStatus isn't provided
+    $quotation->customer_status = $newCustomerStatus ?: 
+        ($newStatus === 'Approved' ? 'Pending' : 
+        ($newStatus === 'Revised' ? 'Pending' : $newStatus));
+        
+    $quotation->customer_status_comment = $comment;
 
     // 5. Save the changes to the quotation
     $quotation->save();
@@ -101,7 +108,6 @@ class QuotationController extends Controller
     if (!empty($comment)) {
         $quotation->comments()->create([
             'user_id' => $request->user()->id ?? null,
-            'role'    => $userRole,
             'status'  => $newStatus,
             'comment' => $comment,
         ]);
@@ -369,6 +375,31 @@ class QuotationController extends Controller
         return response()->json($agreement);
     }
 
+    // In your QuotationController.php
+    public function updateCustomerStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'customer_status' => 'required|in:Sent,Pending,Accept,Reject',
+            'comment' => 'nullable|string',
+        ]);
+
+        $quotation = Quotation::findOrFail($id);
+        
+        $quotation->update([
+            'customer_status' => $validated['customer_status'],
+        ]);
+        
+        if ($request->has('comment')) {
+            // Save comment logic here
+            $quotation->comments()->create([
+                'comment' => $validated['comment'],
+                // 'role' => auth()->user()->role, // or get role from request
+            ]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function savePDF(Request $request)
 {
     // Validate the uploaded file (optional)
@@ -433,7 +464,7 @@ public function sendQuotation(Request $request)
             $filePath = storage_path('app/public/' . $pdfPath);
 
             // Send the email with the saved PDF file
-            Mail::to($customerEmail)->send(new QuotationEmail($quotation, $filePath));
+            Mail::to($customerEmail)->send(new QuotationEmail($quotation, $request->file('pdf_file')));
 
             // Check if there were any failures when sending the email
             // if (Mail::failures()) {

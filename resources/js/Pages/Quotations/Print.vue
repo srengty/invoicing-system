@@ -285,7 +285,28 @@ const mergePDFs = async (pdfBlobs) => {
 const displayMergedPDF = (pdfBytes, filename) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
-
+    const formData = new FormData();
+    formData.append("quotation_id",quotation.value.id)
+    formData.append("send_email","send bro")
+    formData.append("pdf_file", blob, filename);
+           fetch('/quotations/send', {
+                method: 'POST',
+                headers:{
+                    "X-CSRF-TOKEN":document.querySelector('meta[name="csrf_token"]').getAttribute('content'),
+                },
+                body: formData,
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.success) {
+                        console.log("PDF saved successfully!");
+                    } else {
+                        console.error("Error saving PDF on server.");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error sending PDF to server:", error);
+                });
     // Open the PDF in a new tab with the filename
     const link = document.createElement("a");
     link.href = url;

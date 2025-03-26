@@ -432,18 +432,6 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4">
-                            <!-- <div class="field">
-                                <label class="required">Remark</label>
-                                <InputText
-                                    v-model="form.remark"
-                                    class="w-full text-sm"
-                                    placeholder="Enter Remarks"
-                                />
-                                <Message v-if="form.errors.remark" severity="error" size="small" variant="simple"
-                                class="col-span-2">
-                                    {{ form.errors.remark }}
-                                </Message>
-                            </div> -->
 
                             <!-- File Upload -->
                             <div class="grid">
