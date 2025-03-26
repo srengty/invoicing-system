@@ -244,6 +244,26 @@
                                     <strong>Phone Number:</strong>
                                     {{ selectedQuotation.phone_number }}
                                 </p>
+                                <p>
+                                    <strong>Email:</strong>
+                                    <a
+                                        v-if="
+                                            selectedQuotation.email ||
+                                            selectedQuotation.customer?.email
+                                        "
+                                        :href="`mailto:${
+                                            selectedQuotation.email ||
+                                            selectedQuotation.customer?.email
+                                        }`"
+                                        class="text-blue-600 hover:underline"
+                                    >
+                                        {{
+                                            selectedQuotation.email ||
+                                            selectedQuotation.customer?.email
+                                        }}
+                                    </a>
+                                    <span v-else>N/A</span>
+                                </p>
                             </div>
                             <div class="flex flex-col w-1/2 items-end gap-4">
                                 <div class="grid gap-4">
@@ -570,6 +590,7 @@ const form = useForm({
     quotation_date: "",
     address: "",
     phone_number: "",
+    email: "",
     customer_id: "",
     total: 0,
     tax: 0,
@@ -582,6 +603,7 @@ const openForm = (quotations = null) => {
         form.quotation_date = quotations.quotation_date;
         form.address = quotations.address;
         form.phone_number = quotations.phone_number;
+        form.email = quotations.email;
         form.customer_id = quotations.customer_id;
     } else {
         form.reset();
@@ -637,6 +659,7 @@ const columns = [
     { field: "customer.name", header: "Customer/Organization Name" },
     { field: "address", header: "Address" },
     { field: "phone_number", header: "Phone Number" },
+    { field: "email", header: "email" },
     { field: "terms", header: "Terms" },
     { field: "total", header: "Total" },
     { field: "tax", header: "Tax" },
@@ -1024,7 +1047,7 @@ const sendQuotationToCustomer = async () => {
 };
 </script>
 
-<style>
+<style scoped>
 .custom-button {
     padding: 7px 7px;
     font-size: 12px;
@@ -1034,5 +1057,8 @@ const sendQuotationToCustomer = async () => {
     border: 1px solid green;
     background-color: #d4edda;
     color: green;
+}
+.p-dialog-header {
+    pointer-events: none;
 }
 </style>
