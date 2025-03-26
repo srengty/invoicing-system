@@ -2,7 +2,6 @@
     <Head title="Quotations" />
     <meta name="_token" content="{{ csrf_token() }}" />
 
-
     <GuestLayout>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
@@ -63,67 +62,128 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                <Column header="No." style="width: 5%">
-        <template #body="slotProps">
-            {{ slotProps.index + 1 }}
-        </template>
-    </Column>
-    <Column field="customer.name" header="Customer/Organization Name" style="width: 20%" />
-    <Column field="total" header="Total" style="width: 10%" />
+                    <Column header="No." style="width: 5%">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
+                    <Column
+                        field="customer.name"
+                        header="Customer/Organization Name"
+                        style="width: 20%"
+                    />
+                    <Column field="total" header="Total" style="width: 10%" />
 
-    <!-- Correctly Map the Status Column -->
-    <Column field="status" header="Status" style="width: 10%">
-        <template #body="slotProps">
-            <span class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
-                :class="{
-                    'bg-yellow-100 text-yellow-800 border-yellow-400': slotProps.data.status === 'Pending',
-                    'bg-red-100 text-red-800 border-red-400': slotProps.data.status === 'Revise',
-                    'bg-green-100 text-green-800 border-green-400': slotProps.data.status === 'Approved',
-                }">
-                <i :class="{
-                    'pi pi-clock': slotProps.data.status === 'Pending',
-                    'pi pi-times': slotProps.data.status === 'Revise',
-                    'pi pi-check': slotProps.data.status === 'Approved',
-                }"></i>
-                {{ slotProps.data.status }}
-            </span>
-        </template>
-    </Column>
+                    <!-- Correctly Map the Status Column -->
+                    <Column field="status" header="Status" style="width: 10%">
+                        <template #body="slotProps">
+                            <span
+                                class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
+                                :class="{
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.status === 'Pending',
+                                    'bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.status === 'Revise',
+                                    'bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.status === 'Approved',
+                                }"
+                            >
+                                <i
+                                    :class="{
+                                        'pi pi-clock':
+                                            slotProps.data.status === 'Pending',
+                                        'pi pi-times':
+                                            slotProps.data.status === 'Revise',
+                                        'pi pi-check':
+                                            slotProps.data.status ===
+                                            'Approved',
+                                    }"
+                                ></i>
+                                {{ slotProps.data.status }}
+                            </span>
+                        </template>
+                    </Column>
 
-    <!-- Correctly Map the Customer Status Column -->
-    <Column field="customer_status" header="Customer Status" style="width: 15%">
-        <template #body="slotProps">
-            <span
-                @click="handleStatusClick(slotProps.data)"
-                v-tooltip.top=" 'Current customer status: ' + slotProps.data.customer_status "
-                class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
-                :class="{
-                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.customer_status === 'Sent',
-                    'bg-yellow-100 text-yellow-800 border-yellow-400': slotProps.data.customer_status === 'Pending',
-                    'bg-green-100 text-green-800 border-green-400': slotProps.data.customer_status === 'Accept',
-                    'bg-red-100 text-red-800 border-red-400': slotProps.data.customer_status === 'Reject',
-                }">
-                <i :class="{
-                    'pi pi-send': slotProps.data.customer_status === 'Sent',
-                    'pi pi-clock': slotProps.data.customer_status === 'Pending',
-                    'pi pi-check': slotProps.data.customer_status === 'Accept',
-                    'pi pi-times': slotProps.data.customer_status === 'Reject',
-                }" style="margin-right: 8px"></i>
-                {{ slotProps.data.customer_status }}
-            </span>
-        </template>
-    </Column>
+                    <!-- Correctly Map the Customer Status Column -->
+                    <Column
+                        field="customer_status"
+                        header="Customer Status"
+                        style="width: 15%"
+                    >
+                        <template #body="slotProps">
+                            <span
+                                @click="handleStatusClick(slotProps.data)"
+                                v-tooltip.top="
+                                    'Current customer status: ' +
+                                    slotProps.data.customer_status
+                                "
+                                class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
+                                :class="{
+                                    'bg-blue-100 text-blue-800 border-blue-400':
+                                        slotProps.data.customer_status ===
+                                        'Sent',
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.customer_status ===
+                                        'Pending',
+                                    'bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.customer_status ===
+                                        'Accept',
+                                    'bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.customer_status ===
+                                        'Reject',
+                                }"
+                            >
+                                <i
+                                    :class="{
+                                        'pi pi-send':
+                                            slotProps.data.customer_status ===
+                                            'Sent',
+                                        'pi pi-clock':
+                                            slotProps.data.customer_status ===
+                                            'Pending',
+                                        'pi pi-check':
+                                            slotProps.data.customer_status ===
+                                            'Accept',
+                                        'pi pi-times':
+                                            slotProps.data.customer_status ===
+                                            'Reject',
+                                    }"
+                                    style="margin-right: 8px"
+                                ></i>
+                                {{ slotProps.data.customer_status }}
+                            </span>
+                        </template>
+                    </Column>
 
-    <!-- Other columns -->
-    <Column header="Comment / Role" style="width: 15%">
-        <template #body="slotProps">
-            <div v-if="slotProps.data.comments && slotProps.data.comments.length">
-                <p><strong>Comment:</strong> {{ slotProps.data.comments[slotProps.data.comments.length - 1].comment }}</p>
-                <p><strong>Role:</strong> {{ slotProps.data.comments[slotProps.data.comments.length - 1].role }}</p>
-            </div>
-            <div v-else><em>No comment</em></div>
-        </template>
-    </Column>
+                    <!-- Other columns -->
+                    <Column header="Comment / Role" style="width: 15%">
+                        <template #body="slotProps">
+                            <div
+                                v-if="
+                                    slotProps.data.comments &&
+                                    slotProps.data.comments.length
+                                "
+                            >
+                                <p>
+                                    <strong>Comment:</strong>
+                                    {{
+                                        slotProps.data.comments[
+                                            slotProps.data.comments.length - 1
+                                        ].comment
+                                    }}
+                                </p>
+                                <p>
+                                    <strong>Role:</strong>
+                                    {{
+                                        slotProps.data.comments[
+                                            slotProps.data.comments.length - 1
+                                        ].role
+                                    }}
+                                </p>
+                            </div>
+                            <div v-else><em>No comment</em></div>
+                        </template>
+                    </Column>
                     <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
@@ -163,30 +223,41 @@
                         v-if="selectedQuotation"
                         class="flex flex-col gap-2 text-sm pl-6"
                     >
-                        <p>
-                            <strong>Quotation No.:</strong>
-                            {{ selectedQuotation.quotation_no }}
-                        </p>
-                        <p>
-                            <strong>Quotation Date:</strong>
-                            {{ selectedQuotation.quotation_date }}
-                        </p>
-                        <p>
+                        <div class="flex flex-row justify-between mb-6">
+                            <!-- <p>
                             <strong>Customer ID:</strong>
                             {{ selectedQuotation.customer_id }}
-                        </p>
-                        <p>
-                            <strong>Customer Name:</strong>
-                            {{ selectedQuotation.customer?.name || "N/A" }}
-                        </p>
-                        <p>
-                            <strong>Address:</strong>
-                            {{ selectedQuotation.address }}
-                        </p>
-                        <p>
-                            <strong>Phone Number:</strong>
-                            {{ selectedQuotation.phone_number }}
-                        </p>
+                        </p> -->
+                            <div class="flex flex-col w-1/2 gap-4">
+                                <p>
+                                    <strong>Customer Name:</strong>
+                                    {{
+                                        selectedQuotation.customer?.name ||
+                                        "N/A"
+                                    }}
+                                </p>
+                                <p>
+                                    <strong>Address:</strong>
+                                    {{ selectedQuotation.address }}
+                                </p>
+                                <p>
+                                    <strong>Phone Number:</strong>
+                                    {{ selectedQuotation.phone_number }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col w-1/2 items-end gap-4">
+                                <div class="grid gap-4">
+                                    <p>
+                                        <strong>Quotation No.:</strong>
+                                        {{ selectedQuotation.quotation_no }}
+                                    </p>
+                                    <p>
+                                        <strong>Quotation Date:</strong>
+                                        {{ selectedQuotation.quotation_date }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Items Section -->
                         <span class="font-bold block mb-2 text-center"
@@ -279,7 +350,10 @@
                     modal
                     class="text-sm w-auto"
                 >
-                    <div v-if="selectedQuotation" class="flex flex-col gap-4 ml-2 mr-2">
+                    <div
+                        v-if="selectedQuotation"
+                        class="flex flex-col gap-4 ml-2 mr-2"
+                    >
                         <!-- Display Selected Quotation Info -->
                         <div>
                             <strong>Quotation No:</strong>
@@ -287,7 +361,9 @@
                         </div>
                         <div>
                             <strong>Customer Name:</strong>
-                            <p>{{ selectedQuotation.customer?.name || "N/A" }}</p>
+                            <p>
+                                {{ selectedQuotation.customer?.name || "N/A" }}
+                            </p>
                         </div>
 
                         <!-- Email Checkbox -->
@@ -298,7 +374,12 @@
                                 v-model="sendForm.emailChecked"
                                 class="mr-2"
                             />
-                            <label for="emailCheckbox" class="font-bold">Email: {{ selectedQuotation.customer?.email || "N/A" }}</label>
+                            <label for="emailCheckbox" class="font-bold"
+                                >Email:
+                                {{
+                                    selectedQuotation.customer?.email || "N/A"
+                                }}</label
+                            >
                         </div>
 
                         <!-- Telegram Checkbox -->
@@ -309,10 +390,15 @@
                                 v-model="sendForm.telegramChecked"
                                 class="mr-2"
                             />
-                            <label for="telegramCheckbox" class="font-bold">Telegram: {{ selectedQuotation.customer?.telegram_number || "N/A" }}</label>
+                            <label for="telegramCheckbox" class="font-bold"
+                                >Telegram:
+                                {{
+                                    selectedQuotation.customer
+                                        ?.telegram_number || "N/A"
+                                }}</label
+                            >
                         </div>
                     </div>
-
 
                     <template #footer>
                         <Button
@@ -353,7 +439,9 @@
 
                         <!-- Comment Input -->
                         <div class="flex flex-col gap-2">
-                            <label for="feedbackComment" class="block font-bold">Comment:</label>
+                            <label for="feedbackComment" class="block font-bold"
+                                >Comment:</label
+                            >
                             <textarea
                                 id="feedbackComment"
                                 v-model="feedbackComment"
@@ -679,22 +767,32 @@ const sendForm = ref({
 
 const handleApprove = async () => {
     if (!feedbackComment.value.trim()) {
-        showToast("error", "Error", "Please enter a comment before approving!", 3000);
+        showToast(
+            "error",
+            "Error",
+            "Please enter a comment before approving!",
+            3000
+        );
         return;
     }
     try {
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                customer_status: "Accept",  // Change customer status
+                customer_status: "Accept", // Change customer status
                 comment: feedbackComment.value,
             }
         );
-        showToast("success", "Success", "Quotation approved successfully!", 3000);
+        showToast(
+            "success",
+            "Success",
+            "Quotation approved successfully!",
+            3000
+        );
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
         // Refresh the quotations list after updating
-        router.get(route('quotations.list'), {}, { preserveScroll: true });
+        router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
         showToast("error", "Error", "Failed to approve quotation.", 3000);
     }
@@ -702,7 +800,12 @@ const handleApprove = async () => {
 
 const handleReject = async () => {
     if (!feedbackComment.value.trim()) {
-        showToast("error", "Error", "Please enter a comment before rejecting!", 3000);
+        showToast(
+            "error",
+            "Error",
+            "Please enter a comment before rejecting!",
+            3000
+        );
         return;
     }
 
@@ -710,17 +813,22 @@ const handleReject = async () => {
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                customer_status: "Reject",  // Change customer status
+                customer_status: "Reject", // Change customer status
                 comment: feedbackComment.value,
             }
         );
 
-        showToast("success", "Success", "Quotation rejected successfully!", 3000);
+        showToast(
+            "success",
+            "Success",
+            "Quotation rejected successfully!",
+            3000
+        );
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
 
         // Refresh the quotations list after updating
-        router.get(route('quotations.list'), {}, { preserveScroll: true });
+        router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
         showToast("error", "Error", "Failed to reject quotation.", 3000);
     }
@@ -729,9 +837,9 @@ const handleReject = async () => {
 const handleStatusClick = (quotation) => {
     selectedQuotation.value = quotation;
 
-    if (quotation.customer_status === 'Sent') {
+    if (quotation.customer_status === "Sent") {
         isSendDialogVisible.value = true;
-    } else if (quotation.customer_status === 'Pending') {
+    } else if (quotation.customer_status === "Pending") {
         isFeedbackDialogVisible.value = true;
     }
 };
@@ -741,7 +849,9 @@ const generatePDF = (quotation) => {
     element.innerHTML = `
         <h1>Quotation Details</h1>
         <p><strong>Quotation No.:</strong> ${quotation.quotation_no}</p>
-        <p><strong>Customer Name:</strong> ${quotation.customer?.name || "N/A"}</p>
+        <p><strong>Customer Name:</strong> ${
+            quotation.customer?.name || "N/A"
+        }</p>
         <p><strong>Total:</strong> ${quotation.total}</p>
         <h2>Items</h2>
         <table>
@@ -771,13 +881,13 @@ const generatePDF = (quotation) => {
     // Generate PDF and get it as a Blob
     html2pdf()
         .from(element)
-        .get('blob') // Get the generated PDF as a Blob
+        .get("blob") // Get the generated PDF as a Blob
         .then((pdfBlob) => {
             console.log("PDF generated successfully!");
             console.log(pdfBlob);
             const url = URL.createObjectURL(pdfBlob);
 
-// Open the PDF in a new tab with the filename
+            // Open the PDF in a new tab with the filename
             const link = document.createElement("a");
             link.href = url;
             link.download = filename; // Set the filename
@@ -785,7 +895,11 @@ const generatePDF = (quotation) => {
             link.click(); // Trigger the download
             // Create a FormData object to send the PDF to the server
             const formData = new FormData();
-            formData.append("pdf_file", pdfBlob, `quotation_${quotation.quotation_no}.pdf`);
+            formData.append(
+                "pdf_file",
+                pdfBlob,
+                `quotation_${quotation.quotation_no}.pdf`
+            );
 
             // Send the PDF to the server via an AJAX POST request
             // fetch('/save-pdf', {
@@ -803,7 +917,8 @@ const generatePDF = (quotation) => {
             //     .catch((error) => {
             //         console.error("Error sending PDF to server:", error);
             //     });
-        }).save();
+        })
+        .save();
 };
 
 const sendQuotationToCustomer = async () => {
@@ -834,21 +949,25 @@ const sendQuotationToCustomer = async () => {
         const pdfBlob = await html2pdf()
             .from(document.createElement("div"))
             .outputPdf("blob");
-        formData.append("pdf_file", pdfBlob, `quotation_${selectedQuotation.value.quotation_no}.pdf`);
+        formData.append(
+            "pdf_file",
+            pdfBlob,
+            `quotation_${selectedQuotation.value.quotation_no}.pdf`
+        );
 
         // Get CSRF token from the meta tag
-        const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
+        const csrfToken = document
+            .querySelector('meta[name="csrf_token"]')
+            .getAttribute("content");
 
         // Send the request to the backend to save/send the quotation
         const response = await fetch("/quotations/send", {
             method: "POST",
-            body: formData,  // Send the FormData directly
+            body: formData, // Send the FormData directly
             headers: {
-                'X-CSRF-TOKEN': csrfToken,  // CSRF token for security
+                "X-CSRF-TOKEN": csrfToken, // CSRF token for security
             },
         });
-
-
 
         // Parse the JSON response from the server
         const responseData = await response.json();
@@ -882,14 +1001,20 @@ const sendQuotationToCustomer = async () => {
             isSendDialogVisible.value = false;
         } else {
             // Handle case where sending the quotation fails
-            showToast("error", "Error", "Failed to send the quotation. Please try again.", 3000);
+            showToast(
+                "error",
+                "Error",
+                "Failed to send the quotation. Please try again.",
+                3000
+            );
         }
     } catch (error) {
         // Catch any errors and show the error message
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: error.message || "Failed to send quotation. Please try again.",
+            detail:
+                error.message || "Failed to send quotation. Please try again.",
             life: 3000,
         });
     } finally {
