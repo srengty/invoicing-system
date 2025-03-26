@@ -123,4 +123,13 @@ class CustomerController extends Controller
         $customer->active = $data['active'];
         $customer->save();
     }
+    public function toggleActivation(Customer $customer)
+{
+    $customer->update(['active' => !$customer->active]);
+
+    return response()->json([
+        'success' => true,
+        'active' => $customer->active
+    ]);
+}
 }
