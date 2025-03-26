@@ -18,6 +18,7 @@ class Quotation extends Model
         'customer_id',
         'address',
         'phone_number',
+        'email',
         'terms',
         'total',
         'total_usd',

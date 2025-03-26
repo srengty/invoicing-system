@@ -282,6 +282,7 @@ public function updateStatus(Request $request, $id)
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->address,
                 'phone_number' => $quotation->phone_number,
+                'email' => $quotation->email ?? $quotation->customer->email,
                 'products' => $quotation->products,
                 'total' => $quotation->total,
                 'terms' => $quotation->terms,

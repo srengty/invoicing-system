@@ -314,8 +314,8 @@
                     id="terms"
                     v-model="form.terms"
                     rows="5"
-                    cols="30"
-                    class="w-full md:w-2/3"
+                    cols="20"
+                    class="w-full md:w-2/5"
                     placeholder="Enter or edit your Terms & Conditions here"
                     size="small"
                 />
