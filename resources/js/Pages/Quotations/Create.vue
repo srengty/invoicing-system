@@ -258,8 +258,8 @@
                             <span class="ml-2">
                                 {{
                                     slotProps.data.include_catalog
-                                        ? "Included"
-                                        : "Excluded"
+                                        ? ""
+                                        : ""
                                 }}
                             </span>
                         </template>
