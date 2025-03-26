@@ -890,16 +890,9 @@ watch(
 //     }
 // };
 const updateProductSubtotal = (product) => {
-    // Ensure quantity is at least 1
     product.quantity = Math.max(1, product.quantity || 1);
-
-    // Calculate new subtotal
     product.subTotal = (product.price || 0) * product.quantity;
-
-    // Update form total (in KHR)
     form.total = calculateTotalKHR.value;
-
-    // Recalculate exchange rate if USD total exists
     if (form.total_usd && form.total_usd > 0) {
         form.exchange_rate = calculateExchangeRate.value;
     }
@@ -917,45 +910,6 @@ const calculateTotal = computed(() => {
 });
 
 const calculateTotalUSD = ref(null);
-// const calculateExchangeRate = computed(() => {
-//     if (form.total_usd && calculateTotalKHR.value) {
-//         return (calculateTotalKHR.value / form.total_usd).toFixed(2); // Exchange Rate = Total KHR / Total USD
-//     }
-//     return "";
-// });
-
-// const calculateTotalKHR = computed(() => {
-//     const totalInKHR = selectedProductsData.value.reduce((sum, product) => {
-//         return sum + (product.subTotal || 0);
-//     }, 0);
-//     if (form.exchange_rate) {
-//         return (totalInKHR * form.exchange_rate).toFixed(2);
-//     }
-//     return totalInKHR.toFixed(2);
-// });
-
-// watch(calculateTotalUSD, (newValue) => {
-//     if (newValue && calculateTotal.value) {
-//         calculateExchangeRate.value = (calculateTotal.value / newValue).toFixed(
-//             2
-//         );
-//     } else {
-//         calculateExchangeRate.value = "";
-//     }
-// });
-// watch([calculateTotal, calculateTotalUSD], () => {
-//     console.log("Total KHR: ", calculateTotal.value);
-//     console.log("Total USD: ", calculateTotalUSD.value);
-//     console.log("Exchange rate: ", calculateExchangeRate.value);
-// });
-
-// const formatCurrency = (value) => {
-//     if (!value) return "0.00";
-//     return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(
-//         value
-//     );
-// };
-// Calculate subtotal for each product (price * quantity in KHR)
 const calculateProductSubtotals = computed(() => {
     return selectedProductsData.value.map((product) => {
         return {
@@ -964,13 +918,11 @@ const calculateProductSubtotals = computed(() => {
         };
     });
 });
-// Calculate total KHR amount
 const calculateTotalKHR = computed(() => {
     return calculateProductSubtotals.value.reduce((sum, product) => {
         return sum + (product.subTotal || 0);
     }, 0);
 });
-// Calculate exchange rate based on total KHR and USD input
 const calculateExchangeRate = computed(() => {
     if (form.total_usd && form.total_usd > 0) {
         return (calculateTotalKHR.value / form.total_usd).toFixed(4);
@@ -978,7 +930,6 @@ const calculateExchangeRate = computed(() => {
     return "";
 });
 
-// Watch for changes to automatically update exchange rate
 watch(
     () => form.total_usd,
     (newValue) => {
