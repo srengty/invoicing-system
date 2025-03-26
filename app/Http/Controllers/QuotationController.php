@@ -75,10 +75,14 @@ public function updateStatus(Request $request, $id)
 
     // 1. If status is Approved or Revised, and there's no quotation_no yet, assign one
     if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_no) {
-        $lastQuotation = Quotation::orderBy('quotation_no', 'desc')->first();
+        $currentYear = date('Y');
+        $baseQuotationNo = ($currentYear - 2025) * 1000000 + 25000001;
+        $lastQuotation = Quotation::where('quotation_no', '>=', $baseQuotationNo)
+                                ->orderBy('quotation_no', 'desc')
+                                ->first();
         $quotation->quotation_no = $lastQuotation
             ? $lastQuotation->quotation_no + 1
-            : 25000001;
+            : $baseQuotationNo;
     }
 
     // 2. If status is Approved or Revised, and there's no quotation_date yet, set it
@@ -93,12 +97,12 @@ public function updateStatus(Request $request, $id)
 
     // 4. Update the Quotation status and customer status
     $quotation->status = $newStatus;
-    
+
     // Set customer_status based on newStatus if newCustomerStatus isn't provided
-    $quotation->customer_status = $newCustomerStatus ?: 
-        ($newStatus === 'Approved' ? 'Pending' : 
+    $quotation->customer_status = $newCustomerStatus ?:
+        ($newStatus === 'Approved' ? 'Pending' :
         ($newStatus === 'Revised' ? 'Pending' : $newStatus));
-        
+
     $quotation->customer_status_comment = $comment;
 
     // 5. Save the changes to the quotation
@@ -263,9 +267,12 @@ public function updateStatus(Request $request, $id)
         $quotation = Quotation::with(['customer', 'products' => function($query) {
             $query->withPivot(['quantity', 'price', 'include_catalog']);
         }])->where('id', $quotation_no)->firstOrFail();
+
+
         $formattedQuotationDate = $quotation->quotation_date
         ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
         : null;
+
         return Inertia::render('Quotations/Print', [
             'quotation' => [
                 'id' => $quotation->id,
@@ -275,7 +282,7 @@ public function updateStatus(Request $request, $id)
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->address,
                 'phone_number' => $quotation->phone_number,
-                'products' => $quotation->products, // ✅ Ensures products with pivot data are passed
+                'products' => $quotation->products,
                 'total' => $quotation->total,
                 'terms' => $quotation->terms,
                 'total_usd' => $quotation->total_usd,
@@ -398,11 +405,11 @@ public function updateStatus(Request $request, $id)
         ]);
 
         $quotation = Quotation::findOrFail($id);
-        
+
         $quotation->update([
             'customer_status' => $validated['customer_status'],
         ]);
-        
+
         if ($request->has('comment')) {
             // Save comment logic here
             $quotation->comments()->create([

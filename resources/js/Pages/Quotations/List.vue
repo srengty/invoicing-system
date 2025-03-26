@@ -70,7 +70,7 @@
     </Column>
     <Column field="customer.name" header="Customer/Organization Name" style="width: 20%" />
     <Column field="total" header="Total" style="width: 10%" />
-    
+
     <!-- Correctly Map the Status Column -->
     <Column field="status" header="Status" style="width: 10%">
         <template #body="slotProps">
@@ -728,7 +728,7 @@ const handleReject = async () => {
 
 const handleStatusClick = (quotation) => {
     selectedQuotation.value = quotation;
-    
+
     if (quotation.customer_status === 'Sent') {
         isSendDialogVisible.value = true;
     } else if (quotation.customer_status === 'Pending') {
