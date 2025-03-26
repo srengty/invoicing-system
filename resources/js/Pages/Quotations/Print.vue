@@ -198,7 +198,7 @@ const isUSD = ref(false);
 const isKhmer = ref(true);
 const combinedToggle = ref(false);
 const toggleLabel = computed(() => {
-    return isKhmer.value ? "Khmer/៛" : "English/$";
+    return isKhmer.value ? "USD/Dollar($)" : "KHR/Reil(៛)";
 });
 const handleToggleChange = () => {
     if (
