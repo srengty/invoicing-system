@@ -22,16 +22,15 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ParameterSeeder::class,
             CustomerCategorySeeder::class,
-            CustomerSeeder::class,
-            QuotationSeeder::class,
-            AgreementSeeder::class,
+            // CustomerSeeder::class,
+            // QuotationSeeder::class,
+            // AgreementSeeder::class,
             DivisionSeeder::class,
             CategorySeeder::class,
-            ProductSeeder::class,
-            InvoiceSeeder::class,
-            QuotationProductSeeder::class,
-            InvoiceProductSeeder::class,
-            PaymentScheduleSeeder::class,
+            // ProductSeeder::class,
+            // InvoiceSeeder::class,
+            // InvoiceProductSeeder::class,
+            // PaymentScheduleSeeder::class,
         ]);
     }
 }
