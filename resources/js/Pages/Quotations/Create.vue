@@ -246,7 +246,7 @@
                             </div>
                         </template>
                     </Column>
-                    <Column header="Include Catalog">
+                    <Column header="Catalog">
                         <template #body="slotProps">
                             <Checkbox
                                 v-model="slotProps.data.include_catalog"
@@ -258,8 +258,8 @@
                             <span class="ml-2">
                                 {{
                                     slotProps.data.include_catalog
-                                        ? ""
-                                        : ""
+                                        ? "Included"
+                                        : "Include"
                                 }}
                             </span>
                         </template>

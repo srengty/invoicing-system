@@ -20,7 +20,17 @@
                 label="Print Quotation"
                 icon="pi pi-print"
                 class="px-4 py-2"
-                @click="generateAndMergePDFs"
+                @click="generateAndDownloadPDF"
+                size="small"
+            />
+        </div>
+        <!-- Send Email Button -->
+        <div class="flex justify-center mt-6 mb-2">
+            <Button
+                label="Send Quotation via Email"
+                icon="pi pi-send"
+                class="px-4 py-2"
+                @click="generateAndSendPDF"
                 size="small"
             />
         </div>
@@ -175,7 +185,6 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import { Head } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
 import Button from "primevue/button";
 import html2pdf from "html2pdf.js";
@@ -184,6 +193,60 @@ import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
+
+// Form state to track email and telegram sending options
+const sendForm = ref({
+    emailChecked: false,
+    telegramChecked: false
+});
+
+// Other reactive state variables
+const isSendDialogVisible = ref(false);
+const selectedQuotation = ref(null);  // Make sure this is populated with your quotation data
+const isSending = ref(false);
+
+// Function to handle sending the quotation
+const sendQuotationToCustomer = async () => {
+    isSending.value = true;
+    
+    try {
+        // Replace this with the actual API request logic for sending the email
+        await sendQuotationRequest(selectedQuotation.value, sendForm.value);
+
+        // Show success toast
+        toast.add({
+            severity: 'success',
+            summary: 'Quotation Sent',
+            detail: 'The quotation has been sent successfully!',
+            life: 3000,
+        });
+
+        // Close the dialog after sending
+        isSendDialogVisible.value = false;
+    } catch (error) {
+        // Show error toast if something goes wrong
+        toast.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to send the quotation.',
+            life: 3000,
+        });
+    } finally {
+        isSending.value = false;
+    }
+};
+
+// Example function to simulate the sending process (replace with your actual send function)
+const sendQuotationRequest = async (quotation, formData) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            // Simulate successful email sending after 2 seconds
+            resolve();
+        }, 2000);
+    });
+};
+
+// Refs and Data Setup
 const { props } = usePage();
 const quotation = ref({
     ...props.quotation,
@@ -191,20 +254,18 @@ const quotation = ref({
     total_usd: props.quotation?.total_usd || 0,
     exchange_rate: props.quotation?.exchange_rate || 4100,
 });
-const printArea = ref(null);
-const catalogArea = ref(null);
 
+// Create reference for print area (ensure it's properly linked to the DOM)
+const printArea = ref(null);
+
+// State for toggling between currencies
 const isUSD = ref(false);
 const isKhmer = ref(true);
-const combinedToggle = ref(false);
-const toggleLabel = computed(() => {
-    return isKhmer.value ? "USD/Dollar($)" : "KHR/Reil(៛)";
-});
+const toggleLabel = computed(() => isKhmer.value ? "USD/Dollar($)" : "KHR/Reil(៛)");
+
+// Currency conversion and formatting functions
 const handleToggleChange = () => {
-    if (
-        !isKhmer.value &&
-        (!quotation.value.total_usd || !quotation.value.exchange_rate)
-    ) {
+    if (!isKhmer.value && (!quotation.value.total_usd || !quotation.value.exchange_rate)) {
         toast.add({
             severity: "warn",
             summary: "Missing Information",
@@ -217,49 +278,29 @@ const handleToggleChange = () => {
     }
     isUSD.value = !isKhmer.value;
 };
-watch([isKhmer, isUSD], ([newUSD, newKhmer]) => {
-    combinedToggle.value = newKhmer && newUSD;
-});
 
+// Exchange rate and currency labels
 const exchangeRate = computed(() => quotation.value.exchange_rate || 0);
-const currencySymbol = computed(() => (isUSD.value ? "៛" : "$"));
-const currencyLabel = computed(() => (isUSD.value ? "KHR" : "USD"));
+const currencyLabel = computed(() => isUSD.value ? "KHR" : "USD");
 
-const convertCurrency = (amount) => {
-    if (isUSD.value) {
-        return amount / exchangeRate.value;
-    }
-    return amount;
-};
+// Functions for converting and formatting currency
+const convertCurrency = (amount) => isUSD.value ? amount / exchangeRate.value : amount;
 const formatNumber = (value) => {
     if (!value) return "0.00";
-    const formatted = new Intl.NumberFormat("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(value);
-
+    const formatted = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
     return isUSD.value ? `$${formatted}` : `៛${formatted}`;
 };
-const totalAmount = computed(() => {
-    const totalKHR =
-        quotation.value.products?.reduce((sum, product) => {
-            const quantity = product.pivot?.quantity || 0;
-            const price = product.pivot?.price || 0;
-            return sum + quantity * price;
-        }, 0) || 0;
 
+// Compute total amount
+const totalAmount = computed(() => {
+    const totalKHR = quotation.value.products?.reduce((sum, product) => sum + (product.pivot?.quantity || 0) * (product.pivot?.price || 0), 0) || 0;
     return isUSD.value ? totalKHR / exchangeRate.value : totalKHR;
 });
-const alternateTotal = computed(() => {
-    const totalKHR = quotation.value.total || totalAmount.value;
-    return isUSD.value
-        ? totalKHR * exchangeRate.value
-        : totalKHR / exchangeRate.value;
-});
+
+// Format product details
 const formattedProducts = computed(() => {
     if (!quotation.value.products) return [];
-
-    return quotation.value.products.map((product) => ({
+    return quotation.value.products.map(product => ({
         id: product.id,
         name: product.name || "No English name",
         name_kh: product.name_kh || "No Khmer name",
@@ -274,110 +315,82 @@ const formattedProducts = computed(() => {
     }));
 });
 
-const generateAndMergePDFs = async () => {
-    try {
-        const quotationPDF = await generatePDF(printArea.value);
-        const productsWithPDF = formattedProducts.value.filter((product) => {
-            const include = product.pdf_url && product.include_catalog === 1;
-            console.log(
-                `Product ${product.id}: include_catalog=${product.include_catalog}, pdf_url=${product.pdf_url}, include=${include}`
-            );
-            return include;
-        });
-        const catalogPDFs = await Promise.all(
-            productsWithPDF.map(async (product) => {
-                try {
-                    console.log(
-                        `Fetching catalog PDF for product ${product.id} from ${product.pdf_url}...`
-                    );
-                    const response = await fetch(product.pdf_url);
-                    if (!response.ok) {
-                        console.warn(
-                            `Failed to fetch catalog PDF for product ${product.id}: ${response.status} ${response.statusText}`
-                        );
-                        return null;
-                    }
-                    const blob = await response.blob();
-                    return blob;
-                } catch (error) {
-                    console.warn(
-                        `Error fetching catalog PDF for product ${product.id}:`,
-                        error
-                    );
-                    return null;
-                }
-            })
-        );
-        const validCatalogPDFs = catalogPDFs.filter((pdf) => pdf !== null);
-        const mergedPDFBytes = await mergePDFs([
-            quotationPDF,
-            ...validCatalogPDFs,
-        ]);
-
-        // Pass the quotation_no to the displayMergedPDF function
-        const filename = `quotation_${quotation.value.quotation_no}.pdf`;
-        displayMergedPDF(mergedPDFBytes, filename);
-    } catch (error) {
-        console.error("Error generating PDFs:", error);
-    }
-};
+// Function to generate PDF from the print area
 const generatePDF = (element) => {
     return new Promise((resolve) => {
         html2pdf().from(element).toPdf().outputPdf("blob").then(resolve);
     });
 };
 
+// Function to handle printing the PDF (Download)
+const generateAndDownloadPDF = async () => {
+    try {
+        if (!printArea.value) {
+            console.error('Print area is not available');
+            return;
+        }
+        const pdf = await generatePDF(printArea.value);
+        const filename = `quotation_${quotation.value.quotation_no}.pdf`;
+        downloadPDF(pdf, filename);
+    } catch (error) {
+        console.error("Error generating PDFs:", error);
+    }
+};
+
+// Function to handle sending the PDF via email
+const generateAndSendPDF = async () => {
+    try {
+        if (!printArea.value) {
+            console.error('Print area is not available');
+            return;
+        }
+
+        const quotationPDF = await generatePDF(printArea.value);
+        const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
+        const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
+
+        const filename = `quotation_${quotation.value.quotation_no}.pdf`;
+        sendPDFViaEmail(mergedPDF, filename);
+    } catch (error) {
+        console.error("Error generating PDFs:", error);
+    }
+};
+
+// Function to generate catalog PDFs (if available)
+const generateCatalogPDFs = async (products) => {
+    const catalogPDFs = await Promise.all(products.map(async (product) => {
+        if (product.pdf_url && product.include_catalog === 1) {
+            try {
+                const response = await fetch(product.pdf_url);
+                if (!response.ok) {
+                    console.warn(`Failed to fetch catalog PDF for product ${product.id}`);
+                    return null;
+                }
+                return await response.blob();
+            } catch (error) {
+                console.warn(`Error fetching catalog PDF for product ${product.id}:`, error);
+                return null;
+            }
+        }
+        return null;
+    }));
+    return catalogPDFs.filter(pdf => pdf !== null);
+};
+
+// Merge multiple PDFs
 const mergePDFs = async (pdfBlobs) => {
     const pdfDoc = await PDFDocument.create();
-
     for (const pdfBlob of pdfBlobs) {
         const pdf = await PDFDocument.load(await pdfBlob.arrayBuffer());
         const pages = await pdfDoc.copyPages(pdf, pdf.getPageIndices());
-        pages.forEach((page) => pdfDoc.addPage(page));
+        pages.forEach(page => pdfDoc.addPage(page));
     }
-
     return pdfDoc.save();
 };
-const displayMergedPDF = (pdfBytes, filename) => {
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const formData = new FormData();
-    formData.append("quotation_id",quotation.value.id)
-    formData.append("send_email","send bro")
-    formData.append("pdf_file", blob, filename);
-           fetch('/quotations/send', {
-                method: 'POST',
-                headers:{
-                    "X-CSRF-TOKEN":document.querySelector('meta[name="csrf_token"]').getAttribute('content'),
-                },
-                body: formData,
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        console.log("PDF saved successfully!");
-                    } else {
-                        console.error("Error saving PDF on server.");
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error sending PDF to server:", error);
-                });
-    // Open the PDF in a new tab with the filename
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename; // Set the filename
-    document.body.appendChild(link);
-    link.click(); // Trigger the download
-    document.body.removeChild(link); // Clean up
-};
 
+// Download the PDF
 const downloadPDF = (pdfBytes, filename) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    downloadBlob(blob, filename);
-};
-
-const downloadBlob = (blob, filename) => {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = filename;
@@ -385,7 +398,37 @@ const downloadBlob = (blob, filename) => {
     link.click();
     document.body.removeChild(link);
 };
+
+// Send the generated PDF via email
+const sendPDFViaEmail = (pdfBytes, filename) => {
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const formData = new FormData();
+    formData.append("quotation_id", quotation.value.id);
+    formData.append("send_email", "send bro");
+    formData.append("pdf_file", blob, filename);
+
+    fetch('/quotations/send', {
+        method: 'POST',
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf_token"]').getAttribute('content'),
+        },
+        body: formData,
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        if (data.success) {
+            console.log("PDF sent via email successfully!");
+        } else {
+            console.error("Error sending PDF via email.");
+        }
+    })
+    .catch((error) => {
+        console.error("Error sending PDF to server:", error);
+    });
+};
+
 </script>
+
 
 <style scoped>
 .print-area {

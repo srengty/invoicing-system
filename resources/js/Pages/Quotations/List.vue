@@ -70,7 +70,7 @@
     </Column>
     <Column field="customer.name" header="Customer/Organization Name" style="width: 20%" />
     <Column field="total" header="Total" style="width: 10%" />
-
+    
     <!-- Correctly Map the Status Column -->
     <Column field="status" header="Status" style="width: 10%">
         <template #body="slotProps">
@@ -164,7 +164,7 @@
                         class="flex flex-col gap-2 text-sm pl-6"
                     >
                         <p>
-                            <strong>Quotation No.:</strong>
+                            <strong>Quotation No:</strong>
                             {{ selectedQuotation.quotation_no }}
                         </p>
                         <p>
@@ -442,11 +442,11 @@ const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
 };
 
-const openSendDialog = (quotation) => {
-    selectedQuotation.value = quotation;
-    sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
-    isSendDialogVisible.value = true;
-};
+// const openSendDialog = (quotation) => {
+//     selectedQuotation.value = quotation;
+//     sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
+//     isSendDialogVisible.value = true;
+// };
 
 const openFeedbackDialog = (quotation) => {
     if (quotation.customer_status === "Sent") {
@@ -490,7 +490,7 @@ const form = useForm({
 
 const openForm = (quotations = null) => {
     if (quotations) {
-        form.quotation_no = quotations.id;
+        form.quotation_no = quotations.quotation_no;
         form.quotation_date = quotations.quotation_date;
         form.address = quotations.address;
         form.phone_number = quotations.phone_number;
@@ -544,7 +544,7 @@ const viewQuotation = (quotation) => {
 };
 
 const columns = [
-    { field: "quotation_no", header: "Quotation No." },
+    { field: "quotation_no", header: "Quotation No" },
     { field: "quotation_date", header: "Quotation Date" },
     { field: "customer.name", header: "Customer/Organization Name" },
     { field: "address", header: "Address" },
@@ -556,13 +556,6 @@ const columns = [
     { field: "customer_status", header: "Customer Status" },
 ];
 
-// const printQuotation = (quotation_no) => {
-//     const quotUrl = `/quotations/${quotation_no}`;
-//     const printWindow = window.open(quotUrl, "_blank");
-//     printWindow.onload = () => {
-//         printWindow.print();
-//     };
-// };
 const printQuotation = (quotation_no, include_catelog = 0) => {
     // Construct the URL with include_catelog parameter
     const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
@@ -571,9 +564,9 @@ const printQuotation = (quotation_no, include_catelog = 0) => {
     const printWindow = window.open(quotUrl, "_blank");
 
     // Print the quotation once the window has loaded
-    printWindow.onload = () => {
-        printWindow.print();
-    };
+    // printWindow.onload = () => {
+    //     printWindow.print();
+    // };
 };
 
 const selectedColumns = ref(columns);
@@ -728,7 +721,7 @@ const handleReject = async () => {
 
 const handleStatusClick = (quotation) => {
     selectedQuotation.value = quotation;
-
+    
     if (quotation.customer_status === 'Sent') {
         isSendDialogVisible.value = true;
     } else if (quotation.customer_status === 'Pending') {
@@ -769,41 +762,19 @@ const generatePDF = (quotation) => {
     `;
 
     // Generate PDF and get it as a Blob
-    html2pdf()
+    return html2pdf()
         .from(element)
         .get('blob') // Get the generated PDF as a Blob
         .then((pdfBlob) => {
             console.log("PDF generated successfully!");
             console.log(pdfBlob);
-            const url = URL.createObjectURL(pdfBlob);
 
-// Open the PDF in a new tab with the filename
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = filename; // Set the filename
-            document.body.appendChild(link);
-            link.click(); // Trigger the download
             // Create a FormData object to send the PDF to the server
             const formData = new FormData();
             formData.append("pdf_file", pdfBlob, `quotation_${quotation.quotation_no}.pdf`);
 
-            // Send the PDF to the server via an AJAX POST request
-            // fetch('/save-pdf', {
-            //     method: 'POST',
-            //     body: formData,
-            // })
-            //     .then((response) => response.json())
-            //     .then((data) => {
-            //         if (data.success) {
-            //             console.log("PDF saved successfully!");
-            //         } else {
-            //             console.error("Error saving PDF on server.");
-            //         }
-            //     })
-            //     .catch((error) => {
-            //         console.error("Error sending PDF to server:", error);
-            //     });
-        }).save();
+            return formData; // Return the FormData containing the PDF blob
+        });
 };
 
 const sendQuotationToCustomer = async () => {
@@ -847,8 +818,6 @@ const sendQuotationToCustomer = async () => {
                 'X-CSRF-TOKEN': csrfToken,  // CSRF token for security
             },
         });
-
-
 
         // Parse the JSON response from the server
         const responseData = await response.json();
