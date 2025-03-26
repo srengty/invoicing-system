@@ -44,13 +44,21 @@ class QuotationController extends Controller
     $products = Product::where('status', 'approved')->get();
     $quotation = $request->input('quotation', null);
 
-    $customers = Customer::all();
+    $activeCustomers = Customer::where('active', true)->get();
     $divisions = Division::all();
     $products = Product::all();
     $customerCategories = CustomerCategory::all();
     $productCategories = Category::all();
     return inertia('Quotations/Create', [
-        'customers' => Customer::select('id', 'name', 'address', 'phone_number')->get(),
+        'customers' => $activeCustomers->map(function ($customer) {
+            return [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'address' => $customer->address,
+                'phone_number' => $customer->phone_number,
+                'active' => $customer->active
+            ];
+        }),
         // 'products' => $products,
         'products' => Product::where('status', 'approved')->get(),
         'customerCategories' => CustomerCategory::all(),

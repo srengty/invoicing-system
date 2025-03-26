@@ -261,6 +261,8 @@
                                         ? "Included"
                                         : "Include"
                                 }}
+                                =======
+                                {{ slotProps.data.include_catalog ? "" : "" }}
                             </span>
                         </template>
                     </Column>
@@ -515,7 +517,11 @@ import Customers from "@/Components/Customers.vue";
 import { getDepartment } from "../../data";
 
 const props = defineProps({
-    customers: Array,
+    customers: {
+        type: Array,
+        default: () => [], // Ensure default is empty array if not provided
+        required: true,
+    },
     products: Array,
     customerCategories: Array,
     productCategories: Array,
@@ -660,6 +666,18 @@ const updateSelectedProductDetails = () => {
     } else {
         selectedProduct.value = {};
     }
+};
+const activeCustomers = computed(() => {
+    return props.customers.map((customer) => ({
+        id: customer.id.toString(),
+        name: customer.name,
+        address: customer.address,
+        phone_number: customer.phone_number,
+        is_active: customer.is_active,
+    }));
+});
+const isCustomerDisabled = (customer) => {
+    return !customer.is_active;
 };
 const getCategoryName = (categoryId) => {
     if (!categoryId) return "";
@@ -835,10 +853,11 @@ watch(selectedProductIds, (newIds) => {
 
 const formattedCustomers = computed(() => {
     return props.customers.map((customer) => ({
-        id: customer.id.toString(), // Ensure ID is a string for proper binding
-        name: customer.name, // Display name in dropdown
-        address: customer.address,
-        phone_number: customer.phone_number,
+        id: customer.id.toString(),
+        name: customer.name,
+        address: customer.address || "",
+        phone_number: customer.phone_number || "",
+        is_active: customer.is_active !== false,
     }));
 });
 watch(

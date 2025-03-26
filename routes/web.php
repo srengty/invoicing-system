@@ -57,6 +57,11 @@ Route::get('/settings/customers/{customer}/edit', [CustomerController::class, 'e
 Route::delete('/settings/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
 Route::put('/settings/customers/{customer}/toggle-active', [CustomerController::class, 'toggleActive'])
     ->name('customers.toggleActive');
+// routes/web.php
+Route::get('/activate-all-customers', function() {
+    \App\Models\Customer::query()->update(['active' => true]);
+    return 'All customers activated';
+});
 
 Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
 Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
