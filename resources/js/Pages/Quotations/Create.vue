@@ -261,7 +261,6 @@
                                         ? "Included"
                                         : "Include"
                                 }}
-                                =======
                                 {{ slotProps.data.include_catalog ? "" : "" }}
                             </span>
                         </template>
