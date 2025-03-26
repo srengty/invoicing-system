@@ -114,7 +114,6 @@ public function updateStatus(Request $request, $id)
     }
 }
 
-
     public function storeComment(Request $request, $quotationId)
 {
     $quotation = Quotation::findOrFail($quotationId);
@@ -146,18 +145,19 @@ public function updateStatus(Request $request, $id)
             'address'        => 'nullable|string|max:255',
             'phone_number'   => 'nullable|string|max:20',
             'terms'          => 'nullable|string|max:255',
-            'total_usd' => 'nullable|numeric',
+            'total_usd'      => 'nullable|numeric',
+            'exchange_rate' => 'nullable|numeric|min:0',
             // 'tax'            => 'required|numeric',
             'products'       => 'nullable|array', // Make products optional
-            'products.*.id' => 'required|exists:products,id', // Validate product IDs
+            'products.*.id'  => 'required|exists:products,id', // Validate product IDs
             'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
-            'products.*.price' => 'required|numeric|min:1', // Validate product quantities
+            'products.*.price'    => 'required|numeric|min:1', // Validate product quantities
             'products.*.acc_code' => 'nullable|string|max:255',
             'products.*.category_id' => 'nullable|integer|min:0',
-            'products.*.remark' => 'nullable|string|max:255',
-            'products.*.pdf' => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
+            'products.*.remark'      => 'nullable|string|max:255',
+            'products.*.pdf'         => 'nullable|file|mimes:pdf|max:2048', // ✅ Make it optional
             'products.*.include_catalog' => 'required|boolean', // Ensure include_catalog is validated
-            'products.*.pdf_url' => 'nullable|string|max:255',
+            'products.*.pdf_url'     => 'nullable|string|max:255',
         ]);
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
@@ -182,6 +182,12 @@ public function updateStatus(Request $request, $id)
         // $tax = $tax * $total;
         // $grand_total = $total + $tax;
         // $grand_total = $total;
+
+        // Calculate USD amount if exchange rate is provided
+        $totalUsd = null;
+        if (!empty($validated['exchange_rate']) && $validated['exchange_rate'] > 0) {
+            $totalUsd = $total / $validated['exchange_rate'];
+        }
 
         $quotationDate = $request->quotation_date
         ? Carbon::parse($request->quotation_date)->format('Y-m-d H:i:s')
@@ -208,6 +214,7 @@ public function updateStatus(Request $request, $id)
             'terms'          => $validated['terms'] ?? null,
             'total'          => $total,
             'total_usd'      => $validated['total_usd'] ?? 0,
+            'exchange_rate'  => $validated['exchange_rate'] ?? null,
 
         ]);
         // Attach products to the quotation
@@ -304,6 +311,8 @@ public function updateStatus(Request $request, $id)
             'phone_number' => 'nullable|string|max:20',
             'terms' => 'nullable|string|max:255',
             'total' => 'required|numeric|min:0',
+            'total_usd' => 'nullable|numeric',
+            'exchange_rate' => 'nullable|numeric|min:0',
             // 'tax' => 'required|numeric|min:0',
             // 'grand_total' => 'required|numeric|min:0',
             // 'status' => 'sometimes|string|max:20',
@@ -319,6 +328,11 @@ public function updateStatus(Request $request, $id)
             'products.*.pdf_url' => 'nullable|string|max:255',
 
         ]);
+
+        // Calculate USD amount if exchange rate is provided
+        if (!empty($validated['exchange_rate']) && $validated['exchange_rate'] > 0) {
+            $validated['total_usd'] = $validated['total'] / $validated['exchange_rate'];
+        }
 
         $quotation->update($validated);
 

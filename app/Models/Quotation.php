@@ -21,12 +21,14 @@ class Quotation extends Model
         'terms',
         'total',
         'total_usd',
+        'exchange_rate',
         'status',
     ];
 
     protected $casts = [
         'quotation_date' => 'datetime',
         'total' => 'double',
+        'exchange_rate' => 'double',
         'quotation_date' => 'datetime:Y-m-d',
     ];
 

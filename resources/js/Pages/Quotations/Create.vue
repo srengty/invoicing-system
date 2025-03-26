@@ -514,7 +514,6 @@ import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
 import { getDepartment } from "../../data";
 
-
 const props = defineProps({
     customers: Array,
     products: Array,
@@ -557,7 +556,8 @@ const form = useForm({
     address: props.quotation?.address || "",
     phone_number: props.quotation?.phone_number || "",
     total: props.quotation?.total || 0,
-    total_usd: props.quotation?.total_usd || 0, // Add this field for USD input
+    total_usd: props.quotation?.total_usd || 0,
+    exchange_rate: props.quotation?.exchange_rate || 0,
     products: props.quotation?.products || [],
     terms: props.quotation?.terms || "",
 });
@@ -679,8 +679,6 @@ const filterProductsByDivision = () => {
         filteredProducts.value = []; // Clear filtered products if no division is selected
     }
 };
-
-
 const searchProducts = (event) => {
     const selectedProductIds = selectedProductsData.value.map(
         (prod) => prod.id
@@ -875,20 +873,28 @@ watch(
     }
 );
 
-const updateProductSubtotal = (row) => {
-    row.quantity = parseInt(row.quantity) || 1;
-    row.subTotal = Number(row.price) * row.quantity || 0;
-    form.total = selectedProductsData.value.reduce(
-        (sum, prod) => sum + prod.subTotal,
-        0
-    );
-    form.grand_total = calculateGrandTotal.value;
+// const updateProductSubtotal = (row) => {
+//     row.quantity = parseInt(row.quantity) || 1;
+//     row.subTotal = Number(row.price) * row.quantity || 0;
+//     form.total = selectedProductsData.value.reduce(
+//         (sum, prod) => sum + prod.subTotal,
+//         0
+//     );
+//     form.grand_total = calculateGrandTotal.value;
 
-    const updatedProduct = selectedProductsData.value.find(
-        (prod) => prod.id === row.id
-    );
-    if (updatedProduct) {
-        updatedProduct.price = row.price;
+//     const updatedProduct = selectedProductsData.value.find(
+//         (prod) => prod.id === row.id
+//     );
+//     if (updatedProduct) {
+//         updatedProduct.price = row.price;
+//     }
+// };
+const updateProductSubtotal = (product) => {
+    product.quantity = Math.max(1, product.quantity || 1);
+    product.subTotal = (product.price || 0) * product.quantity;
+    form.total = calculateTotalKHR.value;
+    if (form.total_usd && form.total_usd > 0) {
+        form.exchange_rate = calculateExchangeRate.value;
     }
 };
 
@@ -904,47 +910,40 @@ const calculateTotal = computed(() => {
 });
 
 const calculateTotalUSD = ref(null);
+const calculateProductSubtotals = computed(() => {
+    return selectedProductsData.value.map((product) => {
+        return {
+            ...product,
+            subTotal: (product.price || 0) * (product.quantity || 1),
+        };
+    });
+});
+const calculateTotalKHR = computed(() => {
+    return calculateProductSubtotals.value.reduce((sum, product) => {
+        return sum + (product.subTotal || 0);
+    }, 0);
+});
 const calculateExchangeRate = computed(() => {
-    if (form.total_usd && calculateTotalKHR.value) {
-        return (calculateTotalKHR.value / form.total_usd).toFixed(2); // Exchange Rate = Total KHR / Total USD
+    if (form.total_usd && form.total_usd > 0) {
+        return (calculateTotalKHR.value / form.total_usd).toFixed(4);
     }
     return "";
 });
 
-const calculateTotalKHR = computed(() => {
-    // Sum all subtotals in KHR
-    const totalInKHR = selectedProductsData.value.reduce((sum, product) => {
-        return sum + (product.subTotal || 0); // Make sure subTotal is being computed correctly for each product
-    }, 0);
-
-    // Apply the exchange rate
-    if (form.exchange_rate) {
-        return (totalInKHR * form.exchange_rate).toFixed(2); // Convert to KHR using the exchange rate
+watch(
+    () => form.total_usd,
+    (newValue) => {
+        if (newValue && newValue > 0) {
+            form.exchange_rate = calculateExchangeRate.value;
+        }
     }
-
-    return totalInKHR.toFixed(2); // Return the KHR total without conversion if no exchange rate
-});
-
-watch(calculateTotalUSD, (newValue) => {
-    if (newValue && calculateTotal.value) {
-        calculateExchangeRate.value = (calculateTotal.value / newValue).toFixed(
-            2
-        );
-    } else {
-        calculateExchangeRate.value = "";
-    }
-});
-watch([calculateTotal, calculateTotalUSD], () => {
-    console.log("Total KHR: ", calculateTotal.value);
-    console.log("Total USD: ", calculateTotalUSD.value);
-    console.log("Exchange rate: ", calculateExchangeRate.value);
-});
-
+);
 const formatCurrency = (value) => {
-    if (!value) return "0.00";
-    return new Intl.NumberFormat("en-US", { minimumFractionDigits: 2 }).format(
-        value
-    );
+    if (isNaN(value)) return "0.00";
+    return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
 };
 
 const calculateGrandTotal = computed(() => {
@@ -978,7 +977,6 @@ const editProduct = (productId) => {
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
     }
-
 };
 const validateForm = () => {
     if (!form.address) {
@@ -1052,12 +1050,15 @@ const submit = async (event) => {
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
     form.total_usd = form.total_usd || 0;
-    form.exchange_rate = form.exchange_rate || 0;
+    form.total = calculateTotalKHR.value;
+    form.exchange_rate = calculateExchangeRate.value;
 
-    // Debugging: Log form data before submission
-    console.log("Submitting Quotation ID:", form.id);
-    console.log("Final Form Data:", JSON.stringify(form, null, 2));
-
+    // If USD total wasn't set, set it based on exchange rate if available
+    if (!form.total_usd && form.exchange_rate > 0) {
+        form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
+            2
+        );
+    }
     // Check if we are editing or creating
     if (form.id) {
         // PUT request for updating existing quotation
