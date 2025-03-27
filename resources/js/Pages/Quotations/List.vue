@@ -3,13 +3,14 @@
     <meta name="_token" content="{{ csrf_token() }}" />
 
     <GuestLayout>
-        <BodyLayout>
+        <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
         <div class="quotations text-sm">
-            <div class="flex justify-between items-center pb-4 pt-2">
+            <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
-                <div class="flex justify-end gap-4">
+            </div>
+            <div class="flex justify-end p-4 gap-4">
                 <div>
                     <Dropdown
                         v-model="searchType"
@@ -52,8 +53,6 @@
                         raised
                 /></Link>
             </div>
-            </div>
-            
 
             <div>
                 <DataTable
@@ -114,20 +113,40 @@
                         <template #body="slotProps">
                             <span
                                 @click="handleStatusClick(slotProps.data)"
+                                v-tooltip.top="
+                                    'Current customer status: ' +
+                                    slotProps.data.customer_status
+                                "
                                 class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                 :class="{
-                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.customer_status === 'Sent',
-                                    'bg-yellow-100 text-yellow-800 border-yellow-400': slotProps.data.customer_status === 'Pending',
-                                    'bg-green-100 text-green-800 border-green-400': slotProps.data.customer_status === 'Accept',
-                                    'bg-red-100 text-red-800 border-red-400': slotProps.data.customer_status === 'Reject',
+                                    'bg-blue-100 text-blue-800 border-blue-400':
+                                        slotProps.data.customer_status ===
+                                        'Sent',
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.customer_status ===
+                                        'Pending',
+                                    'bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.customer_status ===
+                                        'Accept',
+                                    'bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.customer_status ===
+                                        'Reject',
                                 }"
                             >
                                 <i
                                     :class="{
-                                        'pi pi-send': slotProps.data.customer_status === 'Sent',
-                                        'pi pi-clock': slotProps.data.customer_status === 'Pending',
-                                        'pi pi-check': slotProps.data.customer_status === 'Accept',
-                                        'pi pi-times': slotProps.data.customer_status === 'Reject',
+                                        'pi pi-send':
+                                            slotProps.data.customer_status ===
+                                            'Sent',
+                                        'pi pi-clock':
+                                            slotProps.data.customer_status ===
+                                            'Pending',
+                                        'pi pi-check':
+                                            slotProps.data.customer_status ===
+                                            'Accept',
+                                        'pi pi-times':
+                                            slotProps.data.customer_status ===
+                                            'Reject',
                                     }"
                                     style="margin-right: 8px"
                                 ></i>
@@ -165,7 +184,7 @@
                             <div v-else><em>No comment</em></div>
                         </template>
                     </Column>
-                    <Column header="View / Print-out" style="width: 10%">
+                    <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
                                 <Button
@@ -311,7 +330,7 @@
 
                     <template #footer>
                         <Button
-                            label="Approved"
+                            label="Approve"
                             :class="{
                                 'custom-approved':
                                     selectedQuotation.status === 'Approved',
@@ -340,6 +359,78 @@
                             label="Close"
                             severity="secondary"
                             @click="showCancel"
+                        />
+                    </template>
+                </Dialog>
+
+                <!-- Send Dialog display -->
+                <Dialog
+                    v-model:visible="isSendDialogVisible"
+                    header="Send Quotation"
+                    modal
+                    class="text-sm w-auto"
+                >
+                    <div
+                        v-if="selectedQuotation"
+                        class="flex flex-col gap-4 ml-2 mr-2"
+                    >
+                        <!-- Display Selected Quotation Info -->
+                        <div>
+                            <strong>Quotation No:</strong>
+                            <p>{{ selectedQuotation.quotation_no }}</p>
+                        </div>
+                        <div>
+                            <strong>Customer Name:</strong>
+                            <p>
+                                {{ selectedQuotation.customer?.name || "N/A" }}
+                            </p>
+                        </div>
+
+                        <!-- Email Checkbox -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="emailCheckbox"
+                                v-model="sendForm.emailChecked"
+                                class="mr-2"
+                            />
+                            <label for="emailCheckbox" class="font-bold"
+                                >Email:
+                                {{
+                                    selectedQuotation.customer?.email || "N/A"
+                                }}</label
+                            >
+                        </div>
+
+                        <!-- Telegram Checkbox -->
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="telegramCheckbox"
+                                v-model="sendForm.telegramChecked"
+                                class="mr-2"
+                            />
+                            <label for="telegramCheckbox" class="font-bold"
+                                >Telegram:
+                                {{
+                                    selectedQuotation.customer
+                                        ?.telegram_number || "N/A"
+                                }}</label
+                            >
+                        </div>
+                    </div>
+
+                    <template #footer>
+                        <Button
+                            label="Cancel"
+                            severity="secondary"
+                            @click="isSendDialogVisible = false"
+                        />
+                        <Button
+                            label="Send"
+                            severity="success"
+                            @click="sendQuotationToCustomer"
+                            :loading="isSending"
                         />
                     </template>
                 </Dialog>
@@ -383,7 +474,7 @@
                         <!-- Approve/Reject Buttons -->
                         <div class="flex justify-end gap-2">
                             <Button
-                                label="Accept"
+                                label="Approve"
                                 severity="success"
                                 @click="handleApprove"
                             />
@@ -397,7 +488,6 @@
                 </Dialog>
             </div>
         </div>
-        </BodyLayout>
     </GuestLayout>
 </template>
 
@@ -416,8 +506,7 @@ import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import { InputText } from "primevue";
 import html2pdf from "html2pdf.js";
-import { Inertia } from '@inertiajs/inertia';
-import BodyLayout from '@/Layouts/BodyLayout.vue';
+import { Inertia } from "@inertiajs/inertia";
 
 const toast = useToast();
 
@@ -460,6 +549,12 @@ const filteredQuotations = computed(() => {
 
 const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
+};
+
+const openSendDialog = (quotation) => {
+    selectedQuotation.value = quotation;
+    sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
+    isSendDialogVisible.value = true;
 };
 
 const openFeedbackDialog = (quotation) => {
@@ -572,13 +667,12 @@ const columns = [
     { field: "status", header: "Status" },
     { field: "customer_status", header: "Customer Status" },
 ];
-
-
 const printQuotation = (quotation_no, include_catelog = 0) => {
     // Construct the URL with include_catelog parameter
     const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
 
-    Inertia.visit(quotUrl);
+    // Inertia.visit(quotUrl);
+    const printWindow = window.open(quotUrl, "_blank");
 };
 
 const selectedColumns = ref(columns);
@@ -693,29 +787,25 @@ const handleApprove = async () => {
         return;
     }
     try {
-        // Update the quotation's customer_status to "Accept"
-                await router.put(
+        await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
-            {   
-                status: "Approved",
-                customer_status: "Accept", // Change customer status to "Accept"
-                customer_status_comment: feedbackComment.value,
+            {
+                customer_status: "Accept", // Change customer status
+                comment: feedbackComment.value,
             }
         );
-
         showToast(
             "success",
             "Success",
-            "Quotation accepted successfully!",
+            "Quotation approved successfully!",
             3000
         );
-
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
         // Refresh the quotations list after updating
         router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
-        showToast("error", "Error", "Failed to accept quotation.", 3000);
+        showToast("error", "Error", "Failed to approve quotation.", 3000);
     }
 };
 
@@ -731,13 +821,11 @@ const handleReject = async () => {
     }
 
     try {
-        // Update the quotation's customer_status to "Reject"
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
-            {   
-                status: "Approved",
-                customer_status: "Reject", // Change customer status to "Reject"
-                customer_status_comment: feedbackComment.value,
+            {
+                customer_status: "Reject", // Change customer status
+                comment: feedbackComment.value,
             }
         );
 
@@ -757,7 +845,6 @@ const handleReject = async () => {
     }
 };
 
-
 const handleStatusClick = (quotation) => {
     selectedQuotation.value = quotation;
 
@@ -765,6 +852,185 @@ const handleStatusClick = (quotation) => {
         isSendDialogVisible.value = true;
     } else if (quotation.customer_status === "Pending") {
         isFeedbackDialogVisible.value = true;
+    }
+};
+
+const generatePDF = (quotation) => {
+    const element = document.createElement("div");
+    element.innerHTML = `
+        <h1>Quotation Details</h1>
+        <p><strong>Quotation No.:</strong> ${quotation.quotation_no}</p>
+        <p><strong>Customer Name:</strong> ${
+            quotation.customer?.name || "N/A"
+        }</p>
+        <p><strong>Total:</strong> ${quotation.total}</p>
+        <h2>Items</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>QTY</th>
+                    <th>Unit Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${quotation.products
+                    .map(
+                        (product) => `
+                    <tr>
+                        <td>${product.name}</td>
+                        <td>${product.pivot.quantity}</td>
+                        <td>${product.pivot.price}</td>
+                    </tr>
+                `
+                    )
+                    .join("")}
+            </tbody>
+        </table>
+    `;
+
+    // Generate PDF and get it as a Blob
+    html2pdf()
+        .from(element)
+        .get("blob") // Get the generated PDF as a Blob
+        .then((pdfBlob) => {
+            console.log("PDF generated successfully!");
+            console.log(pdfBlob);
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Open the PDF in a new tab with the filename
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename; // Set the filename
+            document.body.appendChild(link);
+            link.click(); // Trigger the download
+            // Create a FormData object to send the PDF to the server
+            const formData = new FormData();
+            formData.append(
+                "pdf_file",
+                pdfBlob,
+                `quotation_${quotation.quotation_no}.pdf`
+            );
+
+            // Send the PDF to the server via an AJAX POST request
+            // fetch('/save-pdf', {
+            //     method: 'POST',
+            //     body: formData,
+            // })
+            //     .then((response) => response.json())
+            //     .then((data) => {
+            //         if (data.success) {
+            //             console.log("PDF saved successfully!");
+            //         } else {
+            //             console.error("Error saving PDF on server.");
+            //         }
+            //     })
+            //     .catch((error) => {
+            //         console.error("Error sending PDF to server:", error);
+            //     });
+        })
+        .save();
+};
+
+const sendQuotationToCustomer = async () => {
+    // Ensure the email option is selected
+    if (!sendForm.value.emailChecked && !sendForm.value.telegramChecked) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Please select at least one option (Email or Telegram).",
+            life: 3000,
+        });
+        return;
+    }
+
+    isSending.value = true;
+
+    try {
+        // Generate the PDF for the quotation
+        generatePDF(selectedQuotation.value);
+
+        // Prepare the form data for sending
+        const formData = new FormData();
+        formData.append("quotation_id", selectedQuotation.value.id);
+        formData.append("send_email", sendForm.value.emailChecked);
+        formData.append("send_telegram", sendForm.value.telegramChecked);
+
+        // Add the generated PDF to the form data
+        const pdfBlob = await html2pdf()
+            .from(document.createElement("div"))
+            .outputPdf("blob");
+        formData.append(
+            "pdf_file",
+            pdfBlob,
+            `quotation_${selectedQuotation.value.quotation_no}.pdf`
+        );
+
+        // Get CSRF token from the meta tag
+        const csrfToken = document
+            .querySelector('meta[name="csrf_token"]')
+            .getAttribute("content");
+
+        // Send the request to the backend to save/send the quotation
+        const response = await fetch("/quotations/send", {
+            method: "POST",
+            body: formData, // Send the FormData directly
+            headers: {
+                "X-CSRF-TOKEN": csrfToken, // CSRF token for security
+            },
+        });
+
+        // Parse the JSON response from the server
+        const responseData = await response.json();
+
+        if (responseData.success) {
+            // If the quotation was approved, change the status to "Pending"
+            if (selectedQuotation.value.status === "Approved") {
+                await router.put(
+                    `/quotations/${selectedQuotation.value.id}/update-status`,
+                    {
+                        status: "Approved", // Change the status to Pending
+                    }
+                );
+
+                showToast(
+                    "success",
+                    "Success",
+                    "Quotation sent and status updated to 'Pending'!",
+                    3000
+                );
+            } else {
+                showToast(
+                    "success",
+                    "Success",
+                    "Quotation sent successfully!",
+                    3000
+                );
+            }
+
+            // Close the send dialog
+            isSendDialogVisible.value = false;
+        } else {
+            // Handle case where sending the quotation fails
+            showToast(
+                "error",
+                "Error",
+                "Failed to send the quotation. Please try again.",
+                3000
+            );
+        }
+    } catch (error) {
+        // Catch any errors and show the error message
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail:
+                error.message || "Failed to send quotation. Please try again.",
+            life: 3000,
+        });
+    } finally {
+        // Reset the sending state
+        isSending.value = false;
     }
 };
 </script>
