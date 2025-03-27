@@ -68,83 +68,77 @@ class QuotationController extends Controller
     ]);
 }
 
-public function updateStatus(Request $request, $id)
-{
-    $quotation = Quotation::findOrFail($id);
+    public function updateStatus(Request $request, $id)
+    {
+        $quotation = Quotation::findOrFail($id);
 
-    // Validate required fields
-    $validated = $request->validate([
-        'status' => 'required|string', // Ensure status is provided
-    ]);
-
-    $newStatus = $request->input('status');
-    $newCustomerStatus = $request->input('customer_status');
-    $comment = $request->input('comment');
-
-    // 1. If status is Approved or Revised, and there's no quotation_no yet, assign one
-    if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_no) {
-        $currentYear = date('Y');
-        $baseQuotationNo = ($currentYear - 2025) * 1000000 + 25000001;
-        $lastQuotation = Quotation::where('quotation_no', '>=', $baseQuotationNo)
-                                ->orderBy('quotation_no', 'desc')
-                                ->first();
-        $quotation->quotation_no = $lastQuotation
-            ? $lastQuotation->quotation_no + 1
-            : $baseQuotationNo;
-    }
-
-    // 2. If status is Approved or Revised, and there's no quotation_date yet, set it
-    if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_date) {
-        $quotation->quotation_date = now();
-    }
-
-    // 3. If status is Revised, set the revised_at timestamp
-    if ($newStatus === 'Revised') {
-        $quotation->revised_at = now();
-    }
-
-    // 4. Update the Quotation status and customer status
-    $quotation->status = $newStatus;
-
-    // Set customer_status based on newStatus if newCustomerStatus isn't provided
-    $quotation->customer_status = $newCustomerStatus ?:
-        ($newStatus === 'Approved' ? 'Pending' :
-        ($newStatus === 'Revised' ? 'Pending' : $newStatus));
-
-    $quotation->customer_status_comment = $comment;
-
-    // 5. Save the changes to the quotation
-    $quotation->save();
-
-    // 6. If a comment is provided, store it in the quotation_comments table
-    if (!empty($comment)) {
-        $quotation->comments()->create([
-            'user_id' => $request->user()->id ?? null,
-            'status'  => $newStatus,
-            'comment' => $comment,
+        $validated = $request->validate([
+            'status' => 'required|string',
         ]);
+
+        $newStatus = $request->input('status');
+        $newCustomerStatus = $request->input('customer_status');
+        $comment = $request->input('comment');
+
+        // Quotation number generation
+        if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_no) {
+            $currentYear = date('Y');
+            $baseQuotationNo = ($currentYear - 2025) * 1000000 + 25000001;
+            $lastQuotation = Quotation::where('quotation_no', '>=', $baseQuotationNo)
+                                    ->orderBy('quotation_no', 'desc')
+                                    ->first();
+            $quotation->quotation_no = $lastQuotation
+                ? $lastQuotation->quotation_no + 1
+                : $baseQuotationNo;
+        }
+
+        // Date handling
+        if (($newStatus === 'Approved' || $newStatus === 'Revised') && !$quotation->quotation_date) {
+            $quotation->quotation_date = now();
+        }
+
+        // Revised timestamp
+        if ($newStatus === 'Revised') {
+            $quotation->revised_at = now();
+        }
+
+        // Status updates
+        $quotation->status = $newStatus;
+        
+        // Improved customer_status logic
+        if ($newCustomerStatus) {
+            // Use explicitly provided customer_status
+            $quotation->customer_status = $newCustomerStatus;
+        } else {
+            // Default mapping from quotation status to customer_status
+            $statusMap = [
+                'Draft' => 'Draft',
+                'New' => 'New',
+                'Sent' => 'Pending',
+                'Approved' => 'Approved',
+                'Revised' => 'Pending', // Revised puts it back to pending
+                'Rejected' => 'Rejected',
+                'Cancelled' => 'Cancelled'
+            ];
+            
+            $quotation->customer_status = $statusMap[$newStatus] ?? $newStatus;
+        }
+
+        $quotation->customer_status_comment = $comment;
+        $quotation->save();
+
+        // Comment handling
+        if (!empty($comment)) {
+            $quotation->comments()->create([
+                'user_id' => $request->user()->id ?? null,
+                'status' => $newStatus,
+                'comment' => $comment,
+            ]);
+        }
+
+        return response();
     }
-}
 
-    public function storeComment(Request $request, $quotationId)
-{
-    $quotation = Quotation::findOrFail($quotationId);
-
-    $comment = $request->input('comment');
-    $role    = $request->input('role'); // 'ITC management', 'ITC customer', etc.
-
-    $quotation->comments()->create([
-        'user_id' => $request->user()->id ?? null,
-        'role'    => $role,
-        'status'  => $quotation->status, // store the Quotation's current status
-        'comment' => $comment,
-    ]);
-
-    return response()->json([
-        'message'  => 'Comment added successfully!',
-        'comments' => $quotation->comments()->latest()->get(),
-    ]);
-}
 
     public function store(Request $request)
     {
@@ -458,10 +452,8 @@ public function updateStatus(Request $request, $id)
     ]);
 }
 
-
 public function sendQuotation(Request $request)
 {
-    // Find the quotation by ID
     $quotation = Quotation::with('customer')->find($request->input('quotation_id'));
 
     if (!$quotation) {
@@ -469,46 +461,42 @@ public function sendQuotation(Request $request)
     }
 
     try {
-        // Ensure the customer has a valid email
-        $customerEmail = $quotation->customer->email;
-
-        if (!$customerEmail) {
-            throw new Exception('Customer email not found.');
+        // Email validation (only if sending email)
+        if ($request->input('send_email')) {
+            $customerEmail = $quotation->customer->email;
+            if (!$customerEmail) {
+                throw new Exception('Customer email not found.');
+            }
         }
 
-        // Save the PDF file to storage
+        // PDF handling
         if ($request->hasFile('pdf_file')) {
-            $pdfFile = $request->file('pdf_file');
-            $pdfPath = $pdfFile->store('quotations', 'public'); // Save to 'storage/app/public/quotations'
-            Log::info('PDF saved to: ' . $pdfPath); // Log the saved path
+            $pdfPath = $request->file('pdf_file')->store('quotations', 'public');
+            Log::info('PDF saved to: ' . $pdfPath);
         } else {
             throw new Exception('PDF file not found.');
         }
 
-        // Send email if requested
+        // Email sending
         if ($request->input('send_email')) {
-            // Log email sending attempt
             Log::info('Sending email to: ' . $customerEmail);
-
-            // Ensure the file path for email is correct and accessible
-            $filePath = storage_path('app/public/' . $pdfPath);
-
-            // Send the email with the saved PDF file
             Mail::to($customerEmail)->send(new QuotationEmail($quotation, $request->file('pdf_file')));
-
-            // Check if there were any failures when sending the email
-            // if (Mail::failures()) {
-            //     throw new Exception('Failed to send email to ' . $customerEmail);
-            // }
+            
+            // Automatically update statuses when sending email
+            $quotation->customer_status = 'Pending'; // Change from Sent to Pending
+            $quotation->customer->update(['customer_status' => 'Pending']);
         }
 
-        // Return success response
+        // Save the quotation (status remains Approved unless changed elsewhere)
+        $quotation->save();
+
         return response()->json([
-            'success' => 'Quotation sent successfully via email',
-            'pdf_path' => $pdfPath, // Optional: Return the saved PDF path
+            'success' => $request->input('send_email') 
+                ? 'Quotation sent successfully via email' 
+                : 'Quotation processed successfully',
+            'pdf_path' => $pdfPath,
         ]);
     } catch (Exception $e) {
-        // Log any error and return a failure response
         Log::error('Failed to send quotation: ' . $e->getMessage());
         return response()->json(['error' => $e->getMessage()], 500);
     }

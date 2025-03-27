@@ -227,7 +227,7 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { usePage, router } from '@inertiajs/vue3';
 import Button from "primevue/button";
 import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";
@@ -235,6 +235,8 @@ import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
 import Dialog from "primevue/dialog";
 import { Head } from '@inertiajs/vue3';
+import { Inertia } from '@inertiajs/inertia'; // <-- Add this import
+
 
 const toast = useToast();
 
@@ -248,6 +250,10 @@ const sendForm = ref({
 const isSendDialogVisible = ref(false);
 const selectedQuotation = ref(null);  // Make sure this is populated with your quotation data
 const isSending = ref(false);
+
+const cancelSend = () => {
+    isSendDialogVisible.value = false;  // Close the dialog
+};
 
 const showConfirmationDialog = () => {
     selectedQuotation.value = quotation;
@@ -360,6 +366,7 @@ const generateAndDownloadPDF = async () => {
         // Step 4: Download the merged PDF
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         downloadPDF(mergedPDF, filename);
+        Inertia.visit(route('quotations.list'));
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -380,6 +387,7 @@ const generateAndSendPDF = async () => {
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         sendPDFViaEmail(mergedPDF, filename);
         isSendDialogVisible.value=false;
+        Inertia.visit(route('quotations.list'));
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -435,6 +443,7 @@ const sendPDFViaEmail = (pdfBytes, filename) => {
     formData.append("quotation_id", quotation.value.id);
     formData.append("send_email", "send bro");
     formData.append("pdf_file", blob, filename);
+    formData.append("update_status", "Pending");
 
     fetch('/quotations/send', {
         method: 'POST',
