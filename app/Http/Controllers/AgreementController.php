@@ -28,9 +28,9 @@ class AgreementController extends Controller
     public function create()
     {
         return Inertia::render('Agreements/Create',[
-            'customers' => Customer::all(),
+            'customers' => Customer::where('active', true)->get(),
             'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
-            'csrf_token' => csrf_token(),  
+            'csrf_token' => csrf_token(),
             'quotations' => Quotation::all(),
         ]);
     }
@@ -84,8 +84,15 @@ class AgreementController extends Controller
      */
     public function edit(int $agreement_no)
     {
+        $agreement = Agreement::with('customer')->with('paymentSchedules')->find($agreement_no);
+
+        // Get active customers plus the current agreement's customer (if different)
+        $customers = Customer::where('active', true)
+            ->orWhere('id', $agreement->customer_id)
+            ->get();
+
         return Inertia::render('Agreements/Create',[
-            'customers' => Customer::all(),
+            'customers' => $customers,
             'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
             'csrf_token' => csrf_token(),
             'quotations' => Quotation::all(),
@@ -124,17 +131,48 @@ class AgreementController extends Controller
     /**
      * Upload the specified resource into storage.
      */
+    // public function upload(Request $request)
+    // {
+    //     if($request->has('agreement_doc')){
+    //         if($request->has('agreement_doc_old')){
+    //             Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
+    //         }
+    //         return Storage::url($request->file('agreement_doc')->storePublicly('agreements','public'));
+    //     }else if($request->has('attachments')){
+    //         return Storage::url($request->file('attachments')->storePublicly('attachments','public'));
+    //     }
+    // }
     public function upload(Request $request)
-    {
-        if($request->has('agreement_doc')){
-            if($request->has('agreement_doc_old')){
-                Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
-            }
-            return Storage::url($request->file('agreement_doc')->storePublicly('agreements','public'));
-        }else if($request->has('attachments')){
-            return Storage::url($request->file('attachments')->storePublicly('attachments','public'));
+{
+    if ($request->has('agreement_doc')) {
+        if ($request->has('agreement_doc_old')) {
+            Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
         }
+
+        $file = $request->file('agreement_doc');
+        $path = $file->storePublicly('agreements', 'public');
+
+        return response()->json([
+            'path' => Storage::url($path),
+            'name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'mime_type' => $file->getMimeType()
+        ]);
     }
+    else if ($request->has('attachments')) {
+        $file = $request->file('attachments');
+        $path = $file->storePublicly('attachments', 'public');
+
+        return response()->json([
+            'path' => Storage::url($path),
+            'name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'mime_type' => $file->getMimeType()
+        ]);
+    }
+
+    return response()->json(['error' => 'No file uploaded'], 400);
+}
 
     /**
      * Remove the specified resource from storage.

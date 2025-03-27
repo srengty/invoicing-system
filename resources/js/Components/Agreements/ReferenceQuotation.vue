@@ -13,8 +13,12 @@
             <input />
             <span>Agreement doc</span>
             <input type="file" @input="form.avatar = $event.target.files[0]" />
-            <span :class="[{ 'hidden': !form.progress }]">Uploading</span>
-            <progress v-if="form.progress" :value="form.progress.percentage" max="100">
+            <span :class="[{ hidden: !form.progress }]">Uploading</span>
+            <progress
+                v-if="form.progress"
+                :value="form.progress.percentage"
+                max="100"
+            >
                 {{ form.progress.percentage }}%
             </progress>
         </div>
