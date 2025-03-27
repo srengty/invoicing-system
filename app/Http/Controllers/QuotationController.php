@@ -135,8 +135,6 @@ class QuotationController extends Controller
                 'comment' => $comment,
             ]);
         }
-
-        return response();
     }
 
 
@@ -498,7 +496,7 @@ public function sendQuotation(Request $request)
         ]);
     } catch (Exception $e) {
         Log::error('Failed to send quotation: ' . $e->getMessage());
-        return response()->json(['error' => $e->getMessage()], 500);
+        return response();
     }
 }
 
