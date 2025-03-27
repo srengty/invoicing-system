@@ -680,11 +680,6 @@ const printQuotation = (quotation_no, include_catelog = 0) => {
 
     // Open the quotation in a new window for printing
     const printWindow = window.open(quotUrl, "_blank");
-
-    // Print the quotation once the window has loaded
-    printWindow.onload = () => {
-        printWindow.print();
-    };
 };
 
 const selectedColumns = ref(columns);
