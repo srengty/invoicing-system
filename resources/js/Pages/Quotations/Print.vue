@@ -30,7 +30,7 @@
                 label="Send Quotation via Email"
                 icon="pi pi-send"
                 class="px-4 py-2"
-                @click="generateAndSendPDF"
+                @click="showConfirmationDialog"
                 size="small"
             />
         </div>
@@ -180,6 +180,48 @@
                 </div>
             </div>
         </div>
+
+            <Dialog v-model:visible="isSendDialogVisible" header="Confirm Send" footer="dialog-footer">
+            <div v-if="quotation" class="flex flex-col gap-4 ml-2 mr-2">
+                <!-- Display Selected Quotation Info -->
+                <div>
+                    <strong>Quotation No:</strong>
+                    <p>{{ quotation.quotation_no }}</p>
+                </div>
+                <div>
+                    <strong>Customer Name:</strong>
+                    <p>{{ quotation.customer_name || "N/A" }}</p>
+                </div>
+
+                <!-- Email Checkbox -->
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="emailCheckbox"
+                        v-model="sendForm.emailChecked"
+                        class="mr-2"
+                    />
+                    <label for="emailCheckbox" class="font-bold">Email: {{ quotation.email || "N/A" }}</label>
+                </div>
+
+                <!-- Telegram Checkbox -->
+                <div class="flex items-center">
+                    <input
+                        type="checkbox"
+                        id="telegramCheckbox"
+                        v-model="sendForm.telegramChecked"
+                        class="mr-2"
+                    />
+                    <label for="telegramCheckbox" class="font-bold">Telegram: {{ quotation.phone_number || "N/A" }}</label>
+                </div>
+            </div>
+
+            <!-- Dialog Footer -->
+            <template #footer>
+                <Button label="Cancel" severity="secondary" @click="cancelSend" />
+                <Button label="Send" severity="success" @click="generateAndSendPDF" :loading="isSending" />
+            </template>
+        </Dialog>
     </div>
 </template>
 
@@ -191,6 +233,8 @@ import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";
 import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
+import Dialog from "primevue/dialog";
+import { Head } from '@inertiajs/vue3';
 
 const toast = useToast();
 
@@ -205,35 +249,9 @@ const isSendDialogVisible = ref(false);
 const selectedQuotation = ref(null);  // Make sure this is populated with your quotation data
 const isSending = ref(false);
 
-// Function to handle sending the quotation
-const sendQuotationToCustomer = async () => {
-    isSending.value = true;
-    
-    try {
-        // Replace this with the actual API request logic for sending the email
-        await sendQuotationRequest(selectedQuotation.value, sendForm.value);
-
-        // Show success toast
-        toast.add({
-            severity: 'success',
-            summary: 'Quotation Sent',
-            detail: 'The quotation has been sent successfully!',
-            life: 3000,
-        });
-
-        // Close the dialog after sending
-        isSendDialogVisible.value = false;
-    } catch (error) {
-        // Show error toast if something goes wrong
-        toast.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to send the quotation.',
-            life: 3000,
-        });
-    } finally {
-        isSending.value = false;
-    }
+const showConfirmationDialog = () => {
+    selectedQuotation.value = quotation;
+    isSendDialogVisible.value = true;
 };
 
 // Example function to simulate the sending process (replace with your actual send function)
@@ -329,9 +347,19 @@ const generateAndDownloadPDF = async () => {
             console.error('Print area is not available');
             return;
         }
-        const pdf = await generatePDF(printArea.value);
+
+        // Step 1: Generate the PDF for the quotation section
+        const quotationPDF = await generatePDF(printArea.value);
+
+        // Step 2: Generate any catalog PDFs for products with valid URLs
+        const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
+
+        // Step 3: Merge the quotation PDF with the catalog PDFs (if any)
+        const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
+
+        // Step 4: Download the merged PDF
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
-        downloadPDF(pdf, filename);
+        downloadPDF(mergedPDF, filename);
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -351,6 +379,7 @@ const generateAndSendPDF = async () => {
 
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         sendPDFViaEmail(mergedPDF, filename);
+        isSendDialogVisible.value=false;
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
