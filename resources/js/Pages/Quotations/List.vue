@@ -156,7 +156,7 @@
                     </Column>
 
                     <!-- Other columns -->
-                    <Column header="Comment / Role" style="width: 15%">
+                    <!-- <Column header="Comment / Role" style="width: 15%">
                         <template #body="slotProps">
                             <div
                                 v-if="
@@ -183,7 +183,7 @@
                             </div>
                             <div v-else><em>No comment</em></div>
                         </template>
-                    </Column>
+                    </Column> -->
                     <Column header="View / Print-out" style="width: 20%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
@@ -668,11 +668,9 @@ const columns = [
     { field: "customer_status", header: "Customer Status" },
 ];
 const printQuotation = (quotation_no, include_catelog = 0) => {
-    // Construct the URL with include_catelog parameter
     const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
-
     // Inertia.visit(quotUrl);
-    const printWindow = window.open(quotUrl, "_blank");
+    const printWindow = window.open(quotUrl, "_self");
 };
 
 const selectedColumns = ref(columns);
@@ -790,8 +788,10 @@ const handleApprove = async () => {
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                customer_status: "Accept", // Change customer status
+                customer_status: "Accept",
+                status: "Approved",
                 comment: feedbackComment.value,
+                role: "customer",
             }
         );
         showToast(
@@ -802,7 +802,6 @@ const handleApprove = async () => {
         );
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
-        // Refresh the quotations list after updating
         router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
         showToast("error", "Error", "Failed to approve quotation.", 3000);
@@ -824,8 +823,10 @@ const handleReject = async () => {
         await router.put(
             `/quotations/${selectedQuotation.value.id}/update-status`,
             {
-                customer_status: "Reject", // Change customer status
+                customer_status: "Reject",
+                status: "Revise",
                 comment: feedbackComment.value,
+                role: "customer",
             }
         );
 
@@ -837,8 +838,6 @@ const handleReject = async () => {
         );
         isFeedbackDialogVisible.value = false;
         feedbackComment.value = "";
-
-        // Refresh the quotations list after updating
         router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
         showToast("error", "Error", "Failed to reject quotation.", 3000);
