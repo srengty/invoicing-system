@@ -387,7 +387,7 @@ const generateAndSendPDF = async () => {
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         sendPDFViaEmail(mergedPDF, filename);
         isSendDialogVisible.value=false;
-        Inertia.visit(route('quotations.list'));
+        window.location.href = route('quotations.list');
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
