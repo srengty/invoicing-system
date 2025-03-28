@@ -2,7 +2,9 @@
 import ProductTable from "@/Components/ProductTable.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import VerticalBar from "../Layouts/Charts/VerticalBar.vue";
 import { Head, Link } from "@inertiajs/vue3";
+import BaseLayout from "../Layouts/BaseLayout.vue";
 
 defineProps({
     canLogin: {
@@ -33,6 +35,7 @@ function handleImageError() {
     <Head title="Welcome" />
     <GuestLayout>
         <NavbarLayout />
-        <!-- <ProductTable /> -->
+        <BaseLayout/>
+        <ProductTable />
     </GuestLayout>
 </template>
