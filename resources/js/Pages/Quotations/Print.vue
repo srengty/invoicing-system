@@ -181,7 +181,11 @@
             </div>
         </div>
 
-            <Dialog v-model:visible="isSendDialogVisible" header="Confirm Send" footer="dialog-footer">
+        <Dialog
+            v-model:visible="isSendDialogVisible"
+            header="Confirm Send"
+            footer="dialog-footer"
+        >
             <div v-if="quotation" class="flex flex-col gap-4 ml-2 mr-2">
                 <!-- Display Selected Quotation Info -->
                 <div>
@@ -201,7 +205,9 @@
                         v-model="sendForm.emailChecked"
                         class="mr-2"
                     />
-                    <label for="emailCheckbox" class="font-bold">Email: {{ quotation.email || "N/A" }}</label>
+                    <label for="emailCheckbox" class="font-bold"
+                        >Email: {{ quotation.email || "N/A" }}</label
+                    >
                 </div>
 
                 <!-- Telegram Checkbox -->
@@ -212,14 +218,25 @@
                         v-model="sendForm.telegramChecked"
                         class="mr-2"
                     />
-                    <label for="telegramCheckbox" class="font-bold">Telegram: {{ quotation.phone_number || "N/A" }}</label>
+                    <label for="telegramCheckbox" class="font-bold"
+                        >Telegram: {{ quotation.phone_number || "N/A" }}</label
+                    >
                 </div>
             </div>
 
             <!-- Dialog Footer -->
             <template #footer>
-                <Button label="Cancel" severity="secondary" @click="cancelSend" />
-                <Button label="Send" severity="success" @click="generateAndSendPDF" :loading="isSending" />
+                <Button
+                    label="Cancel"
+                    severity="secondary"
+                    @click="cancelSend"
+                />
+                <Button
+                    label="Send"
+                    severity="success"
+                    @click="generateAndSendPDF"
+                    :loading="isSending"
+                />
             </template>
         </Dialog>
     </div>
@@ -227,32 +244,30 @@
 
 <script setup>
 import { ref, computed, watch } from "vue";
-import { usePage, router } from '@inertiajs/vue3';
+import { usePage, router } from "@inertiajs/vue3";
 import Button from "primevue/button";
 import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";
 import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
 import Dialog from "primevue/dialog";
-import { Head } from '@inertiajs/vue3';
-import { Inertia } from '@inertiajs/inertia'; // <-- Add this import
-
+import { Head } from "@inertiajs/vue3";
 
 const toast = useToast();
 
 // Form state to track email and telegram sending options
 const sendForm = ref({
     emailChecked: false,
-    telegramChecked: false
+    telegramChecked: false,
 });
 
 // Other reactive state variables
 const isSendDialogVisible = ref(false);
-const selectedQuotation = ref(null);  // Make sure this is populated with your quotation data
+const selectedQuotation = ref(null); // Make sure this is populated with your quotation data
 const isSending = ref(false);
 
 const cancelSend = () => {
-    isSendDialogVisible.value = false;  // Close the dialog
+    isSendDialogVisible.value = false; // Close the dialog
 };
 
 const showConfirmationDialog = () => {
@@ -285,11 +300,16 @@ const printArea = ref(null);
 // State for toggling between currencies
 const isUSD = ref(false);
 const isKhmer = ref(true);
-const toggleLabel = computed(() => isKhmer.value ? "USD/Dollar($)" : "KHR/Reil(៛)");
+const toggleLabel = computed(() =>
+    isKhmer.value ? "USD/Dollar($)" : "KHR/Reil(៛)"
+);
 
 // Currency conversion and formatting functions
 const handleToggleChange = () => {
-    if (!isKhmer.value && (!quotation.value.total_usd || !quotation.value.exchange_rate)) {
+    if (
+        !isKhmer.value &&
+        (!quotation.value.total_usd || !quotation.value.exchange_rate)
+    ) {
         toast.add({
             severity: "warn",
             summary: "Missing Information",
@@ -305,26 +325,36 @@ const handleToggleChange = () => {
 
 // Exchange rate and currency labels
 const exchangeRate = computed(() => quotation.value.exchange_rate || 0);
-const currencyLabel = computed(() => isUSD.value ? "KHR" : "USD");
+const currencyLabel = computed(() => (isUSD.value ? "KHR" : "USD"));
 
 // Functions for converting and formatting currency
-const convertCurrency = (amount) => isUSD.value ? amount / exchangeRate.value : amount;
+const convertCurrency = (amount) =>
+    isUSD.value ? amount / exchangeRate.value : amount;
 const formatNumber = (value) => {
     if (!value) return "0.00";
-    const formatted = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+    const formatted = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
     return isUSD.value ? `$${formatted}` : `៛${formatted}`;
 };
 
 // Compute total amount
 const totalAmount = computed(() => {
-    const totalKHR = quotation.value.products?.reduce((sum, product) => sum + (product.pivot?.quantity || 0) * (product.pivot?.price || 0), 0) || 0;
+    const totalKHR =
+        quotation.value.products?.reduce(
+            (sum, product) =>
+                sum +
+                (product.pivot?.quantity || 0) * (product.pivot?.price || 0),
+            0
+        ) || 0;
     return isUSD.value ? totalKHR / exchangeRate.value : totalKHR;
 });
 
 // Format product details
 const formattedProducts = computed(() => {
     if (!quotation.value.products) return [];
-    return quotation.value.products.map(product => ({
+    return quotation.value.products.map((product) => ({
         id: product.id,
         name: product.name || "No English name",
         name_kh: product.name_kh || "No Khmer name",
@@ -350,7 +380,7 @@ const generatePDF = (element) => {
 const generateAndDownloadPDF = async () => {
     try {
         if (!printArea.value) {
-            console.error('Print area is not available');
+            console.error("Print area is not available");
             return;
         }
 
@@ -366,7 +396,7 @@ const generateAndDownloadPDF = async () => {
         // Step 4: Download the merged PDF
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         downloadPDF(mergedPDF, filename);
-        Inertia.visit(route('quotations.list'));
+        window.location.href = route("quotations.list");
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -376,7 +406,7 @@ const generateAndDownloadPDF = async () => {
 const generateAndSendPDF = async () => {
     try {
         if (!printArea.value) {
-            console.error('Print area is not available');
+            console.error("Print area is not available");
             return;
         }
 
@@ -388,6 +418,7 @@ const generateAndSendPDF = async () => {
         sendPDFViaEmail(mergedPDF, filename);
         isSendDialogVisible.value=false;
         window.location.href = route('quotations.list');
+
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -395,23 +426,30 @@ const generateAndSendPDF = async () => {
 
 // Function to generate catalog PDFs (if available)
 const generateCatalogPDFs = async (products) => {
-    const catalogPDFs = await Promise.all(products.map(async (product) => {
-        if (product.pdf_url && product.include_catalog === 1) {
-            try {
-                const response = await fetch(product.pdf_url);
-                if (!response.ok) {
-                    console.warn(`Failed to fetch catalog PDF for product ${product.id}`);
+    const catalogPDFs = await Promise.all(
+        products.map(async (product) => {
+            if (product.pdf_url && product.include_catalog === 1) {
+                try {
+                    const response = await fetch(product.pdf_url);
+                    if (!response.ok) {
+                        console.warn(
+                            `Failed to fetch catalog PDF for product ${product.id}`
+                        );
+                        return null;
+                    }
+                    return await response.blob();
+                } catch (error) {
+                    console.warn(
+                        `Error fetching catalog PDF for product ${product.id}:`,
+                        error
+                    );
                     return null;
                 }
-                return await response.blob();
-            } catch (error) {
-                console.warn(`Error fetching catalog PDF for product ${product.id}:`, error);
-                return null;
             }
-        }
-        return null;
-    }));
-    return catalogPDFs.filter(pdf => pdf !== null);
+            return null;
+        })
+    );
+    return catalogPDFs.filter((pdf) => pdf !== null);
 };
 
 // Merge multiple PDFs
@@ -420,7 +458,7 @@ const mergePDFs = async (pdfBlobs) => {
     for (const pdfBlob of pdfBlobs) {
         const pdf = await PDFDocument.load(await pdfBlob.arrayBuffer());
         const pages = await pdfDoc.copyPages(pdf, pdf.getPageIndices());
-        pages.forEach(page => pdfDoc.addPage(page));
+        pages.forEach((page) => pdfDoc.addPage(page));
     }
     return pdfDoc.save();
 };
@@ -445,28 +483,28 @@ const sendPDFViaEmail = (pdfBytes, filename) => {
     formData.append("pdf_file", blob, filename);
     formData.append("update_status", "Pending");
 
-    fetch('/quotations/send', {
-        method: 'POST',
+    fetch("/quotations/send", {
+        method: "POST",
         headers: {
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf_token"]').getAttribute('content'),
+            "X-CSRF-TOKEN": document
+                .querySelector('meta[name="csrf_token"]')
+                .getAttribute("content"),
         },
         body: formData,
     })
-    .then((response) => response.json())
-    .then((data) => {
-        if (data.success) {
-            console.log("PDF sent via email successfully!");
-        } else {
-            console.error("Error sending PDF via email.");
-        }
-    })
-    .catch((error) => {
-        console.error("Error sending PDF to server:", error);
-    });
+        .then((response) => response.json())
+        .then((data) => {
+            if (data.success) {
+                console.log("PDF sent via email successfully!");
+            } else {
+                console.error("Error sending PDF via email.");
+            }
+        })
+        .catch((error) => {
+            console.error("Error sending PDF to server:", error);
+        });
 };
-
 </script>
-
 
 <style scoped>
 .print-area {
