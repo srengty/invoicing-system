@@ -1,7 +1,7 @@
 <template>
-
     <Head title="Create Agreement" />
     <GuestLayout>
+        <NavbarLayout />
         <Toast />
         <BodyLayout>
             <div>
@@ -86,6 +86,7 @@ import { Button, Dialog, DataTable, Column, InputText, Toast } from "primevue";
 import { Head, usePage, router } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from '@/Layouts/BodyLayout.vue';
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 const toast = useToast();
 const { customerCategories } = usePage().props;
 const displayModal = ref(false);

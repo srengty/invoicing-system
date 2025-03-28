@@ -2,7 +2,6 @@
 import ApplicationLogo from "@/Components/ApplicationLogo.vue";
 import { Link } from "@inertiajs/vue3";
 import MainNavTree from "./MainNavTree.vue";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 </script>
 
 <template>
@@ -27,10 +26,9 @@ import NavbarLayout from "@/Layouts/NavbarLayout.vue";
                 <MainNavTree />
             </div>
             <div class="md:col-span-5">
-                <!-- <NavbarLayout/> -->
-                <div class="bg-slate-100 dark:bg-slate-100 min-h-10">
+                <!-- <div class="bg-slate-100 dark:bg-slate-100 min-h-10">
                     &emsp;
-                </div>
+                </div> -->
                 <slot />
             </div>
         </div>

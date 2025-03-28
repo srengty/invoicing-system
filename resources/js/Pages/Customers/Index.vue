@@ -3,6 +3,7 @@
     <ConfirmDialog />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
+        <NavbarLayout />
         <BodyLayout>
             <div class="customers">
                 <div class="flex justify-between items-center pb-4">
@@ -197,7 +198,14 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Head } from "@inertiajs/vue3";
-import { DataTable, Column, Button, Dialog, InputText, Dropdown } from "primevue";
+import {
+    DataTable,
+    Column,
+    Button,
+    Dialog,
+    InputText,
+    Dropdown,
+} from "primevue";
 import { Inertia } from "@inertiajs/inertia";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from "@/Layouts/BodyLayout.vue";
@@ -207,6 +215,7 @@ import Toast from "primevue/toast";
 import ConfirmDialog from "primevue/confirmdialog";
 import { useConfirm } from "primevue/useconfirm";
 import { router } from "@inertiajs/vue3";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -266,7 +275,9 @@ const filteredCustomers = computed(() => {
             const status = customer.active.toLowerCase();
             return status.includes(term);
         } else if (searchType.value === "customer_category_name") {
-            const categoryName = getCategoryNameById(customer.customer_category_id).toLowerCase();
+            const categoryName = getCategoryNameById(
+                customer.customer_category_id
+            ).toLowerCase();
             return categoryName.includes(term);
         }
         return false;

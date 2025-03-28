@@ -1,6 +1,7 @@
 <template>
     <Head title="Create Agreement" />
     <GuestLayout>
+        <NavbarLayout />
         <div class="create-agreement p-4">
             <Toast />
             <h1 class="text-2xl">
@@ -13,7 +14,7 @@
                 class="mt-6"
             >
                 <div class="create-agreement flex flex-row gap-4">
-                    <div class="border border-gray-200 rounded-lg p-4 w-1/3">
+                    <div class="border border-gray-200 rounded-lg p-4 w-2/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
                                 >Record Agreement</span
@@ -67,15 +68,14 @@
                                 size="small"
                                 >{{ errors.agreement_date }}</Message
                             >
-                            <span class="text-sm required"
-                                >Customer / Organization name</span
-                            >
+                            <span class="text-sm required">Customer name</span>
                             <Select
                                 filter
                                 v-model="form.customer_id"
                                 :options="customers"
                                 option-value="id"
                                 option-label="name"
+                                placeholder="Customer / Organization name"
                                 :virtualScrollerOptions="{ itemSize: 38 }"
                                 size="small"
                             >
@@ -150,43 +150,38 @@
                                 class="col-span-2 mt-2"
                             >
                                 <template #list="slotProps">
-                                    <div class="grid gap-2 w-full">
+                                    <div class="grid gap-3 w-full">
                                         <div
                                             v-for="(
                                                 item, index
                                             ) in slotProps.items"
                                             :key="index"
-                                            class="border-round border-1 surface-border flex items-center"
+                                            class="border border-gray-200 rounded-lg p-3 flex items-center hover:bg-gray-50 transition-colors"
                                         >
                                             <span
-                                                class="text-sm font-medium mr-12"
+                                                class="text-sm font-medium text-gray-700 mr-3"
                                             >
-                                                Agreement Doc:
+                                                Agreement Doc {{ index + 1 }}:
                                             </span>
                                             <a
-                                                class="underline hover:text-primary flex align-items-center"
+                                                class="underline hover:text-blue-600 flex items-center text-blue-500"
                                                 :href="item.path"
                                                 target="_blank"
                                             >
                                                 <i
-                                                    class="pi pi-file-pdf mr-1 text-red-500"
+                                                    class="pi pi-file-pdf mr-2 text-red-500"
                                                 ></i>
                                                 {{ item.name }}
                                             </a>
-                                            <span
-                                                class="text-sm text-color-secondary ml-2"
-                                            >
-                                                ({{
-                                                    formatFileSize(item.size)
-                                                }})
-                                            </span>
                                             <Button
-                                                @click="removeAgreementDoc"
+                                                @click="
+                                                    removeAgreementDoc(index)
+                                                "
                                                 icon="pi pi-times"
                                                 text
                                                 rounded
                                                 severity="danger"
-                                                class="ml-auto"
+                                                class="ml-auto hover:bg-red-50"
                                                 v-tooltip="'Remove document'"
                                             />
                                         </div>
@@ -194,18 +189,20 @@
                                 </template>
                                 <template #empty>
                                     <div
-                                        class="text-center p-4 text-color-secondary"
+                                        class="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
                                     >
                                         <i
-                                            class="pi pi-inbox text-2xl mb-2"
+                                            class="pi pi-inbox text-2xl text-gray-400 mb-2"
                                         ></i>
-                                        <p>No agreement document uploaded</p>
+                                        <p class="text-gray-500">
+                                            No agreement document uploaded
+                                        </p>
                                     </div>
                                 </template>
                             </DataView>
                         </div>
                     </div>
-                    <div class="border border-gray-200 rounded-lg p-4 w-1/3">
+                    <div class="border border-gray-200 rounded-lg p-4 w-2/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 font-semibold text-xl mb-5"
                                 >Agreement summary</span
@@ -280,92 +277,79 @@
                             />
                         </div>
                     </div>
-                    <div class="border border-gray-200 rounded-lg p-4 w-1/3">
-                        <div class="grid grid-cols-2 gap-2 items-center">
-                            <span class="col-span-2 font-semibold text-xl mb-5"
-                                >Add Attachment</span
-                            >
-                            <span class="text-sm">Attachment</span>
-                            <FileUpload
-                                name="attachments"
-                                :url="route('agreements.upload')"
-                                mode="basic"
-                                auto
-                                multiple
-                                accept="application/pdf"
-                                @before-upload="beforeUploadAttachment"
-                                @upload="onUploadAttachments"
-                                class="custom-file-upload w-full h-9"
-                                chooseLabel="Add Attachment"
-                            >
-                                <template #chooseicon>
-                                    <i class="pi pi-paperclip"></i>
-                                </template>
-                            </FileUpload>
-                            <Message
-                                v-if="errors.attachments"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                class="col-span-2"
-                                >{{ errors.attachments }}</Message
-                            >
-                            <DataView
-                                :value="form.attachments"
-                                class="col-span-2 mt-2"
-                            >
+                    <div class="border border-gray-200 rounded-lg p-4 w-1/4">
+                        <h3 class="font-semibold text-xl mb-4">
+                            Add Attachment
+                        </h3>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1"
+                                    >Attachment</label
+                                >
+                                <FileUpload
+                                    name="attachments"
+                                    :url="route('agreements.upload')"
+                                    mode="basic"
+                                    auto
+                                    multiple
+                                    accept="application/pdf"
+                                    @before-upload="beforeUploadAttachment"
+                                    @upload="onUploadAttachments"
+                                    class="custom-file-upload w-full"
+                                    chooseLabel="Attachment"
+                                >
+                                    <template #chooseicon>
+                                        <i class="pi pi-paperclip mr-2"></i>
+                                    </template>
+                                </FileUpload>
+                            </div>
+                            <DataView :value="form.attachments" class="w-full">
                                 <template #list="slotProps">
-                                    <div class="grid gap-2 w-full">
+                                    <div class="space-y-2">
                                         <div
                                             v-for="(
                                                 item, index
                                             ) in slotProps.items"
                                             :key="index"
-                                            class="border-round border-1 surface-border flex items-center"
+                                            class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                                         >
-                                            <span
-                                                class="text-sm font-medium mr-12"
-                                            >
-                                                Attachment {{ index + 1 }}:
-                                            </span>
-                                            <a
-                                                class="underline hover:text-primary flex align-items-center"
-                                                :href="item.path"
-                                                target="_blank"
+                                            <div
+                                                class="flex items-center gap-2"
                                             >
                                                 <i
-                                                    class="pi pi-file-pdf mr-1 text-red-500"
+                                                    class="pi pi-file-pdf text-red-500"
                                                 ></i>
-                                                {{ item.name }}
-                                            </a>
-                                            <span
-                                                class="text-sm text-color-secondary ml-2"
-                                            >
-                                                ({{
-                                                    formatFileSize(item.size)
-                                                }})
-                                            </span>
-                                            <Button
+                                                <span
+                                                    class="text-sm font-medium text-gray-700"
+                                                >
+                                                    {{ item.name }}
+                                                </span>
+                                                <!-- Uncomment if you want to show file size -->
+                                                <!-- <span class="text-xs text-gray-500">
+                        ({{ formatFileSize(item.size) }})
+                    </span> -->
+                                            </div>
+                                            <button
                                                 @click="removeAttachment(index)"
-                                                icon="pi pi-times"
-                                                text
-                                                rounded
-                                                severity="danger"
-                                                class="ml-auto"
+                                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
                                                 v-tooltip="'Remove attachment'"
-                                            />
+                                            >
+                                                <i class="pi pi-times"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </template>
-
                                 <template #empty>
                                     <div
-                                        class="text-center p-4 text-color-secondary"
+                                        class="text-center p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50"
                                     >
                                         <i
-                                            class="pi pi-inbox text-2xl mb-2"
+                                            class="pi pi-inbox text-2xl text-gray-400 mb-2"
                                         ></i>
-                                        <p>No attachments added</p>
+                                        <p class="text-sm text-gray-500">
+                                            No attachments added
+                                        </p>
                                     </div>
                                 </template>
                             </DataView>
@@ -430,6 +414,7 @@ import Textarea from "primevue/textarea";
 import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import moment from "moment";
 import { currencies } from "@/constants";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const page = usePage();
 const props = defineProps({
@@ -518,6 +503,8 @@ onMounted(() => {
     form.agreement_no = props.agreement_max;
     if (props.edit) {
         console.log("edit", props.agreement);
+
+        // Basic form data
         form.quotation_no = props.agreement.quotation_no;
         form.agreement_no = props.agreement.agreement_no;
         form.agreement_date = moment(
@@ -526,7 +513,6 @@ onMounted(() => {
         ).toDate();
         form.customer_id = props.agreement.customer_id;
         form.address = props.agreement.address;
-        form.agreement_doc = props.agreement.agreement_doc;
         form.start_date = moment(
             props.agreement.start_date,
             "DD/MM/YYYY"
@@ -534,6 +520,22 @@ onMounted(() => {
         form.end_date = moment(props.agreement.end_date, "DD/MM/YYYY").toDate();
         form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
+        form.currency = props.agreement.currency;
+
+        // Initialize agreement document
+        if (props.agreement.agreement_doc) {
+            agreementDocs.value = [
+                {
+                    path: props.agreement.agreement_doc,
+                    name: getFileName(props.agreement.agreement_doc),
+                    size: 0, // You might want to get the actual size from your API if available
+                    type: "application/pdf",
+                },
+            ];
+            form.agreement_doc = props.agreement.agreement_doc;
+        }
+
+        // Initialize payment schedule
         form.payment_schedule = props.agreement.payment_schedules.map(
             (v, i) => {
                 return {
@@ -550,10 +552,35 @@ onMounted(() => {
                 };
             }
         );
-        form.attachments = JSON.parse(props.agreement.attachments ?? "[]");
-        form.currency = props.agreement.currency;
-        riels.value = props.agreement.currency == "KHR" ? true : false;
-        schedule.value.agreement_amount = props.agreement.amount;
+
+        // Initialize attachments
+        const parsedAttachments = JSON.parse(
+            props.agreement.attachments ?? "[]"
+        );
+        form.attachments = parsedAttachments.map((att) => {
+            // Handle both string paths and object attachments
+            const path = typeof att === "string" ? att : att.path || att.url;
+            return {
+                path: path,
+                name: getFileName(path),
+                size: att.size || 0,
+                type: att.type || "application/pdf",
+            };
+        });
+
+        // Initialize other reactive values
+        riels.value = props.agreement.currency == "KHR";
+        schedule.value = {
+            agreement_amount: props.agreement.amount,
+            due_date: new Date(),
+            short_description: "Item description",
+            percentage: 100,
+            remark: "Additional remark",
+            amount: 2000,
+            currency: props.agreement.currency,
+            agreement_currency: props.agreement.currency,
+            exchange_rate: 4100,
+        };
         src.value = props.agreement.agreement_doc;
     }
 });
@@ -593,14 +620,13 @@ const onUpload = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
 
-        agreementDocs.value = [
-            {
-                path: response.path,
-                name: response.name,
-                size: response.size,
-                type: response.mime_type,
-            },
-        ];
+        // Push to agreementDocs array instead of replacing
+        agreementDocs.value.push({
+            path: response.path,
+            name: response.name,
+            size: response.size,
+            type: response.mime_type,
+        });
 
         form.agreement_doc = response.path;
 
@@ -620,9 +646,12 @@ const onUpload = (e) => {
         console.error("Agreement doc upload error:", error);
     }
 };
-const removeAgreementDoc = () => {
-    agreementDocs.value = [];
-    form.agreement_doc = null;
+
+const removeAgreementDoc = (index) => {
+    agreementDocs.value.splice(index, 1);
+    if (agreementDocs.value.length === 0) {
+        form.agreement_doc = null;
+    }
     toast.add({
         severity: "info",
         summary: "Removed",
@@ -638,6 +667,7 @@ const onUploadAttachments = (e) => {
         if (!Array.isArray(form.attachments)) {
             form.attachments = [];
         }
+
         form.attachments.push({
             path: response.path,
             name: response.name,

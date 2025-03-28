@@ -1,6 +1,7 @@
 <template>
     <Head title="Create Agreement" />
     <GuestLayout>
+        <NavbarLayout />
         <Toast />
         <BodyLayout>
             <div>
@@ -28,7 +29,7 @@
                     </DataTable>
                 </div>
             </div>
-            
+
             <Dialog v-model:visible="displayDetailModal" header="Category Details" modal>
                 <div class="grid grid-cols-1 gap-4">
                     <div>
@@ -48,7 +49,7 @@
                     </div>
                 </div>
             </Dialog>
-            
+
             <Dialog v-model:visible="displayEditModal" header="Edit Customer Category" modal>
                 <form @submit.prevent="handleEditSubmit">
                     <div class="grid grid-cols-1 gap-4">
@@ -84,6 +85,7 @@ import { DataTable, Column, Dialog, Button, InputText, Toast } from "primevue";
 import { Head, usePage } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from '@/Layouts/BodyLayout.vue';
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const productCategories = computed(() => usePage().props.productCategories || []);
 const displayDetailModal = ref(false);

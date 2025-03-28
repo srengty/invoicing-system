@@ -1,6 +1,7 @@
 <template>
     <Head :title="isEditing ? 'Edit Quotation' : 'Create Quotation'" />
     <GuestLayout>
+        <NavbarLayout />
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
@@ -514,6 +515,7 @@ import Column from "primevue/column";
 import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
 import { getDepartment } from "../../data";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const props = defineProps({
     customers: {

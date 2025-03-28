@@ -3,6 +3,7 @@
     <ConfirmDialog />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
+        <NavbarLayout />
         <BodyLayout>
             <Toast position="top-center" group="tc" />
             <div class="Items text-sm">
@@ -16,13 +17,13 @@
                         <h1 class="text-xl text-green-600">Manage Items</h1>
                     </div>
                     <div class="flex items-center gap-2">
-                        <Dropdown 
-                            v-model="searchType" 
-                            :options="searchOptions" 
-                            optionLabel="label" 
-                            optionValue="value" 
+                        <Dropdown
+                            v-model="searchType"
+                            :options="searchOptions"
+                            optionLabel="label"
+                            optionValue="value"
                             class="w-48 text-sm"
-                            
+
                         />
                         <!-- Search Input -->
                         <InputText
@@ -238,11 +239,11 @@
                                 </a>
                             </div>
                             <div v-else class="text-gray-500">No file uploaded</div>
-                        </div>    
+                        </div>
                     </div>
-                    
+
                         <!-- PDF Catalog -->
-                        
+
                     </div>
 
                     <!-- Close Button -->
@@ -522,6 +523,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { router } from "@inertiajs/vue3";
 import {getDepartment} from '../../data';
 import Dropdown from "primevue/dropdown";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -566,21 +568,21 @@ const filteredProducts = computed(() => {
 
 onMounted(async () => {
   const response = await getDepartment();
-  const data = response.data; 
+  const data = response.data;
 
   // Filter departments with status === "service"
   const serviceDepartments = data.filter(dept => dept.status === "service");
 
   if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
     divisionOptions.value = serviceDepartments.map(dept => ({
-      name: dept.name, 
+      name: dept.name,
       id: dept.id,
       code: dept.code,  // Assuming `code` exists in API response
       displayName: `${dept.code} - ${dept.name}` // Add this for Dropdown
     }));
   } else {
     console.warn('No service departments found.');
-    divisionOptions.value = []; 
+    divisionOptions.value = [];
   }
 });
 

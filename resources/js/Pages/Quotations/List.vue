@@ -3,12 +3,13 @@
     <meta name="_token" content="{{ csrf_token() }}" />
 
     <GuestLayout>
+        <NavbarLayout />
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
         <div class="quotations text-sm">
             <div class="flex justify-between items-center p-4">
-                <h1 class="text-2xl">Quotations list</h1>
+                <!-- <h1 class="text-2xl">Quotations list</h1> -->
             </div>
             <div class="flex justify-end p-4 gap-4">
                 <div>
@@ -507,6 +508,7 @@ import { useToast } from "primevue/usetoast";
 import { InputText } from "primevue";
 import html2pdf from "html2pdf.js";
 import { Inertia } from "@inertiajs/inertia";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const toast = useToast();
 

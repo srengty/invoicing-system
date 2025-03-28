@@ -1,6 +1,7 @@
 <template>
     <Head title="Agreements"></Head>
     <GuestLayout>
+        <NavbarLayout />
         <div class="agreements p-4">
             <div class="flex justify-between items-center p-3">
                 <h1 class="text-2xl">Agreements list</h1>
@@ -166,6 +167,7 @@ import {
 import { ref, watch } from "vue";
 import moment from "moment";
 import { debounce } from "lodash";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 defineProps({
     agreements: {

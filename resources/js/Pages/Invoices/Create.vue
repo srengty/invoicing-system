@@ -2,6 +2,7 @@
   <meta name="_token" content="{{ csrf_token() }}" />
   <Head title="Create Invoice" />
   <GuestLayout>
+    <NavbarLayout />
     <div class="create-invoice">
       <!-- Header Section with Buttons -->
       <div class="flex justify-between items-center p-3 mr-4">
@@ -215,6 +216,7 @@ import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select } from
 import { usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const { products, agreements, quotations, customers } = usePage().props;
 
@@ -231,7 +233,7 @@ const form = useForm({
   grand_total: 0,
   instalmentPaid: 0,
   status: '',
-  productQuotations:[], 
+  productQuotations:[],
 });
 
 const statusOptions = [
@@ -244,7 +246,7 @@ const productsList = ref([]);
 const showProductModal = ref(false);
 const filteredAgreements = ref([]);
 
-const indexedProducts = computed(() => 
+const indexedProducts = computed(() =>
   productsList.value.map((product, index) => ({
     ...product,
     index: index + 1, // Assign index dynamically

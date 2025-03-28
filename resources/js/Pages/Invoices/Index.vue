@@ -1,6 +1,7 @@
 <template>
   <Head title="Invoices" />
   <GuestLayout>
+    <NavbarLayout />
     <div class="invoices">
       <div class="flex justify-between items-center p-3">
         <h1 class="text-2xl">Invoices</h1>
@@ -13,7 +14,7 @@
       <!-- Filters -->
       <div class="mb-8 pl-3">
     <div class="text-xl mb-3">Filter by</div>
-    
+
     <div class="grid gap-10 w-full grid-cols-4 text-lg mb-2">
       <!-- Invoice No. Start - Restrict to Numbers -->
       <div class="grid grid-cols-2">
@@ -128,6 +129,7 @@ import { ref } from 'vue';
 import { Inertia } from '@inertiajs/inertia';
 import moment from 'moment';
 import Customers from '@/Components/Customers.vue';
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 // Props
 defineProps({
