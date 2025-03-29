@@ -4,6 +4,9 @@
 
     <GuestLayout>
         <NavbarLayout />
+        <div class="px-4 py-2">
+            <Breadcrumb :home="home" :model="items" class="text-sm" />
+        </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
@@ -496,18 +499,19 @@
 import { ref, computed } from "vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
+import { router } from "@inertiajs/vue3";
+import { useForm } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
-import { useForm } from "@inertiajs/vue3";
 import Dropdown from "primevue/dropdown";
-import { router } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useToast } from "primevue/usetoast";
 import { InputText } from "primevue";
+import Breadcrumb from "primevue/breadcrumb";
 import html2pdf from "html2pdf.js";
-import { Inertia } from "@inertiajs/inertia";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const toast = useToast();
@@ -529,6 +533,14 @@ const searchOptions = ref([
     { label: "Total", value: "total" },
     { label: "Status", value: "status" },
     { label: "Customer Status", value: "customer_status" },
+]);
+const home = ref({
+    icon: 'pi pi-home',
+    to: '/'
+});
+
+const items = ref([
+    { label: 'Quotations', to: route('quotations.list') }
 ]);
 
 const filteredQuotations = computed(() => {
@@ -1049,5 +1061,15 @@ const sendQuotationToCustomer = async () => {
 }
 .p-dialog-header {
     pointer-events: none;
+} /* Add this to your existing styles */
+:deep(.p-breadcrumb) {
+    background: transparent;
+    border: none;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+:deep(.p-menuitem-text) {
+    font-size: 0.875rem;
 }
 </style>
