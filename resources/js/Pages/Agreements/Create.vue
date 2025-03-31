@@ -1,19 +1,35 @@
 <template>
-    <Head title="Create Agreement" />
+    <Head :title="isEditing ? 'Edit Agreement' : 'Create Agreement'" />
     <GuestLayout>
-        <NavbarLayout />
-        <div class="create-agreement p-4">
+        <NavbarLayout
+            :title="isEditing ? 'Edit Quotation' : 'Create Quotation'"
+        />
+        <!-- PrimeVue Breadcrumb -->
+        <div class="py-3">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                    >
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
+        </div>
+        <div class="create-agreement pl-4 pr-4">
             <Toast />
-            <h1 class="text-2xl">
+            <!-- <h1 class="text-2xl">
                 {{ props.edit ? "Update" : "Create" }} Agreement
-            </h1>
+            </h1> -->
             <Form
                 @submit="submit"
                 :action="route('agreements.store')"
                 :initial-values="form"
                 class="mt-6"
             >
-                <div class="create-agreement flex flex-row gap-4">
+                <div class="create-agreement flex flex-row justify-between">
                     <div class="border border-gray-200 rounded-lg p-4 w-2/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
@@ -389,7 +405,7 @@
 
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { Head, router, usePage } from "@inertiajs/vue3";
+import { Head, router } from "@inertiajs/vue3";
 import {
     Button,
     DatePicker,
@@ -406,6 +422,7 @@ import {
     Calendar,
     Dropdown,
 } from "primevue";
+import { Link } from "@inertiajs/vue3";
 import { Form } from "@primevue/forms";
 import { useToast } from "primevue/usetoast";
 import { reactive, onMounted, ref, computed } from "vue";
@@ -415,8 +432,29 @@ import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import moment from "moment";
 import { currencies } from "@/constants";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import Breadcrumb from "primevue/breadcrumb";
+import { usePage } from "@inertiajs/vue3";
 
+// The Breadcrumb Quotations
 const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
+    {
+        label: "Agreements",
+        to: route("agreements.index"),
+    },
+    {
+        label: isEditing.value ? "Edit Agreement" : "Create Agreement",
+        to: isEditing.value
+            ? route("agreements.update", { id: form.id })
+            : route("agreements.create"),
+    },
+]);
+const isEditing = computed(() => !!form.id);
 const props = defineProps({
     errors: Object,
     customers: Array,

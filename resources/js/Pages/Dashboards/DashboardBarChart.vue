@@ -13,28 +13,36 @@
                         :options="languageOptions"
                         optionLabel="name"
                         placeholder="KHR/USD"
-                        class="w-full md:w-32"
+                        class="w-full md:w-30 h-9"
+                        size="small"
                     />
                     <SelectButton
                         v-model="selectedPeriod"
                         :options="periodOptions"
                         optionLabel="name"
                         aria-labelledby="period-label"
+                        class="w-full md:w-30 h-9"
+                        size="small"
                     />
                     <Select
                         v-model="selectedTimeRange"
                         :options="timeRanges"
                         optionLabel="label"
                         placeholder="Select time range"
-                        class="w-full md:w-48"
+                        class="w-full md:w-44 h-9"
+                        size="small"
                     >
                         <template #value="slotProps">
                             <div
                                 v-if="slotProps.value"
-                                class="flex item-center"
+                                class="flex item-center w-full md:w-44 text-sm"
                             >
-                                <div><i class="pi pi-calendar mr-2"></i></div>
-                                <div>{{ slotProps.value.label }}</div>
+                                <div>
+                                    <i class="pi pi-calendar mr-2 text-sm"></i>
+                                </div>
+                                <div class="text-sm">
+                                    {{ slotProps.value.label }}
+                                </div>
                             </div>
                             <span v-else>
                                 {{ slotProps.placeholder }}
@@ -75,7 +83,7 @@
                 </div>
                 <div class="w-2/3">
                     <!-- <VerticalBar /> -->
-                    <StackedBar/>
+                    <StackedBar />
                 </div>
             </div>
         </div>
@@ -84,10 +92,12 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { Head,Link } from "@inertiajs/vue3";
 import { Card, Button, SelectButton, Select } from "primevue";
 import VerticalBar from "../../Layouts/Charts/VerticalBar.vue";
 import StackedBar from "../../Layouts/Charts/StackedBar.vue";
+import { usePage } from "@inertiajs/vue3";
+
 const transactions = ref([
     { label: "Invoices", value: "0.00" },
     { label: "Payments", value: "0.00" },

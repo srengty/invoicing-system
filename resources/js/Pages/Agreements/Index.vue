@@ -2,9 +2,25 @@
     <Head title="Agreements"></Head>
     <GuestLayout>
         <NavbarLayout />
-        <div class="agreements p-4">
-            <div class="flex justify-between items-center p-3">
-                <h1 class="text-2xl">Agreements list</h1>
+        <!-- PrimeVue Breadcrumb -->
+        <div class="py-3">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                    >
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
+        </div>
+        <Toast position="top-center" group="tc" />
+        <Toast position="top-right" group="tr" />
+        <div class="agreements pl-4 pr-4">
+            <div class="flex justify-end items-center">
+                <!-- <h1 class="text-2xl">Agreements list</h1> -->
                 <div class="flex gap-2">
                     <div>
                         <InputText
@@ -127,7 +143,7 @@
                                 "
                                 icon="pi pi-eye"
                                 aria-label="View"
-                                rounded
+                                outlined
                             ></Button>
                             <Button
                                 severity="info"
@@ -142,8 +158,8 @@
                                 "
                                 icon="pi pi-pencil"
                                 aria-label="Edit"
-                                rounded
                                 class="ms-2"
+                                outlined
                             ></Button>
                         </template>
                     </Column>
@@ -164,11 +180,15 @@ import {
     Dropdown,
     InputText,
 } from "primevue";
-import { ref, watch } from "vue";
 import moment from "moment";
+import { ref, watch, computed } from "vue";
 import { debounce } from "lodash";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import Breadcrumb from "primevue/breadcrumb";
+import { usePage } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
 
+const toast = useToast();
 defineProps({
     agreements: {
         type: Array,
@@ -178,6 +198,16 @@ defineProps({
         default: () => ({}),
     },
 });
+// The Breadcrumb Quotations
+const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
+    { label: page.props.title || "Agreements", to: route("agreements.index") },
+]);
 const columns = [
     // { field: 'id', header: 'ID' },
     {

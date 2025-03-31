@@ -255,7 +255,6 @@ import { Head } from "@inertiajs/vue3";
 
 const toast = useToast();
 
-// Form state to track email and telegram sending options
 const sendForm = ref({
     emailChecked: false,
     telegramChecked: false,
@@ -263,11 +262,11 @@ const sendForm = ref({
 
 // Other reactive state variables
 const isSendDialogVisible = ref(false);
-const selectedQuotation = ref(null); // Make sure this is populated with your quotation data
+const selectedQuotation = ref(null);
 const isSending = ref(false);
 
 const cancelSend = () => {
-    isSendDialogVisible.value = false; // Close the dialog
+    isSendDialogVisible.value = false;
 };
 
 const showConfirmationDialog = () => {
@@ -279,7 +278,6 @@ const showConfirmationDialog = () => {
 const sendQuotationRequest = async (quotation, formData) => {
     return new Promise((resolve, reject) => {
         setTimeout(() => {
-            // Simulate successful email sending after 2 seconds
             resolve();
         }, 2000);
     });
@@ -369,14 +367,11 @@ const formattedProducts = computed(() => {
     }));
 });
 
-// Function to generate PDF from the print area
 const generatePDF = (element) => {
     return new Promise((resolve) => {
         html2pdf().from(element).toPdf().outputPdf("blob").then(resolve);
     });
 };
-
-// Function to handle printing the PDF (Download)
 const generateAndDownloadPDF = async () => {
     try {
         if (!printArea.value) {
@@ -384,16 +379,9 @@ const generateAndDownloadPDF = async () => {
             return;
         }
 
-        // Step 1: Generate the PDF for the quotation section
         const quotationPDF = await generatePDF(printArea.value);
-
-        // Step 2: Generate any catalog PDFs for products with valid URLs
         const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
-
-        // Step 3: Merge the quotation PDF with the catalog PDFs (if any)
         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
-
-        // Step 4: Download the merged PDF
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         downloadPDF(mergedPDF, filename);
         window.location.href = route("quotations.list");
@@ -416,9 +404,8 @@ const generateAndSendPDF = async () => {
 
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
         sendPDFViaEmail(mergedPDF, filename);
-        isSendDialogVisible.value=false;
-        window.location.href = route('quotations.list');
-
+        isSendDialogVisible.value = false;
+        window.location.href = route("quotations.list");
     } catch (error) {
         console.error("Error generating PDFs:", error);
     }
@@ -639,5 +626,9 @@ input:checked + .toggle-slider:before {
         max-width: 100%;
         height: auto;
     }
+}
+.p-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>

@@ -45,6 +45,8 @@ Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])
 Route::put('/quotations/{id}', [QuotationController::class, 'update'])->name('quotations.update');
 
 Route::resource('invoices', InvoiceController::class);
+Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
 Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
 

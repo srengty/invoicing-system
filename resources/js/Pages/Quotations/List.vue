@@ -4,16 +4,27 @@
 
     <GuestLayout>
         <NavbarLayout />
-        <div class="px-4 py-2">
-            <Breadcrumb :home="home" :model="items" class="text-sm" />
+        <!-- PrimeVue Breadcrumb -->
+        <div class="px-4 py-3 mt-4">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                    >
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
         </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
         <div class="quotations text-sm">
-            <div class="flex justify-between items-center p-4">
-                <!-- <h1 class="text-2xl">Quotations list</h1> -->
-            </div>
+            <!-- <div class="flex justify-between items-center p-4">
+                <h1 class="text-2xl">Quotations list</h1>
+            </div> -->
             <div class="flex justify-end p-4 gap-4">
                 <div>
                     <Dropdown
@@ -66,15 +77,40 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <Column header="No." style="width: 5%">
+                    <Column header="View / Print-out" style="width: 8%">
+                        <template #body="slotProps">
+                            <div class="flex gap-4">
+                                <Button
+                                    icon="pi pi-eye"
+                                    aria-label="View"
+                                    severity="info"
+                                    class="custom-button"
+                                    @click="viewQuotation(slotProps.data)"
+                                    size="small"
+                                    outlined
+                                />
+                                <Button
+                                    icon="pi pi-print"
+                                    aria-label="Print out"
+                                    class="custom-button"
+                                    @click="
+                                        printQuotation(slotProps.data.id, 1)
+                                    "
+                                    size="small"
+                                    outlined
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                    <!-- <Column header="No." style="width: 5%">
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
                         </template>
-                    </Column>
+                    </Column> -->
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
-                        style="width: 20%"
+                        style="width: 15%"
                     />
                     <Column field="total" header="Total" style="width: 10%" />
 
@@ -160,56 +196,27 @@
                     </Column>
 
                     <!-- Other columns -->
-                    <!-- <Column header="Comment / Role" style="width: 15%">
-                        <template #body="slotProps">
-                            <div
-                                v-if="
-                                    slotProps.data.comments &&
-                                    slotProps.data.comments.length
-                                "
-                            >
-                                <p>
-                                    <strong>Comment:</strong>
-                                    {{
-                                        slotProps.data.comments[
-                                            slotProps.data.comments.length - 1
-                                        ].comment
-                                    }}
-                                </p>
-                                <p>
-                                    <strong>Role:</strong>
-                                    {{
-                                        slotProps.data.comments[
-                                            slotProps.data.comments.length - 1
-                                        ].role
-                                    }}
-                                </p>
-                            </div>
-                            <div v-else><em>No comment</em></div>
-                        </template>
-                    </Column> -->
-                    <Column header="View / Print-out" style="width: 20%">
-                        <template #body="slotProps">
-                            <div class="flex gap-4">
-                                <Button
-                                    icon="pi pi-eye"
-                                    aria-label="View"
-                                    severity="info"
-                                    class="custom-button"
-                                    @click="viewQuotation(slotProps.data)"
-                                    size="small"
-                                    raised
-                                />
-                                <Button
-                                    icon="pi pi-print"
-                                    aria-label="Print out"
-                                    class="custom-button"
-                                    @click="
-                                        printQuotation(slotProps.data.id, 1)
-                                    "
-                                    size="small"
-                                    raised
-                                />
+                    <Column
+                        header="Customer's Comment"
+                        style="width: 15%; min-width: 200px"
+                        bodyStyle="white-space: normal"
+                    >
+                        <template #body="{ data }">
+                            <div class="comment-container">
+                                <template v-if="data.comments?.length">
+                                    <div class="latest-comment">
+                                        <p class="comment-text">
+                                            {{
+                                                data.comments[
+                                                    data.comments.length - 1
+                                                ].comment
+                                            }}
+                                        </p>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <span class="no-comment">No comment</span>
+                                </template>
                             </div>
                         </template>
                     </Column>
@@ -499,6 +506,7 @@
 import { ref, computed } from "vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
 import { router } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
@@ -534,13 +542,16 @@ const searchOptions = ref([
     { label: "Status", value: "status" },
     { label: "Customer Status", value: "customer_status" },
 ]);
-const home = ref({
-    icon: 'pi pi-home',
-    to: '/'
-});
 
-const items = ref([
-    { label: 'Quotations', to: route('quotations.list') }
+// The Breadcrumb Quotations
+const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
+    { label: page.props.title || "Quotations", to: route("quotations.list") },
 ]);
 
 const filteredQuotations = computed(() => {
@@ -1061,12 +1072,48 @@ const sendQuotationToCustomer = async () => {
 }
 .p-dialog-header {
     pointer-events: none;
-} /* Add this to your existing styles */
+}
 :deep(.p-breadcrumb) {
     background: transparent;
     border: none;
     padding-left: 0;
     padding-right: 0;
+}
+
+:deep(.p-menuitem-text) {
+    font-size: 0.875rem;
+}
+.comment-container {
+    padding: 0.5rem;
+}
+
+.latest-comment {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007ad9;
+    padding: 0.5rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.comment-text {
+    margin: 0;
+    word-break: break-word;
+}
+
+.no-comment {
+    color: #6c757d;
+    font-style: italic;
+}
+.breadcrumb-container {
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem 1rem;
+}
+
+/* For PrimeVue Breadcrumb customization */
+:deep(.p-breadcrumb) {
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 
 :deep(.p-menuitem-text) {

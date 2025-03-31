@@ -1,7 +1,23 @@
 <template>
     <Head :title="isEditing ? 'Edit Quotation' : 'Create Quotation'" />
     <GuestLayout>
-        <NavbarLayout />
+        <NavbarLayout
+            :title="isEditing ? 'Edit Quotation' : 'Create Quotation'"
+        />
+        <!-- PrimeVue Breadcrumb -->
+        <div class=" py-3 ">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                    >
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
+        </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
@@ -515,6 +531,7 @@ import Column from "primevue/column";
 import Toast from "primevue/toast";
 import Customers from "@/Components/Customers.vue";
 import { getDepartment } from "../../data";
+import Breadcrumb from "primevue/breadcrumb";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 
 const props = defineProps({
@@ -533,6 +550,27 @@ const props = defineProps({
 const toast = useToast();
 const selectedProductIds = ref([]);
 const selectedProductsData = ref([]);
+
+// The Breadcrumb Quotations
+const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
+    {
+        label: "Quotations",
+        to: route("quotations.list"),
+    },
+    {
+        label: isEditing.value ? "Edit Quotation" : "Create Quotation",
+        to: isEditing.value
+            ? (route("quotations.update", { id: form.id }))
+            : route("quotations.create"),
+    },
+]);
+
 const showToast = (
     type = "success",
     title = "Success",
@@ -553,7 +591,7 @@ const preventMinus = (event) => {
 };
 const pageProps = usePage().props;
 const quotation = ref(pageProps.quotation || null);
-const isEditing = computed(() => !!props.quotation);
+const isEditing = computed(() => !!form.id);
 // Define the Inertia form
 const form = useForm({
     id: props.quotation?.id || null,
@@ -662,12 +700,17 @@ const updateSelectedProductDetails = () => {
                 quantity: 1,
                 subTotal: Number(product.price),
                 category_id: product.category_id ?? null,
+                division_id: product.division_id ?? null,
             };
+            selectedDivision.value = product.division_id;
+            filterProductsByDivision();
         }
     } else {
         selectedProduct.value = {};
+        selectedDivision.value = null;
     }
 };
+
 const activeCustomers = computed(() => {
     return props.customers.map((customer) => ({
         id: customer.id.toString(),

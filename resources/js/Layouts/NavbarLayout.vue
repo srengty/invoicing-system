@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import IconField from "primevue/iconfield";
 import InputText from "primevue/inputtext";
@@ -46,58 +46,48 @@ import InputIcon from "primevue/inputicon";
 import Toolbar from "primevue/toolbar";
 import SplitButton from "primevue/splitbutton";
 import Avatar from "primevue/avatar";
-import Button from "primevue/button";
 
 const page = usePage();
+
 const routeTitles = {
-    "/": {
-        title: "Dashboard",
-    },
-    "/quotations": {
-        title: "Quotation",
-    },
-    "/quotations/create": {
-        title: "Create Quotation",
-    },
-    "/agreements": {
-        title: "Agreement",
-    },
-    "/agreements/create": {
-        title: "Create Agreement",
-    },
-    "/invoices": {
-        title: "Invoices",
-    },
-    "/invoices/create": {
-        title: "Create Invoices",
-    },
-    "/settings": {
-        title: "Setting",
-    },
-    "/settings/customers": {
-        title: "Customers",
-    },
-    "/settings/products": {
-        title: "Items",
-    },
-    "/settings/product-categories": {
-        title: "Product Categories",
-    },
-    "/settings/customer-categories": {
-        title: "Customer Categories",
-    },
+    "/": "Dashboard",
+    "/quotations": "Quotations",
+    "/quotations/create": "Create Quotation",
+    "/agreements": "Agreements",
+    "/agreements/create": "Create Agreement",
+    "/invoices": "Invoices",
+    "/invoices/create": "Create Invoice",
+    "/settings": "Settings",
+    "/settings/customers": "Customers",
+    "/settings/products": "Items",
+    "/settings/product-categories": "Product Categories",
+    "/settings/customer-categories": "Customer Categories",
 };
 
 const currentRouteTitle = computed(() => {
-    return routeTitles[page.url]?.title || "Dashboard";
+    // Check if we're editing a quotation by component name
+    if (page.component === 'Quotations/Edit') {
+        return `Edit Quotation ${page.props.quotation?.id || ''}`;
+    }
+
+    // Check if URL matches edit pattern (supports both /edit/{id} and /{id}/edit)
+    if (page.url.match(/\/quotations\/(edit\/|)\d+/)) {
+        return `Edit Quotation ${page.props.quotation?.id || ''}`;
+    }
+
+    // Check create route
+    if (page.url === '/quotations/create') {
+        return "Create Quotation";
+    }
+
+    // Default to mapped titles
+    return routeTitles[page.url] || "Edit Quotation";
 });
 
-const userName = ref("Manager");
-const userAvatar = ref(
-    "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-);
+const userName = "Manager";
+const userAvatar = "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
 
-const items = ref([
+const items = [
     {
         label: "Accounts",
         icon: "pi pi-user",
@@ -106,11 +96,10 @@ const items = ref([
         label: "Logout",
         icon: "pi pi-sign-out",
     },
-]);
+];
 </script>
 
 <style scoped>
-/* Custom styles */
 .p-toolbar {
     padding: 1rem;
     background: white;

@@ -104,7 +104,7 @@ class QuotationController extends Controller
 
         // Status updates
         $quotation->status = $newStatus;
-        
+
         // Improved customer_status logic
         if ($newCustomerStatus) {
             // Use explicitly provided customer_status
@@ -120,7 +120,7 @@ class QuotationController extends Controller
                 'Rejected' => 'Rejected',
                 'Cancelled' => 'Cancelled'
             ];
-            
+
             $quotation->customer_status = $statusMap[$newStatus] ?? $newStatus;
         }
 
@@ -268,6 +268,10 @@ class QuotationController extends Controller
             $query->withPivot(['quantity', 'price', 'include_catalog']);
         }])->where('id', $quotation_no)->firstOrFail();
 
+        // Prevent access if already approved
+        if ($quotation->customer_status === 'Approved') {
+            abort(403, 'This quotation has been approved and can no longer be modified or printed.');
+        }
 
         $formattedQuotationDate = $quotation->quotation_date
         ? Carbon::parse($quotation->quotation_date)->format('Y-m-d')
@@ -360,7 +364,7 @@ class QuotationController extends Controller
                 ]);
             }
         }
-
+        // dd("Hello World");
         return redirect()->route('quotations.list')->with('success', 'Quotation updated successfully.');
     }
 
@@ -479,7 +483,7 @@ public function sendQuotation(Request $request)
         if ($request->input('send_email')) {
             Log::info('Sending email to: ' . $customerEmail);
             Mail::to($customerEmail)->send(new QuotationEmail($quotation, $request->file('pdf_file')));
-            
+
             // Automatically update statuses when sending email
             $quotation->customer_status = 'Pending'; // Change from Sent to Pending
             $quotation->customer->update(['customer_status' => 'Pending']);
@@ -489,8 +493,8 @@ public function sendQuotation(Request $request)
         $quotation->save();
 
         return response()->json([
-            'success' => $request->input('send_email') 
-                ? 'Quotation sent successfully via email' 
+            'success' => $request->input('send_email')
+                ? 'Quotation sent successfully via email'
                 : 'Quotation processed successfully',
             'pdf_path' => $pdfPath,
         ]);

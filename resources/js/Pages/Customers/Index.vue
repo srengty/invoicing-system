@@ -4,200 +4,208 @@
     <Toast position="top-center" group="tc" />
     <GuestLayout>
         <NavbarLayout />
-        <BodyLayout>
-            <div class="customers">
-                <div class="flex justify-between items-center pb-4">
-                    <div class="flex items-center gap-2">
-                        <img src="/User.png" alt="Item Icon" class="h-8 w-8" />
-                        <h1 class="text-xl text-green-600">
-                            Customers/Organization Name
-                        </h1>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <Dropdown
-                            v-model="searchType"
-                            :options="searchOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            class="w-48 text-sm"
-                            placeholder="Search by"
-                        />
-                        <InputText
-                            v-model="searchTerm"
-                            placeholder="Search"
-                            class="w-64"
-                            size="small"
-                        />
-                        <Button
-                            icon="pi pi-plus"
-                            label="New Customer"
-                            @click="isCreateCustomerVisible = true"
-                            size="small"
-                        />
-                    </div>
-                </div>
-
-                <DataTable
-                    :value="filteredCustomers"
-                    paginator
-                    :rows="5"
-                    :rowsPerPageOptions="[5, 10, 20, 50]"
-                    class="text-sm"
-                >
-                    <Column
-                        field="customer_category_name"
-                        header="Category"
-                        style="width: 5%"
+        <!-- PrimeVue Breadcrumb -->
+        <div class="py-3">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
                     >
-                        <template #body="{ data }">
-                            {{ getCategoryNameById(data.customer_category_id) }}
-                        </template>
-                    </Column>
-
-                    <Column
-                        v-for="col of showColumns"
-                        :key="col.field"
-                        :field="col.field"
-                        :header="col.header"
-                    ></Column>
-
-                    <Column header="Actions">
-                        <template #body="slotProps">
-                            <div class="flex gap-2">
-                                <Button
-                                    icon="pi pi-eye"
-                                    class="p-button-info"
-                                    aria-label="View"
-                                    size="small"
-                                    @click="viewCustomer(slotProps.data.id)"
-                                    outlined
-                                />
-                                <Button
-                                    icon="pi pi-pencil"
-                                    class="p-button-warning"
-                                    aria-label="Edit"
-                                    size="small"
-                                    @click="editCustomer(slotProps.data.id)"
-                                    outlined
-                                />
-                                <Button
-                                    :icon="
-                                        slotProps.data.active
-                                            ? 'pi pi-unlock'
-                                            : 'pi pi-lock'
-                                    "
-                                    :label="
-                                        slotProps.data.active
-                                            ? 'Activate'
-                                            : 'Deactivate'
-                                    "
-                                    :class="{
-                                        'p-button-success':
-                                            slotProps.data.active,
-                                        'p-button-danger':
-                                            !slotProps.data.active,
-                                        ' w-28 h-8 flex items-center justify-center': true,
-                                    }"
-                                    aria-label="Toggle Active Status"
-                                    size="small"
-                                    @click="toggleActive(slotProps.data)"
-                                    outlined
-                                />
-                            </div>
-                        </template>
-                    </Column>
-                </DataTable>
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
+        </div>
+        <!-- <BodyLayout> -->
+        <div class="customers p-4">
+            <div class="flex justify-between items-center pb-4">
+                <div class="flex items-center gap-2">
+                    <img src="/User.png" alt="Item Icon" class="h-8 w-8 ml-4" />
+                    <h1 class="text-xl text-green-600">
+                        Customers/Organization Name
+                    </h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Dropdown
+                        v-model="searchType"
+                        :options="searchOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-48 text-sm"
+                        placeholder="Search by"
+                    />
+                    <InputText
+                        v-model="searchTerm"
+                        placeholder="Search"
+                        class="w-64"
+                        size="small"
+                    />
+                    <Button
+                        icon="pi pi-plus"
+                        label="New Customer"
+                        @click="isCreateCustomerVisible = true"
+                        size="small"
+                    />
+                </div>
             </div>
 
-            <!-- Dialogs for Create, Edit, and View -->
-            <Dialog
-                v-model:visible="isCreateCustomerVisible"
-                modal
-                header="Add Customer"
-                class="w-2/3"
+            <DataTable
+                :value="filteredCustomers"
+                paginator
+                :rows="5"
+                :rowsPerPageOptions="[5, 10, 20, 50]"
+                class="text-sm"
             >
-                <template #header>
-                    <div class="flex items-center gap-2">
-                        <img
-                            src="/User.png"
-                            alt="Item Customer"
-                            class="h-8 w-8 ml-2"
-                        />
-                        <span class="text-xl font-semibold bor"
-                            >Add Customer</span
-                        >
-                    </div>
-                </template>
-                <Customers
-                    :customerCategories="customerCategories"
-                    redirect_route="customers.index"
-                    :mode="'create'"
-                    @close="isCreateCustomerVisible = false"
-                />
-            </Dialog>
+                <Column
+                    field="customer_category_name"
+                    header="Category"
+                    style="width: 5%"
+                >
+                    <template #body="{ data }">
+                        {{ getCategoryNameById(data.customer_category_id) }}
+                    </template>
+                </Column>
 
-            <!-- Edit Customer Dialog -->
-            <Dialog
-                v-model:visible="isEditCustomerVisible"
-                modal
-                header="Edit Customer"
-                class="w-2/3"
-            >
-                <template #header>
-                    <div class="flex items-center gap-2">
-                        <img
-                            src="/Item.png"
-                            alt="Item Customer"
-                            class="h-8 w-8 ml-2"
-                        />
-                        <span class="text-xl font-semibold bor"
-                            >Edit Customer</span
-                        >
-                    </div>
-                </template>
-                <Customers
-                    :customerCategories="customerCategories"
-                    redirect_route="customers.index"
-                    :mode="'edit'"
-                    :customer="selectedCustomer"
-                    @close="isEditCustomerVisible = false"
-                />
-            </Dialog>
+                <Column
+                    v-for="col of showColumns"
+                    :key="col.field"
+                    :field="col.field"
+                    :header="col.header"
+                ></Column>
 
-            <!-- View Customer Dialog -->
-            <Dialog
-                v-model:visible="isViewCustomerVisible"
-                modal
-                header="View Customer"
-                class="w-2/3"
-            >
-                <template #header>
-                    <div class="flex items-center gap-2">
-                        <img
-                            src="/Item.png"
-                            alt="Item Customer"
-                            class="h-8 w-8 ml-2"
-                        />
-                        <span class="text-xl font-semibold bor"
-                            >Customer Details</span
-                        >
-                    </div>
-                </template>
-                <Customers
-                    :customerCategories="customerCategories"
-                    redirect_route="customers.index"
-                    :mode="'view'"
-                    :customer="selectedCustomer"
-                    @close="isViewCustomerVisible = false"
-                />
-            </Dialog>
-        </BodyLayout>
+                <Column header="Actions">
+                    <template #body="slotProps">
+                        <div class="flex gap-2">
+                            <Button
+                                icon="pi pi-eye"
+                                class="p-button-info"
+                                aria-label="View"
+                                size="small"
+                                @click="viewCustomer(slotProps.data.id)"
+                                outlined
+                            />
+                            <Button
+                                icon="pi pi-pencil"
+                                class="p-button-warning"
+                                aria-label="Edit"
+                                size="small"
+                                @click="editCustomer(slotProps.data.id)"
+                                outlined
+                            />
+                            <Button
+                                :icon="
+                                    slotProps.data.active
+                                        ? 'pi pi-unlock'
+                                        : 'pi pi-lock'
+                                "
+                                :label="
+                                    slotProps.data.active
+                                        ? 'Activate'
+                                        : 'Deactivate'
+                                "
+                                :class="{
+                                    'p-button-success': slotProps.data.active,
+                                    'p-button-danger': !slotProps.data.active,
+                                    ' w-28 h-8 flex items-center justify-center': true,
+                                }"
+                                aria-label="Toggle Active Status"
+                                size="small"
+                                @click="toggleActive(slotProps.data)"
+                                outlined
+                            />
+                        </div>
+                    </template>
+                </Column>
+            </DataTable>
+        </div>
+
+        <!-- Dialogs for Create, Edit, and View -->
+        <Dialog
+            v-model:visible="isCreateCustomerVisible"
+            modal
+            header="Add Customer"
+            class="w-2/3"
+        >
+            <template #header>
+                <div class="flex items-center gap-2">
+                    <img
+                        src="/User.png"
+                        alt="Item Customer"
+                        class="h-8 w-8 ml-2"
+                    />
+                    <span class="text-xl font-semibold bor">Add Customer</span>
+                </div>
+            </template>
+            <Customers
+                :customerCategories="customerCategories"
+                redirect_route="customers.index"
+                :mode="'create'"
+                @close="isCreateCustomerVisible = false"
+            />
+        </Dialog>
+
+        <!-- Edit Customer Dialog -->
+        <Dialog
+            v-model:visible="isEditCustomerVisible"
+            modal
+            header="Edit Customer"
+            class="w-2/3"
+        >
+            <template #header>
+                <div class="flex items-center gap-2">
+                    <img
+                        src="/Item.png"
+                        alt="Item Customer"
+                        class="h-8 w-8 ml-2"
+                    />
+                    <span class="text-xl font-semibold bor">Edit Customer</span>
+                </div>
+            </template>
+            <Customers
+                :customerCategories="customerCategories"
+                redirect_route="customers.index"
+                :mode="'edit'"
+                :customer="selectedCustomer"
+                @close="isEditCustomerVisible = false"
+            />
+        </Dialog>
+
+        <!-- View Customer Dialog -->
+        <Dialog
+            v-model:visible="isViewCustomerVisible"
+            modal
+            header="View Customer"
+            class="w-2/3"
+        >
+            <template #header>
+                <div class="flex items-center gap-2">
+                    <img
+                        src="/Item.png"
+                        alt="Item Customer"
+                        class="h-8 w-8 ml-2"
+                    />
+                    <span class="text-xl font-semibold bor"
+                        >Customer Details</span
+                    >
+                </div>
+            </template>
+            <Customers
+                :customerCategories="customerCategories"
+                redirect_route="customers.index"
+                :mode="'view'"
+                :customer="selectedCustomer"
+                @close="isViewCustomerVisible = false"
+            />
+        </Dialog>
+        <!-- </BodyLayout> -->
     </GuestLayout>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import {
     DataTable,
     Column,
@@ -216,6 +224,8 @@ import ConfirmDialog from "primevue/confirmdialog";
 import { useConfirm } from "primevue/useconfirm";
 import { router } from "@inertiajs/vue3";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import Breadcrumb from "primevue/breadcrumb";
+import { usePage } from "@inertiajs/vue3";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -225,6 +235,16 @@ const props = defineProps({
     customers: Array,
     customerCategories: Array,
 });
+// The Breadcrumb Quotations
+const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
+    { label: page.props.title || "Customers", to: route("customers.index") },
+]);
 
 const columns = [
     { field: "name", header: "Name", style: { width: "5%" } },
