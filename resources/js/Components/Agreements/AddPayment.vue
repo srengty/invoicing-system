@@ -20,7 +20,7 @@
                 fluid
                 date-format="dd/mm/yy"
             />
-            <label for="due_date" class="required">Due date</label>
+            <label for="due_date" class="required">Due date </label>
         </FloatLabel>
 
         <FloatLabel variant="on">
@@ -48,6 +48,7 @@
             </InputGroup>
             <label for="percentage" class="required z-10">Percentage</label>
         </FloatLabel>
+
         <FloatLabel variant="on">
             <InputGroup id="amount">
                 <InputGroupAddon>{{
@@ -62,7 +63,19 @@
             </InputGroup>
             <label for="amount" class="required z-10">Amount</label>
         </FloatLabel>
-        <div class="flex items-center gap-2" v-if="props.multiCurrencies">
+        <FloatLabel variant="on">
+            <Dropdown
+                id="currency"
+                v-model="model.currency"
+                :options="currencies"
+                optionLabel="name"
+                optionValue="value"
+                class="w-full"
+                @change="doCurrencyChange"
+            />
+            <label for="currency" class="required">Currency</label>
+        </FloatLabel>
+        <!-- <div class="flex items-center gap-2" v-if="props.multiCurrencies">
             <label for="currency" class="required">Currency</label>
             <RadioButtonGroup
                 id="currency"
@@ -94,7 +107,7 @@
                 id="exchange_rate"
             />
             <label for="exchange_rate" class="required z-10">Rate</label>
-        </FloatLabel>
+        </FloatLabel> -->
         <div class="flex justify-end gap-2">
             <Button label="Save" class="grow" @click="doSave"></Button>
             <Button
@@ -119,6 +132,7 @@ import {
     InputGroupAddon,
     InputNumber,
     Toast,
+    Dropdown,
 } from "primevue";
 import { onMounted, ref } from "vue";
 import { currencies } from "@/constants";

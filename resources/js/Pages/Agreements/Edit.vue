@@ -1,5 +1,5 @@
 <template>
-    <Head title="Create Agreements"></Head>
+    <Head :title="`Edit Agreement ${agreement.agreement_no}`"></Head>
     <GuestLayout>
         <NavbarLayout />
         <!-- PrimeVue Breadcrumb -->
@@ -16,77 +16,38 @@
                 </template>
             </Breadcrumb>
         </div>
-        <div class="create-agreement pl-4 pr-4">
+        <div class="edit-agreement pl-4 pr-4">
             <Toast />
-            <!-- <h1 class="text-2xl">
-                {{ props.edit ? "Update" : "Create" }} Agreement
-            </h1> -->
-            <Form
-                @submit="submit"
-                :action="route('agreements.store')"
-                :initial-values="form"
-                class="mt-6"
-            >
-                <div
-                    class="create-agreement flex flex-row justify-between gap-4"
-                >
+            <Form @submit="submitForm" :initial-values="form" class="mt-6">
+                <div class="flex flex-row justify-between gap-4">
+                    <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
                                 >Record Agreement</span
                             >
-                            <!-- Quotation No Input with Search -->
-                            <span
-                                v-tooltip="
-                                    'must be approved and no agreement attached'
-                                "
-                                class="text-sm"
-                            >
-                                Quotation No.
-                            </span>
+
+                            <!-- Quotation No -->
+                            <span class="text-sm">Quotation No.</span>
                             <InputText
                                 v-model="form.quotation_no"
                                 placeholder="Enter Quotation No."
                                 class="w-full"
                                 size="small"
-                            >
-                                <template #suffix>
-                                    <i
-                                        v-if="form.quotation_no"
-                                        class="pi pi-times cursor-pointer text-gray-500 hover:text-gray-700"
-                                        @click="
-                                            form.quotation_no = '';
-                                            form.customer_id = null;
-                                            form.address = '';
-                                            customerName.value = '';
-                                        "
-                                    />
-                                    <i
-                                        v-else
-                                        class="pi pi-search text-gray-400"
-                                    />
-                                </template>
-                            </InputText>
-                            <!-- <span class="text-sm required"
-                                >Agreement No. {{ agreement_max }}</span
-                            > -->
-                            <span class="text-sm required">Agreement No. </span>
+                                readonly
+                            />
+
+                            <!-- Agreement No -->
+                            <span class="text-sm required">Agreement No.</span>
                             <InputNumber
                                 v-model="form.agreement_no"
                                 name="agreement_no"
-                                :class="errors.agreement_no ? 'p-invalid' : ''"
                                 :use-grouping="false"
                                 :readonly="true"
                                 size="small"
                             />
-                            <Message
-                                v-if="errors.agreement_no"
-                                severity="error"
-                                variant="simple"
-                                class="col-span-2"
-                                size="small"
-                                >{{ errors.agreement_no }}</Message
-                            >
+
+                            <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
                             <DatePicker
                                 date-format="dd/mm/yy"
@@ -95,15 +56,8 @@
                                 showIcon
                                 size="small"
                             />
-                            <Message
-                                v-if="errors.agreement_date"
-                                severity="error"
-                                variant="simple"
-                                class="col-span-2"
-                                size="small"
-                                >{{ errors.agreement_date }}</Message
-                            >
-                            <!-- Customer Select Dropdown -->
+
+                            <!-- Customer Name -->
                             <span class="text-sm required">Customer name</span>
                             <InputText
                                 name="customer_name"
@@ -120,8 +74,9 @@
                                 size="small"
                                 readonly
                             />
+
+                            <!-- Agreement Doc -->
                             <span class="text-sm required">Agreement doc</span>
-                            <!-- <FileUpload name="agreement_doc" auto customUpload @select="onFileSelect" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/> -->
                             <FileUpload
                                 name="agreement_doc"
                                 :url="route('agreements.upload')"
@@ -137,14 +92,8 @@
                                     <i class="pi pi-file-pdf"></i>
                                 </template>
                             </FileUpload>
-                            <Message
-                                v-if="errors.agreement_doc"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                class="col-span-2"
-                                >{{ errors.agreement_doc }}</Message
-                            >
+
+                            <!-- Agreement Docs List -->
                             <DataView
                                 :value="agreementDocs"
                                 class="col-span-2 mt-2"
@@ -202,11 +151,15 @@
                             </DataView>
                         </div>
                     </div>
+
+                    <!-- Middle Column - Agreement Summary -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 font-semibold text-xl mb-5"
                                 >Agreement summary</span
                             >
+
+                            <!-- Start Date -->
                             <span class="text-sm">Start date</span>
                             <DatePicker
                                 date-format="dd/mm/yy"
@@ -215,14 +168,8 @@
                                 showIcon
                                 size="small"
                             />
-                            <Message
-                                v-if="errors.start_date"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                class="col-span-2"
-                                >{{ errors.start_date }}</Message
-                            >
+
+                            <!-- End Date -->
                             <span class="text-sm">End date</span>
                             <DatePicker
                                 date-format="dd/mm/yy"
@@ -231,17 +178,11 @@
                                 showIcon
                                 size="small"
                             />
-                            <Message
-                                v-if="errors.end_date"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                class="col-span-2"
-                                >{{ errors.end_date }}</Message
-                            >
+
+                            <!-- Agreement Amount -->
                             <span class="text-sm">
                                 Agreement amount ({{
-                                    currencies[riels == true ? 0 : 1].name
+                                    currencies[riels ? 0 : 1].name
                                 }})
                             </span>
                             <InputGroup size="small">
@@ -253,14 +194,8 @@
                                     :value="schedule.agreement_amount"
                                 />
                             </InputGroup>
-                            <Message
-                                v-if="errors.agreement_amount"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                class="col-span-2"
-                                >{{ errors.agreement_amount }}</Message
-                            >
+
+                            <!-- Short Description -->
                             <span class="text-sm">Short description</span>
                             <Textarea
                                 name="short_description"
@@ -268,6 +203,8 @@
                                 v-model="form.short_description"
                                 size="small"
                             ></Textarea>
+
+                            <!-- Payment Schedule -->
                             <span class="text-sm">Payment schedule</span>
                             <PopupAddPaymentSchedule
                                 v-model="schedule"
@@ -278,15 +215,14 @@
                             />
                         </div>
                     </div>
-                    <div class="border border-gray-200 rounded-lg p-4 w-1/4">
-                        <h3 class="font-semibold text-xl mb-4">
-                            Add Attachment
-                        </h3>
 
+                    <!-- Right Column - Attachments -->
+                    <div class="border border-gray-200 rounded-lg p-4 w-1/4">
+                        <h3 class="font-semibold text-xl mb-4">Attachments</h3>
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1"
-                                    >Attachment</label
+                                    >Add Attachment</label
                                 >
                                 <FileUpload
                                     name="attachments"
@@ -326,10 +262,6 @@
                                                 >
                                                     {{ item.name }}
                                                 </span>
-                                                <!-- Uncomment if you want to show file size -->
-                                                <!-- <span class="text-xs text-gray-500">
-                        ({{ formatFileSize(item.size) }})
-                    </span> -->
                                             </div>
                                             <button
                                                 @click="removeAttachment(index)"
@@ -357,12 +289,16 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Payment Schedule Table -->
                 <PaymentSchedule
                     class="mt-2"
                     v-model="form.payment_schedule"
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
                 />
+
+                <!-- Exchange Rate (if needed) -->
                 <div
                     class="flex justify-end items-center gap-2 my-2 px-24"
                     v-if="hasManyCurrencies"
@@ -376,12 +312,13 @@
                     ></InputText>
                 </div>
 
+                <!-- Save Button -->
                 <Button
-                    label="Save"
+                    label="Save Changes"
                     type="submit"
                     raised
                     class="w-48 mt-5"
-                    :disabled="isStoringAgreement"
+                    :disabled="processing"
                     icon="pi pi-check"
                 ></Button>
             </Form>
@@ -390,8 +327,11 @@
 </template>
 
 <script setup>
+import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { Head, router, Link } from "@inertiajs/vue3";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { ref, computed, onMounted } from "vue";
+import { usePage } from "@inertiajs/vue3";
 import {
     Button,
     DatePicker,
@@ -399,342 +339,161 @@ import {
     InputNumber,
     InputText,
     Message,
-    Select,
     ToggleSwitch,
     InputGroup,
     InputGroupAddon,
     DataView,
     Toast,
-    Calendar,
-    Dropdown,
+    Textarea,
 } from "primevue";
 import { Form } from "@primevue/forms";
 import { useToast } from "primevue/usetoast";
-import { reactive, onMounted, ref, computed, watch } from "vue";
-import Textarea from "primevue/textarea";
-import moment from "moment";
-import { currencies } from "@/constants";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
 import PaymentSchedule from "./PaymentSchedule.vue";
 import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
+import { currencies } from "@/constants";
+import moment from "moment";
+
 const toast = useToast();
-// The Breadcrumb Quotations
 const page = usePage();
-const items = computed(() => [
-    {
-        label: "",
-        to: "/",
-        icon: "pi pi-home",
-    },
-    {
-        label: "Agreements",
-        to: route("agreements.index"),
-    },
-    {
-        label: "Create Agreements",
-        to: route("agreements.create"),
-    },
 
-]);
-const isEditing = computed(() => !!form.id);
 const props = defineProps({
-    errors: Object,
-    customers: Array,
-    agreement_max: Number,
     agreement: Object,
-    edit: Boolean,
+    customers: Array,
+    quotations: Array,
+    errors: Object,
 });
 
+// Breadcrumb items
+const items = computed(() => [
+    { label: "", to: "/", icon: "pi pi-home" },
+    { label: "Agreements", to: route("agreements.index") },
+    {
+        label: `Edit Agreement ${props.agreement.agreement_no}`,
+        to: route("agreements.edit", {
+            agreement_no: props.agreement.agreement_no,
+        }),
+    },
+]);
+
+// Form setup
+const form = useForm({
+    quotation_no: props.agreement.quotation_no,
+    agreement_no: props.agreement.agreement_no,
+    agreement_date: props.agreement.agreement_date
+        ? moment(props.agreement.agreement_date, "DD/MM/YYYY").toDate()
+        : new Date(),
+    customer_id: props.agreement.customer_id,
+    address: props.agreement.address,
+    agreement_doc: props.agreement.agreement_doc,
+    start_date: props.agreement.start_date
+        ? moment(props.agreement.start_date, "DD/MM/YYYY").toDate()
+        : new Date(),
+    end_date: props.agreement.end_date
+        ? moment(props.agreement.end_date, "DD/MM/YYYY").toDate()
+        : new Date(),
+    agreement_amount: props.agreement.amount,
+    short_description: props.agreement.short_description,
+    currency: props.agreement.currency || "USD",
+    attachments: props.agreement.attachments
+        ? JSON.parse(props.agreement.attachments)
+        : [],
+    payment_schedule:
+        props.agreement.payment_schedules?.map((item) => ({
+            ...item,
+            due_date: item.due_date
+                ? moment(item.due_date, "DD/MM/YYYY").toDate()
+                : new Date(),
+        })) || [],
+});
+
+// Reactive state
+const processing = ref(false);
+const customerName = ref(props.agreement.customer?.name || "");
 const riels = computed({
-    get: () => form.currency === "KHR", // Check if currency is KHR
+    get: () => form.currency === "KHR",
     set: (value) => {
-        form.currency = value ? "KHR" : "USD"; // Toggle currency between KHR and USD
+        form.currency = value ? "KHR" : "USD";
         if (form.currency === "KHR") {
-            // If KHR is selected, set the exchange rate from the quotation
-            schedule.value.exchange_rate = form.exchange_rate; // Use the exchange rate from the quotation
+            schedule.value.exchange_rate = form.exchange_rate || 4100;
         } else {
-            // If USD is selected, set exchange rate to 1
-            schedule.value.exchange_rate = 1; // USD default exchange rate is 1
+            schedule.value.exchange_rate = 1;
         }
     },
 });
-const updateAgreementAmount = () => {
-    if (form.currency === "USD") {
-        // If USD is selected, the amount remains as is
-        schedule.value.agreement_amount = form.agreement_amount;
-    } else if (form.currency === "KHR") {
-        // If KHR is selected, apply the exchange rate
-        schedule.value.agreement_amount =
-            form.agreement_amount * schedule.value.exchange_rate;
-    }
-};
-
-const form = reactive({
-    quotation_no: null,
-    agreement_no: props.edit
-        ? props.agreement.agreement_no
-        : Math.max(props.agreement_max, 25000001),
-    agreement_date: new Date(),
-    customer_id: null,
-    address: "",
-    agreement_doc: null,
-    progress: null,
-    start_date: new Date(),
-    end_date: new Date(),
-    agreement_amount: 0,
-    short_description: "",
-    attachments: [],
-    payment_schedule: [],
-    attachments: null,
-    currency: "KHR",
-});
-const customerName = ref("");
-const address = ref("");
-const searchQuotation = async () => {
-    if (form.quotation_no) {
-        console.log("Searching for quotation no:", form.quotation_no);
-        try {
-            const response = await axios.get("/search-quotation", {
-                params: { quotation_no: form.quotation_no },
-            });
-
-            if (response.data) {
-                customerName.value = response.data.customer_name;
-                form.address = response.data.address;
-                form.customer_id = response.data.customer_id;
-                form.agreement_amount = response.data.agreement_amount;
-                schedule.value.agreement_amount =
-                    response.data.agreement_amount;
-
-                // Set the exchange rate based on quotation currency
-                if (response.data.currency === "KHR") {
-                    schedule.value.exchange_rate = response.data.exchange_rate; // Quotation's exchange rate
-                    form.currency = "KHR"; // Set currency to KHR
-                } else {
-                    schedule.value.exchange_rate = 1; // For USD, set exchange rate to 1
-                    form.currency = "USD"; // Set currency to USD
-                }
-            } else {
-                // Handle case where no quotation is found
-                customerName.value = "";
-                form.address = "";
-                form.customer_id = null;
-                form.agreement_amount = 0;
-                schedule.value.agreement_amount = 0;
-                schedule.value.exchange_rate = 1; // Default exchange rate for USD
-            }
-        } catch (error) {
-            console.error("Error fetching quotation", error);
-        }
-    }
-};
-
-watch(
-    () => form.quotation_no,
-    (newVal) => {
-        // Debounce the search to avoid too many requests
-        const timer = setTimeout(() => {
-            searchQuotation();
-        }, 500); // 500ms delay to avoid excessive requests
-
-        return () => clearTimeout(timer);
-    }
-);
 
 const schedule = ref({
-    agreement_amount: form.agreement_amount,
+    agreement_amount: props.agreement.amount,
     due_date: new Date(),
     short_description: "Item description",
     percentage: 100,
     remark: "Additional remark",
     amount: 2000,
-    currency: "KHR",
-    agreement_currency: "KHR",
-    exchange_rate: 4200,
+    currency: props.agreement.currency || "USD",
+    agreement_currency: props.agreement.currency || "USD",
+    exchange_rate: props.agreement.currency === "KHR" ? 4100 : 1,
 });
 
-// Form data
-const totalAgreement = ref(10000); // Set your default total amount
-const dueDate = ref();
-const shortDescription = ref("");
-const percentage = ref();
-const amount = ref();
-const currency = ref("USD");
-const locale = ref("en-US");
-const agreementDocs = ref([]);
-const currencyOptions = ref([
-    { name: "US Dollar", code: "USD" },
-    { name: "Euro", code: "EUR" },
-    { name: "British Pound", code: "GBP" },
-]);
-const calculateAmount = () => {
-    if (percentage.value) {
-        amount.value = (totalAgreement.value * percentage.value) / 100;
-    } else {
-        amount.value = null;
-    }
-};
+const agreementDocs = ref(
+    props.agreement.agreement_doc
+        ? [
+              {
+                  path: props.agreement.agreement_doc,
+                  name: getFileName(props.agreement.agreement_doc),
+                  size: 0,
+                  type: "application/pdf",
+              },
+          ]
+        : []
+);
 
+// Computed properties
 const remainingAmount = computed(() => {
     return (
         schedule.value.agreement_amount -
         form.payment_schedule.reduce((acc, item) => acc + item.amount, 0)
     );
 });
+
 const remainingPercentage = computed(() => {
     return (
         100 -
         form.payment_schedule.reduce((acc, item) => acc + item.percentage, 0)
     );
 });
-const isStoringAgreement = ref(false);
+
 const hasManyCurrencies = computed(() => {
     return form.payment_schedule.some((v) => v.currency != form.currency);
 });
-onMounted(() => {
-    // form.agreement_no = props.agreement_max > 25000001 ? props.agreement_max : 25000001;
-    // form.agreement_no = props.edit ? props.agreement.agreement_no : 25000001;
-    form.agreement_no = props.edit
-        ? props.agreement.agreement_no
-        : Math.max(props.agreement_max, 25000001);
-    if (props.edit) {
-        console.log("edit", props.agreement);
 
-        // Basic form data
-        form.quotation_no = props.agreement.quotation_no;
-        form.agreement_no = props.agreement.agreement_no;
-        form.agreement_date = moment(
-            props.agreement.agreement_date,
-            "DD/MM/YYYY"
-        ).toDate();
-        form.customer_id = props.agreement.customer_id;
-        form.address = props.agreement.address;
-        form.start_date = moment(
-            props.agreement.start_date,
-            "DD/MM/YYYY"
-        ).toDate();
-        form.end_date = moment(props.agreement.end_date, "DD/MM/YYYY").toDate();
-        form.agreement_amount = props.agreement.amount;
-        form.short_description = props.agreement.short_description;
-        form.currency = props.agreement.currency;
-
-        // Initialize agreement document
-        if (props.agreement.agreement_doc) {
-            agreementDocs.value = [
-                {
-                    path: props.agreement.agreement_doc,
-                    name: getFileName(props.agreement.agreement_doc),
-                    size: 0, // You might want to get the actual size from your API if available
-                    type: "application/pdf",
-                },
-            ];
-            form.agreement_doc = props.agreement.agreement_doc;
-        }
-
-        // Initialize payment schedule
-        form.payment_schedule = props.agreement.payment_schedules?.map(
-            (v, i) => {
-                return {
-                    id: v.id,
-                    due_date: moment(v.due_date, "DD/MM/YYYY").toDate(),
-                    short_description: v.short_description,
-                    percentage: v.percentage,
-                    currency: v.currency,
-                    remark: v.remark,
-                    amount: v.amount,
-                    agreement_currency: props.agreement.currency,
-                    exchange_rate: 4100,
-                    status: v.status,
-                };
-            }
-        );
-
-        // Initialize attachments
-        const parsedAttachments = JSON.parse(
-            props.agreement.attachments ?? "[]"
-        );
-        form.attachments = parsedAttachments?.map((att) => {
-            // Handle both string paths and object attachments
-            const path = typeof att === "string" ? att : att.path || att.url;
-            return {
-                path: path,
-                name: getFileName(path),
-                size: att.size || 0,
-                type: att.type || "application/pdf",
-            };
-        });
-
-        // Initialize other reactive values
-        riels.value = props.agreement.currency == "KHR";
-        schedule.value = {
-            agreement_amount: props.agreement.amount,
-            due_date: new Date(),
-            short_description: "Item description",
-            percentage: 100,
-            remark: "Additional remark",
-            amount: 2000,
-            currency: props.agreement.currency,
-            agreement_currency: props.agreement.currency,
-            exchange_rate: 4100,
-        };
-        src.value = props.agreement.agreement_doc;
-    }
-});
-const submit = ({ states, valid }) => {
-    isStoringAgreement.value = true;
-    form.agreement_amount = schedule.value.agreement_amount;
-    const data = {
-        ...form,
-        agreement_date: form.agreement_date
-            ? form.agreement_date.toLocaleDateString("fr-FR")
-            : null,
-        start_date: form.start_date
-            ? form.start_date.toLocaleDateString("fr-FR")
-            : null,
-        end_date: form.end_date
-            ? form.end_date.toLocaleDateString("fr-FR")
-            : null,
-        payment_schedule: form.payment_schedule.map((v) => ({
-            ...v,
-            due_date: v.due_date
-                ? v.due_date.toLocaleDateString("fr-FR")
-                : null,
-        })),
-    };
-    console.log("submit", data, valid, form.agreement_date);
-    if (props.edit) {
-        form._method = "PUT";
-        router.put(
-            route("agreements.update", props.agreement.agreement_no),
-            data
-        );
-    } else {
-        router.post(route("agreements.store"), data);
-    }
-    isStoringAgreement.value = false;
-    //form.post(route('agreements.store'));
-    // if(e.valid){
-    //     router.push(route('agreements.store'), form);
-    //     toast.add({ severity: 'success', summary: 'Success', detail: 'Agreement created successfully' });
-    // }else{
-    //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
-    // }
+// Methods
+const getFileName = (path) => {
+    if (!path) return "document.pdf";
+    const filename = decodeURIComponent(path.split(/[\\/]/).pop());
+    return filename || "document.pdf";
 };
+
+const beforeUpload = (e) => {
+    e.formData.enctype = "multipart/form-data";
+    e.formData.append("agreement_doc_old", form.agreement_doc);
+    e.formData.append("_token", page.props.csrf_token);
+};
+
+const beforeUploadAttachment = (e) => {
+    e.formData.enctype = "multipart/form-data";
+    e.formData.append("_token", page.props.csrf_token);
+};
+
 const onUpload = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
-        // Push to agreementDocs array instead of replacing
         agreementDocs.value.push({
             path: response.path,
             name: response.name,
             size: response.size,
             type: response.mime_type,
         });
-
         form.agreement_doc = response.path;
-
         toast.add({
             severity: "success",
             summary: "Uploaded",
@@ -748,7 +507,6 @@ const onUpload = (e) => {
             detail: "Failed to upload agreement document",
             life: 3000,
         });
-        console.error("Agreement doc upload error:", error);
     }
 };
 
@@ -768,18 +526,12 @@ const removeAgreementDoc = (index) => {
 const onUploadAttachments = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
-
-        if (!Array.isArray(form.attachments)) {
-            form.attachments = [];
-        }
-
         form.attachments.push({
             path: response.path,
             name: response.name,
             size: response.size,
             type: response.mime_type,
         });
-
         toast.add({
             severity: "success",
             summary: "Uploaded",
@@ -793,14 +545,9 @@ const onUploadAttachments = (e) => {
             detail: "Failed to upload attachment",
             life: 3000,
         });
-        console.error("Attachment upload error:", error);
     }
 };
-const getFileName = (path) => {
-    if (!path) return "document.pdf";
-    const filename = decodeURIComponent(path.split(/[\\/]/).pop());
-    return filename || "document.pdf";
-};
+
 const removeAttachment = (index) => {
     form.attachments.splice(index, 1);
     toast.add({
@@ -811,24 +558,6 @@ const removeAttachment = (index) => {
     });
 };
 
-const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
-const beforeUpload = (e) => {
-    e.formData.enctype = "multipart/form-data";
-    e.formData.append("agreement_doc_old", form.agreement_doc);
-    e.formData.append("_token", page.props.csrf_token);
-};
-const beforeUploadAttachment = (e) => {
-    e.formData.enctype = "multipart/form-data";
-    e.formData.append("_token", page.props.csrf_token);
-};
-const src = ref(null);
-const attachments = ref([]);
 const doSave = (e) => {
     schedule.value.currency = e.currency;
     form.payment_schedule.push({
@@ -842,29 +571,64 @@ const doSave = (e) => {
         status: e.status ?? "Pending",
     });
 };
+
 const beforeUpdate = (e) => {
     schedule.value.amount = remainingAmount.value;
     schedule.value.percentage = remainingPercentage.value;
 };
-// const resolver = zodResolver(z.object({
-//     agreement_no: z.number(),
-//     date: z.date(),
-//     customer: z.string().nonempty(),
-//     address: z.string().nonempty(),
-//     agreement_doc: z.string().nonempty(),
-//     start_date: z.date(),
-//     end_date: z.date(),
-//     agreement_amount: z.number(),
-//     tax_amount: z.number(),
-//     attachment: z.string().nonempty(),
-//     payment_schedule: z.array(z.object({
-//         id: z.number(),
-//         due_date: z.string().nonempty(),
-//         short_description: z.string().nonempty(),
-//         remark: z.string().nonempty(),
-//         amount: z.number(),
-//     })),
-// }));
+
+const submitForm = () => {
+    processing.value = true;
+    form.agreement_amount = schedule.value.agreement_amount;
+
+    const data = {
+        ...form,
+        agreement_date: form.agreement_date
+            ? moment(form.agreement_date).format("DD/MM/YYYY")
+            : null,
+        start_date: form.start_date
+            ? moment(form.start_date).format("DD/MM/YYYY")
+            : null,
+        end_date: form.end_date
+            ? moment(form.end_date).format("DD/MM/YYYY")
+            : null,
+        payment_schedule: form.payment_schedule.map((v) => ({
+            ...v,
+            due_date: v.due_date
+                ? moment(v.due_date).format("DD/MM/YYYY")
+                : null,
+        })),
+    };
+
+    form.put(
+        route("agreements.update", {
+            agreement_no: props.agreement.agreement_no,
+        }),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Agreement updated successfully",
+                    life: 3000,
+                });
+                router.visit(route("agreements.index"));
+            },
+            onError: () => {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to update agreement",
+                    life: 3000,
+                });
+            },
+            onFinish: () => {
+                processing.value = false;
+            },
+        }
+    );
+};
 </script>
 
 <style>

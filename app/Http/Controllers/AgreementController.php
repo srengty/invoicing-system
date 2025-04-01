@@ -27,9 +27,10 @@ class AgreementController extends Controller
      */
     public function create()
     {
+        $baseAgreementNo = 25000000;
         return Inertia::render('Agreements/Create',[
             'customers' => Customer::where('active', true)->get(),
-            'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
+            'agreement_max' => (Agreement::max('agreement_no') ?? $baseAgreementNo) + 1,
             'csrf_token' => csrf_token(),
             'quotations' => Quotation::all(),
         ]);
@@ -42,6 +43,7 @@ class AgreementController extends Controller
     {
         $request->validate([
             'agreement_no' => 'required',
+            'agreement_doc' => 'required',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
             'end_date' => 'required|date_format:d/m/Y',
@@ -84,20 +86,18 @@ class AgreementController extends Controller
      */
     public function edit(int $agreement_no)
     {
-        $agreement = Agreement::with('customer')->with('paymentSchedules')->find($agreement_no);
+        $agreement = Agreement::with(['customer', 'paymentSchedules', 'quotation'])
+            ->findOrFail($agreement_no);
 
-        // Get active customers plus the current agreement's customer (if different)
         $customers = Customer::where('active', true)
             ->orWhere('id', $agreement->customer_id)
             ->get();
 
-        return Inertia::render('Agreements/Create',[
+        return Inertia::render('Agreements/Edit', [
+            'agreement' => $agreement,
             'customers' => $customers,
-            'agreement_max' => (Agreement::max('agreement_no')??0) + 1,
-            'csrf_token' => csrf_token(),
             'quotations' => Quotation::all(),
-            'agreement' => Agreement::with('customer')->with('paymentSchedules')->find($agreement_no),
-            'edit' => true,
+            // dd("Hello")
         ]);
     }
 
@@ -106,27 +106,42 @@ class AgreementController extends Controller
      */
     public function update(Request $request, int $agreement_no)
     {
-        $data = $request->except('payment_schedule')+['amount' => $request->agreement_amount];
-        $data['attachments'] = json_encode($request->attachments);
-        $agreement = Agreement::with('paymentSchedules')->find($agreement_no);
-        $agreement->update($data);
-        //dd($agreement->paymentSchedules->pluck('id'));
-        // PaymentSchedule::where('agreement_no','=',$agreement->agreement_no)->delete();
-        $agreement->paymentSchedules()->delete();
-        foreach($request->payment_schedule as $key => $value){
-            $schedule = new PaymentSchedule([
-                'agreement_no' => $request->agreement_no,
-                'due_date' => $value['due_date'],
-                'amount' => $value['amount'],
-                'status' => $value['status']??'Pending',
-                'percentage' => $value['percentage'],
-                'short_description' => $value['short_description'],
-                'currency' => $value['currency'],
-            ]);
-            $schedule->save();
-            // $value['agreement_no'] = $request->agreement_no;
+        $request->validate([
+            'agreement_no' => 'required',
+            'agreement_date' => 'required|date_format:d/m/Y',
+            'start_date' => 'required|date_format:d/m/Y',
+            'end_date' => 'required|date_format:d/m/Y',
+            'customer_id' => 'required',
+            'currency' => 'required',
+        ]);
+
+        $agreement = Agreement::with('paymentSchedules')->findOrFail($agreement_no);
+
+        $data = $request->except('payment_schedule', 'attachments') + ['amount' => $request->agreement_amount];
+
+        // Handle attachments
+        if ($request->has('attachments')) {
+            $data['attachments'] = json_encode($request->attachments);
         }
-        return to_route('agreements.index');
+
+        $agreement->update($data);
+
+        // Update payment schedules
+        $agreement->paymentSchedules()->delete();
+        foreach ($request->payment_schedule as $schedule) {
+            PaymentSchedule::create([
+                'agreement_no' => $request->agreement_no,
+                'due_date' => $schedule['due_date'],
+                'amount' => $schedule['amount'],
+                'status' => $schedule['status'] ?? 'Pending',
+                'percentage' => $schedule['percentage'],
+                'short_description' => $schedule['short_description'],
+                'currency' => $schedule['currency'],
+            ]);
+        }
+
+        return redirect()->route('agreements.index')
+            ->with('success', 'Agreement updated successfully');
     }
     /**
      * Upload the specified resource into storage.
@@ -143,36 +158,36 @@ class AgreementController extends Controller
     //     }
     // }
     public function upload(Request $request)
-{
-    if ($request->has('agreement_doc')) {
-        if ($request->has('agreement_doc_old')) {
-            Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
+    {
+        if ($request->has('agreement_doc')) {
+            if ($request->has('agreement_doc_old')) {
+                Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
+            }
+
+            $file = $request->file('agreement_doc');
+            $path = $file->storePublicly('agreements', 'public');
+
+            return response()->json([
+                'path' => Storage::url($path),
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime_type' => $file->getMimeType()
+            ]);
+        }
+        else if ($request->has('attachments')) {
+            $file = $request->file('attachments');
+            $path = $file->storePublicly('attachments', 'public');
+
+            return response()->json([
+                'path' => Storage::url($path),
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime_type' => $file->getMimeType()
+            ]);
         }
 
-        $file = $request->file('agreement_doc');
-        $path = $file->storePublicly('agreements', 'public');
-
-        return response()->json([
-            'path' => Storage::url($path),
-            'name' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType()
-        ]);
+        return response()->json(['error' => 'No file uploaded'], 400);
     }
-    else if ($request->has('attachments')) {
-        $file = $request->file('attachments');
-        $path = $file->storePublicly('attachments', 'public');
-
-        return response()->json([
-            'path' => Storage::url($path),
-            'name' => $file->getClientOriginalName(),
-            'size' => $file->getSize(),
-            'mime_type' => $file->getMimeType()
-        ]);
-    }
-
-    return response()->json(['error' => 'No file uploaded'], 400);
-}
 
     /**
      * Remove the specified resource from storage.
@@ -195,6 +210,25 @@ class AgreementController extends Controller
 
         return response()->json(null); // Return null if no agreement found
     }
+    public function searchQuotation(Request $request)
+    {
+        $quotationNo = $request->input('quotation_no');
+        $quotation = Quotation::where('quotation_no', $quotationNo)
+                              ->with('customer') // Ensure the customer is loaded
+                              ->first();
+
+        if ($quotation) {
+            return response()->json([
+                'customer_name' => $quotation->customer->name,
+                'address' => $quotation->customer->address,
+                'customer_id' => $quotation->customer->id, // Include the customer_id
+                'agreement_amount' => $quotation->total, // Replace 'total' with the field name you want
+            ]);
+        }
+
+        return response()->json(['error' => 'Quotation not found'], 404);
+    }
+
 
 
 }
