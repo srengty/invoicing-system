@@ -555,7 +555,7 @@ const selectedProductsData = ref([]);
 const page = usePage();
 const items = computed(() => [
     {
-        label: "Dashboard",
+        label: "",
         to: "/",
         icon: "pi pi-home",
     },
