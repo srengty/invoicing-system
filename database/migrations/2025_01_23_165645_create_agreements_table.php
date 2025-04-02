@@ -67,7 +67,7 @@ return new class extends Migration
             $table->string('agreement_ref_no')->nullable()->comment('When Agreement is prepared by Customer');
             $table->timestamp('agreement_date')->useCurrent();
             $table->string('address', 255)->nullable();
-            $table->string('agreement_doc', 255)->nullable()->comment('agreement document in PDF');
+            $table->json('agreement_doc', 255)->nullable()->comment('agreement document in PDF');
 
             $table->json('attachments')->nullable()->comment('attachment files');
             // ------- Agreement Summary ------------

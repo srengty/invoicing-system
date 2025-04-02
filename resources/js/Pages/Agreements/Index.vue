@@ -158,6 +158,33 @@
                     </Column>
                 </template>
             </DataTable>
+            <!-- Progress Payment Dialog -->
+            <Dialog
+                v-model:visible="displayProgressPaymentDialog"
+                modal
+                header="Progress Payments Details"
+                :style="{ width: '50vw' }"
+            >
+                <div v-if="selectedAgreement" class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-semibold">Agreement Number:</p>
+                        <p>{{ selectedAgreement.agreement_no }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Customer:</p>
+                        <p>{{ selectedAgreement.customer.name }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Total Amount:</p>
+                        <p>{{ selectedAgreement.amount }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Total Progress Payment:</p>
+                        <p>{{ selectedAgreement.total_progress_payment }}</p>
+                    </div>
+                    <!-- Add more details or a table of progress payments here if available -->
+                </div>
+            </Dialog>
         </div>
     </GuestLayout>
 </template>
@@ -172,6 +199,7 @@ import {
     Popover,
     Dropdown,
     InputText,
+    Dialog,
 } from "primevue";
 import moment from "moment";
 import { ref, watch, computed } from "vue";
@@ -221,6 +249,7 @@ const columns = [
     },
     { field: "start_date", header: "Start Date" },
     { field: "end_date", header: "End Date" },
+    { field: "short_description", header: "Short description" },
     // { field: "agreement_doc", header: "Agreement Doc" },
     // { field: "agreement_date", header: "Agreement Date" },
     // { field: "address", header: "Address" },
@@ -294,4 +323,12 @@ const filteredAgreements = computed(() => {
             .includes(searchTerm.value.toLowerCase());
     });
 });
+// Dialog state
+const displayProgressPaymentDialog = ref(false);
+const selectedAgreement = ref(null);
+
+const showProgressPayments = (agreement) => {
+    selectedAgreement.value = agreement;
+    displayProgressPaymentDialog.value = true;
+};
 </script>

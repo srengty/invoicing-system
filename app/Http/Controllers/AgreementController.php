@@ -18,7 +18,7 @@ class AgreementController extends Controller
     public function index()
     {
         return Inertia::render('Agreements/Index', [
-            'agreements' => Agreement::with('customer')->get(),
+            'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
         ]);
     }
 
@@ -51,7 +51,17 @@ class AgreementController extends Controller
             'currency' => 'required',
         ]);
         //dd($request->all());
-        $data = $request->except('payment_schedule')+['amount' => $request->agreement_amount];
+        $data = $request->except('payment_schedule')+[
+            'amount' => $request->agreement_amount,
+            'agreement_reference_no' => $request->agreement_reference_no
+        ];
+        // $data['agreement_doc'] = json_encode([
+        //     'path' => $request->agreement_doc['path'],
+        //     'name' => $request->agreement_doc['name'],
+        //     'size' => $request->agreement_doc['size'],
+        //     'mime_type' => $request->agreement_doc['mime_type']
+        // ]);
+        $data['agreement_doc'] = json_encode($request->agreement_doc); 
         $data['attachments'] = json_encode($request->attachments);
         $agreement = Agreement::create($data);
         foreach($request->payment_schedule as $key => $value){
@@ -97,6 +107,7 @@ class AgreementController extends Controller
             'agreement' => $agreement,
             'customers' => $customers,
             'quotations' => Quotation::all(),
+            'csrf_token' => csrf_token(), // ✅ required for upload
             // dd("Hello")
         ]);
     }
@@ -104,45 +115,69 @@ class AgreementController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, int $agreement_no)
+    public function update(Request $request, $agreement_no)
     {
+        // dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
+            'agreement_doc' => 'required',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
+            'agreement_reference_no' => 'nullable|string|unique:agreements,agreement_reference_no,'.$agreement_no.',agreement_no',
+            'payment_schedule' => 'required|array|min:1',
+            'payment_schedule.*.due_date' => 'required|date_format:d/m/Y',
+            'payment_schedule.*.amount' => 'required|numeric|min:0',
+            'payment_schedule.*.percentage' => 'required|numeric|min:0|max:100',
         ]);
 
-        $agreement = Agreement::with('paymentSchedules')->findOrFail($agreement_no);
+        // Find the agreement
+        $agreement = Agreement::where('agreement_no', $agreement_no)->firstOrFail();
 
-        $data = $request->except('payment_schedule', 'attachments') + ['amount' => $request->agreement_amount];
+        // Prepare data for update
+        $data = $request->only([
+            'agreement_no',
+            'agreement_reference_no',
+            'agreement_date',
+            'customer_id',
+            'address',
+            'start_date',
+            'end_date',
+            'short_description',
+            'currency'
+        ]);
 
-        // Handle attachments
-        if ($request->has('attachments')) {
-            $data['attachments'] = json_encode($request->attachments);
-        }
+        $data['amount'] = $request->agreement_amount;
+        $data['agreement_doc'] = json_encode($request->agreement_doc);
+        $data['attachments'] = $request->attachments;
 
+        // Update the agreement
         $agreement->update($data);
 
-        // Update payment schedules
+        // Delete existing payment schedules
         $agreement->paymentSchedules()->delete();
+
+        // Create new payment schedules
         foreach ($request->payment_schedule as $schedule) {
             PaymentSchedule::create([
-                'agreement_no' => $request->agreement_no,
+                'agreement_no' => $agreement->agreement_no,
                 'due_date' => $schedule['due_date'],
                 'amount' => $schedule['amount'],
                 'status' => $schedule['status'] ?? 'Pending',
                 'percentage' => $schedule['percentage'],
                 'short_description' => $schedule['short_description'],
+                'remark' => $schedule['remark'] ?? null,
                 'currency' => $schedule['currency'],
+                'exchange_rate' => $schedule['exchange_rate'] ?? ($schedule['currency'] === 'KHR' ? 4100 : 1),
             ]);
         }
 
         return redirect()->route('agreements.index')
             ->with('success', 'Agreement updated successfully');
     }
+
     /**
      * Upload the specified resource into storage.
      */
@@ -159,22 +194,30 @@ class AgreementController extends Controller
     // }
     public function upload(Request $request)
     {
-        if ($request->has('agreement_doc')) {
-            if ($request->has('agreement_doc_old')) {
-                Storage::disk('public')->delete('agreements/'.basename($request->agreement_doc_old));
+        if ($request->hasFile('agreement_doc')) {
+            $files = $request->file('agreement_doc');
+
+            // If only one file is uploaded (non-array), convert to array
+            if (!is_array($files)) {
+                $files = [$files];
             }
 
-            $file = $request->file('agreement_doc');
-            $path = $file->storePublicly('agreements', 'public');
+            $uploaded = [];
 
-            return response()->json([
-                'path' => Storage::url($path),
-                'name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'mime_type' => $file->getMimeType()
-            ]);
+            foreach ($files as $file) {
+                $path = $file->storePublicly('agreements', 'public');
+                $uploaded[] = [
+                    'path' => Storage::url($path),
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                ];
+            }
+
+            return response()->json($uploaded); // return array
         }
-        else if ($request->has('attachments')) {
+
+        if ($request->hasFile('attachments')) {
             $file = $request->file('attachments');
             $path = $file->storePublicly('attachments', 'public');
 
@@ -182,12 +225,13 @@ class AgreementController extends Controller
                 'path' => Storage::url($path),
                 'name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
-                'mime_type' => $file->getMimeType()
+                'mime_type' => $file->getMimeType(),
             ]);
         }
 
         return response()->json(['error' => 'No file uploaded'], 400);
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -228,7 +272,20 @@ class AgreementController extends Controller
 
         return response()->json(['error' => 'Quotation not found'], 404);
     }
+    public function checkDuplicateReference(Request $request)
+    {
+        $request->validate([
+            'reference_no' => 'required|string'
+        ]);
 
+        $exists = Agreement::where('agreement_reference_no', $request->reference_no)
+            ->when($request->has('exclude_id'), function($query) use ($request) {
+                $query->where('id', '!=', $request->exclude_id);
+            })
+            ->exists();
+
+        return response()->json(['exists' => $exists]);
+    }
 
 
 }
