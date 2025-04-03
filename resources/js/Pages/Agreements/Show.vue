@@ -1,7 +1,8 @@
 <template>
+    <Head title="Agreement Printing" />
     <div class="flex flex-col">
         <div
-            class="grid grid-cols-2 md:grid-cols-4 gap-3 print:hidden mb-5 fixed top-0"
+            class="grid grid-cols-2 md:grid-cols-4 gap-3 print:hidden mb-5 fixed top-6 left-6"
         >
             <Select
                 :options="currencies"
@@ -9,16 +10,19 @@
                 option-label="name"
                 v-model="form.currency"
                 @value-change="changeCurrency()"
+                class="w-full md:w-28 h-10"
             ></Select>
-            <Button @click="doPrint" class="md:col-start-2"
+            <Button @click="doPrint" class="md:col-start-2 md:w-28" size="small"
                 >Print {{ form.currency }}</Button
             >
-            <Button @click="back()">Back to list</Button>
+            <Button @click="back()" class="w-full md:w-28 h-10"
+                >Back to list</Button
+            >
         </div>
         <div
             class="flex flex-col items-stretch justify-stretch mx-auto aspect-1/1.414 shadow-lg p-20 min-h-svh border print:border-0 print:shadow-none print:p-0 print:mx-0 print:aspect-none print:w-full print:print-container"
         >
-            <div><img src="/logo.png" alt="ITC logo" class="w-28" /></div>
+            <!-- <div><img src="/logo.png" alt="ITC logo" class="w-28" /></div> -->
             <div class="w-full"></div>
             <h1 class="mx-auto text-2xl">Agreement</h1>
             <div class="grid grid-cols-2">
@@ -73,6 +77,7 @@ import { reactive, ref, defineProps, onMounted } from "vue";
 import PaymentSchedule from "./PaymentSchedule.vue";
 import { currencies } from "@/constants";
 import moment from "moment";
+import { Head } from "@inertiajs/vue3";
 const props = defineProps({
     agreement: Object,
 });

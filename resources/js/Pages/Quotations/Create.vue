@@ -5,7 +5,7 @@
             :title="isEditing ? 'Edit Quotation' : 'Create Quotation'"
         />
         <!-- PrimeVue Breadcrumb -->
-        <div class=" py-3 ">
+        <div class="py-3">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link
@@ -564,9 +564,9 @@ const items = computed(() => [
         to: route("quotations.list"),
     },
     {
-        label: isEditing.value ? "Edit Quotation" : "Create Quotation",
+        label: isEditing.value ? `Edit Quotation` : "Create Quotation",
         to: isEditing.value
-            ? (route("quotations.update", { id: form.id }))
+            ? route("quotations.update", { id: form.id })
             : route("quotations.create"),
     },
 ]);

@@ -4,7 +4,7 @@
             <template #start>
                 <div class="flex items-center gap-8">
                     <h1 class="text-xl font-bold m-0">
-                        {{ currentRouteTitle }}
+                        {{ pageTitle }}
                     </h1>
                     <IconField>
                         <InputIcon>
@@ -49,43 +49,9 @@ import Avatar from "primevue/avatar";
 
 const page = usePage();
 
-const routeTitles = {
-    "/": "Dashboard",
-    "/quotations": "Quotations",
-    "/quotations/create": "Create Quotation",
-    "/agreements": "Agreements",
-    "/agreements/create": "Create Agreement",
-    "/invoices": "Invoices",
-    "/invoices/create": "Create Invoice",
-    "/settings": "Settings",
-    "/settings/customers": "Customers",
-    "/settings/products": "Items",
-    "/settings/product-categories": "Product Categories",
-    "/settings/customer-categories": "Customer Categories",
-};
-
-const currentRouteTitle = computed(() => {
-    // Check if we're editing a quotation by component name
-    if (page.component === 'Quotations/Edit') {
-        return `Edit Quotation ${page.props.quotation?.id || ''}`;
-    }
-
-    // Check if URL matches edit pattern (supports both /edit/{id} and /{id}/edit)
-    if (page.url.match(/\/quotations\/(edit\/|)\d+/)) {
-        return `Edit Quotation ${page.props.quotation?.id || ''}`;
-    }
-
-    // Check create route
-    if (page.url === '/quotations/create') {
-        return "Create Quotation";
-    }
-
-    // Default to mapped titles
-    return routeTitles[page.url] || "Edit Quotation";
-});
-
 const userName = "Manager";
-const userAvatar = "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
+const userAvatar =
+    "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
 
 const items = [
     {
@@ -97,6 +63,39 @@ const items = [
         icon: "pi pi-sign-out",
     },
 ];
+
+// Computed property for page title
+const pageTitle = computed(() => {
+    const routePath = page.url;
+
+    // Map of static routes
+    const routeTitles = {
+        "/": "Dashboard",
+        "/quotations": "Quotations",
+        "/quotations/create": "Create Quotation",
+        "/agreements": "Agreements",
+        "/agreements/create": "Create Agreement",
+        "/invoices": "Invoices",
+        "/invoices/create": "Create Invoice",
+        "/settings": "Settings",
+        "/settings/customers": "Customers",
+        "/settings/products": "Items",
+        "/settings/product-categories": "Product Categories",
+        "/settings/customer-categories": "Customer Categories",
+    };
+
+    // Check if it's the Edit Agreement page (dynamic route)
+    if (routePath.includes("/agreements/") && routePath.includes("/edit")) {
+        const agreementNo = routePath.split("/")[2]; // Assuming agreement_no is part of the URL
+        return `Edit Agreement`;
+    }
+    if (routePath.includes("/quotations/") && routePath.includes("/update")) {
+        const quotationNo = routePath.split("/")[2]; // Assuming quotation_no is part of the URL
+        return `Edit Quotation - ${quotationNo}`;
+    }
+
+    return routeTitles[routePath] || "Edit Quotation";
+});
 </script>
 
 <style scoped>

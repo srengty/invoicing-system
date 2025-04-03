@@ -22,45 +22,38 @@
             <div class="flex justify-end items-center">
                 <!-- <h1 class="text-2xl">Agreements list</h1> -->
                 <div class="flex gap-2">
-                    <div>
-                        <InputText
-                            v-model="searchTerm"
-                            placeholder="Search"
-                            class="w-64"
-                            size="small"
-                            @keyup.enter="performSearch"
-                        />
-                    </div>
-                    <div>
-                        <Dropdown
-                            v-model="searchType"
-                            :options="searchOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            class="w-48 text-sm"
-                            placeholder="Select field to search"
-                        />
-                    </div>
-                    <div>
-                        <Button
-                            icon="pi pi-plus"
-                            label="New"
-                            @click="openCreate"
-                            raised
-                            size="small"
-                        ></Button>
-                        <ChooseColumns
-                            :columns="columns"
-                            v-model="selectedColumns"
-                            @apply="updateColumns"
-                            size="small"
-                            raised
-                        />
-                    </div>
+                    <Dropdown
+                        v-model="searchType"
+                        :options="searchOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-48 text-sm"
+                        placeholder="Select field to search"
+                    />
+                    <InputText
+                        v-model="searchTerm"
+                        placeholder="Search"
+                        class="w-64"
+                        size="small"
+                    />
+                    <Button
+                        icon="pi pi-plus"
+                        label="New"
+                        @click="openCreate"
+                        raised
+                        size="small"
+                    ></Button>
+                    <ChooseColumns
+                        :columns="columns"
+                        v-model="selectedColumns"
+                        @apply="updateColumns"
+                        size="small"
+                        raised
+                    />
                 </div>
             </div>
             <DataTable
-                :value="agreements"
+                :value="filteredAgreements"
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -165,6 +158,33 @@
                     </Column>
                 </template>
             </DataTable>
+            <!-- Progress Payment Dialog -->
+            <Dialog
+                v-model:visible="displayProgressPaymentDialog"
+                modal
+                header="Progress Payments Details"
+                :style="{ width: '50vw' }"
+            >
+                <div v-if="selectedAgreement" class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="font-semibold">Agreement Number:</p>
+                        <p>{{ selectedAgreement.agreement_no }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Customer:</p>
+                        <p>{{ selectedAgreement.customer.name }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Total Amount:</p>
+                        <p>{{ selectedAgreement.amount }}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">Total Progress Payment:</p>
+                        <p>{{ selectedAgreement.total_progress_payment }}</p>
+                    </div>
+                    <!-- Add more details or a table of progress payments here if available -->
+                </div>
+            </Dialog>
         </div>
     </GuestLayout>
 </template>
@@ -179,6 +199,7 @@ import {
     Popover,
     Dropdown,
     InputText,
+    Dialog,
 } from "primevue";
 import moment from "moment";
 import { ref, watch, computed } from "vue";
@@ -189,7 +210,7 @@ import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
-defineProps({
+const props = defineProps({
     agreements: {
         type: Array,
     },
@@ -228,6 +249,7 @@ const columns = [
     },
     { field: "start_date", header: "Start Date" },
     { field: "end_date", header: "End Date" },
+    { field: "short_description", header: "Short description" },
     // { field: "agreement_doc", header: "Agreement Doc" },
     // { field: "agreement_date", header: "Agreement Date" },
     // { field: "address", header: "Address" },
@@ -241,6 +263,21 @@ const defaultColumns = columns.filter(
             // "agreement_ref_no",
         ].includes(col.field)
 );
+
+const selectedColumns = ref(defaultColumns);
+const showColumns = ref(defaultColumns);
+const updateColumns = (columns) => {
+    showColumns.value = selectedColumns.value;
+};
+const openCreate = () => {
+    router.get(route("agreements.create"));
+};
+const momentDate = (date) => {
+    return moment(date, "DD/MM/YYYY").fromNow();
+};
+
+const searchType = ref(""); // Set a default search type
+const searchTerm = ref("");
 const searchOptions = ref([
     { label: "Agreement Number", value: "agreement_no" },
     { label: "Quotation Number", value: "quotation_no" },
@@ -252,33 +289,46 @@ const searchOptions = ref([
     { label: "Start Date", value: "start_date" },
     { label: "End Date", value: "end_date" },
 ]);
-const searchType = ref(searchOptions.value[0].value);
-const searchTerm = ref("");
-const performSearch = debounce(() => {
-    router.get(
-        route("agreements.index"),
-        {
-            search: searchTerm.value,
-            search_type: searchType.value,
-        },
-        {
-            preserveState: true,
-            replace: true,
+const getFieldValue = (obj, path) => {
+    return path.split(".").reduce((o, p) => (o || {})[p], obj) || "";
+};
+// Filter agreements locally (alternative to server-side search)
+const filteredAgreements = computed(() => {
+    if (!searchTerm.value || !searchType.value) {
+        return props.agreements;
+    }
+
+    return props.agreements.filter((agreement) => {
+        const fieldValue = getFieldValue(agreement, searchType.value);
+
+        if (fieldValue === null || fieldValue === undefined) {
+            return false;
         }
-    );
-}, 500);
-watch([searchTerm, searchType], () => {
-    performSearch();
+
+        // Handle numeric fields
+        if (typeof fieldValue === "number") {
+            return fieldValue.toString().includes(searchTerm.value);
+        }
+
+        // Handle date fields
+        if (searchType.value.includes("date") && fieldValue) {
+            const dateStr = moment(fieldValue).format("DD/MM/YYYY");
+            return dateStr.includes(searchTerm.value);
+        }
+
+        // Handle string fields (case insensitive)
+        return fieldValue
+            .toString()
+            .toLowerCase()
+            .includes(searchTerm.value.toLowerCase());
+    });
 });
-const selectedColumns = ref(defaultColumns);
-const showColumns = ref(defaultColumns);
-const updateColumns = (columns) => {
-    showColumns.value = selectedColumns.value;
-};
-const openCreate = () => {
-    router.get(route("agreements.create"));
-};
-const momentDate = (date) => {
-    return moment(date, "DD/MM/YYYY").fromNow();
+// Dialog state
+const displayProgressPaymentDialog = ref(false);
+const selectedAgreement = ref(null);
+
+const showProgressPayments = (agreement) => {
+    selectedAgreement.value = agreement;
+    displayProgressPaymentDialog.value = true;
 };
 </script>

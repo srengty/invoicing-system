@@ -89,16 +89,27 @@
                                     size="small"
                                     outlined
                                 />
-                                <Button
-                                    icon="pi pi-print"
-                                    aria-label="Print out"
-                                    class="custom-button"
-                                    @click="
-                                        printQuotation(slotProps.data.id, 1)
+                                <div
+                                    v-tooltip.top="
+                                        slotProps.data.status === 'Pending'
+                                            ? 'Printing is disabled for pending quotations'
+                                            : ''
                                     "
-                                    size="small"
-                                    outlined
-                                />
+                                >
+                                    <Button
+                                        icon="pi pi-print"
+                                        aria-label="Print out"
+                                        class="custom-button"
+                                        @click="
+                                            printQuotation(slotProps.data.id, 1)
+                                        "
+                                        size="small"
+                                        outlined
+                                        :disabled="
+                                            slotProps.data.status === 'Pending'
+                                        "
+                                    />
+                                </div>
                             </div>
                         </template>
                     </Column>
@@ -374,78 +385,6 @@
                     </template>
                 </Dialog>
 
-                <!-- Send Dialog display -->
-                <Dialog
-                    v-model:visible="isSendDialogVisible"
-                    header="Send Quotation"
-                    modal
-                    class="text-sm w-auto"
-                >
-                    <div
-                        v-if="selectedQuotation"
-                        class="flex flex-col gap-4 ml-2 mr-2"
-                    >
-                        <!-- Display Selected Quotation Info -->
-                        <div>
-                            <strong>Quotation No:</strong>
-                            <p>{{ selectedQuotation.quotation_no }}</p>
-                        </div>
-                        <div>
-                            <strong>Customer Name:</strong>
-                            <p>
-                                {{ selectedQuotation.customer?.name || "N/A" }}
-                            </p>
-                        </div>
-
-                        <!-- Email Checkbox -->
-                        <div class="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="emailCheckbox"
-                                v-model="sendForm.emailChecked"
-                                class="mr-2"
-                            />
-                            <label for="emailCheckbox" class="font-bold"
-                                >Email:
-                                {{
-                                    selectedQuotation.customer?.email || "N/A"
-                                }}</label
-                            >
-                        </div>
-
-                        <!-- Telegram Checkbox -->
-                        <div class="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="telegramCheckbox"
-                                v-model="sendForm.telegramChecked"
-                                class="mr-2"
-                            />
-                            <label for="telegramCheckbox" class="font-bold"
-                                >Telegram:
-                                {{
-                                    selectedQuotation.customer
-                                        ?.telegram_number || "N/A"
-                                }}</label
-                            >
-                        </div>
-                    </div>
-
-                    <template #footer>
-                        <Button
-                            label="Cancel"
-                            severity="secondary"
-                            @click="isSendDialogVisible = false"
-                        />
-                        <Button
-                            label="Send"
-                            severity="success"
-                            @click="sendQuotationToCustomer"
-                            :loading="isSending"
-                        />
-                    </template>
-                </Dialog>
-
                 <!-- Feedback Dialog display -->
                 <Dialog
                     v-model:visible="isFeedbackDialogVisible"
@@ -526,7 +465,6 @@ const toast = useToast();
 
 // Reactive properties
 const isViewDialogVisible = ref(false);
-const isSendDialogVisible = ref(false);
 const isFeedbackDialogVisible = ref(false);
 const selectedQuotation = ref(null);
 const userRole = ref("manager");
@@ -1118,5 +1056,9 @@ const sendQuotationToCustomer = async () => {
 
 :deep(.p-menuitem-text) {
     font-size: 0.875rem;
+}
+.custom-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>
