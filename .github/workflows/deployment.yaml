@@ -37,6 +37,7 @@ jobs:
     steps:
       - name: restore data in project
         run: |
+          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777
           cp -r /opt/invoice/storage storage
           cp -r /opt/invoice/vendor vendor
           cp -r /opt/invoice/public public
@@ -51,6 +52,8 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
+        cd /var/www/invoice
+        php artisan config:cache
 
   # remove-old-release:
   #   runs-on: self-hosted
