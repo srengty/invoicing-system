@@ -1,5 +1,5 @@
 <template>
-    <Head :title="`Edit Agreement ${agreement.agreement_no}`"></Head>
+    <Head :title="`Edit Agreement`"></Head>
     <GuestLayout>
         <NavbarLayout />
         <!-- PrimeVue Breadcrumb -->

@@ -305,18 +305,15 @@ const filteredAgreements = computed(() => {
             return false;
         }
 
-        // Handle numeric fields
         if (typeof fieldValue === "number") {
             return fieldValue.toString().includes(searchTerm.value);
         }
 
-        // Handle date fields
         if (searchType.value.includes("date") && fieldValue) {
             const dateStr = moment(fieldValue).format("DD/MM/YYYY");
             return dateStr.includes(searchTerm.value);
         }
 
-        // Handle string fields (case insensitive)
         return fieldValue
             .toString()
             .toLowerCase()
