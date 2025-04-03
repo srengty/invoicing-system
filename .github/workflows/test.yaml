@@ -67,7 +67,7 @@ jobs:
     needs: install-dpendencies
     steps:
     - name: Building Frontend
-      run: npm run build
+      run: npm run normal-build
   generate-key:
     runs-on: self-hosted
     needs: build-frontend
