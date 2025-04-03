@@ -38,7 +38,7 @@ jobs:
         run: |
           cp -r /opt/invoice/storage storage
           cp -r /opt/invoice/vendor vendor
-          cp -r /opt/invoice/build public/build
+          cp -r /opt/invoice/public public
   deploy-invoice:
     runs-on: self-hosted
     needs: config-data
