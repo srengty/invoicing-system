@@ -8,14 +8,7 @@ on:
 env:
   PASSWORD_SERVER: dice@gic
 jobs:
-  download-build:
-    runs-on: self-hosted
-    steps:
-      - name: Download build artifact
-        uses: actions/invoice@v3
-        with:
-          name: invoice-build
-          path: .
+
   migrate:
     runs-on: self-hosted
     steps:
@@ -35,6 +28,17 @@ jobs:
       run: |
         php artisan config:clear
         php artisan config:cache
+    - name: store persistance data
+      run: |
+        cp -r storage /opt/invoice/storage
+  restore-build:
+    runs-on: self-hosted
+    steps:
+      - name: restore data in project
+        run: |
+          cp -r /opt/invoice/storage storage
+          cp -r /opt/invoice/vendor vendor
+          cp -r /opt/invoice/build public/build
   deploy-invoice:
     runs-on: self-hosted
     needs: config-data

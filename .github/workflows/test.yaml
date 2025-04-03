@@ -27,7 +27,6 @@ jobs:
           echo "$PASSWORD_SERVER" | sudo -S apt install -y php8.4 php8.4-mysql php8.4-cli php8.4-mbstring php8.4-xml php8.4-bcmath php8.4-curl php8.4-zip php8.4-tokenizer php8.4-common php8.4-mysql php8.4-sqlite3 php8.4-gd unzip php8.4-fpm
           echo "$PASSWORD_SERVER" | sudo -S update-alternatives --set php /usr/bin/php8.4
           echo "$PASSWORD_SERVER" | sudo -S systemctl restart php8.4-fpm
-    - uses: actions/checkout@v4
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
   set-up-composer:
@@ -81,6 +80,13 @@ jobs:
     steps:
       - name: Directory Permissions
         run:  echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage bootstrap/cache
+      - name: Copy storage and cache to persistence location
+        run: |
+          mkdir -p /opt/invoice
+          cp -r storage /opt/invoice/storage
+          cp -r public/build /opt/invoice/build
+          cp -r vendor /opt/invoice/vendor
+          cp -r node_modules /opt/invoice/node_modules
   create-database:
     runs-on: self-hosted
     needs: directory-permissions
@@ -89,15 +95,6 @@ jobs:
       run: |
         mkdir -p database
         touch database/database.sqlite
-    - name: Upload caching and storage
-      uses: actions/invoice@v3
-      with:
-        name: invoice-build
-        path: |
-          vendor
-          node_modules
-          public/build
-          storage
   # test:
   #   runs-on: self-hosted
   #   needs: create-database
