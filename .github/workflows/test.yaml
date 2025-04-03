@@ -69,6 +69,15 @@ jobs:
     steps:
     - name: Building Frontend
       run: npm run build
+
+    - name: Upload caching and storage
+      uses: actions/upload-invoice@3
+      with:
+        name: invoice-build
+        path: |
+          vendor
+          node_modules
+          public/build
   generate-key:
     runs-on: self-hosted
     needs: build-frontend
