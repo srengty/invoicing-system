@@ -31,6 +31,7 @@ jobs:
         php artisan view:cache
     - name: store persistance data
       run: |
+        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage
         cp -r storage /opt/invoice/
   restore-build:
     runs-on: self-hosted
