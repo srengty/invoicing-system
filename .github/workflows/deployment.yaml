@@ -37,7 +37,7 @@ jobs:
     steps:
       - name: restore data in project
         run: |
-          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777
+          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /opt/invoice
           cp -r /opt/invoice/storage storage
           cp -r /opt/invoice/vendor vendor
           cp -r /opt/invoice/public public
