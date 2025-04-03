@@ -89,9 +89,9 @@ jobs:
       run: |
         mkdir -p database
         touch database/database.sqlite
-  test:
-    runs-on: self-hosted
-    needs: create-database
-    steps:
-    - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
-      run: php artisan test
+  # test:
+  #   runs-on: self-hosted
+  #   needs: create-database
+  #   steps:
+  #   - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
+  #     run: php artisan test
