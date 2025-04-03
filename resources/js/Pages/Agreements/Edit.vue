@@ -47,6 +47,35 @@
                                 size="small"
                             />
 
+                            <!-- Agreement Reference No -->
+                            <span class="text-sm">Agreement reference No.</span>
+                            <InputText
+                                v-model="form.agreement_reference_no"
+                                placeholder="Enter reference number"
+                                class="w-full"
+                                size="small"
+                                @blur="checkDuplicateReference"
+                            >
+                                <template #suffix>
+                                    <i
+                                        v-if="showDuplicateAlert"
+                                        class="pi pi-exclamation-triangle text-yellow-500"
+                                        v-tooltip="
+                                            'This reference number already exists!'
+                                        "
+                                    />
+                                </template>
+                            </InputText>
+                            <Message
+                                v-if="showDuplicateAlert"
+                                severity="warn"
+                                variant="simple"
+                                class="col-span-2"
+                                size="small"
+                                >This reference number already exists in our
+                                records</Message
+                            >
+
                             <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
                             <DatePicker
@@ -75,7 +104,7 @@
                                 readonly
                             />
 
-                            <!-- Agreement Doc -->
+                            <!-- Agreement Doc Upload Section -->
                             <span class="text-sm required">Agreement doc</span>
                             <FileUpload
                                 name="agreement_doc"
@@ -83,10 +112,11 @@
                                 mode="basic"
                                 auto
                                 accept="application/pdf"
-                                @before-upload="beforeUpload"
-                                @upload="onUpload"
-                                class="custom-file-upload w-full h-9"
+                                multiple
+                                @before-upload="beforeUploadAgreementDoc"
+                                @upload="onUploadAgreementDoc"
                                 chooseLabel="Upload Agreement PDF"
+                                class="custom-file-upload w-full h-9"
                             >
                                 <template #chooseicon>
                                     <i class="pi pi-file-pdf"></i>
@@ -112,15 +142,17 @@
                                             >
                                                 Agreement Doc {{ index + 1 }}:
                                             </span>
+                                            <i
+                                                class="pi pi-file-pdf mr-2 text-red-500"
+                                            ></i>
                                             <a
-                                                class="underline hover:text-blue-600 flex items-center text-blue-500"
+                                                class="hover:underline hover:text-blue-600 flex items-center text-blue-500"
                                                 :href="item.path"
                                                 target="_blank"
                                             >
-                                                <i
-                                                    class="pi pi-file-pdf mr-2 text-red-500"
-                                                ></i>
-                                                {{ item.name }}
+                                                {{
+                                                    item.name || "document.pdf"
+                                                }}
                                             </a>
                                             <Button
                                                 @click="
@@ -151,7 +183,6 @@
                             </DataView>
                         </div>
                     </div>
-
                     <!-- Middle Column - Agreement Summary -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
@@ -178,11 +209,10 @@
                                 showIcon
                                 size="small"
                             />
-
                             <!-- Agreement Amount -->
                             <span class="text-sm">
                                 Agreement amount ({{
-                                    currencies[riels ? 0 : 1].name
+                                    currencies[riels ? 1 : 0].name
                                 }})
                             </span>
                             <InputGroup size="small">
@@ -215,32 +245,30 @@
                             />
                         </div>
                     </div>
-
                     <!-- Right Column - Attachments -->
-                    <div class="border border-gray-200 rounded-lg p-4 w-1/4">
+                    <div class="border border-gray-200 rounded-lg p-4 w-1/3">
                         <h3 class="font-semibold text-xl mb-4">Attachments</h3>
                         <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-1"
-                                    >Add Attachment</label
-                                >
-                                <FileUpload
-                                    name="attachments"
-                                    :url="route('agreements.upload')"
-                                    mode="basic"
-                                    auto
-                                    multiple
-                                    accept="application/pdf"
-                                    @before-upload="beforeUploadAttachment"
-                                    @upload="onUploadAttachments"
-                                    class="custom-file-upload w-full"
-                                    chooseLabel="Attachment"
-                                >
-                                    <template #chooseicon>
-                                        <i class="pi pi-paperclip mr-2"></i>
-                                    </template>
-                                </FileUpload>
-                            </div>
+                            <!-- Attachment Upload Section -->
+                            <span class="text-sm required">Add Attachment</span>
+                            <FileUpload
+                                name="attachments"
+                                :url="route('agreements.upload')"
+                                mode="basic"
+                                auto
+                                multiple
+                                accept="application/pdf"
+                                @before-upload="beforeUploadAttachment"
+                                @upload="onUploadAttachment"
+                                chooseLabel="Upload Attachments"
+                                class="custom-file-upload w-full h-9"
+                            >
+                                <template #chooseicon>
+                                    <i class="pi pi-paperclip mr-2"></i>
+                                </template>
+                            </FileUpload>
+
+                            <!-- Attachments List -->
                             <DataView :value="form.attachments" class="w-full">
                                 <template #list="slotProps">
                                     <div class="space-y-2">
@@ -251,17 +279,24 @@
                                             :key="index"
                                             class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                                         >
+                                            <span
+                                                class="text-xs font-medium text-gray-700 mr-3"
+                                            >
+                                                Attachment:{{ index + 1 }}
+                                            </span>
                                             <div
                                                 class="flex items-center gap-2"
                                             >
                                                 <i
                                                     class="pi pi-file-pdf text-red-500"
                                                 ></i>
-                                                <span
-                                                    class="text-sm font-medium text-gray-700"
+                                                <a
+                                                    class="text-sm font-medium text-blue-500 hover:underline"
+                                                    :href="item.path"
+                                                    target="_blank"
                                                 >
                                                     {{ item.name }}
-                                                </span>
+                                                </a>
                                             </div>
                                             <button
                                                 @click="removeAttachment(index)"
@@ -289,7 +324,6 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Payment Schedule Table -->
                 <PaymentSchedule
                     class="mt-2"
@@ -297,9 +331,8 @@
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
                 />
-
                 <!-- Exchange Rate (if needed) -->
-                <div
+                <!-- <div
                     class="flex justify-end items-center gap-2 my-2 px-24"
                     v-if="hasManyCurrencies"
                 >
@@ -310,8 +343,7 @@
                         id="agreement_exchange_rate"
                         v-model="schedule.exchange_rate"
                     ></InputText>
-                </div>
-
+                </div> -->
                 <!-- Save Button -->
                 <Button
                     label="Save Changes"
@@ -363,7 +395,6 @@ const props = defineProps({
     quotations: Array,
     errors: Object,
 });
-
 // Breadcrumb items
 const items = computed(() => [
     { label: "", to: "/", icon: "pi pi-home" },
@@ -375,17 +406,34 @@ const items = computed(() => [
         }),
     },
 ]);
-
+const getFileName = (path) => {
+    if (!path) return "document.pdf";
+    // Handle both URL-encoded and regular paths
+    const decodedPath = decodeURIComponent(path);
+    // Extract the file name (handles both forward and backward slashes)
+    const filename = decodedPath.split(/[\\/]/).pop();
+    return filename || "document.pdf";
+};
+const formatFileSize = (bytes) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 // Form setup
 const form = useForm({
     quotation_no: props.agreement.quotation_no,
     agreement_no: props.agreement.agreement_no,
+    agreement_reference_no: props.agreement.agreement_reference_no,
     agreement_date: props.agreement.agreement_date
         ? moment(props.agreement.agreement_date, "DD/MM/YYYY").toDate()
         : new Date(),
     customer_id: props.agreement.customer_id,
     address: props.agreement.address,
-    agreement_doc: props.agreement.agreement_doc,
+    agreement_doc: props.agreement.agreement_doc
+        ? JSON.parse(props.agreement.agreement_doc)
+        : null,
     start_date: props.agreement.start_date
         ? moment(props.agreement.start_date, "DD/MM/YYYY").toDate()
         : new Date(),
@@ -400,52 +448,53 @@ const form = useForm({
         : [],
     payment_schedule:
         props.agreement.payment_schedules?.map((item) => ({
-            ...item,
+            id: item.id,
             due_date: item.due_date
                 ? moment(item.due_date, "DD/MM/YYYY").toDate()
                 : new Date(),
+            short_description: item.short_description,
+            percentage: item.percentage,
+            currency: item.currency,
+            remark: item.remark,
+            amount: item.amount,
+            status: item.status || "Pending",
+            agreement_currency: props.agreement.currency,
+            exchange_rate:
+                item.exchange_rate || (item.currency === "KHR" ? 4100 : 1),
         })) || [],
 });
-
 // Reactive state
 const processing = ref(false);
 const customerName = ref(props.agreement.customer?.name || "");
+const showDuplicateAlert = ref(false);
 const riels = computed({
     get: () => form.currency === "KHR",
     set: (value) => {
         form.currency = value ? "KHR" : "USD";
         if (form.currency === "KHR") {
-            schedule.value.exchange_rate = form.exchange_rate || 4100;
+            schedule.value.exchange_rate = 4100;
         } else {
             schedule.value.exchange_rate = 1;
         }
     },
 });
-
 const schedule = ref({
     agreement_amount: props.agreement.amount,
     due_date: new Date(),
     short_description: "Item description",
-    percentage: 100,
+    percentage: 100, // Initial static value
     remark: "Additional remark",
-    amount: 2000,
+    amount: props.agreement.amount, // Initial static value
     currency: props.agreement.currency || "USD",
     agreement_currency: props.agreement.currency || "USD",
     exchange_rate: props.agreement.currency === "KHR" ? 4100 : 1,
 });
+const parsedAgreementDocs = Array.isArray(props.agreement.agreement_doc)
+    ? props.agreement.agreement_doc
+    : JSON.parse(props.agreement.agreement_doc || "[]");
 
-const agreementDocs = ref(
-    props.agreement.agreement_doc
-        ? [
-              {
-                  path: props.agreement.agreement_doc,
-                  name: getFileName(props.agreement.agreement_doc),
-                  size: 0,
-                  type: "application/pdf",
-              },
-          ]
-        : []
-);
+const agreementDocs = ref(parsedAgreementDocs);
+form.agreement_doc = parsedAgreementDocs;
 
 // Computed properties
 const remainingAmount = computed(() => {
@@ -454,57 +503,56 @@ const remainingAmount = computed(() => {
         form.payment_schedule.reduce((acc, item) => acc + item.amount, 0)
     );
 });
-
 const remainingPercentage = computed(() => {
     return (
         100 -
         form.payment_schedule.reduce((acc, item) => acc + item.percentage, 0)
     );
 });
-
 const hasManyCurrencies = computed(() => {
     return form.payment_schedule.some((v) => v.currency != form.currency);
 });
 
 // Methods
-const getFileName = (path) => {
-    if (!path) return "document.pdf";
-    const filename = decodeURIComponent(path.split(/[\\/]/).pop());
-    return filename || "document.pdf";
-};
-
 const beforeUpload = (e) => {
     e.formData.enctype = "multipart/form-data";
     e.formData.append("agreement_doc_old", form.agreement_doc);
     e.formData.append("_token", page.props.csrf_token);
 };
-
-const beforeUploadAttachment = (e) => {
-    e.formData.enctype = "multipart/form-data";
-    e.formData.append("_token", page.props.csrf_token);
+const beforeUploadAgreementDoc = (event) => {
+    event.formData.append("_token", page.props.csrf_token); // ✅ Laravel needs this
 };
-
-const onUpload = (e) => {
+const beforeUploadAttachment = (event) => {
+    event.formData.append("_token", page.props.csrf_token);
+};
+const onUploadAgreementDoc = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
-        agreementDocs.value.push({
-            path: response.path,
-            name: response.name,
-            size: response.size,
-            type: response.mime_type,
+        const uploadedFiles = Array.isArray(response) ? response : [response];
+
+        uploadedFiles.forEach((file) => {
+            const newDoc = {
+                path: file.path,
+                name: file.name,
+                size: file.size,
+                mime_type: file.mime_type,
+            };
+            agreementDocs.value.push(newDoc);
         });
-        form.agreement_doc = response.path;
+        form.agreement_doc = [...agreementDocs.value];
+
         toast.add({
             severity: "success",
             summary: "Uploaded",
-            detail: `Agreement document "${response.name}" uploaded successfully`,
+            detail: `${uploadedFiles.length} agreement document(s) uploaded successfully`,
             life: 3000,
         });
     } catch (error) {
+        console.error("Upload error:", error);
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "Failed to upload agreement document",
+            detail: "Failed to upload agreement document(s)",
             life: 3000,
         });
     }
@@ -512,9 +560,9 @@ const onUpload = (e) => {
 
 const removeAgreementDoc = (index) => {
     agreementDocs.value.splice(index, 1);
-    if (agreementDocs.value.length === 0) {
-        form.agreement_doc = null;
-    }
+    form.agreement_doc = [...agreementDocs.value]; //
+    //  form state
+
     toast.add({
         severity: "info",
         summary: "Removed",
@@ -523,7 +571,7 @@ const removeAgreementDoc = (index) => {
     });
 };
 
-const onUploadAttachments = (e) => {
+const onUploadAttachment = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
         form.attachments.push({
@@ -535,7 +583,7 @@ const onUploadAttachments = (e) => {
         toast.add({
             severity: "success",
             summary: "Uploaded",
-            detail: `File "${response.name}" added successfully`,
+            detail: `Attachment "${response.name}" added successfully`,
             life: 3000,
         });
     } catch (error) {
@@ -569,6 +617,8 @@ const doSave = (e) => {
         remark: e.remark,
         amount: e.amount,
         status: e.status ?? "Pending",
+        agreement_currency: form.currency,
+        exchange_rate: e.currency === "KHR" ? 4100 : 1,
     });
 };
 
@@ -577,30 +627,67 @@ const beforeUpdate = (e) => {
     schedule.value.percentage = remainingPercentage.value;
 };
 
+const checkDuplicateReference = async () => {
+    if (!form.agreement_reference_no) {
+        showDuplicateAlert.value = false;
+        return;
+    }
+
+    try {
+        const response = await axios.get("/api/check-agreement-reference", {
+            params: {
+                reference_no: form.agreement_reference_no,
+                exclude_id: props.agreement.id,
+            },
+        });
+
+        showDuplicateAlert.value = response.data.exists;
+    } catch (error) {
+        console.error("Error checking reference:", error);
+    }
+};
+
 const submitForm = () => {
     processing.value = true;
-    form.agreement_amount = schedule.value.agreement_amount;
 
+    // Helper function to format dates consistently
+    const formatDate = (date) => {
+        if (!date) return null;
+
+        const d = date instanceof Date ? date : new Date(date);
+        const day = String(d.getDate()).padStart(2, "0");
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
     const data = {
-        ...form,
-        agreement_date: form.agreement_date
-            ? moment(form.agreement_date).format("DD/MM/YYYY")
-            : null,
-        start_date: form.start_date
-            ? moment(form.start_date).format("DD/MM/YYYY")
-            : null,
-        end_date: form.end_date
-            ? moment(form.end_date).format("DD/MM/YYYY")
-            : null,
-        payment_schedule: form.payment_schedule.map((v) => ({
-            ...v,
-            due_date: v.due_date
-                ? moment(v.due_date).format("DD/MM/YYYY")
+        ...form.data(),
+        agreement_amount: schedule.value.agreement_amount,
+        agreement_doc:
+            agreementDocs.value.length > 0
+                ? JSON.stringify(agreementDocs.value)
                 : null,
+        agreement_date: formatDate(form.agreement_date),
+        start_date: formatDate(form.start_date),
+        end_date: formatDate(form.end_date),
+        payment_schedule: form.payment_schedule.map((item) => ({
+            ...item,
+            due_date: formatDate(item.due_date),
+            amount: parseFloat(item.amount),
+            percentage: parseFloat(item.percentage),
         })),
+        attachments:
+            form.attachments.length > 0
+                ? JSON.stringify(form.attachments)
+                : null,
     };
 
-    form.put(
+    console.log("Formatted data before submission:", data);
+
+    form.transform(() => ({
+        ...data,
+        _method: "PUT",
+    })).post(
         route("agreements.update", {
             agreement_no: props.agreement.agreement_no,
         }),
@@ -613,15 +700,10 @@ const submitForm = () => {
                     detail: "Agreement updated successfully",
                     life: 3000,
                 });
-                router.visit(route("agreements.index"));
             },
-            onError: () => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to update agreement",
-                    life: 3000,
-                });
+            onError: (errors) => {
+                console.error("Validation errors:", errors);
+                // ...
             },
             onFinish: () => {
                 processing.value = false;

@@ -28,11 +28,13 @@ Route::get('/agreements/create', [AgreementController::class, 'create'])->name('
 Route::get('/agreements/show/{id}', [AgreementController::class, 'show'])->name('agreements.show');
 Route::post('/agreements/store', [AgreementController::class, 'store'])->name('agreements.store');
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
+Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/agreements/{agreement_no}/edit', [AgreementController::class, 'edit'])->name('agreements.edit');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/quotations/{quotationId}/agreement', [QuotationController::class, 'getAgreementForQuotation']);
 Route::post('/api/invoices/filter', [InvoiceController::class, 'filter']);
 Route::get('/search-quotation', [AgreementController::class, 'searchQuotation']);
+Route::get('/check-agreement-reference', [AgreementController::class, 'checkDuplicateReference']);
 
 Route::resource('quotations', QuotationController::class);
 Route::get('/quotations', [QuotationController::class, 'list']);
