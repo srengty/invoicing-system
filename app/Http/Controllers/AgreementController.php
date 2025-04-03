@@ -61,7 +61,7 @@ class AgreementController extends Controller
         //     'size' => $request->agreement_doc['size'],
         //     'mime_type' => $request->agreement_doc['mime_type']
         // ]);
-        $data['agreement_doc'] = json_encode($request->agreement_doc); 
+        $data['agreement_doc'] = json_encode($request->agreement_doc);
         $data['attachments'] = json_encode($request->attachments);
         $agreement = Agreement::create($data);
         foreach($request->payment_schedule as $key => $value){
