@@ -13,12 +13,12 @@ jobs:
     steps:
     - name: Run migration
       run: php artisan migrate
-  seed:
-    runs-on: self-hosted
-    needs: migrate
-    steps:
-    - name: Seeding data
-      run: php artisan db:seed
+  # seed:
+  #   runs-on: self-hosted
+  #   needs: migrate
+  #   steps:
+  #   - name: Seeding data
+  #     run: php artisan db:seed
   config-data:
     runs-on: self-hosted
     needs: seed
