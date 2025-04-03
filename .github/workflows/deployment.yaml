@@ -33,6 +33,7 @@ jobs:
         cp -r storage /opt/invoice/storage
   restore-build:
     runs-on: self-hosted
+    needs: config-data
     steps:
       - name: restore data in project
         run: |
