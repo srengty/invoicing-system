@@ -22,7 +22,7 @@
         <Toast position="top-right" group="tr" />
 
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
-        <form @submit.prevent="submit" class="text-sm ">
+        <form @submit.prevent="submit" class="text-sm">
             <!-- Quotation Info -->
             <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -421,6 +421,7 @@
                     class="w-full text-sm"
                     @complete="searchProducts"
                     @change="updateSelectedProductDetails"
+                    :input-props="{ id: 'item' }"
                 />
             </div>
             <!-- Item Category (Auto-complete, Read-Only) -->
@@ -737,8 +738,15 @@ const filterProductsByDivision = () => {
         filteredProducts.value = props.products.filter(
             (product) => product.division_id === selectedDivision.value
         );
+    } else if (editingProduct.value) {
+        // If editing, use the product's division
+        selectedDivision.value = editingProduct.value.division_id;
+        filteredProducts.value = props.products.filter(
+            (product) =>
+                product.division_id === editingProduct.value.division_id
+        );
     } else {
-        filteredProducts.value = []; // Clear filtered products if no division is selected
+        filteredProducts.value = [];
     }
 };
 const searchProducts = (event) => {
@@ -839,6 +847,9 @@ const resetAddItemDialog = () => {
     selectedQuantity.value = 1;
     additionalRemark.value = "";
     selectedAccountCode.value = "";
+    selectedItem.value = null;
+    selectedDivision.value = null;
+    filteredProducts.value = [];
     editingProduct.value = null;
 };
 
@@ -1029,6 +1040,10 @@ const editProduct = (productId) => {
         (prod) => prod.id === productId
     );
     if (productToEdit) {
+        // Set the division first
+        selectedDivision.value = productToEdit.division_id;
+
+        // Then set the product and other values
         selectedProduct.value = {
             ...productToEdit,
             quantity: productToEdit.quantity ?? 1,
@@ -1036,6 +1051,16 @@ const editProduct = (productId) => {
             remark: productToEdit.remark || "",
             include_catalog: Boolean(productToEdit.include_catalog),
         };
+
+        // Set the selected item for autocomplete
+        selectedItem.value = {
+            id: productToEdit.id,
+            name: productToEdit.name,
+            division_id: productToEdit.division_id,
+        };
+
+        // Filter products based on the division
+        filterProductsByDivision();
 
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
