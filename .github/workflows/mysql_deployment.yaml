@@ -9,9 +9,6 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - name: Set up MySQL
         run: |
           # Set variable for user
