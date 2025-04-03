@@ -1,3 +1,4 @@
+list agreement
 <template>
     <Head title="Agreements"></Head>
     <GuestLayout>
@@ -73,6 +74,8 @@
                                 'agreement_date',
                                 'start_date',
                                 'end_date',
+                                'total_progress_payment',
+                                'total_progress_payment_percentage',
                             ].includes(col.field)
                         "
                         :field="col.field"
@@ -98,6 +101,7 @@
                             {{ momentDate(slotProps.data[col.field]) }}
                         </template>
                     </Column>
+
                     <!-- column for agreement doc -->
                     <Column
                         v-if="col.field === 'agreement_doc'"
@@ -115,15 +119,93 @@
                             >
                         </template>
                     </Column>
-                    <!-- column for view/edit -->
+                    <!-- column for total progress payment -->
                     <Column
-                        v-if="col.field === 'actions'"
+                        v-if="col.field === 'total_progress_payment'"
                         :field="col.field"
                         :header="col.header"
                         sortable
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
+                            <div class="flex items-center">
+                                <span
+                                    class="hover:text-primary hover:underline cursor-pointer transition-all duration-200"
+                                    @click="
+                                        showProgressPayments(slotProps.data)
+                                    "
+                                >
+                                    {{
+                                        formatCurrency(
+                                            slotProps.data[col.field]
+                                        )
+                                    }}
+                                </span>
+                                <Button
+                                    v-if="
+                                        slotProps.data.progress_payments?.length
+                                    "
+                                    icon="pi pi-info-circle"
+                                    @click="
+                                        showProgressPayments(slotProps.data)
+                                    "
+                                    severity="secondary"
+                                    size="small"
+                                    text
+                                    rounded
+                                    class="ml-2"
+                                    v-tooltip.top="'View progress payments'"
+                                />
+                            </div>
+                        </template>
+                    </Column>
+                    <!-- column for total progress payment percentage -->
+                    <Column
+                        v-if="col.field === 'total_progress_payment_percentage'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template #body="slotProps">
+                            <ProgressBar
+                                v-if="
+                                    col.field ===
+                                    'total_progress_payment_percentage'
+                                "
+                                :value="slotProps.data[col.field] || 0"
+                                :showValue="true"
+                                :class="
+                                    progressBarClass(
+                                        slotProps.data[col.field] || 0
+                                    )
+                                "
+                            />
+                        </template>
+                    </Column>
+                    <!-- column for view/edit -->
+                    <Column
+                        v-if="col.field === 'actions'"
+                        :field="col.field"
+                        :header="col.header"
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template #body="slotProps">
+                            <Button
+                                severity=""
+                                size="small"
+                                @click="
+                                    router.get(
+                                        route('agreements.show', {
+                                            id: slotProps.data.agreement_no,
+                                        })
+                                    )
+                                "
+                                icon="pi pi-print"
+                                aria-label="print"
+                                outlined
+                                class="mr-2"
+                            ></Button>
                             <Button
                                 severity=""
                                 size="small"
@@ -160,30 +242,107 @@
             </DataTable>
             <!-- Progress Payment Dialog -->
             <Dialog
-                v-model:visible="displayProgressPaymentDialog"
-                modal
-                header="Progress Payments Details"
-                :style="{ width: '50vw' }"
+                v-model:visible="progressPaymentsDialog"
+                :style="{ width: '40vw' }"
+                header="Progress Payment Details"
+                :modal="true"
+                :dismissableMask="true"
+                class="text-sm"
             >
-                <div v-if="selectedAgreement" class="grid grid-cols-2 gap-4">
-                    <div>
-                        <p class="font-semibold">Agreement Number:</p>
-                        <p>{{ selectedAgreement.agreement_no }}</p>
+                <div class="grid">
+                    <div class="col-12">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="col-12 md:col-6 lg:col-3">
+                                <div class="field">
+                                    <label class="font-semibold"
+                                        >Agreement No:</label
+                                    >
+                                    <div class="text-sm">
+                                        {{ selectedAgreement?.agreement_no }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-3">
+                                <div class="field">
+                                    <label class="font-semibold"
+                                        >Customer:</label
+                                    >
+                                    <div>
+                                        {{ selectedAgreement?.customer?.name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-3">
+                                <div class="field">
+                                    <label class="font-semibold"
+                                        >Total Amount:</label
+                                    >
+                                    <div>
+                                        {{
+                                            formatCurrency(
+                                                selectedAgreement?.amount
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-3">
+                                <div class="field">
+                                    <label class="font-semibold"
+                                        >Total Paid:</label
+                                    >
+                                    <div>
+                                        {{
+                                            formatCurrency(
+                                                selectedAgreement?.total_progress_payment
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <p class="font-semibold">Customer:</p>
-                        <p>{{ selectedAgreement.customer.name }}</p>
-                    </div>
-                    <div>
-                        <p class="font-semibold">Total Amount:</p>
-                        <p>{{ selectedAgreement.amount }}</p>
-                    </div>
-                    <div>
-                        <p class="font-semibold">Total Progress Payment:</p>
-                        <p>{{ selectedAgreement.total_progress_payment }}</p>
-                    </div>
-                    <!-- Add more details or a table of progress payments here if available -->
                 </div>
+                <Divider class="my-4" />
+                <div class="text-md font-bold mb-3">Progress Payments</div>
+                <DataTable
+                    :value="selectedProgressPayments"
+                    :paginator="true"
+                    :rows="5"
+                    :rowsPerPageOptions="[5, 10, 20]"
+                    :stripedRows="true"
+                    :showGridlines="true"
+                    class="mt-3"
+                    size="small"
+                >
+                    <Column field="payment_no" header="No" sortable></Column>
+                    <Column
+                        field="receipt_no"
+                        header="Receipt No"
+                        sortable
+                    ></Column>
+                    <Column field="amount" header="Amount" sortable>
+                        <template #body="slotProps">
+                            <span class="font-semibold">
+                                {{ formatCurrency(slotProps.data.amount) }}
+                            </span>
+                        </template>
+                    </Column>
+                    <Column
+                        field="invoice_no"
+                        header="Invoice No"
+                        sortable
+                    ></Column>
+                </DataTable>
+
+                <template #footer>
+                    <Button
+                        label="Close"
+                        icon="pi pi-times"
+                        @click="progressPaymentsDialog = false"
+                        class="p-button-text"
+                    />
+                </template>
             </Dialog>
         </div>
     </GuestLayout>
@@ -191,7 +350,14 @@
 <script setup>
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { ref, watch, computed } from "vue";
+import moment from "moment";
 import { Head, Link, router } from "@inertiajs/vue3";
+import axios from "axios";
+import { debounce } from "lodash";
+import { usePage } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
 import {
     DataTable,
     Column,
@@ -200,14 +366,14 @@ import {
     Dropdown,
     InputText,
     Dialog,
+    ProgressBar,
+    Tag,
+    Divider,
+    Breadcrumb,
+    Badge,
+    ProgressSpinner,
+    Card,
 } from "primevue";
-import moment from "moment";
-import { ref, watch, computed } from "vue";
-import { debounce } from "lodash";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
-import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const props = defineProps({
@@ -230,11 +396,6 @@ const items = computed(() => [
     { label: page.props.title || "Agreements", to: route("agreements.index") },
 ]);
 const columns = [
-    // { field: 'id', header: 'ID' },
-    {
-        field: "actions",
-        header: "View/Edit",
-    },
     { field: "quotation_no", header: "Quotation No." },
     { field: "agreement_no", header: "Agreement No." },
     { field: "agreement_ref_no", header: "Agreement Ref No." },
@@ -250,9 +411,10 @@ const columns = [
     { field: "start_date", header: "Start Date" },
     { field: "end_date", header: "End Date" },
     { field: "short_description", header: "Short description" },
-    // { field: "agreement_doc", header: "Agreement Doc" },
-    // { field: "agreement_date", header: "Agreement Date" },
-    // { field: "address", header: "Address" },
+    {
+        field: "actions",
+        header: "Print/View/Edit",
+    },
 ];
 const defaultColumns = columns.filter(
     (col) =>
@@ -263,7 +425,6 @@ const defaultColumns = columns.filter(
             // "agreement_ref_no",
         ].includes(col.field)
 );
-
 const selectedColumns = ref(defaultColumns);
 const showColumns = ref(defaultColumns);
 const updateColumns = (columns) => {
@@ -275,8 +436,7 @@ const openCreate = () => {
 const momentDate = (date) => {
     return moment(date, "DD/MM/YYYY").fromNow();
 };
-
-const searchType = ref(""); // Set a default search type
+const searchType = ref("");
 const searchTerm = ref("");
 const searchOptions = ref([
     { label: "Agreement Number", value: "agreement_no" },
@@ -320,12 +480,44 @@ const filteredAgreements = computed(() => {
             .includes(searchTerm.value.toLowerCase());
     });
 });
-// Dialog state
-const displayProgressPaymentDialog = ref(false);
+const formatCurrency = (value) => {
+    if (!value) return "0.00";
+    return parseFloat(value).toLocaleString("en-US", {
+        style: "currency",
+        currency: "KHR", // Change to your preferred currency
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+const progressBarClass = (percentage) => {
+    if (percentage >= 100) return "bg-green-500";
+    if (percentage >= 75) return "bg-blue-500";
+    if (percentage >= 50) return "bg-yellow-500";
+    if (percentage >= 25) return "bg-orange-500";
+    return "bg-red-500";
+};
+// Progress payments dialog
+const progressPaymentsDialog = ref(false);
+const selectedProgressPayments = ref([]);
 const selectedAgreement = ref(null);
+const paymentDetailsDialog = ref(false);
+const currentPayment = ref(null);
 
 const showProgressPayments = (agreement) => {
-    selectedAgreement.value = agreement;
-    displayProgressPaymentDialog.value = true;
+    try {
+        selectedAgreement.value = { ...agreement };
+        selectedProgressPayments.value = [
+            ...(agreement.progress_payments || []),
+        ]; // Copy array
+        progressPaymentsDialog.value = true;
+    } catch (error) {
+        console.error("Error showing progress payments:", error);
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to load payment details",
+            life: 3000,
+        });
+    }
 };
 </script>
