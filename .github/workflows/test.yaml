@@ -14,8 +14,7 @@ env:
   DB_USERNAME: invoices
   DB_PASSWORD: invoice@gicitc
   MAIL_USERNAME: itcfinance168@gmail.com
-  MAIL_PASSWORD: "rvle ineh zvpa dutt"
-  MAIL_FROM_ADDRESS: "itcfinance168@gmail.com"
+  MAIL_FROM_ADDRESS: itcfinance168@gmail.com
   MAIL_FROM_NAME: "ITC Finance"
 jobs:
   install-packages:
@@ -56,7 +55,6 @@ jobs:
           sed -i 's/^DB_USERNAME=.*/DB_USERNAME=${{ env.DB_USERNAME }}/' .env
           sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
           sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
-          sed -i 's/^MAIL_PASSWORD=.*/MAIL_PASSWORD=${{ env.MAIL_PASSWORD}}/' .env
           sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
           sed -i 's/^MAIL_FROM_NAME=.*/MAIL_FROM_NAME=${{ env.MAIL_FROM_NAME}}/' .env
   install-dpendencies:
