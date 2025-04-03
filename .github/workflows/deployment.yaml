@@ -28,6 +28,7 @@ jobs:
       run: |
         php artisan config:clear
         php artisan config:cache
+        php artisan view:cache
     - name: store persistance data
       run: |
         cp -r storage /opt/invoice/
