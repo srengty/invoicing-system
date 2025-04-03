@@ -4,7 +4,7 @@
     <GuestLayout>
         <NavbarLayout />
         <!-- PrimeVue Breadcrumb -->
-        <div class="py-3">
+        <div class="py-3 pb-0">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link
@@ -19,8 +19,7 @@
         </div>
         <div class="create-invoice">
             <!-- Header Section with Buttons -->
-            <div class="flex justify-end items-center p-3 mr-4">
-                <!-- <h1 class="text-2xl">Create Invoice</h1> -->
+            <div class="flex justify-end items-center p-3 pt-0 mr-4">
                 <div class="flex gap-4">
                     <Button
                         label="Add Product"
@@ -41,7 +40,6 @@
                 </div>
             </div>
 
-            <!-- Invoice Form Section -->
             <form @submit.prevent="submitInvoice">
                 <div
                     class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4"
@@ -57,7 +55,7 @@
                             v-model="form.invoice_no"
                             placeholder="Enter invoice no"
                             required
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                         />
                     </div>
@@ -73,7 +71,7 @@
                             optionLabel="quotation_no"
                             optionValue="quotation_no"
                             placeholder="Select Quotation"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                             required
                         />
@@ -96,28 +94,30 @@
                             optionLabel="agreement_no"
                             optionValue="agreement_no"
                             placeholder="Select Agreement"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                             required
                         />
                     </div>
-                    <div>
+                    <div >
                         <label
                             for="deposit_no"
                             class="block text-sm font-medium"
                             >Receipt No (for deposit)</label
                         >
-                        <InputText
-                            id="deposit_no"
-                            v-model="form.deposit_no"
-                            class="w-1/2"
-                            placeholder="Enter deposit number"
-                            required
-                            size="small"
-                        />
-                        <Button class="w-1/3 ml-4 p-button-info" size="small"
-                            >Add Receipt</Button
-                        >
+                        <div class="flex items-center gap-2">
+                            <InputText
+                                id="deposit_no"
+                                v-model="form.deposit_no"
+                                class="w-1/2"
+                                placeholder="Enter deposit number"
+                                required
+                                size="small"
+                            />
+                            <Button class="grid md:w-1/2 gap-2 p-button-info" size="small"
+                                > Add Receipt</Button
+                            >
+                        </div>
                     </div>
                     <div>
                         <label
@@ -131,7 +131,7 @@
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Customer"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                             required
                         />
@@ -146,7 +146,7 @@
                             optionLabel="label"
                             optionValue="value"
                             placeholder="Select Status"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                             required
                         />
@@ -158,7 +158,7 @@
                         <InputText
                             id="address"
                             v-model="form.address"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                             placeholder="Enter address"
                         />
@@ -170,7 +170,7 @@
                         <InputText
                             id="phone"
                             v-model="form.phone"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
                             placeholder="Enter phone number"
                         />
@@ -179,26 +179,32 @@
                         <label
                             for="start_date"
                             class="block text-sm font-medium"
-                            >Date</label
+                            >Start Date</label
                         >
-                        <DatePicker
+                        <Calendar
                             id="start_date"
                             v-model="form.start_date"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
-                            placeholder="Select date"
+                            placeholder="Select start date"
+                            dateFormat="yy-mm-dd"
+                            showTime
+                            hourFormat="24"
                         />
                     </div>
                     <div>
                         <label for="end_date" class="block text-sm font-medium"
-                            >Due Date</label
+                            >End Date</label
                         >
-                        <DatePicker
+                        <Calendar
                             id="end_date"
                             v-model="form.end_date"
-                            class="w-full md:w-80"
+                            class="w-full md:w-72"
                             size="small"
-                            placeholder="Select due date"
+                            placeholder="Select end date"
+                            dateFormat="yy-mm-dd"
+                            showTime
+                            hourFormat="24"
                         />
                     </div>
                 </div>
@@ -217,19 +223,41 @@
                             {{ slotProps.index + 1 }}
                         </template>
                     </Column>
-                    <Column field="product" header="Product"></Column>
-                    <Column field="qty" header="Qty">
+                    <Column field="name" header="Product"></Column>
+                    <Column field="quantity" header="Qty">
                         <template #body="slotProps">
-                            <InputText
-                                v-model="slotProps.data.qty"
+                            <InputNumber
+                                v-model="slotProps.data.quantity"
                                 @input="updateProductSubtotal(slotProps.data)"
                                 class="w-full"
+                                mode="decimal"
+                                :min="1"
                             />
                         </template>
                     </Column>
                     <Column field="unit" header="Unit"></Column>
-                    <Column field="unitPrice" header="Unit Price"></Column>
+                    <Column field="price" header="Unit Price">
+                        <template #body="slotProps">
+                            <InputNumber
+                                v-model="slotProps.data.price"
+                                @input="updateProductSubtotal(slotProps.data)"
+                                class="w-full"
+                                mode="decimal"
+                                :minFractionDigits="2"
+                                :maxFractionDigits="2"
+                                :min="1"
+                            />
+                        </template>
+                    </Column>
                     <Column field="subTotal" header="Sub Total"></Column>
+                    <Column header="Include Catalog">
+                        <template #body="slotProps">
+                            <Checkbox 
+                                v-model="slotProps.data.include_catalog" 
+                                :binary="true" 
+                            />
+                        </template>
+                    </Column>
                     <Column header="Action">
                         <template #body="slotProps">
                             <Button
@@ -242,29 +270,40 @@
                     </Column>
                 </DataTable>
 
-                <div class="total-container mt-4 flex justify-between">
-                    <p class="font-bold">Total</p>
-                    <p class="font-bold">{{ calculateTotal }}</p>
-                </div>
-                <div class="grand-total-container flex justify-between">
-                    <p class="font-bold text-lg">Grand Total</p>
-                    <p class="font-bold text-lg">{{ calculateGrandTotal }}</p>
-                </div>
-                <div class="flex justify-between mt-4">
-                    <p class="font-bold">Instalment Paid</p>
-                    <p class="font-bold">{{ form.instalmentPaid }}</p>
+                <div class="pl-2 pr-6">
+                    <div class="total-container mt-4 flex justify-between">
+                        <p class="font-bold">Total KHR</p>
+                        <p class="font-bold">
+                            ៛{{ calculateTotalKHR }}
+                        </p>
+                    </div>
+                    <div class="total-container mt-4 flex justify-between">
+                        <p class="font-bold">Total USD</p>
+                        <p class="font-bold">
+                            <input
+                                type="number"
+                                v-model.number="form.total_usd"
+                                placeholder="Enter USD"
+                                :minFractionDigits="2"
+                                :maxFractionDigits="2"
+                                class="w-1/7 h-9 text-sm"
+                            />
+                        </p>
+                    </div>
+                    <div class="grand-total-container flex justify-between">
+                        <p class="font-bold">Exchange rate</p>
+                        <p class="font-bold">
+                            {{ calculateExchangeRate }}
+                        </p>
+                    </div>
                 </div>
                 <div class="terms mt-4">
                     <h3 class="text-lg">Terms and Conditions</h3>
-                    <p>Full payment is required upon quote acceptance.</p>
-                    <p>
-                        This quote is negotiable for one (1) week from the date
-                        stated above.
-                    </p>
+                    <Textarea v-model="form.terms" rows="3" class="w-full" />
                 </div>
                 <div class="buttons mt-4 flex justify-end">
                     <Button
-                        label="Submit request for approval"
+                        label="Save Invoice"
                         icon="pi pi-check"
                         class="p-button-success shadow-md"
                         @click="submitInvoice"
@@ -278,39 +317,45 @@
             </div>
 
             <!-- Modal to Select Product -->
-            <Dialog v-model:visible="showProductModal" header="Select Product">
+            <Dialog 
+                v-model:visible="showProductModal" 
+                header="Select Product"
+                :modal="true"
+                :style="{ width: '70vw' }"
+            >
+                <DataTable
+                    :value="filteredProducts"
+                    class="p-datatable-striped"
+                    responsiveLayout="scroll"
+                    size="small"
+                    selectionMode="single"
+                    v-model:selection="selectedProduct"
+                    dataKey="id"
+                >
+                    <Column field="name" header="Product Name"></Column>
+                    <Column field="unit" header="Unit"></Column>
+                    <Column field="price" header="Price">
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data.price) }}
+                        </template>
+                    </Column>
+                    <Column field="status" header="Status"></Column>
+                </DataTable>
                 <template #footer>
                     <Button
-                        label="Close"
+                        label="Cancel"
                         icon="pi pi-times"
                         class="p-button-text"
                         @click="showProductModal = false"
                     />
+                    <Button
+                        label="Add Product"
+                        icon="pi pi-plus"
+                        class="p-button-success"
+                        @click="addSelectedProduct"
+                        :disabled="!selectedProduct"
+                    />
                 </template>
-                <div class="product-list">
-                    <p v-if="!products || products.length === 0">
-                        No products available.
-                    </p>
-                    <DataTable
-                        :value="products"
-                        class="p-datatable-striped"
-                        responsiveLayout="scroll"
-                    >
-                        <Column field="name" header="Product Name"></Column>
-                        <Column field="unit" header="Unit"></Column>
-                        <Column field="price" header="Price"></Column>
-                        <Column header="Action">
-                            <template #body="slotProps">
-                                <Button
-                                    label="Add"
-                                    icon="pi pi-plus"
-                                    class="p-button-text p-button-success"
-                                    @click="addProduct(slotProps.data.id)"
-                                />
-                            </template>
-                        </Column>
-                    </DataTable>
-                </div>
             </Dialog>
         </div>
     </GuestLayout>
@@ -322,11 +367,14 @@ import { useForm } from "@inertiajs/vue3";
 import {
     Button,
     InputText,
+    InputNumber,
     DataTable,
     Column,
     Dialog,
-    DatePicker,
+    Calendar,
     Select,
+    Checkbox,
+    Textarea,
 } from "primevue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
@@ -334,7 +382,6 @@ import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import Breadcrumb from "primevue/breadcrumb";
 import { usePage } from "@inertiajs/vue3";
 
-// The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
     {
@@ -351,117 +398,122 @@ const items = computed(() => [
         to: route("invoices.create"),
     },
 ]);
-const { products, agreements, quotations, customers } = usePage().props;
 
+const { products: allProducts, agreements, quotations, customers } = usePage().props;
+
+// Initialize form first
 const form = useForm({
     invoice_no: "",
     agreement_no: "",
     quotation_no: "",
-    deposit_no: "",
     customer_id: "",
     address: "",
-    phone: "",
-    start_date: "",
-    end_date: "",
-    grand_total: 0,
-    instalmentPaid: 0,
-    status: "",
-    productQuotations: [],
+    phone_number: "",
+    terms: "",
+    total_usd: null,
+    exchange_rate: null,
+    start_date: null,
+    end_date: null,
+    products: [],
 });
 
-const statusOptions = [
-    { label: "Pending", value: "Pending" },
-    { label: "Approved", value: "Approved" },
-    { label: "Revise", value: "Revise" },
-];
-
+const calculateTotalUSD = ref(null);
 const productsList = ref([]);
 const showProductModal = ref(false);
-const filteredAgreements = ref([]);
+const filteredAgreements = ref(agreements.filter(a => a.status === 'Open'));
+const selectedProduct = ref(null);
 
-const indexedProducts = computed(() =>
+const calculateProductSubtotals = computed(() => {
+    return productsList.value.map((product) => {
+        return {
+            ...product,
+            subTotal: (product.price || 0) * (product.quantity || 1),
+        };
+    });
+});
+
+const calculateTotalKHR = computed(() => {
+    return calculateProductSubtotals.value.reduce((sum, product) => {
+        return sum + (product.subTotal || 0);
+    }, 0);
+});
+
+const calculateExchangeRate = computed(() => {
+    if (form.total_usd && form.total_usd > 0) {
+        return (calculateTotalKHR.value / form.total_usd).toFixed(4);
+    }
+    return "";
+});
+
+watch(
+    () => form.total_usd,
+    (newValue) => {
+        if (newValue && newValue > 0) {
+            form.exchange_rate = calculateExchangeRate.value;
+        }
+    }
+);
+
+// Filter only approved products
+const filteredProducts = computed(() => {
+    return allProducts.filter(product => product.status === 'approved');
+});
+
+const indexedProducts = computed(() => 
     productsList.value.map((product, index) => ({
         ...product,
-        index: index + 1, // Assign index dynamically
+        index: index + 1,
+        subTotal: (product.quantity || 1) * (product.price || 0)
     }))
 );
 
+const calculateTotal = computed(() => {
+    return productsList.value.reduce(
+        (acc, product) => acc + (product.quantity * product.price),
+        0
+    );
+});
+
 watch(
     () => form.quotation_no,
-    (newQuotationId) => {
-        if (newQuotationId) {
+    (newQuotationNo) => {
+        if (newQuotationNo) {
             const selectedQuotation = quotations.find(
-                (q) => q.quotation_no === newQuotationId
+                q => q.quotation_no === newQuotationNo
             );
 
             if (selectedQuotation) {
-                console.log("Selected Quotation:", selectedQuotation);
-
-                // Auto-fill customer details
                 form.customer_id = selectedQuotation.customer_id || "";
                 form.address = selectedQuotation.address || "";
-                form.phone = selectedQuotation.phone_number || "";
-                form.status = selectedQuotation.status || "";
-
+                form.phone_number = selectedQuotation.phone_number || "";
+                
                 if (selectedQuotation.agreement) {
-                    console.log("working on agreement");
-                    // If quotation has an agreement, set and disable agreement selection
-                    form.agreement_no =
-                        selectedQuotation.agreement.agreement_no;
-                    filteredAgreements.value = [selectedQuotation.agreement];
+                    form.agreement_no = selectedQuotation.agreement.agreement_no;
                 } else {
-                    console.log("working on not agreement");
-                    // If no agreement, list only agreements that are not linked to any quotation
-                    form.agreement_no = ""; // Reset agreement selection
-                    filteredAgreements.value = agreements.filter(
-                        (a) => a.quotation == null && a.status === "Open"
-                    );
+                    form.agreement_no = "";
                 }
 
-                // Auto-fill products based on quotation
-                if (
-                    Array.isArray(selectedQuotation.product_quotations) &&
-                    selectedQuotation.product_quotations.length > 0
-                ) {
-                    productsList.value =
-                        selectedQuotation.product_quotations.map(
-                            (pq, index) => ({
-                                index: index + 1,
-                                product: pq.product.name || "Unknown Product",
-                                qty: pq.quantity || 1,
-                                unit: pq.product.unit || "Unit",
-                                unitPrice: pq.price || 0,
-                                subTotal: (pq.quantity || 1) * (pq.price || 0),
-                            })
-                        );
-                } else {
-                    productsList.value = [];
+                // Add products from quotation
+                if (selectedQuotation.product_quotations?.length > 0) {
+                    productsList.value = selectedQuotation.product_quotations.map(pq => ({
+                        id: pq.product.id,
+                        name: pq.product.name,
+                        quantity: pq.quantity,
+                        unit: pq.product.unit,
+                        price: pq.price,
+                        include_catalog: false,
+                        pdf_url: null
+                    }));
                 }
-
-                // Recalculate Grand Total
-                form.grand_total = calculateTotal.value - form.instalmentPaid;
-
-                console.log(
-                    "Updated Form Data after Quotation Selection:",
-                    form
-                );
             }
         } else {
-            // If no quotation is selected, reset agreements list
-            filteredAgreements.value = agreements.filter(
-                (a) => a.status === "Open"
-            );
-            form.agreement_no = "";
             form.customer_id = "";
             form.address = "";
-            form.phone = "";
-            form.start_date = "";
-            form.end_date = "";
-            form.instalmentPaid = 0;
+            form.phone_number = "";
+            form.agreement_no = "";
             productsList.value = [];
         }
-    },
-    { deep: true }
+    }
 );
 
 watch(
@@ -469,130 +521,111 @@ watch(
     (newAgreementNo) => {
         if (newAgreementNo) {
             const selectedAgreement = agreements.find(
-                (a) => a.agreement_no === newAgreementNo
+                a => a.agreement_no === newAgreementNo
             );
 
             if (selectedAgreement) {
-                console.log("Selected Agreement:", selectedAgreement);
-
-                // Set quotation if the agreement is linked to one
-                form.quotation_no = selectedAgreement.quotation_no || "";
-
-                // Auto-fill address only if empty
-                if (!form.address) {
-                    form.address = selectedAgreement.address || "";
-                }
-
-                // Auto-fill start and end dates
-                form.start_date = selectedAgreement.start_date || "";
-                form.end_date = selectedAgreement.end_date || "";
-
-                // Calculate instalment paid (sum of all invoice amounts related to this agreement)
-                form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
-                    ? selectedAgreement.invoices.reduce(
-                          (sum, invoice) => sum + invoice.amount,
-                          0
-                      )
-                    : 0;
-
-                // Recalculate Grand Total
-                form.grand_total = calculateTotal.value - form.instalmentPaid;
+                form.start_date = selectedAgreement.start_date || null;
+                form.end_date = selectedAgreement.end_date || null;
             }
-        } else {
-            console.log("Agreement Deselected - Keeping existing data");
         }
-    },
-    { deep: true }
+    }
 );
 
-const indexTemplate = (rowData, { index }) => {
-    return index + 1; // Return the index + 1 for 1-based index display
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(value);
 };
 
-const calculateTotal = computed(() => {
-    return productsList.value.reduce(
-        (acc, product) => acc + product.subTotal,
-        0
-    );
-});
+const addSelectedProduct = () => {
+    if (selectedProduct.value) {
+        const existingProduct = productsList.value.find(
+            p => p.id === selectedProduct.value.id
+        );
 
-const calculateGrandTotal = computed(() => {
-    return calculateTotal.value - form.instalmentPaid;
-});
+        if (!existingProduct) {
+            productsList.value.push({
+                id: selectedProduct.value.id,
+                name: selectedProduct.value.name,
+                quantity: 1,
+                unit: selectedProduct.value.unit,
+                price: selectedProduct.value.price,
+                include_catalog: false,
+                pdf_url: null
+            });
+        } else {
+            existingProduct.quantity += 1;
+        }
 
-const addProduct = (productId) => {
-    const product = products.find((prod) => prod.id === productId);
-    if (product) {
-        const newProduct = {
-            id: product.id,
-            product: product.name,
-            qty: 1,
-            unit: product.unit,
-            unitPrice: product.price,
-            subTotal: product.price,
-        };
-        productsList.value.push(newProduct);
+        showProductModal.value = false;
+        selectedProduct.value = null;
     }
 };
 
 const removeProduct = (productId) => {
     productsList.value = productsList.value.filter(
-        (product) => product.id !== productId
+        product => product.id !== productId
     );
 };
 
 const updateProductSubtotal = (product) => {
-    product.subTotal = product.qty * product.unitPrice;
+    // Subtotal is calculated in the computed property
 };
 
 const cancel = () => {
     form.reset();
     productsList.value = [];
+    window.location.href = route('invoices.index');
 };
 
-const submitInvoice = async () => {
+const submitInvoice = () => {
     if (productsList.value.length === 0) {
         alert("Please add at least one product.");
         return;
     }
 
-    const invoiceData = {
-        invoice_no: form.invoice_no,
-        agreement_no: form.agreement_no,
-        quotation_no: form.quotation_no,
-        customer_id: form.customer_id,
-        address: form.address,
-        phone: form.phone,
-        date: form.start_date,
-        due_date: form.end_date,
-        grand_total: form.grand_total,
-        status: form.status,
-        products: productsList.value.map((product) => ({
+    // Format dates to match backend expectation
+    const formattedData = {
+        ...form.data(),
+        start_date: form.start_date ? new Date(form.start_date).toISOString() : null,
+        end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
+        products: productsList.value.map(product => ({
             id: product.id,
-            quantity: product.qty,
-        })),
+            quantity: product.quantity,
+            price: product.price,
+            include_catalog: product.include_catalog,
+            acc_code: null, // Add if needed
+            category_id: null, // Add if needed
+            remark: null, // Add if needed
+            pdf_url: product.pdf_url
+        }))
     };
 
-    const csrfToken = document
-        .querySelector('meta[name="csrf_token"]')
-        .getAttribute("content");
+    form.products = productsList.value;
+    form.total = calculateTotal.value;
 
-    try {
-        const response = await fetch("/invoices", {
-            method: "POST",
-            body: JSON.stringify(invoiceData),
-            headers: {
-                "X-CSRF-TOKEN": csrfToken,
-                "Content-type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            console.error("Failed to submit invoice:", response.statusText);
-            return;
-        } // Redirect after submission
-    } catch (error) {
-        console.error("Error submitting invoice:", error);
-    }
+    form.post(route('invoices.store'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+            productsList.value = [];
+        },
+        onError: (errors) => {
+            console.error('Error creating invoice:', errors);
+        }
+    });
 };
 </script>
+
+<style scoped>
+.create-invoice {
+    padding: 1rem;
+}
+.total-container, .grand-total-container {
+    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+</style>

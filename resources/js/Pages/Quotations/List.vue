@@ -77,42 +77,6 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <Column header="View / Print-out" style="width: 8%">
-                        <template #body="slotProps">
-                            <div class="flex gap-4">
-                                <Button
-                                    icon="pi pi-eye"
-                                    aria-label="View"
-                                    severity="info"
-                                    class="custom-button"
-                                    @click="viewQuotation(slotProps.data)"
-                                    size="small"
-                                    outlined
-                                />
-                                <div
-                                    v-tooltip.top="
-                                        slotProps.data.status === 'Pending'
-                                            ? 'Printing is disabled for pending quotations'
-                                            : ''
-                                    "
-                                >
-                                    <Button
-                                        icon="pi pi-print"
-                                        aria-label="Print out"
-                                        class="custom-button"
-                                        @click="
-                                            printQuotation(slotProps.data.id, 1)
-                                        "
-                                        size="small"
-                                        outlined
-                                        :disabled="
-                                            slotProps.data.status === 'Pending'
-                                        "
-                                    />
-                                </div>
-                            </div>
-                        </template>
-                    </Column>
                     <!-- <Column header="No." style="width: 5%">
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
@@ -159,7 +123,7 @@
                     <Column
                         field="customer_status"
                         header="Customer Status"
-                        style="width: 15%"
+                        style="width: 10%"
                     >
                         <template #body="slotProps">
                             <span
@@ -228,6 +192,42 @@
                                 <template v-else>
                                     <span class="no-comment">No comment</span>
                                 </template>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column header="View / Print-out" style="width: 8%">
+                        <template #body="slotProps">
+                            <div class="flex gap-4">
+                                <Button
+                                    icon="pi pi-eye"
+                                    aria-label="View"
+                                    severity="info"
+                                    class="custom-button"
+                                    @click="viewQuotation(slotProps.data)"
+                                    size="small"
+                                    outlined
+                                />
+                                <div
+                                    v-tooltip.top="
+                                        slotProps.data.status === 'Pending'
+                                            ? 'Printing is disabled for pending quotations'
+                                            : ''
+                                    "
+                                >
+                                    <Button
+                                        icon="pi pi-print"
+                                        aria-label="Print out"
+                                        class="custom-button"
+                                        @click="
+                                            printQuotation(slotProps.data.id, 1)
+                                        "
+                                        size="small"
+                                        outlined
+                                        :disabled="
+                                            slotProps.data.status === 'Pending'
+                                        "
+                                    />
+                                </div>
                             </div>
                         </template>
                     </Column>

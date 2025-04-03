@@ -49,8 +49,14 @@ class Product extends Model
     public function invoices()
     {
         return $this->belongsToMany(Invoice::class, 'invoice_product')
-                    ->withPivot('quantity') // Include quantity from the pivot table
+                    ->withPivot('quantity', 'price', 'name', 'unit') // Include quantity from the pivot table
                     ->withTimestamps();
+    }
+
+    public function invoiceProduct()
+    {
+        return $this->hasMany(InvoiceProduct::class, 'product_id', 'id')
+                    ->withPivot('quantity', 'price', 'unit');
     }
 
     /**
