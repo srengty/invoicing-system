@@ -82,7 +82,7 @@ jobs:
         run:  echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage bootstrap/cache
       - name: Copy storage and cache to persistence location
         run: |
-          echo "$PASSWORD_SERVER" | sudo -S chmdo 777 /opt
+          echo "$PASSWORD_SERVER" | sudo -S chmod 777 /opt
           mkdir -p /opt/invoice
           cp -r storage /opt/invoice/storage
           cp -r public/build /opt/invoice/build
