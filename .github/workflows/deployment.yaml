@@ -21,7 +21,7 @@ jobs:
   #     run: php artisan db:seed
   config-data:
     runs-on: self-hosted
-    needs: migrate
+    needs: seed
     steps:
     - name: Config data
       run: |
