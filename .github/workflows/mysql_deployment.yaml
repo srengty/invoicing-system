@@ -9,11 +9,6 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Fix File Permissions
-        run: |
-          user=dice@gic
-          echo "$user"  | sudo -S chown -R $USER:$USER bootstrap/cache
-          echo "$user" | sudo -S chmod -R 775 bootstrap/cache
       - name: Checkout repository
         uses: actions/checkout@v3
 
