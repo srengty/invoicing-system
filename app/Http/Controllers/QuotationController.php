@@ -239,11 +239,6 @@ class QuotationController extends Controller
                         'pdf_url'    => $product['pdf_url'] ?? null,
                     ]);
                 }
-                // $quotation->products()->attach($product['id'], [
-                //     'quantity' => $product['quantity'],
-                //     'price'    => $product['price'],
-                //     'product_unit_prices' => json_encode($validated['products']),
-                // ]);
             }
         }
     // Redirect with a success message
