@@ -30,7 +30,7 @@ jobs:
         php artisan config:cache
     - name: store persistance data
       run: |
-        cp -r storage /opt/invoice/storage
+        cp -r storage /opt/invoice/
   restore-build:
     runs-on: self-hosted
     needs: config-data
@@ -38,9 +38,9 @@ jobs:
       - name: restore data in project
         run: |
           echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /opt/invoice
-          cp -r /opt/invoice/storage storage
-          cp -r /opt/invoice/vendor vendor
-          cp -r /opt/invoice/public public
+          cp -r /opt/invoice/storage ./
+          cp -r /opt/invoice/vendor ./
+          cp -r /opt/invoice/public ./
   deploy-invoice:
     runs-on: self-hosted
     needs: config-data
@@ -52,8 +52,6 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
-        cd /var/www/invoice
-        php artisan config:cache
 
   # remove-old-release:
   #   runs-on: self-hosted

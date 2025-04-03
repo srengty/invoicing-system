@@ -84,10 +84,10 @@ jobs:
         run: |
           echo "$PASSWORD_SERVER" | sudo -S chmod 777 /opt
           mkdir -p /opt/invoice
-          cp -r storage /opt/invoice/storage
-          cp -r public /opt/invoice/public
-          cp -r vendor /opt/invoice/vendor
-          cp -r node_modules /opt/invoice/node_modules
+          cp -r storage /opt/invoice/
+          cp -r public /opt/invoice/
+          cp -r vendor /opt/invoice/
+          cp -r node_modules /opt/invoice/
   create-database:
     runs-on: self-hosted
     needs: directory-permissions
