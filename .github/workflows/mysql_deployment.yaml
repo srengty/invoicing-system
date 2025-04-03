@@ -53,6 +53,6 @@ jobs:
 
       - name: Verify MySQL Configuration
         run: |
-          user=gic@dice
+          user=dice@gic
           echo "$user" | sudo -S mysql -e "SELECT User, Host FROM mysql.user;"
           echo "$user" | sudo -S mysql -e "SHOW DATABASES;"
