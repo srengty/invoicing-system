@@ -9,7 +9,7 @@ export default defineConfig({
     //     emptyOutDir: false, // also necessary
     // },
     server: {
-        host: 'https://finance.itc.edu.kh/',
+        // host: 'https://finance.itc.edu.kh/',
         hmr: {
             protocol: "wss",
         }
