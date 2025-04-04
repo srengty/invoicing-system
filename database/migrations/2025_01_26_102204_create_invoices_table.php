@@ -14,19 +14,22 @@ return new class extends Migration
     public function up()
     {
         Schema::create('invoices', function (Blueprint $table) {
-            $table->unsignedBigInteger('invoice_no')->primary();
+            $table->id();
+            $table->unsignedBigInteger('invoice_no')->unique()->nullable();
             $table->foreignId('agreement_no')->nullable()->constrained('agreements','agreement_no')->nullOnDelete();
             $table->foreignId('quotation_no')->nullable()->constrained('quotations','quotation_no')->nullOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->string('address');
-            $table->string('phone');
-            $table->date('date');
-            $table->date('due_date');
+            $table->string('phone_number');
+            $table->date('start_date');
+            $table->date('end_date');
             $table->enum('status', ['Pending', 'Paid', 'Cancelled'])->default('Pending');
-            $table->decimal('sub_total', 10, 2);
-            $table->decimal('grand_total', 10, 2)->nullable();
+            $table->double('total')->default(0)->comment('no tax');
+            $table->double('total_usd', 15, 2)->nullable();
+            $table->decimal('exchange_rate', 10, 4)->nullable();
             $table->json('products')->nullable();
             $table->enum('currency', ['USD', 'KHR'])->default('USD'); // Add currency column with default USD
+            $table->text('terms')->nullable();
             $table->timestamps();
         });
     }
