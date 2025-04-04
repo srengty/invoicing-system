@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         composer install --no-dev --optimize-autoloader
-        npm ci
+        npm install
         npm run build
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
