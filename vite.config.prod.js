@@ -3,11 +3,13 @@ import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-    base: '/build/',
-    // build: {
-    //     outDir: './public',
-    //     emptyOutDir: false, // also necessary
-    // },
+    build: {
+        outDir: './public/build',
+        manifest: true,
+        rollupOptions: {
+          input : "resources/js/app.js",
+        },
+    },
 
     // server: {
     //     hmr: {
@@ -29,7 +31,7 @@ export default defineConfig({
         vue({
             template: {
                 transformAssetUrls: {
-                    base: null,
+                    base: "/build/",
                     includeAbsolute: false,
                 },
             },
