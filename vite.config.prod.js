@@ -12,6 +12,7 @@ export default defineConfig({
         hmr: {
             host: 'finance.itc.edu.kh',
         },
+        https: true,
         cors: {
             origin: [
                 'https://finance.itc.edu.kh',
