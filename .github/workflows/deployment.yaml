@@ -132,7 +132,14 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
         echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /var/www/invoice
-
+    - name: Remove old release
+      run: |
+        echo "$PASSWORD_SERVER" | sudo -S bash -c '
+          cd /var/www/invoice/releases || exit 1
+          ls -1tr | head -n -5 | while read dir; do
+            [ -n "$dir" ] && rm -rf "$dir"
+          done
+        '
     - name: Restart PHP & Clear OPcache
       run: |
         echo "$PASSWORD_SERVER"  | sudo -S systemctl restart php8.4-fpm
