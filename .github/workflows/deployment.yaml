@@ -56,10 +56,15 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
 
-  # remove-old-release:
-  #   runs-on: self-hosted
-  #   needs: deploy-invoice
-  #   steps:
-  #   - name: Remove old release
-  #     run: |
-  #       echo "$PASSWORD_SERVER" | sudo -S -v && sudo ls -1 /var/www/invoice/releases/ | sort -r | tail -n +6 | xargs -I {} sudo rm -rf /var/www/invoice/releases/{}
+  remove-old-release:
+    runs-on: self-hosted
+    needs: deploy-invoice
+    steps:
+    - name: Remove old release
+      run: |
+        echo "$PASSWORD_SERVER" | sudo -S bash -c '
+          cd /var/www/invoice/releases || exit 1
+          ls -1tr | head -n -5 | while read dir; do
+            [ -n "$dir" ] && rm -rf "$dir"
+          done
+        '
