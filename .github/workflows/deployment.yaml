@@ -1,0 +1,64 @@
+name: Invoice Deployment
+
+on:
+  workflow_run:
+    workflows: ["Invoice Testing"]
+    types:
+      - completed
+env:
+  PASSWORD_SERVER: dice@gic
+jobs:
+
+  migrate:
+    runs-on: self-hosted
+    steps:
+    - name: Run migration
+      run: php artisan migrate
+  # seed:
+  #   runs-on: self-hosted
+  #   needs: migrate
+  #   steps:
+  #   - name: Seeding data
+  #     run: php artisan db:seed
+  config-data:
+    runs-on: self-hosted
+    needs: migrate
+    steps:
+    - name: Config data
+      run: |
+        php artisan config:clear
+        php artisan config:cache
+        php artisan view:cache
+    - name: store persistance data
+      run: |
+        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage
+        cp -r storage /opt/invoice/
+  restore-build:
+    runs-on: self-hosted
+    needs: config-data
+    steps:
+      - name: restore data in project
+        run: |
+          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /opt/invoice
+          cp -r /opt/invoice/storage ./
+          cp -r /opt/invoice/vendor ./
+          cp -r /opt/invoice/public ./
+  deploy-invoice:
+    runs-on: self-hosted
+    needs: config-data
+    steps:
+    - name: Deploy New Version
+      run: |
+        NEW_RELEASE_DIR=/var/www/invoice/releases/$(date +%Y%m%d%H%M%S)
+        echo "$PASSWORD_SERVER" | sudo -S mkdir -p $NEW_RELEASE_DIR
+        echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
+        echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
+        echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
+
+  # remove-old-release:
+  #   runs-on: self-hosted
+  #   needs: deploy-mpi
+  #   steps:
+  #   - name: Remove old release
+  #     run: |
+  #       echo "$PASSWORD_SERVER" | sudo -S -v && sudo ls -1 /var/www/mpi/releases/ | sort -r | tail -n +6 | xargs -I {} sudo rm -rf /var/www/mpi/releases/{}

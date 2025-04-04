@@ -1,0 +1,58 @@
+name: Deploy MySQL
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy-mysql:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up MySQL
+        run: |
+          # Set variable for user
+          user=dice@gic
+          echo "$user" | sudo -S apt update
+          echo "$user" | sudo -S apt install -y mysql-server
+
+      # - name: Configure MySQL to listen on port 5432
+      #   run: |
+      #     user=dice@gic
+      #     echo "$user" | sudo -S bash -c "if grep -q '^#\\?port\\s*=\\s*[0-9]' /etc/mysql/mysql.conf.d/mysqld.cnf; then \
+      #       sed -i 's/^#\\?port\\s*=\\s*[0-9]\\+/port = 5432/' /etc/mysql/mysql.conf.d/mysqld.cnf; \
+      #       else \
+      #       echo 'port = 5432' >> /etc/mysql/mysql.conf.d/mysqld.cnf; \
+      #       fi"
+
+      #     echo "$user" | sudo -S sed -i "s/^#\\?bind-address\\s*=\\s*[0-9.]*/bind-address=0.0.0.0/" /etc/mysql/mysql.conf.d/mysqld.cnf
+      #     echo "$user" | sudo -S systemctl restart mysql
+
+      - name: Start MySQL Service
+        run: |
+          user=dice@gic
+          echo "$user" | sudo -S systemctl enable mysql
+          echo "$user" | sudo -S systemctl restart mysql
+
+      - name: Create User, Database and Set Password if not exists
+        run: |
+          # Set variables for database
+          user=dice@gic
+          DB_USER=invoices
+          DB_PASS=invoice@gicitc
+          DB_NAME=invoices
+
+          # Login to MySQL and execute commands
+          echo "$user" | sudo -S mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'%' IDENTIFIED with mysql_native_password BY '$DB_PASS';"
+          echo "$user" | sudo -S mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+          echo "$user" | sudo -S mysql -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';"
+          echo "$user" | sudo -S mysql -e "FLUSH PRIVILEGES;"
+
+      - name: Verify MySQL Configuration
+        run: |
+          user=dice@gic
+          echo "$user" | sudo -S mysql -e "SELECT User, Host FROM mysql.user;"
+          echo "$user" | sudo -S mysql -e "SHOW DATABASES;"

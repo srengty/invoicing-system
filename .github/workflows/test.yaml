@@ -1,0 +1,104 @@
+name: Invoice Testing
+
+on:
+  workflow_run:
+    workflows: ["Deploy MySQL"]
+    types:
+      - completed
+env:
+  PASSWORD_SERVER: dice@gic
+  DB_CONNECTION: mysql
+  DB_DATABASE: invoices
+  DB_HOST: localhost
+  DB_PORT: 3306
+  DB_USERNAME: invoices
+  DB_PASSWORD: invoice@gicitc
+  MAIL_USERNAME: itcfinance168@gmail.com
+  MAIL_FROM_ADDRESS: itcfinance168@gmail.com
+jobs:
+  install-packages:
+    runs-on: self-hosted
+    steps:
+    - name: Set php for running laravel
+      run: |
+          echo "$PASSWORD_SERVER" | sudo -S add-apt-repository ppa:ondrej/php
+          echo "$PASSWORD_SERVER" | sudo -S apt install software-properties-common -y
+          echo "$PASSWORD_SERVER" | sudo -S apt update
+          echo "$PASSWORD_SERVER" | sudo -S apt install -y php8.4 php8.4-mysql php8.4-cli php8.4-mbstring php8.4-xml php8.4-bcmath php8.4-curl php8.4-zip php8.4-tokenizer php8.4-common php8.4-mysql php8.4-sqlite3 php8.4-gd unzip php8.4-fpm
+          echo "$PASSWORD_SERVER" | sudo -S update-alternatives --set php /usr/bin/php8.4
+          echo "$PASSWORD_SERVER" | sudo -S systemctl restart php8.4-fpm
+    - name: Copy .env
+      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+  set-up-composer:
+    runs-on: self-hosted
+    needs: install-packages
+    steps:
+    - name: Set composer
+      run: |
+        php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+        php -r "if (hash_file('sha384', 'composer-setup.php') === 'dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+        php composer-setup.php
+        php -r "unlink('composer-setup.php');"
+        echo "$PASSWORD_SERVER" |sudo -S mv composer.phar /usr/local/bin/composer
+  update-env:
+    runs-on: self-hosted
+    needs: set-up-composer
+    steps:
+      - name: Update .env for Database
+        run: |
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=${{ env.DB_CONNECTION }}/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=${{ env.DB_DATABASE }}/' .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=${{ env.DB_HOST }}/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=${{ env.DB_PORT }}/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=${{ env.DB_USERNAME }}/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
+          sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
+          sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
+  install-dpendencies:
+    runs-on: self-hosted
+    needs: update-env
+    steps:
+    - name: Install Dependencies
+      run: |
+        composer install
+        npm install
+  build-frontend:
+    runs-on: self-hosted
+    needs: install-dpendencies
+    steps:
+    - name: Building Frontend
+      run: npm run build
+  generate-key:
+    runs-on: self-hosted
+    needs: build-frontend
+    steps:
+    - name: Generate key
+      run: php artisan key:generate
+  directory-permissions:
+    runs-on: self-hosted
+    needs: build-frontend
+    steps:
+      - name: Directory Permissions
+        run:  echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage bootstrap/cache
+      - name: Copy storage and cache to persistence location
+        run: |
+          echo "$PASSWORD_SERVER" | sudo -S chmod 777 public vendor storage node_modules /opt
+          mkdir -p /opt/invoice
+          cp -r storage /opt/invoice/
+          cp -r public /opt/invoice/
+          cp -r vendor /opt/invoice/
+          cp -r node_modules /opt/invoice/
+  create-database:
+    runs-on: self-hosted
+    needs: directory-permissions
+    steps:
+    - name: Create Database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+  # test:
+  #   runs-on: self-hosted
+  #   needs: create-database
+  #   steps:
+  #   - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
+  #     run: php artisan test

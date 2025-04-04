@@ -4,12 +4,20 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     base: 'https://finance.itc.edu.kh/',
-    build: {
-        outDir: './public',
-        emptyOutDir: false, // also necessary
-    },
+    // build: {
+    //     outDir: './public',
+    //     emptyOutDir: false, // also necessary
+    // },
     server: {
-        host: 'https://finance.itc.edu.kh/'
+        hmr: {
+            host: 'finance.itc.edu.kh',
+        },
+        cors: {
+            origin: [
+                'https://finance.itc.edu.kh',
+            ],
+
+        },
     },
     plugins: [
         laravel({
