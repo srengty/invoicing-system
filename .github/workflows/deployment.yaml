@@ -3,7 +3,16 @@ name: Deploy Invoice
 on:
   push:
     branches: [main]
-
+env:
+  PASSWORD_SERVER: dice@gic
+  DB_CONNECTION: mysql
+  DB_DATABASE: invoices
+  DB_HOST: localhost
+  DB_PORT: 3306
+  DB_USERNAME: invoices
+  DB_PASSWORD: invoice@gicitc
+  MAIL_USERNAME: itcfinance168@gmail.com
+  MAIL_FROM_ADDRESS: itcfinance168@gmail.com
 jobs:
   deploy:
     runs-on: self-hosted
