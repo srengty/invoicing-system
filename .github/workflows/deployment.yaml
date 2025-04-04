@@ -46,12 +46,6 @@ jobs:
         sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
         sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
         sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
-
-    - name: Set permissions
-      run: |
-        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage bootstrap/cache
-        echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data .
-
     - name: Laravel Migrate & Cache
       run: |
         php artisan migrate --force
@@ -65,6 +59,8 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
+        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /var/www/invoice
+
     - name: Restart PHP & Clear OPcache
       run: |
         sudo systemctl restart php8.4-fpm
