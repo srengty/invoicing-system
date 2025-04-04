@@ -4,33 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Invoice extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'id';
-    protected $keyType = 'int';
+    protected $primaryKey = 'invoice_no'; // Assuming invoice_no is the primary key
     protected $fillable = [
         'invoice_no',
         'agreement_no',
         'quotation_no',
         'customer_id',
         'address',
-        'phone_number',
-        'email',
-        'terms',
-        'total',
-        'total_usd',
-        'exchange_rate',
+        'phone',
+        'start_date',
+        'end_date',
+        'grand_total',
         'status',
-    ];
-
-    protected $casts = [
-        'quotation_date' => 'datetime',
-        'total' => 'double',
-        'exchange_rate' => 'double',
-        'quotation_date' => 'datetime:Y-m-d',
     ];
 
     // Relationship with Customer
@@ -55,15 +44,16 @@ class Invoice extends Model
         return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
     }
 
-    public function productQuotations():HasMany
+    public function product_quotations()
     {
-        return $this->hasMany(ProductQuotation::class, 'quotation_no', 'id');
+        return $this->belongsTo(ProductQuotation::class);
     }
 
+    // Relationship with Products (many-to-many with pivot table for quantities)
     public function products()
     {
         return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_no', 'product_id')
-                    ->withPivot(['quantity', 'price', 'include_catalog'])  // If you're storing additional fields like quantity
+                    ->withPivot('quantity')  // If you're storing additional fields like quantity
                     ->withTimestamps();
     }
 }

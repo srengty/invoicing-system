@@ -1,631 +1,416 @@
 <template>
-    <meta name="_token" content="{{ csrf_token() }}" />
-    <Head title="Create Invoice" />
-    <GuestLayout>
-        <NavbarLayout />
-        <!-- PrimeVue Breadcrumb -->
-        <div class="py-3 pb-0">
-            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
-                <template #item="{ item }">
-                    <Link
-                        :href="item.to"
-                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
-                    >
-                        <i v-if="item.icon" :class="item.icon"></i>
-                        {{ item.label }}
-                    </Link>
-                </template>
-            </Breadcrumb>
+  <meta name="_token" content="{{ csrf_token() }}" />
+  <Head title="Create Invoice" />
+  <GuestLayout>
+    <div class="create-invoice">
+      <!-- Header Section with Buttons -->
+      <div class="flex justify-between items-center p-3 mr-4">
+        <h1 class="text-2xl">Create Invoice</h1>
+        <div class="flex gap-4">
+          <Button
+            label="Add Product"
+            icon="pi pi-plus"
+            class="p-button-success"
+            type="button"
+            @click="showProductModal = true"
+            rounded
+          />
+          <Button
+            label="Save Invoice"
+            icon="pi pi-check"
+            class="p-button-success"
+            type="button"
+            @click="submitInvoice"
+            rounded
+          />
         </div>
-        <div class="create-invoice">
-            <!-- Header Section with Buttons -->
-            <div class="flex justify-end items-center p-3 pt-0 mr-4">
-                <div class="flex gap-4">
-                    <Button
-                        label="Add Product"
-                        icon="pi pi-plus"
-                        class="p-button-success"
-                        type="button"
-                        @click="showProductModal = true"
-                        size="small"
-                    />
-                    <Button
-                        label="Save Invoice"
-                        icon="pi pi-check"
-                        class="p-button-success"
-                        type="button"
-                        @click="submitInvoice"
-                        size="small"
-                    />
-                </div>
-            </div>
+      </div>
 
-            <form @submit.prevent="submitInvoice">
-                <div
-                    class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4"
-                >
-                    <div>
-                        <label
-                            for="invoice_no"
-                            class="block text-sm font-medium"
-                            >Invoice no</label
-                        >
-                        <InputText
-                            id="invoice_no"
-                            v-model="form.invoice_no"
-                            placeholder="Enter invoice no"
-                            required
-                            class="w-full md:w-72"
-                            size="small"
-                        />
-                    </div>
-                    <div>
-                        <label
-                            for="quotation_no"
-                            class="block text-sm font-medium"
-                            >Quotation No</label
-                        >
-                        <Select
-                            v-model="form.quotation_no"
-                            :options="quotations"
-                            optionLabel="quotation_no"
-                            optionValue="quotation_no"
-                            placeholder="Select Quotation"
-                            class="w-full md:w-72"
-                            size="small"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label
-                            for="agreement_no"
-                            class="block text-sm font-medium"
-                            >Agreement No</label
-                        >
-                        <Select
-                            v-model="form.agreement_no"
-                            :options="
-                                form.agreement_no || !form.quotation_no
-                                    ? agreements
-                                    : agreements.filter(
-                                          (a) => a.status === 'Open'
-                                      )
-                            "
-                            optionLabel="agreement_no"
-                            optionValue="agreement_no"
-                            placeholder="Select Agreement"
-                            class="w-full md:w-72"
-                            size="small"
-                            required
-                        />
-                    </div>
-                    <div >
-                        <label
-                            for="deposit_no"
-                            class="block text-sm font-medium"
-                            >Receipt No (for deposit)</label
-                        >
-                        <div class="flex items-center gap-2">
-                            <InputText
-                                id="deposit_no"
-                                v-model="form.deposit_no"
-                                class="w-1/2"
-                                placeholder="Enter deposit number"
-                                required
-                                size="small"
-                            />
-                            <Button class="grid md:w-1/2 gap-2 p-button-info" size="small"
-                                > Add Receipt</Button
-                            >
-                        </div>
-                    </div>
-                    <div>
-                        <label
-                            for="customer_id"
-                            class="block text-sm font-medium"
-                            >Customer</label
-                        >
-                        <Select
-                            v-model="form.customer_id"
-                            :options="customers"
-                            optionLabel="name"
-                            optionValue="id"
-                            placeholder="Select Customer"
-                            class="w-full md:w-72"
-                            size="small"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label for="status" class="block text-sm font-medium"
-                            >Status</label
-                        >
-                        <Select
-                            v-model="form.status"
-                            :options="statusOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Select Status"
-                            class="w-full md:w-72"
-                            size="small"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label for="address" class="block text-sm font-medium"
-                            >Address</label
-                        >
-                        <InputText
-                            id="address"
-                            v-model="form.address"
-                            class="w-full md:w-72"
-                            size="small"
-                            placeholder="Enter address"
-                        />
-                    </div>
-                    <div>
-                        <label for="phone" class="block text-sm font-medium"
-                            >Phone</label
-                        >
-                        <InputText
-                            id="phone"
-                            v-model="form.phone"
-                            class="w-full md:w-72"
-                            size="small"
-                            placeholder="Enter phone number"
-                        />
-                    </div>
-                    <div>
-                        <label
-                            for="start_date"
-                            class="block text-sm font-medium"
-                            >Start Date</label
-                        >
-                        <Calendar
-                            id="start_date"
-                            v-model="form.start_date"
-                            class="w-full md:w-72"
-                            size="small"
-                            placeholder="Select start date"
-                            dateFormat="yy-mm-dd"
-                            showTime
-                            hourFormat="24"
-                        />
-                    </div>
-                    <div>
-                        <label for="end_date" class="block text-sm font-medium"
-                            >End Date</label
-                        >
-                        <Calendar
-                            id="end_date"
-                            v-model="form.end_date"
-                            class="w-full md:w-72"
-                            size="small"
-                            placeholder="Select end date"
-                            dateFormat="yy-mm-dd"
-                            showTime
-                            hourFormat="24"
-                        />
-                    </div>
-                </div>
-            </form>
-
-            <!-- Product Table Section -->
-            <div class="m-6">
-                <DataTable
-                    :value="indexedProducts"
-                    class="p-datatable-striped"
-                    responsiveLayout="scroll"
-                    size="small"
-                >
-                    <Column field="index" header="No.">
-                        <template #body="slotProps">
-                            {{ slotProps.index + 1 }}
-                        </template>
-                    </Column>
-                    <Column field="name" header="Product"></Column>
-                    <Column field="quantity" header="Qty">
-                        <template #body="slotProps">
-                            <InputNumber
-                                v-model="slotProps.data.quantity"
-                                @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
-                                mode="decimal"
-                                :min="1"
-                            />
-                        </template>
-                    </Column>
-                    <Column field="unit" header="Unit"></Column>
-                    <Column field="price" header="Unit Price">
-                        <template #body="slotProps">
-                            <InputNumber
-                                v-model="slotProps.data.price"
-                                @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
-                                mode="decimal"
-                                :minFractionDigits="2"
-                                :maxFractionDigits="2"
-                                :min="1"
-                            />
-                        </template>
-                    </Column>
-                    <Column field="subTotal" header="Sub Total"></Column>
-                    <Column header="Include Catalog">
-                        <template #body="slotProps">
-                            <Checkbox 
-                                v-model="slotProps.data.include_catalog" 
-                                :binary="true" 
-                            />
-                        </template>
-                    </Column>
-                    <Column header="Action">
-                        <template #body="slotProps">
-                            <Button
-                                label="Remove"
-                                icon="pi pi-times"
-                                class="p-button-text p-button-danger"
-                                @click="removeProduct(slotProps.data.id)"
-                            />
-                        </template>
-                    </Column>
-                </DataTable>
-
-                <div class="pl-2 pr-6">
-                    <div class="total-container mt-4 flex justify-between">
-                        <p class="font-bold">Total KHR</p>
-                        <p class="font-bold">
-                            ៛{{ calculateTotalKHR }}
-                        </p>
-                    </div>
-                    <div class="total-container mt-4 flex justify-between">
-                        <p class="font-bold">Total USD</p>
-                        <p class="font-bold">
-                            <input
-                                type="number"
-                                v-model.number="form.total_usd"
-                                placeholder="Enter USD"
-                                :minFractionDigits="2"
-                                :maxFractionDigits="2"
-                                class="w-1/7 h-9 text-sm"
-                            />
-                        </p>
-                    </div>
-                    <div class="grand-total-container flex justify-between">
-                        <p class="font-bold">Exchange rate</p>
-                        <p class="font-bold">
-                            {{ calculateExchangeRate }}
-                        </p>
-                    </div>
-                </div>
-                <div class="terms mt-4">
-                    <h3 class="text-lg">Terms and Conditions</h3>
-                    <Textarea v-model="form.terms" rows="3" class="w-full" />
-                </div>
-                <div class="buttons mt-4 flex justify-end">
-                    <Button
-                        label="Save Invoice"
-                        icon="pi pi-check"
-                        class="p-button-success shadow-md"
-                        @click="submitInvoice"
-                    />
-                    <Button
-                        label="Cancel"
-                        class="p-button-secondary ml-2 shadow-md"
-                        @click="cancel"
-                    />
-                </div>
-            </div>
-
-            <!-- Modal to Select Product -->
-            <Dialog 
-                v-model:visible="showProductModal" 
-                header="Select Product"
-                :modal="true"
-                :style="{ width: '70vw' }"
-            >
-                <DataTable
-                    :value="filteredProducts"
-                    class="p-datatable-striped"
-                    responsiveLayout="scroll"
-                    size="small"
-                    selectionMode="single"
-                    v-model:selection="selectedProduct"
-                    dataKey="id"
-                >
-                    <Column field="name" header="Product Name"></Column>
-                    <Column field="unit" header="Unit"></Column>
-                    <Column field="price" header="Price">
-                        <template #body="slotProps">
-                            {{ formatCurrency(slotProps.data.price) }}
-                        </template>
-                    </Column>
-                    <Column field="status" header="Status"></Column>
-                </DataTable>
-                <template #footer>
-                    <Button
-                        label="Cancel"
-                        icon="pi pi-times"
-                        class="p-button-text"
-                        @click="showProductModal = false"
-                    />
-                    <Button
-                        label="Add Product"
-                        icon="pi pi-plus"
-                        class="p-button-success"
-                        @click="addSelectedProduct"
-                        :disabled="!selectedProduct"
-                    />
-                </template>
-            </Dialog>
+      <!-- Invoice Form Section -->
+      <form @submit.prevent="submitInvoice">
+        <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
+          <div>
+            <label for="quotation_no" class="block text-lg font-medium">Quotation No</label>
+            <Select
+              v-model="form.quotation_no"
+              :options="quotations"
+              optionLabel="quotation_no"
+              optionValue="quotation_no"
+              placeholder="Select Quotation"
+              class="w-full"
+              required
+            />
+          </div>
+          <div>
+            <label for="agreement_no" class="block text-lg font-medium">Agreement No</label>
+            <Select
+              v-model="form.agreement_no"
+              :options="form.agreement_no || !form.quotation_no
+              ? agreements:agreements.filter(a => a.status === 'Open')"
+              optionLabel="agreement_no"
+              optionValue="agreement_no"
+              placeholder="Select Agreement"
+              class="w-full"
+              required
+            />
+          </div>
+          <div>
+            <label for="deposit_no" class="block text-lg font-medium">Receipt No (for deposit)</label>
+            <InputText
+              id="deposit_no"
+              v-model="form.deposit_no"
+              class="w-1/2"
+              placeholder="Enter deposit number"
+              required
+            />
+            <Button class="w-1/3 ml-4 p-button-info" rounded>Add Receipt</Button>
+          </div>
+          <div>
+            <label for="customer_id" class="block text-lg font-medium">Customer</label>
+            <Select
+              v-model="form.customer_id"
+              :options="customers"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Select Customer"
+              class="w-full"
+              required
+            />
+          </div>
+          <div>
+            <label for="status" class="block text-lg font-medium">Status</label>
+            <Select
+              v-model="form.status"
+              :options="statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Status"
+              class="w-full"
+              required
+            />
+          </div>
+          <div>
+            <label for="address" class="block text-lg font-medium">Address</label>
+            <InputText
+              id="address"
+              v-model="form.address"
+              class="w-full"
+              placeholder="Enter address"
+            />
+          </div>
+          <div>
+            <label for="phone" class="block text-lg font-medium">Phone</label>
+            <InputText
+              id="phone"
+              v-model="form.phone"
+              class="w-full"
+              placeholder="Enter phone number"
+            />
+          </div>
+          <div>
+            <label for="start_date" class="block text-lg font-medium">Date</label>
+            <DatePicker id="start_date" v-model="form.start_date" class="w-full" placeholder="Select date" />
+          </div>
+          <div>
+            <label for="end_date" class="block text-lg font-medium">Due Date</label>
+            <DatePicker id="end_date" v-model="form.end_date" class="w-full" placeholder="Select due date" />
+          </div>
         </div>
-    </GuestLayout>
+      </form>
+
+      <!-- Product Table Section -->
+      <div class="m-6">
+        <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
+          <Column field="index" header="No."></Column>
+          <Column field="product" header="Product"></Column>
+          <Column field="qty" header="Qty">
+            <template #body="slotProps">
+              <InputText v-model="slotProps.data.qty" @input="updateProductSubtotal(slotProps.data)" class="w-full" />
+            </template>
+          </Column>
+          <Column field="unit" header="Unit"></Column>
+          <Column field="unitPrice" header="Unit Price"></Column>
+          <Column field="subTotal" header="Sub Total"></Column>
+          <Column header="Action">
+            <template #body="slotProps">
+              <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(slotProps.data.id)" />
+            </template>
+          </Column>
+        </DataTable>
+
+        <div class="total-container mt-4 flex justify-between">
+          <p class="font-bold">Total</p>
+          <p class="font-bold">{{ calculateTotal }}</p>
+        </div>
+        <div class="grand-total-container flex justify-between">
+          <p class="font-bold text-lg">Grand Total</p>
+          <p class="font-bold text-lg">{{ calculateGrandTotal }}</p>
+        </div>
+        <div class="flex justify-between mt-4">
+          <p class="font-bold">Instalment Paid</p>
+          <p class="font-bold">{{ form.instalmentPaid }}</p>
+        </div>
+        <div class="terms mt-4">
+          <h3 class="text-lg">Terms and Conditions</h3>
+          <p>Full payment is required upon quote acceptance.</p>
+          <p>This quote is negotiable for one (1) week from the date stated above.</p>
+        </div>
+        <div class="buttons mt-4 flex justify-end">
+          <Button label="Submit request for approval" icon="pi pi-check" class="p-button-rounded p-button-success" @click="submitInvoice" />
+          <Button label="Cancel" class="p-button-rounded p-button-secondary ml-2" @click="cancel" />
+        </div>
+      </div>
+
+      <!-- Modal to Select Product -->
+      <Dialog v-model:visible="showProductModal" header="Select Product">
+        <template #footer>
+          <Button
+            label="Close"
+            icon="pi pi-times"
+            class="p-button-text"
+            @click="showProductModal = false"
+          />
+        </template>
+        <div class="product-list">
+          <p v-if="!products || products.length === 0">No products available.</p>
+          <DataTable :value="products" class="p-datatable-striped" responsiveLayout="scroll">
+            <Column field="name" header="Product Name"></Column>
+            <Column field="unit" header="Unit"></Column>
+            <Column field="price" header="Price"></Column>
+            <Column header="Action">
+              <template #body="slotProps">
+                <Button
+                  label="Add"
+                  icon="pi pi-plus"
+                  class="p-button-text p-button-success"
+                  @click="addProduct(slotProps.data.id)"
+                />
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+      </Dialog>
+    </div>
+  </GuestLayout>
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import { useForm } from "@inertiajs/vue3";
-import {
-    Button,
-    InputText,
-    InputNumber,
-    DataTable,
-    Column,
-    Dialog,
-    Calendar,
-    Select,
-    Checkbox,
-    Textarea,
-} from "primevue";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { Head, Link } from "@inertiajs/vue3";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
+import { ref, computed, watch } from 'vue';
+import { useForm } from '@inertiajs/vue3';
+import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select } from 'primevue';
+import { usePage } from '@inertiajs/vue3';
+import GuestLayout from '@/Layouts/GuestLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import { Inertia } from '@inertiajs/inertia';
 
-const page = usePage();
-const items = computed(() => [
-    {
-        label: "",
-        to: "/",
-        icon: "pi pi-home",
-    },
-    {
-        label: page.props.title || " Invoices",
-        to: route("invoices.index"),
-    },
-    {
-        label: page.props.title || "Create Invoices",
-        to: route("invoices.create"),
-    },
-]);
+const { products, agreements, quotations, customers, product_quotations } = usePage().props;
 
-const { products: allProducts, agreements, quotations, customers } = usePage().props;
-
-// Initialize form first
 const form = useForm({
-    invoice_no: "",
-    agreement_no: "",
-    quotation_no: "",
-    customer_id: "",
-    address: "",
-    phone_number: "",
-    terms: "",
-    total_usd: null,
-    exchange_rate: null,
-    start_date: null,
-    end_date: null,
-    products: [],
+  invoice_no: '',
+  agreement_no: '',
+  quotation_no: '',
+  deposit_no: '',
+  customer_id: '',
+  address: '',
+  phone: '',
+  start_date: '',
+  end_date: '',
+  grand_total: 0,
+  instalmentPaid: 0,
+  status: '',
+  productQuotations:[], 
 });
 
-const calculateTotalUSD = ref(null);
+const statusOptions = [
+  { label: 'Pending', value: 'Pending' },
+  { label: 'Approved', value: 'Approved' },
+  { label: 'Revise', value: 'Revise' },
+];
+
 const productsList = ref([]);
 const showProductModal = ref(false);
-const filteredAgreements = ref(agreements.filter(a => a.status === 'Open'));
-const selectedProduct = ref(null);
+const filteredAgreements = ref([]);
 
-const calculateProductSubtotals = computed(() => {
-    return productsList.value.map((product) => {
-        return {
-            ...product,
-            subTotal: (product.price || 0) * (product.quantity || 1),
-        };
-    });
-});
+watch(() => form.quotation_no, (newQuotationId) => {
+  if (newQuotationId) {
+    const selectedQuotation = quotations.find(q => q.quotation_no === newQuotationId);
 
-const calculateTotalKHR = computed(() => {
-    return calculateProductSubtotals.value.reduce((sum, product) => {
-        return sum + (product.subTotal || 0);
-    }, 0);
-});
+    if (selectedQuotation) {
+      console.log("Selected Quotation:", selectedQuotation);
 
-const calculateExchangeRate = computed(() => {
-    if (form.total_usd && form.total_usd > 0) {
-        return (calculateTotalKHR.value / form.total_usd).toFixed(4);
+      // Auto-fill customer details
+      form.customer_id = selectedQuotation.customer_id || '';
+      form.address = selectedQuotation.address || '';
+      form.phone = selectedQuotation.phone_number || '';
+      form.status = selectedQuotation.status || '';
+
+      if (selectedQuotation.agreement) {
+        console.log("working on agreement")
+        // If quotation has an agreement, set and disable agreement selection
+        form.agreement_no = selectedQuotation.agreement.agreement_no;
+        filteredAgreements.value = [selectedQuotation.agreement];
+      } else {
+        console.log("working on not agreement")
+        // If no agreement, list only agreements that are not linked to any quotation
+        form.agreement_no = ''; // Reset agreement selection
+        filteredAgreements.value = agreements.filter(a => a.quotation == null && a.status === 'Open');
+      }
+
+      // Auto-fill products based on quotation
+      if (Array.isArray(selectedQuotation.product_quotations) && selectedQuotation.product_quotations.length > 0) {
+        productsList.value = selectedQuotation.product_quotations.map((pq, index) => ({
+          index: index + 1,
+          product: pq.product.name || 'Unknown Product',
+          qty: pq.quantity || 1,
+          unit: pq.product.unit || 'Unit',
+          unitPrice: pq.price || 0,
+          subTotal: (pq.quantity || 1) * (pq.price || 0),
+        }));
+      } else {
+        productsList.value = [];
+      }
+
+      // Recalculate Grand Total
+      form.grand_total = calculateTotal.value - form.instalmentPaid;
+
+      console.log("Updated Form Data after Quotation Selection:", form);
     }
-    return "";
-});
+  } else {
+    // If no quotation is selected, reset agreements list
+    filteredAgreements.value = agreements.filter(a => a.status === 'Open');
+    form.agreement_no = '';
+    form.customer_id = '';
+    form.address = '';
+    form.phone = '';
+    form.start_date = '';
+    form.end_date = '';
+    form.instalmentPaid = 0;
+    productsList.value = [];
+  }
+}, { deep: true });
 
-watch(
-    () => form.total_usd,
-    (newValue) => {
-        if (newValue && newValue > 0) {
-            form.exchange_rate = calculateExchangeRate.value;
-        }
+watch(() => form.agreement_no, (newAgreementNo) => {
+  if (newAgreementNo) {
+    const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
+
+    if (selectedAgreement) {
+      console.log("Selected Agreement:", selectedAgreement);
+
+      // Set quotation if the agreement is linked to one
+      form.quotation_no = selectedAgreement.quotation_no || '';
+
+      // Auto-fill address only if empty
+      if (!form.address) {
+        form.address = selectedAgreement.address || '';
+      }
+
+      // Auto-fill start and end dates
+      form.start_date = selectedAgreement.start_date || '';
+      form.end_date = selectedAgreement.end_date || '';
+
+      // Calculate instalment paid (sum of all invoice amounts related to this agreement)
+      form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
+        ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
+        : 0;
+
+      // Recalculate Grand Total
+      form.grand_total = calculateTotal.value - form.instalmentPaid;
     }
-);
+  } else {
+    console.log("Agreement Deselected - Keeping existing data");
+  }
+}, { deep: true });
 
-// Filter only approved products
-const filteredProducts = computed(() => {
-    return allProducts.filter(product => product.status === 'approved');
-});
-
-const indexedProducts = computed(() => 
-    productsList.value.map((product, index) => ({
-        ...product,
-        index: index + 1,
-        subTotal: (product.quantity || 1) * (product.price || 0)
-    }))
-);
-
-const calculateTotal = computed(() => {
-    return productsList.value.reduce(
-        (acc, product) => acc + (product.quantity * product.price),
-        0
-    );
-});
-
-watch(
-    () => form.quotation_no,
-    (newQuotationNo) => {
-        if (newQuotationNo) {
-            const selectedQuotation = quotations.find(
-                q => q.quotation_no === newQuotationNo
-            );
-
-            if (selectedQuotation) {
-                form.customer_id = selectedQuotation.customer_id || "";
-                form.address = selectedQuotation.address || "";
-                form.phone_number = selectedQuotation.phone_number || "";
-                
-                if (selectedQuotation.agreement) {
-                    form.agreement_no = selectedQuotation.agreement.agreement_no;
-                } else {
-                    form.agreement_no = "";
-                }
-
-                // Add products from quotation
-                if (selectedQuotation.product_quotations?.length > 0) {
-                    productsList.value = selectedQuotation.product_quotations.map(pq => ({
-                        id: pq.product.id,
-                        name: pq.product.name,
-                        quantity: pq.quantity,
-                        unit: pq.product.unit,
-                        price: pq.price,
-                        include_catalog: false,
-                        pdf_url: null
-                    }));
-                }
-            }
-        } else {
-            form.customer_id = "";
-            form.address = "";
-            form.phone_number = "";
-            form.agreement_no = "";
-            productsList.value = [];
-        }
-    }
-);
-
-watch(
-    () => form.agreement_no,
-    (newAgreementNo) => {
-        if (newAgreementNo) {
-            const selectedAgreement = agreements.find(
-                a => a.agreement_no === newAgreementNo
-            );
-
-            if (selectedAgreement) {
-                form.start_date = selectedAgreement.start_date || null;
-                form.end_date = selectedAgreement.end_date || null;
-            }
-        }
-    }
-);
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(value);
+const indexTemplate = (rowData, { index }) => {
+  return index + 1; // Return the index + 1 for 1-based index display
 };
 
-const addSelectedProduct = () => {
-    if (selectedProduct.value) {
-        const existingProduct = productsList.value.find(
-            p => p.id === selectedProduct.value.id
-        );
+const calculateTotal = computed(() => {
+  return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
+});
 
-        if (!existingProduct) {
-            productsList.value.push({
-                id: selectedProduct.value.id,
-                name: selectedProduct.value.name,
-                quantity: 1,
-                unit: selectedProduct.value.unit,
-                price: selectedProduct.value.price,
-                include_catalog: false,
-                pdf_url: null
-            });
-        } else {
-            existingProduct.quantity += 1;
-        }
+const calculateGrandTotal = computed(() => {
+  return calculateTotal.value - form.instalmentPaid;
+});
 
-        showProductModal.value = false;
-        selectedProduct.value = null;
-    }
+const actionTemplate = (data) => {
+  return {
+    template: `
+      <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />
+    `
+  };
+};
+
+const addProduct = (productId) => {
+  const product = products.find((prod) => prod.id === productId);
+  if (product) {
+    const newProduct = {
+      id: product.id,
+      product: product.name,
+      qty: 1,
+      unit: product.unit,
+      unitPrice: product.price,
+      subTotal: product.price,
+    };
+    productsList.value.push(newProduct);
+    showProductModal.value = false;
+  }
 };
 
 const removeProduct = (productId) => {
-    productsList.value = productsList.value.filter(
-        product => product.id !== productId
-    );
+  productsList.value = productsList.value.filter((product) => product.id !== productId);
 };
 
 const updateProductSubtotal = (product) => {
-    // Subtotal is calculated in the computed property
+  product.subTotal = product.qty * product.unitPrice;
 };
 
 const cancel = () => {
-    form.reset();
-    productsList.value = [];
-    window.location.href = route('invoices.index');
+  form.reset();
+  productsList.value = [];
 };
 
-const submitInvoice = () => {
-    if (productsList.value.length === 0) {
-        alert("Please add at least one product.");
-        return;
-    }
+const submitInvoice = async () => {
+  if (productsList.value.length === 0) {
+    alert('Please add at least one product.');
+    return;
+  }
 
-    // Format dates to match backend expectation
-    const formattedData = {
-        ...form.data(),
-        start_date: form.start_date ? new Date(form.start_date).toISOString() : null,
-        end_date: form.end_date ? new Date(form.end_date).toISOString() : null,
-        products: productsList.value.map(product => ({
-            id: product.id,
-            quantity: product.quantity,
-            price: product.price,
-            include_catalog: product.include_catalog,
-            acc_code: null, // Add if needed
-            category_id: null, // Add if needed
-            remark: null, // Add if needed
-            pdf_url: product.pdf_url
-        }))
-    };
+  const invoiceData = {
+    invoice_no: form.invoice_no,
+    agreement_no: form.agreement_no,
+    quotation_no: form.quotation_no,
+    customer_id: form.customer_id,
+    address: form.address,
+    phone: form.phone,
+    start_date: form.start_date,
+    end_date: form.end_date,
+    grand_total: form.grand_total,
+    status: form.status,
+    products: productsList.value.map(product => ({
+      id: product.id,
+      quantity: product.qty,
+    })),
+  };
 
-    form.products = productsList.value;
-    form.total = calculateTotal.value;
+  const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
 
-    form.post(route('invoices.store'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-            productsList.value = [];
-        },
-        onError: (errors) => {
-            console.error('Error creating invoice:', errors);
-        }
+  try {
+    const response = await fetch('/invoices', {
+      method: "POST",
+      body: JSON.stringify(invoiceData),
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+        "Content-type": "application/json",
+      },
     });
+
+    if (!response.ok) {
+      console.error('Failed to submit invoice:', response.statusText);
+      return;
+    }// Redirect after submission
+  } catch (error) {
+    console.error('Error submitting invoice:', error);
+  }
 };
 </script>
-
-<style scoped>
-.create-invoice {
-    padding: 1rem;
-}
-.total-container, .grand-total-container {
-    padding: 0.5rem 1rem;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-}
-</style>
