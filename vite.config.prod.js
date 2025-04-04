@@ -8,13 +8,7 @@ export default defineConfig({
     //     outDir: './public',
     //     emptyOutDir: false, // also necessary
     // },
-    build: {
-        manifest: true,
-        outDir: 'public/build',
-        rollupOptions: {
-            input: 'resources/js/app.js',
-        },
-    },
+
     // server: {
     //     hmr: {
     //         host: 'finance.itc.edu.kh',
@@ -28,6 +22,17 @@ export default defineConfig({
     //     },
     // },
     plugins: [
-        vue(),
+        laravel({
+            input: 'resources/js/app.js',
+            refresh: true,
+        }),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    base: null,
+                    includeAbsolute: false,
+                },
+            },
+        }),
     ],
 });
