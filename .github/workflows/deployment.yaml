@@ -128,6 +128,8 @@ jobs:
       run: |
         NEW_RELEASE_DIR=/var/www/invoice/releases/$(date +%Y%m%d%H%M%S)
         echo "$PASSWORD_SERVER" | sudo -S mkdir -p $NEW_RELEASE_DIR
+        echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data $NEW_RELEASE_DIR
+        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
