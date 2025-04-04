@@ -55,6 +55,10 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
+    - name: Fix permissions for storage and cache
+      run: |
+        echo "$PASSWORD_SERVER" | sudo -S chmod -R 775 /var/www/invoice/storage /var/www/invoice/bootstrap/cache
+        echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice/storage /var/www/invoice/bootstrap/cache
 
   remove-old-release:
     runs-on: self-hosted
