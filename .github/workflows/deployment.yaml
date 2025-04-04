@@ -1,53 +1,51 @@
-name: Invoice Deployment
+name: Deploy Invoice
 
 on:
-  workflow_run:
-    workflows: ["Invoice Testing"]
-    types:
-      - completed
-env:
-  PASSWORD_SERVER: dice@gic
+  push:
+    branches: [main]
+
 jobs:
+  deploy:
+    runs-on: self-hosted
 
-  migrate:
-    runs-on: self-hosted
     steps:
-    - name: Run migration
-      run: php artisan migrate
-  # seed:
-  #   runs-on: self-hosted
-  #   needs: migrate
-  #   steps:
-  #   - name: Seeding data
-  #     run: php artisan db:seed
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
-  restore-build:
-    runs-on: self-hosted
-    needs: migrate
-    steps:
-      - name: restore data in project
-        run: |
-          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /opt/invoice
-          cp -r /opt/invoice/storage ./
-          cp -r /opt/invoice/vendor ./
-          cp -r /opt/invoice/public ./
-  config-data:
-    runs-on: self-hosted
-    needs: restore-build
-    steps:
-    - name: Config data
+    - name: Set up PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, bcmath, curl, dom, fileinfo, openssl, pdo, tokenizer, xml
+    - name: Install dependencies
       run: |
-        php artisan config:clear
+        composer install --no-dev --optimize-autoloader
+        npm ci
+        npm run build
+    - name: Copy .env
+      run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+    - name: Update .env for Database
+      run: |
+        sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=${{ env.DB_CONNECTION }}/' .env
+        sed -i 's/^DB_DATABASE=.*/DB_DATABASE=${{ env.DB_DATABASE }}/' .env
+        sed -i 's/^DB_HOST=.*/DB_HOST=${{ env.DB_HOST }}/' .env
+        sed -i 's/^DB_PORT=.*/DB_PORT=${{ env.DB_PORT }}/' .env
+        sed -i 's/^DB_USERNAME=.*/DB_USERNAME=${{ env.DB_USERNAME }}/' .env
+        sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
+        sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
+        sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
+
+    - name: Set permissions
+      run: |
+        chmod -R 775 storage bootstrap/cache
+        chown -R www-data:www-data .
+
+    - name: Laravel Migrate & Cache
+      run: |
+        php artisan migrate --force
         php artisan config:cache
+        php artisan route:cache
         php artisan view:cache
-    - name: store persistance data
-      run: |
-        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage
-        cp -r storage /opt/invoice/
-  deploy-invoice:
-    runs-on: self-hosted
-    needs: config-data
-    steps:
     - name: Deploy New Version
       run: |
         NEW_RELEASE_DIR=/var/www/invoice/releases/$(date +%Y%m%d%H%M%S)
@@ -55,21 +53,7 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S rsync -av --exclude=.git --exclude=node_modules . $NEW_RELEASE_DIR
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
-    - name: Fix permissions for storage and cache
+    - name: Restart PHP & Clear OPcache
       run: |
-        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /var/www/invoice/releases
-        echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice/releases
-        echo "$PASSWORD_SERVER" |  sudo -S chmod -R 777 /home/dice/invoice/invoice/invoicing-system/invoicing-system/storage
-
-  remove-old-release:
-    runs-on: self-hosted
-    needs: deploy-invoice
-    steps:
-    - name: Remove old release
-      run: |
-        echo "$PASSWORD_SERVER" | sudo -S bash -c '
-          cd /var/www/invoice/releases || exit 1
-          ls -1tr | head -n -5 | while read dir; do
-            [ -n "$dir" ] && rm -rf "$dir"
-          done
-        '
+        sudo systemctl restart php8.2-fpm
+        sudo systemctl reload nginx
