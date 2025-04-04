@@ -20,9 +20,20 @@ jobs:
   #   steps:
   #   - name: Seeding data
   #     run: php artisan db:seed
-  config-data:
+
+  restore-build:
     runs-on: self-hosted
     needs: migrate
+    steps:
+      - name: restore data in project
+        run: |
+          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /opt/invoice
+          cp -r /opt/invoice/storage ./
+          cp -r /opt/invoice/vendor ./
+          cp -r /opt/invoice/public ./
+  config-data:
+    runs-on: self-hosted
+    needs: restore-build
     steps:
     - name: Config data
       run: |
@@ -33,16 +44,6 @@ jobs:
       run: |
         echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage
         cp -r storage /opt/invoice/
-  restore-build:
-    runs-on: self-hosted
-    needs: config-data
-    steps:
-      - name: restore data in project
-        run: |
-          echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /opt/invoice
-          cp -r /opt/invoice/storage ./
-          cp -r /opt/invoice/vendor ./
-          cp -r /opt/invoice/public ./
   deploy-invoice:
     runs-on: self-hosted
     needs: config-data
@@ -55,10 +56,10 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
 
-  # remove-old-release:
-  #   runs-on: self-hosted
-  #   needs: deploy-mpi
-  #   steps:
-  #   - name: Remove old release
-  #     run: |
-  #       echo "$PASSWORD_SERVER" | sudo -S -v && sudo ls -1 /var/www/mpi/releases/ | sort -r | tail -n +6 | xargs -I {} sudo rm -rf /var/www/mpi/releases/{}
+  remove-old-release:
+    runs-on: self-hosted
+    needs: deploy-mpi
+    steps:
+    - name: Remove old release
+      run: |
+        echo "$PASSWORD_SERVER" | sudo -S -v && sudo ls -1 /var/www/invoice/releases/ | sort -r | tail -n +6 | xargs -I {} sudo rm -rf /var/www/invoice/releases/{}
