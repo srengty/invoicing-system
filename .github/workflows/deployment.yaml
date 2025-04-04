@@ -58,7 +58,7 @@ jobs:
 
   remove-old-release:
     runs-on: self-hosted
-    needs: deploy-mpi
+    needs: deploy-invoice
     steps:
     - name: Remove old release
       run: |
