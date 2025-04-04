@@ -192,35 +192,6 @@ list agreement
                     >
                         <template #body="slotProps">
                             <Button
-                                severity=""
-                                size="small"
-                                @click="
-                                    router.get(
-                                        route('agreements.show', {
-                                            id: slotProps.data.agreement_no,
-                                        })
-                                    )
-                                "
-                                icon="pi pi-print"
-                                aria-label="print"
-                                outlined
-                                class="mr-2"
-                            ></Button>
-                            <Button
-                                severity=""
-                                size="small"
-                                @click="
-                                    router.get(
-                                        route('agreements.show', {
-                                            id: slotProps.data.agreement_no,
-                                        })
-                                    )
-                                "
-                                icon="pi pi-eye"
-                                aria-label="View"
-                                outlined
-                            ></Button>
-                            <Button
                                 severity="info"
                                 size="small"
                                 @click="
@@ -233,9 +204,33 @@ list agreement
                                 "
                                 icon="pi pi-pencil"
                                 aria-label="Edit"
-                                class="ms-2"
+                                class="mr-2"
                                 outlined
-                            ></Button>
+                            />
+                            <Button
+                                severity=""
+                                size="small"
+                                @click="viewAgreementDetails(slotProps.data)"
+                                icon="pi pi-eye"
+                                aria-label="View"
+                                outlined
+                                class="mr-2"
+                            />
+                            <Button
+                                severity=""
+                                size="small"
+                                @click="
+                                    router.get(
+                                        route('agreements.print', {
+                                            id: slotProps.data.agreement_no,
+                                        })
+                                    )
+                                "
+                                icon="pi pi-print"
+                                aria-label="print"
+                                outlined
+                                class="mr-2"
+                            />
                         </template>
                     </Column>
                 </template>
@@ -253,7 +248,7 @@ list agreement
                     <div class="col-12">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field">
+                                <div class="field flex gap-2">
                                     <label class="font-semibold"
                                         >Agreement No:</label
                                     >
@@ -263,7 +258,7 @@ list agreement
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field">
+                                <div class="field flex gap-2">
                                     <label class="font-semibold"
                                         >Customer:</label
                                     >
@@ -273,30 +268,23 @@ list agreement
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field">
+                                <div class="field flex gap-2">
                                     <label class="font-semibold"
                                         >Total Amount:</label
                                     >
                                     <div>
-                                        {{
-                                            formatCurrency(
-                                                selectedAgreement?.amount
-                                            )
-                                        }}
+                                        {{ selectedAgreement?.amount }}
+                                        ({{
+                                            selectedAgreementDetails?.currency
+                                        }})
                                     </div>
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field">
-                                    <label class="font-semibold"
-                                        >Total Paid:</label
-                                    >
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold">Status:</label>
                                     <div>
-                                        {{
-                                            formatCurrency(
-                                                selectedAgreement?.total_progress_payment
-                                            )
-                                        }}
+                                        {{ selectedAgreement?.status }}
                                     </div>
                                 </div>
                             </div>
@@ -312,7 +300,7 @@ list agreement
                     :rowsPerPageOptions="[5, 10, 20]"
                     :stripedRows="true"
                     :showGridlines="true"
-                    class="mt-3"
+                    class="mt-3 text-sm"
                     size="small"
                 >
                     <Column field="payment_no" header="No" sortable></Column>
@@ -340,6 +328,205 @@ list agreement
                         label="Close"
                         icon="pi pi-times"
                         @click="progressPaymentsDialog = false"
+                        class="p-button-text"
+                    />
+                </template>
+            </Dialog>
+            <!-- Agreement Details Dialog -->
+            <Dialog
+                v-model:visible="agreementDetailsDialog"
+                :style="{ width: '40vw' }"
+                header="Agreement Details"
+                :modal="true"
+                :dismissableMask="true"
+                class="text-sm"
+            >
+                <div class="grid">
+                    <div class="col-12">
+                        <!-- Agreement Information Section -->
+                        <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Agreement No:</label
+                                    >
+                                    <div class="text-sm">
+                                        {{
+                                            selectedAgreementDetails?.agreement_no
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Quotation No:</label
+                                    >
+                                    <div>
+                                        {{
+                                            selectedAgreementDetails?.quotation_no ||
+                                            "N/A"
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Agreement Ref No:</label
+                                    >
+                                    <div>
+                                        {{
+                                            selectedAgreementDetails?.agreement_ref_no || "N/A"
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Customer:</label
+                                    >
+                                    <div>
+                                        {{
+                                            selectedAgreementDetails?.customer
+                                                ?.name
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Total Amount:</label
+                                    >
+                                    <div>
+                                        {{ selectedAgreementDetails?.amount }}
+                                        ({{
+                                            selectedAgreementDetails?.currency
+                                        }})
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Agreement Date:</label
+                                    >
+                                    <div>
+                                        {{
+                                            momentDate(
+                                                selectedAgreementDetails?.agreement_date
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Start Date:</label
+                                    >
+                                    <div>
+                                        {{
+                                            momentDate(
+                                                selectedAgreementDetails?.start_date
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-4">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >End Date:</label
+                                    >
+                                    <div>
+                                        {{
+                                            momentDate(
+                                                selectedAgreementDetails?.end_date
+                                            )
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 md:col-6 lg:col-8">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold"
+                                        >Description:</label
+                                    >
+                                    <div>
+                                        {{
+                                            selectedAgreementDetails?.short_description ||
+                                            "N/A"
+                                        }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <Divider class="my-4" />
+                        <!-- Payment Schedule Section -->
+                        <div class="text-md font-bold mb-3">
+                            Payment Schedule
+                        </div>
+                        <DataTable
+                            :value="
+                                selectedAgreementDetails?.payment_schedules ||
+                                []
+                            "
+                            :paginator="true"
+                            :rows="5"
+                            :rowsPerPageOptions="[5, 10, 20]"
+                            :stripedRows="true"
+                            :showGridlines="true"
+                            class="mt-3"
+                            size="small"
+                        >
+                            <Column field="id" header="No" sortable>
+                                <template #body="slotProps">
+                                    {{ slotProps.index + 1 }}
+                                </template>
+                            </Column>
+                            <Column field="due_date" header="Due Date" sortable>
+                                <template #body="slotProps">
+                                    {{ momentDate(slotProps.data.due_date) }}
+                                </template>
+                            </Column>
+                            <Column
+                                field="short_description"
+                                header="Description"
+                                sortable
+                            >
+                                <template #body="slotProps">
+                                    {{
+                                        slotProps.data.short_description ||
+                                        "N/A"
+                                    }}
+                                </template>
+                            </Column>
+                            <Column
+                                field="percentage"
+                                header="Percentage"
+                                sortable
+                            >
+                                <template #body="slotProps">
+                                    {{ slotProps.data.percentage }}%
+                                </template>
+                            </Column>
+                            <Column field="amount" header="Amount" sortable>
+                                <template #body="slotProps">
+                                    {{ slotProps.data.amount }}
+                                    ({{ slotProps.data.currency }})
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </div>
+                </div>
+                <template #footer>
+                    <Button
+                        label="Close"
+                        icon="pi pi-times"
+                        @click="agreementDetailsDialog = false"
                         class="p-button-text"
                     />
                 </template>
@@ -374,6 +561,7 @@ import {
     ProgressSpinner,
     Card,
 } from "primevue";
+import PaymentSchedule from "./PaymentSchedule.vue";
 
 const toast = useToast();
 const props = defineProps({
@@ -517,6 +705,40 @@ const showProgressPayments = (agreement) => {
             summary: "Error",
             detail: "Failed to load payment details",
             life: 3000,
+        });
+    }
+};
+// Agreement Details Dialog
+const agreementDetailsDialog = ref(false);
+const selectedAgreementDetails = ref(null);
+const viewAgreementDetails = async (agreement) => {
+    try {
+        const response = await axios.get(
+            route("agreements.show", { id: agreement.agreement_no })
+        );
+
+        // Format dates if needed
+        const formattedData = {
+            ...response.data,
+            payment_schedules:
+                response.data.payment_schedules?.map((schedule) => ({
+                    ...schedule,
+                    due_date: moment(schedule.due_date, "DD/MM/YYYY").format(
+                        "DD/MM/YYYY"
+                    ),
+                })) || [],
+        };
+
+        selectedAgreementDetails.value = formattedData;
+        agreementDetailsDialog.value = true;
+    } catch (error) {
+        console.error("Error loading agreement details:", error);
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to load agreement details",
+            life: 3000,
+            group: "tr",
         });
     }
 };

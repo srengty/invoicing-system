@@ -43,7 +43,7 @@ class AgreementController extends Controller
     {
         $request->validate([
             'agreement_no' => 'required',
-            'agreement_doc' => 'required',
+            'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
             'end_date' => 'required|date_format:d/m/Y',
@@ -61,8 +61,28 @@ class AgreementController extends Controller
         //     'size' => $request->agreement_doc['size'],
         //     'mime_type' => $request->agreement_doc['mime_type']
         // ]);
-        $data['agreement_doc'] = json_encode($request->agreement_doc);
-        $data['attachments'] = json_encode($request->attachments);
+        // $data['agreement_doc'] = json_encode($request->agreement_doc);
+        // $data['attachments'] = json_encode($request->attachments);
+        $data['agreement_doc'] = json_encode(
+            collect($request->agreement_doc)->map(function ($doc) {
+                return [
+                    'path' => $doc['path'] ?? null,
+                    'name' => $doc['name'] ?? null,
+                    'size' => $doc['size'] ?? null,
+                ];
+            })->toArray()
+        );
+
+        // Handle attachments (ensure empty array if null)
+        $data['attachments'] = json_encode(
+            collect($request->attachments ?? [])->map(function ($file) {
+                return [
+                    'path' => $file['path'] ?? null,
+                    'name' => $file['name'] ?? null,
+                    'size' => $file['size'] ?? null,
+                ];
+            })->toArray()
+        );
         $agreement = Agreement::create($data);
         foreach($request->payment_schedule as $key => $value){
             unset($value['id']);
@@ -86,7 +106,14 @@ class AgreementController extends Controller
      */
     public function show(int $id)
     {
-        return Inertia::render('Agreements/Show', [
+
+        $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
+        return response()->json($agreement);  // Debugging line
+    }
+    public function print(int $id)
+    {
+        // dd("Hello");
+        return Inertia::render('Agreements/Print', [
             'agreement' => Agreement::with('customer')->with('paymentSchedules')->find($id),
         ]);
     }

@@ -398,6 +398,12 @@
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { Head, router, Link } from "@inertiajs/vue3";
+import { Form } from "@primevue/forms";
+import { useToast } from "primevue/usetoast";
+import { reactive, onMounted, ref, computed, watch } from "vue";
+import { currencies } from "@/constants";
+import { usePage } from "@inertiajs/vue3";
+import moment from "moment";
 import {
     Button,
     DatePicker,
@@ -413,18 +419,13 @@ import {
     Toast,
     Calendar,
     Dropdown,
+    Textarea,
+    Breadcrumb,
 } from "primevue";
-import { Form } from "@primevue/forms";
-import { useToast } from "primevue/usetoast";
-import { reactive, onMounted, ref, computed, watch } from "vue";
-import Textarea from "primevue/textarea";
-import moment from "moment";
-import { currencies } from "@/constants";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
 import PaymentSchedule from "./PaymentSchedule.vue";
 import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
+
 const toast = useToast();
 // The Breadcrumb Quotations
 const page = usePage();
@@ -514,13 +515,13 @@ const searchQuotation = async () => {
                     response.data.agreement_amount;
 
                 // Set the exchange rate based on quotation currency
-                if (response.data.currency === "KHR") {
+                if (response.data.currency === "USD") {
                     schedule.value.exchange_rate =
                         response.data.exchange_rate || 4100;
-                    riels.value = true; // ✅ this will auto-update form.currency to KHR
+                    riels.value = false; // ✅ this will auto-update form.currency to KHR
                 } else {
                     schedule.value.exchange_rate = 1;
-                    riels.value = false; // ✅ this will auto-update form.currency to USD
+                    riels.value = true; // ✅ this will auto-update form.currency to USD
                 }
             } else {
                 // Handle case where no quotation is found
@@ -738,9 +739,15 @@ const onUpload = (e) => {
         }
 
         uploadedFiles.forEach((file) => {
-            form.agreement_doc.push(file);
-            agreementDocs.value.push(file);
+            form.agreement_doc.push({
+                path: file.path,
+                name: file.name,
+                size: file.size,
+            });
         });
+
+        // Update UI
+        agreementDocs.value = form.agreement_doc;
 
         toast.add({
             severity: "success",
@@ -774,16 +781,18 @@ const removeAgreementDoc = (index) => {
 const onUploadAttachments = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
+        const uploadedFiles = Array.isArray(response) ? response : [response];
 
         if (!Array.isArray(form.attachments)) {
             form.attachments = [];
         }
 
-        form.attachments.push({
-            path: response.path,
-            name: response.name,
-            size: response.size,
-            type: response.mime_type,
+        uploadedFiles.forEach((file) => {
+            form.attachments.push({
+                path: file.path,
+                name: file.name,
+                size: file.size,
+            });
         });
 
         toast.add({
