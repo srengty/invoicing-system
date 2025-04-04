@@ -18,8 +18,8 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+    # - name: Checkout repo
+    #   uses: actions/checkout@v3
 
     - name: Set php for running laravel
       run: |
