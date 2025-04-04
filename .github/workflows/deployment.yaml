@@ -135,5 +135,5 @@ jobs:
 
     - name: Restart PHP & Clear OPcache
       run: |
-        sudo systemctl restart php8.4-fpm
-        sudo systemctl reload nginx
+        echo "$PASSWORD_SERVER"  | sudo -S systemctl restart php8.4-fpm
+        echo "$PASSWORD_SERVER"  | sudo -S systemctl reload nginx
