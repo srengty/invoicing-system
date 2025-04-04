@@ -49,7 +49,7 @@ jobs:
 
     - name: Set permissions
       run: |
-        echo "$PASSWORD_SERVER" | sudo -S chmod -R 775 storage bootstrap/cache
+        echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 storage bootstrap/cache
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data .
 
     - name: Laravel Migrate & Cache
