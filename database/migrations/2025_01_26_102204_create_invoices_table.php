@@ -20,16 +20,13 @@ return new class extends Migration
             $table->foreignId('quotation_no')->nullable()->constrained('quotations','quotation_no')->nullOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
             $table->string('address');
-            $table->string('phone_number');
+            $table->string('phone');
             $table->date('start_date');
             $table->date('end_date');
             $table->enum('status', ['Pending', 'Paid', 'Cancelled'])->default('Pending');
-            $table->double('total')->default(0)->comment('no tax');
-            $table->double('total_usd', 15, 2)->nullable();
-            $table->decimal('exchange_rate', 10, 4)->nullable();
+            $table->decimal('grand_total', 10, 2)->nullable();
             $table->json('products')->nullable();
             $table->enum('currency', ['USD', 'KHR'])->default('USD'); // Add currency column with default USD
-            $table->text('terms')->nullable();
             $table->timestamps();
         });
     }

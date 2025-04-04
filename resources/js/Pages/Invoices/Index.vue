@@ -343,8 +343,8 @@ const currencyOptions = ref([
 
 const columns = [
     { field: "invoice_no", header: "Invoice No" },
-    { field: "date", header: "Date" },
-    { field: "due_date", header: "Due Date" },
+    { field: "start_date", header: "Date" },
+    { field: "end_date", header: "Due Date" },
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
     { field: "agreement.amount", header: "Amount Paid" },
@@ -379,8 +379,8 @@ const deleteInvoice = (id) => {
 };
 
 const over_due = (rowData) => {
-    if (!rowData.due_date) return "-";
-    const dueDate = moment(rowData.due_date);
+    if (!rowData.end_date) return "-";
+    const dueDate = moment(rowData.end_date);
     const currentDate = moment();
     const overdue = currentDate.diff(dueDate, "days");
     return overdue > 0 ? overdue : 0;

@@ -377,7 +377,6 @@ const submitInvoice = async () => {
   }
 
   const invoiceData = {
-    invoice_no: form.invoice_no,
     agreement_no: form.agreement_no,
     quotation_no: form.quotation_no,
     customer_id: form.customer_id,

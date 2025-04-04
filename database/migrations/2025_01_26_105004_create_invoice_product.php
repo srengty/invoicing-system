@@ -14,10 +14,14 @@ return new class extends Migration
     {
         Schema::create('invoice_product', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('invoice_no')->constrained('invoices','invoice_no')->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('invoice_id'); // This should be a reference to `invoices.id`
+            $table->unsignedBigInteger('product_id');
             $table->integer('quantity');
             $table->timestamps();
+
+            // Foreign key constraints
+            $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
         });       
     }
 

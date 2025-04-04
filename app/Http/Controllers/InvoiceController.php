@@ -38,7 +38,7 @@ class InvoiceController extends Controller
     {
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
-            'invoice_no' => 'required|unique:invoices',
+            'invoice_no' => 'nullable|unique:invoices',
             'agreement_no' => 'required',
             'quotation_no' => 'required',
             'customer_id' => 'required',
@@ -75,7 +75,7 @@ class InvoiceController extends Controller
 
         // Create the invoice
         $invoice = Invoice::create([
-            'invoice_no' => $validated['invoice_no'],
+            // 'invoice_no' => $validated['invoice_no'],
             'agreement_no' => $validated['agreement_no'],
             'quotation_no' => $validated['quotation_no'],
             'customer_id' => $validated['customer_id'],
@@ -85,6 +85,8 @@ class InvoiceController extends Controller
             'end_date' => $endDate,
             'grand_total' => $grand_total,  // Store only the grand total
         ]);
+
+        $invoiceId = $invoice->id;
 
         // Attach the selected products with their quantities to the invoice
         foreach ($validated['products'] as $product) {

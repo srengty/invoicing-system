@@ -14,7 +14,7 @@ class InvoiceProduct extends Model
 
     // Specify the fillable fields (to prevent mass assignment vulnerability)
     protected $fillable = [
-        'invoice_no',
+        'id',
         'product_id',
         'quantity',
         'price',
@@ -28,7 +28,7 @@ class InvoiceProduct extends Model
      */
     public function invoice()
     {
-        return $this->belongsTo(Invoice::class, 'invoice_no', 'id');
+        return $this->belongsTo(Invoice::class, 'invoice_id', 'id');
     }
 
     /**

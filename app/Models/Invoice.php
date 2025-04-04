@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class Invoice extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'invoice_no'; // Assuming invoice_no is the primary key
+    protected $primaryKey = 'id'; // Explicitly set the primary key
+    protected $keyType = 'int'; // Assuming invoice_no is the primary key
     protected $fillable = [
         'invoice_no',
         'agreement_no',
@@ -52,7 +53,7 @@ class Invoice extends Model
     // Relationship with Products (many-to-many with pivot table for quantities)
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_no', 'product_id')
+        return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_id', 'product_id')
                     ->withPivot('quantity')  // If you're storing additional fields like quantity
                     ->withTimestamps();
     }
