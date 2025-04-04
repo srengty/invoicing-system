@@ -59,8 +59,7 @@ jobs:
       run: |
         echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /var/www/invoice/releases
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice/releases
-        echo "$PASSWORD_SERVER" |  sudo -S chown -R www-data:www-data /home/dice/invoice/invoice/invoicing-system/invoicing-system/storage
-        echo "$PASSWORD_SERVER" |  sudo -S chmod -R 775 /home/dice/invoice/invoice/invoicing-system/invoicing-system/storage
+        echo "$PASSWORD_SERVER" |  sudo -S chmod -R 777 /home/dice/invoice/invoice/invoicing-system/invoicing-system/storage
 
   remove-old-release:
     runs-on: self-hosted
