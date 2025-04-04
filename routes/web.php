@@ -43,14 +43,14 @@ Route::get('/quotations/create', [QuotationController::class, 'create'])->name('
 Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
 Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updateStatus']);
 Route::post('/quotations/{quotationId}/comments', [QuotationController::class, 'storeComment']);
-Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
+// Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
 Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
-Route::put('/quotations/{id}', [QuotationController::class, 'update'])->name('quotations.update');
+// Route::put('/quotations/{id}', [QuotationController::class, 'update'])->name('quotations.update');
 
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
-Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
+// Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
 
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
@@ -72,7 +72,7 @@ Route::get('/settings/products', [ProductController::class, 'index'])->name('pro
 Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
 Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
 Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
+// Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
 Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index');

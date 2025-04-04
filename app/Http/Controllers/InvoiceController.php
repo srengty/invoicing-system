@@ -8,8 +8,6 @@ use App\Models\Quotation;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
-use App\Models\Category;
-use App\Models\InvoiceProduct;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -23,27 +21,15 @@ class InvoiceController extends Controller
         // Get all agreements, quotations, customers, and products
         $agreements = Agreement::all();
         $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
-        $activeCustomers = Customer::where('active', true)->get();
+        $customers = Customer::all();
         $products = Product::all();
-        $customerCategories = CustomerCategory::all();
-        $productCategories = Category::all();
         
         // Pass the full models to the form
         return Inertia::render('Invoices/Create', [
             'agreements' => $agreements,
             'quotations' => $quotations,
-            'customers' => $activeCustomers->map(function ($customer) {
-                return [
-                    'id' => $customer->id,
-                    'name' => $customer->name,
-                    'address' => $customer->address,
-                    'phone_number' => $customer->phone_number,
-                    'active' => $customer->active
-                ];
-            }),
-            'products' => Product::where('status', 'approved')->get(),
-            'customerCategories' => CustomerCategory::all(),
-            'productCategories' => Category::all(),
+            'customers' => $customers,
+            'products' => $products,
         ]);
     }
 
@@ -52,27 +38,17 @@ class InvoiceController extends Controller
     {
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
-            'invoice_no' => 'required|integer|unique:invoices,invoice_no',
+            'invoice_no' => 'nullable|unique:invoices',
             'agreement_no' => 'required',
             'quotation_no' => 'required',
-            'customer_id' => 'required|exists:customers,id',
-            'address'        => 'nullable|string|max:255',
-            'phone_number'   => 'nullable|string|max:20',
-            'terms'          => 'nullable|string|max:255',
-            'total_usd'      => 'nullable|numeric',
-            'exchange_rate' => 'nullable|numeric|min:0',
-            'start_date' => 'required|date_format:Y-m-d\TH:i:s.v\Z',
-            'end_date' => 'required|date_format:Y-m-d\TH:i:s.v\Z',
+            'customer_id' => 'required',
+            'address' => 'required',
+            'phone' => 'required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
             'products' => 'required|array',
             'products.*.id' => 'required|exists:products,id', 
             'products.*.quantity' => 'required|numeric|min:1',
-            'products.*.price'    => 'required|numeric|min:1',
-            'products.*.acc_code' => 'nullable|string|max:255',
-            'products.*.category_id' => 'nullable|integer|min:0',
-            'products.*.remark'      => 'nullable|string|max:255',
-            'products.*.pdf'         => 'nullable|file|mimes:pdf|max:2048',
-            'products.*.include_catalog' => 'required|boolean',
-            'products.*.pdf_url'     => 'nullable|string|max:255',
         ]);
 
         if ($validated->fails()) {
@@ -87,32 +63,15 @@ class InvoiceController extends Controller
         $endDate = Carbon::parse($validated['end_date'])->toDateTimeString();
 
         // Calculate the grand total (without storing the subtotal)
-        $total = 0;
-        if (isset($validated['products'])) {
-            foreach ($validated['products'] as $product) {
-                // Only add approved products to the total
-                $productData = Product::find($product['id']);
-                if ($productData && $productData->status === 'approved') {
-                    $total += $product['price'] * $product['quantity'];
-                }
-            }
+        $grand_total = 0;
+        foreach ($validated['products'] as $product) {
+            $prod = Product::find($product['id']);
+            $grand_total += $prod->price * $product['quantity'];
         }
 
         // Assuming tax is 10% of the grand total
-        // $tax = 0.0 * $total;
-        // $total += $tax;  // Add tax to grand total
-
-        $totalUsd = null;
-        if (!empty($validated['exchange_rate']) && $validated['exchange_rate'] > 0) {
-            $totalUsd = $total / $validated['exchange_rate'];
-        }
-
-        $currentYear = date('Y');
-        $baseInvoiceNo = ($currentYear - 2025) * 1000000 + 25000001;
-        $lastInvoice = Invoice::where('invoice_no', '>=', $baseInvoiceNo)
-                                ->orderBy('invoice_no', 'desc')
-                                ->first();
-        $newInvoiceNo = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
+        $tax = 0.0 * $grand_total;
+        $grand_total += $tax;  // Add tax to grand total
 
         // Create the invoice
         $invoice = Invoice::create([
@@ -120,39 +79,18 @@ class InvoiceController extends Controller
             'agreement_no' => $validated['agreement_no'],
             'quotation_no' => $validated['quotation_no'],
             'customer_id' => $validated['customer_id'],
-            'address' => $validated['address'] ?? null,
-            'phone_number' => $validated['phone_number'] ?? null,
+            'address' => $validated['address'],
+            'phone' => $validated['phone'],
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'terms'          => $validated['terms'] ?? null,
-            'total' => $total,  // Store only the grand total
-            'total_usd'      => $validated['total_usd'] ?? 0,
-            'exchange_rate'  => $validated['exchange_rate'] ?? null,
+            'grand_total' => $grand_total,  // Store only the grand total
         ]);
 
+        $invoiceId = $invoice->id;
+
         // Attach the selected products with their quantities to the invoice
-        // foreach ($validated['products'] as $product) {
-        //     $invoice->products()->attach($product['id'], ['quantity' => $product['quantity']]);
-        // }
-
-        if (isset($validated['products'])) {
-            foreach ($validated['products'] as $product) {
-                $productData = Product::find($product['id']);
-
-                // Only attach approved products
-                if ($productData && $productData->status === 'approved') {
-                    // Debug the product data
-                    // \Log::info('Product Data:', $product);
-                    InvoiceProduct::create([
-                        'product_id' => $product['id'],
-                        'quantity'   => $product['quantity'],
-                        'invoice_no' => $invoice->id,
-                        'price'      => $product['price'],
-                        'include_catalog' => $product['include_catalog'],
-                        'pdf_url'    => $product['pdf_url'] ?? null,
-                    ]);
-                }
-            }
+        foreach ($validated['products'] as $product) {
+            $invoice->products()->attach($product['id'], ['quantity' => $product['quantity']]);
         }
 
         // Redirect with a success message
