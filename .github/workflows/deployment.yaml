@@ -118,12 +118,12 @@ jobs:
         sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
         sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
         sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
-    - name: Laravel Migrate & Cache
-      run: |
-        php artisan migrate --force
-        php artisan config:cache
-        php artisan route:cache
-        php artisan view:cache
+    # - name: Laravel Migrate & Cache
+    #   run: |
+    #     php artisan migrate --force
+    #     php artisan config:cache
+    #     php artisan route:cache
+    #     php artisan view:cache
     - name: Deploy New Version
       run: |
         NEW_RELEASE_DIR=/var/www/invoice/releases/$(date +%Y%m%d%H%M%S)
@@ -132,6 +132,14 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
         echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /var/www/invoice
+    - name: Finalize Laravel (Migrate & Cache)
+      run: |
+        cd /var/www/invoice/current
+        php artisan migrate --force
+        php artisan config:clear
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
     - name: Remove old release
       run: |
         echo "$PASSWORD_SERVER" | sudo -S bash -c '
