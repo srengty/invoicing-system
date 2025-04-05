@@ -43,6 +43,7 @@ jobs:
 
         export default defineConfig({
             base: '/build/',
+
             server: {
                 hmr: {
                     host: 'finance.itc.edu.kh',
@@ -57,7 +58,7 @@ jobs:
             },
             plugins: [
                 laravel({
-                    input: 'resources/js/app.js',
+                    input: ["resources/js/app.js","resources/css/app.css"],
                     refresh: true,
                     detectTls: 'finance.itc.edu.kh',
                 }),
