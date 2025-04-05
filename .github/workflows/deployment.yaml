@@ -42,6 +42,7 @@ jobs:
         import vue from '@vitejs/plugin-vue';
 
         export default defineConfig({
+            base: 'https://finance.itc.edu.kh/build/',
             server: {
                 hmr: {
                     host: 'finance.itc.edu.kh',
