@@ -18,7 +18,7 @@
             <Column field="due_date" header="Due Date" sortable class="text-sm">
                 <template #body="slotProps">
                     {{
-                        moment(slotProps.data["due_date"]).format("DD/MM/YYYY")
+                        moment(slotProps.data["due_date"]).format("YYYY/MM/DD")
                     }}
                 </template>
             </Column>
@@ -32,7 +32,7 @@
                     <DatePicker
                         v-model="data[field]"
                         fluid
-                        date-format="dd/mm/yy"
+                        date-format="yy/mm/dd"
                     />
                 </template>
             </Column>

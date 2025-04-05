@@ -74,6 +74,8 @@ list agreement
                                 'agreement_date',
                                 'start_date',
                                 'end_date',
+                                'status',
+                                'amount',
                                 'total_progress_payment',
                                 'total_progress_payment_percentage',
                             ].includes(col.field)
@@ -98,10 +100,9 @@ list agreement
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
-                            {{ momentDate(slotProps.data[col.field]) }}
+                            {{ formatDate(slotProps.data[col.field]) }}
                         </template>
                     </Column>
-
                     <!-- column for agreement doc -->
                     <Column
                         v-if="col.field === 'agreement_doc'"
@@ -117,6 +118,40 @@ list agreement
                                 target="_blank"
                                 >View doc</a
                             >
+                        </template>
+                    </Column>
+                    <!-- column for status -->
+                    <Column
+                        v-if="col.field === 'status'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template #body="slotProps">
+                            <Tag
+                                :value="slotProps.data.status"
+                                :severity="
+                                    getStatusSeverity(slotProps.data.status)
+                                "
+                                :icon="getStatusIcon(slotProps.data.status)"
+                                rounded
+                            />
+                        </template>
+                    </Column>
+                    <!-- column for Total Amount -->
+                    <Column
+                        v-if="col.field === 'amount'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data[col.field]) }}
+                            <span class="text-xs text-gray-500 ml-1">
+                                ({{ slotProps.data.currency }})
+                            </span>
                         </template>
                     </Column>
                     <!-- column for total progress payment -->
@@ -273,10 +308,12 @@ list agreement
                                         >Total Amount:</label
                                     >
                                     <div>
-                                        {{ selectedAgreement?.amount }}
-                                        ({{
-                                            selectedAgreementDetails?.currency
-                                        }})
+                                        {{
+                                            formatCurrency(
+                                                selectedAgreement?.amount
+                                            )
+                                        }}
+                                        ({{ selectedAgreement?.currency }})
                                     </div>
                                 </div>
                             </div>
@@ -377,7 +414,8 @@ list agreement
                                     >
                                     <div>
                                         {{
-                                            selectedAgreementDetails?.agreement_ref_no || "N/A"
+                                            selectedAgreementDetails?.agreement_ref_no ||
+                                            "N/A"
                                         }}
                                     </div>
                                 </div>
@@ -401,7 +439,11 @@ list agreement
                                         >Total Amount:</label
                                     >
                                     <div>
-                                        {{ selectedAgreementDetails?.amount }}
+                                        {{
+                                            formatCurrency(
+                                                selectedAgreementDetails?.amount
+                                            )
+                                        }}
                                         ({{
                                             selectedAgreementDetails?.currency
                                         }})
@@ -415,7 +457,7 @@ list agreement
                                     >
                                     <div>
                                         {{
-                                            momentDate(
+                                            formatDate(
                                                 selectedAgreementDetails?.agreement_date
                                             )
                                         }}
@@ -429,7 +471,7 @@ list agreement
                                     >
                                     <div>
                                         {{
-                                            momentDate(
+                                            formatDate(
                                                 selectedAgreementDetails?.start_date
                                             )
                                         }}
@@ -443,7 +485,7 @@ list agreement
                                     >
                                     <div>
                                         {{
-                                            momentDate(
+                                            formatDate(
                                                 selectedAgreementDetails?.end_date
                                             )
                                         }}
@@ -489,7 +531,7 @@ list agreement
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    {{ momentDate(slotProps.data.due_date) }}
+                                    {{ formatDate(slotProps.data.due_date) }}
                                 </template>
                             </Column>
                             <Column
@@ -515,7 +557,7 @@ list agreement
                             </Column>
                             <Column field="amount" header="Amount" sortable>
                                 <template #body="slotProps">
-                                    {{ slotProps.data.amount }}
+                                    {{ formatCurrency(slotProps.data.amount) }}
                                     ({{ slotProps.data.currency }})
                                 </template>
                             </Column>
@@ -621,9 +663,14 @@ const updateColumns = (columns) => {
 const openCreate = () => {
     router.get(route("agreements.create"));
 };
-const momentDate = (date) => {
-    return moment(date, "DD/MM/YYYY").fromNow();
+const formatDate = (date, format = "YYYY-MM-DD") => {
+    if (!date) return "N/A";
+    return moment(date).format(format);
 };
+
+// const momentDate = (date) => {
+//     return moment(date, "DD/MM/YYYY").fromNow();
+// };
 const searchType = ref("");
 const searchTerm = ref("");
 const searchOptions = ref([
@@ -669,10 +716,14 @@ const filteredAgreements = computed(() => {
     });
 });
 const formatCurrency = (value) => {
-    if (!value) return "0.00";
-    return parseFloat(value).toLocaleString("en-US", {
-        style: "currency",
-        currency: "KHR", // Change to your preferred currency
+    if (value === null || value === undefined || value === "") return "0.00";
+
+    const numValue =
+        typeof value === "string"
+            ? parseFloat(value.replace(/,/g, ""))
+            : Number(value);
+
+    return numValue.toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
@@ -717,7 +768,6 @@ const viewAgreementDetails = async (agreement) => {
             route("agreements.show", { id: agreement.agreement_no })
         );
 
-        // Format dates if needed
         const formattedData = {
             ...response.data,
             payment_schedules:
@@ -742,4 +792,34 @@ const viewAgreementDetails = async (agreement) => {
         });
     }
 };
+// Status-specific styling
+const getStatusSeverity = (status) => {
+    switch (status?.toLowerCase()) {
+        case 'open': return 'success';
+        case 'closed': return 'danger';
+        case 'abnormal closed': return 'info';
+        default: return 'warning';
+    }
+};
+
+const getStatusIcon = (status) => {
+    switch (status?.toLowerCase()) {
+        case 'open': return 'pi pi-lock-open';
+        case 'closed': return 'pi pi-check-circle';
+        case 'abnormal closed': return 'pi pi-exclamation-triangle';
+        default: return 'pi pi-question-circle';
+    }
+};
 </script>
+<style scoped>
+/* Custom tag styling */
+.p-tag {
+    border: 1px solid !important;
+    font-weight: 500;
+}
+
+/* Status-specific border colors */
+.p-tag-success { border-color: var(--green-600) !important; }
+.p-tag-info { border-color: var(--blue-600) !important; }
+.p-tag-danger { border-color: var(--red-600) !important; }
+</style>

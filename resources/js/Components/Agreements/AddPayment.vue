@@ -18,7 +18,7 @@
                 size="30"
                 v-model="model.due_date"
                 fluid
-                date-format="dd/mm/yy"
+                date-format="yy/mm/dd"
             />
             <label for="due_date" class="required">Due date </label>
         </FloatLabel>

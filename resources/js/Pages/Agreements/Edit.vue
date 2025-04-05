@@ -345,14 +345,25 @@
                     ></InputText>
                 </div> -->
                 <!-- Save Button -->
-                <Button
-                    label="Save Changes"
-                    type="submit"
-                    raised
-                    class="w-48 mt-5"
-                    :disabled="processing"
-                    icon="pi pi-check"
-                ></Button>
+                <div class="flex justify-end gap-2 mt-10">
+                    <Button
+                        label="Save Changes"
+                        type="submit"
+                        raised
+                        class="w-full md:w-40"
+                        :disabled="processing"
+                        icon="pi pi-check"
+                    ></Button>
+                    <Button
+                        label="Cancel"
+                        severity="secondary"
+                        raised
+                        class="w-full md:w-28"
+                        :disabled="processing"
+                        icon="pi pi-times"
+                        @click="cancelChanges"
+                    />
+                </div>
             </Form>
         </div>
     </GuestLayout>
@@ -710,6 +721,25 @@ const submitForm = () => {
             },
         }
     );
+};
+const cancelChanges = () => {
+    router.visit(route("agreements.index"), {
+        onStart: () => {
+            toast.add({
+                severity: "secondary",
+                summary: "Cancelled",
+                detail: "Changes were not saved",
+                life: 3000,
+            });
+        },
+    });
+};
+const formatNumber = (value, decimals = 2) => {
+  if (isNaN(value)) return '0.00';
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
 };
 </script>
 

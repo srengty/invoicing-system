@@ -339,21 +339,24 @@
                 />
             </div>
             <!-- Form Buttons -->
-            <div class="buttons mt-4 mr-4 mb-10 flex justify-end">
+            <div class="buttons mt-4 mr-4 mb-10 flex justify-end gap-2">
                 <Button
                     :label="isEditing ? 'Update' : 'Create'"
-                    icon="pi pi-check"
                     type="submit"
-                    class="p-button-raised"
+                    class="w-full md:w-28"
                     size="small"
+                    raised
+                    icon="pi pi-check"
                 />
                 <Button
                     v-ripple
-                    icon="pi pi-times"
                     label="Cancel"
-                    class="p-button-raised p-button-secondary ml-2"
-                    @click="cancelOperation"
+                    severity="secondary"
+                    class="w-full md:w-28"
                     size="small"
+                    raised
+                    icon="pi pi-times"
+                    @click="cancelOperation"
                 />
             </div>
         </form>

@@ -116,7 +116,7 @@
                             >
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -236,7 +236,7 @@
                             >
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -244,7 +244,7 @@
                             />
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -382,14 +382,26 @@
                         v-model="schedule.exchange_rate"
                     ></InputText>
                 </div> -->
-                <Button
-                    label="Save"
-                    type="submit"
-                    raised
-                    class="w-48 mt-5"
-                    :disabled="isStoringAgreement"
-                    icon="pi pi-check"
-                ></Button>
+                <div class="flex justify-end gap-2 mt-10">
+                    <Button
+                        label="Save"
+                        type="submit"
+                        raised
+                        class="w-full md:w-28"
+                        :disabled="isStoringAgreement"
+                        icon="pi pi-check"
+                        size="small"
+                    ></Button>
+                    <Button
+                        label="Cancel"
+                        severity="secondary"
+                        raised
+                        class="w-full md:w-28"
+                        @click="cancel"
+                        icon="pi pi-times"
+                        size="small"
+                    ></Button>
+                </div>
             </Form>
         </div>
     </GuestLayout>
@@ -718,7 +730,24 @@ const submit = ({ states, valid }) => {
             data
         );
     } else {
-        router.post(route("agreements.store"), data);
+        router.post(route("agreements.store"), data, {
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Agreement created successfully",
+                    life: 3000,
+                });
+            },
+            onError: () => {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to create agreement",
+                    life: 3000,
+                });
+            },
+        });
     }
     isStoringAgreement.value = false;
     //form.post(route('agreements.store'));
@@ -728,6 +757,17 @@ const submit = ({ states, valid }) => {
     // }else{
     //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
     // }
+};
+const cancel = () => {
+    toast.add({
+        severity: "secondary",
+        summary: "Cancelled",
+        detail: "Agreement creation cancelled",
+        life: 3000,
+    });
+    setTimeout(() => {
+        router.visit(route("agreements.index"));
+    }, 500);
 };
 const onUpload = (e) => {
     try {
@@ -895,6 +935,10 @@ const checkDuplicateReference = async () => {
     } catch (error) {
         console.error("Error checking reference:", error);
     }
+};
+const formatDate = (date, format = 'YYYY-MM-DD') => {
+    if (!date) return 'N/A';
+    return moment(date).format(format);
 };
 </script>
 
