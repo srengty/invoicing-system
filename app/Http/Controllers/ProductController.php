@@ -130,9 +130,9 @@ class ProductController extends Controller
 
     // Call deparment api
     public function getDepartments(){
-        // 
+        //
         $client = new Client();
-        
+
         // Make the GET request to fetch divisions
         $response = $client->request('POST', 'https://dev.itc.edu.kh/api/departments/', [
             'headers' => [
@@ -143,7 +143,7 @@ class ProductController extends Controller
 
         // Decode the response into an array
         $departments = json_decode($response->getBody(), true);
-        
+
         // Use Inertia to pass the data to the Vue component
         return Inertia::render('Products/Index', [
             'departments' => $departments
@@ -151,7 +151,7 @@ class ProductController extends Controller
         ]);
         dd($departments);
     }
-    
+
 
     public function toggleStatus(Request $request, Product $product)
     {
