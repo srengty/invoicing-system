@@ -40,6 +40,7 @@ jobs:
         import { defineConfig } from 'vite';
         import laravel from 'laravel-vite-plugin';
         import vue from '@vitejs/plugin-vue';
+        import ziggy from 'laravel-vite-plugin/ziggy';
 
         export default defineConfig({
             base: '/build/',
@@ -70,6 +71,7 @@ jobs:
                         },
                     },
                 }),
+                ziggy()
             ],
         });
 
@@ -78,7 +80,7 @@ jobs:
       run: |
         cat << 'EOF' > .env
         APP_NAME=Laravel
-        APP_ENV=PRODUCTION
+        APP_ENV=production
         VITE_APP_URL=https://finance.itc.edu.kh
         APP_KEY=
         APP_DEBUG=false
@@ -88,7 +90,7 @@ jobs:
         APP_LOCALE=en
         APP_FALLBACK_LOCALE=en
         APP_FAKER_LOCALE=en_US
-
+        VITE_APP_URL=https://finance.itc.edu.kh
         APP_MAINTENANCE_DRIVER=file
         # APP_MAINTENANCE_STORE=database
 
@@ -177,15 +179,16 @@ jobs:
     - name: Finalize Laravel (Migrate & Cache)
       run: |
         cd /var/www/invoice/current
-        npm install
-        npm run build
         php artisan migrate --force
         php artisan route:clear
         php artisan config:clear
         php artisan view:clear
         php artisan config:clear
-        php artisan ziggy:generate
+        php artisan optimize
+        php artisan ziggy:generate resources/js/ziggy.js
         php artisan storage:link
+        npm install
+        npm run build
 
     - name: Remove old release
       run: |

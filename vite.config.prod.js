@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
-
+import ziggy from 'laravel-vite-plugin/ziggy';
 export default defineConfig({
     server: {
         hmr: {
@@ -29,5 +29,6 @@ export default defineConfig({
                 },
             },
         }),
+        ziggy()
     ],
 });
