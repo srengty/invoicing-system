@@ -42,6 +42,7 @@ jobs:
         import vue from '@vitejs/plugin-vue';
 
         export default defineConfig({
+            base: '/build/',
             server: {
                 hmr: {
                     host: 'finance.itc.edu.kh',
@@ -181,6 +182,7 @@ jobs:
         php artisan config:cache
         php artisan route:cache
         php artisan view:cache
+        php artisan ziggy:generate
         php artisan storage:link
     - name: Remove old release
       run: |
