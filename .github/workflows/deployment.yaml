@@ -81,6 +81,7 @@ jobs:
         APP_DEBUG=false
         APP_TIMEZONE=UTC
         APP_URL=https://finance.itc.edu.kh
+        ASSET_URL=https://finance.itc.edu.kh/build
         APP_LOCALE=en
         APP_FALLBACK_LOCALE=en
         APP_FAKER_LOCALE=en_US
