@@ -178,6 +178,9 @@ jobs:
         cd /var/www/invoice/current
         npm install
         php artisan migrate --force
+        php artisan route:clear
+        php artisan config:clear
+        php artisan view:clear
         php artisan config:clear
         php artisan config:cache
         php artisan route:cache
