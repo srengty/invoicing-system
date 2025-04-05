@@ -42,7 +42,6 @@ jobs:
         import vue from '@vitejs/plugin-vue';
 
         export default defineConfig({
-            base: 'https://finance.itc.edu.kh/build/',
             server: {
                 hmr: {
                     host: 'finance.itc.edu.kh',
@@ -82,7 +81,7 @@ jobs:
         APP_DEBUG=false
         APP_TIMEZONE=UTC
         APP_URL=https://finance.itc.edu.kh
-        ASSET_URL=https://finance.itc.edu.kh/build
+        ASSET_URL=https://finance.itc.edu.kh/
         APP_LOCALE=en
         APP_FALLBACK_LOCALE=en
         APP_FAKER_LOCALE=en_US
