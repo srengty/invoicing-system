@@ -32,8 +32,6 @@ jobs:
     - name: Install dependencies
       run: |
         composer install --no-dev --optimize-autoloader
-        npm install
-        npm run build
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
     - name: Create .env file
@@ -134,6 +132,10 @@ jobs:
         echo "$PASSWORD_SERVER" | sudo -S ln -sfn $NEW_RELEASE_DIR /var/www/invoice/current
         echo "$PASSWORD_SERVER" | sudo -S chown -R www-data:www-data /var/www/invoice
         echo "$PASSWORD_SERVER" | sudo -S chmod -R 777 /var/www/invoice
+    - name: Install node
+      run: |
+        npm install
+        npm run build
     - name: Finalize Laravel (Migrate & Cache)
       run: |
         cd /var/www/invoice/current
