@@ -78,6 +78,7 @@ jobs:
         cat << 'EOF' > .env
         APP_NAME=Laravel
         APP_ENV=PRODUCTION
+        VITE_APP_URL=https://finance.itc.edu.kh
         APP_KEY=
         APP_DEBUG=false
         APP_TIMEZONE=UTC
@@ -176,7 +177,6 @@ jobs:
       run: |
         cd /var/www/invoice/current
         npm install
-        npm run build
         php artisan migrate --force
         php artisan config:clear
         php artisan config:cache
@@ -184,6 +184,8 @@ jobs:
         php artisan view:cache
         php artisan ziggy:generate
         php artisan storage:link
+        npm run build
+
     - name: Remove old release
       run: |
         echo "$PASSWORD_SERVER" | sudo -S bash -c '
