@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
-import ziggy from 'laravel-vite-plugin/ziggy';
+import path from 'path';
 export default defineConfig({
     server: {
         hmr: {
@@ -13,6 +13,11 @@ export default defineConfig({
                 'https://finance.itc.edu.kh',
             ],
 
+        },
+    },
+    resolve: {
+        alias: {
+            ziggy: path.resolve('vendor/tightenco/ziggy/dist/vue.es.js'),
         },
     },
     plugins: [
@@ -29,6 +34,5 @@ export default defineConfig({
                 },
             },
         }),
-        ziggy()
     ],
 });

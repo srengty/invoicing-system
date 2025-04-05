@@ -40,8 +40,7 @@ jobs:
         import { defineConfig } from 'vite';
         import laravel from 'laravel-vite-plugin';
         import vue from '@vitejs/plugin-vue';
-        import ziggy from 'laravel-vite-plugin/ziggy';
-
+        import path from 'path';
         export default defineConfig({
             base: '/build/',
 
@@ -57,6 +56,11 @@ jobs:
 
                 },
             },
+              resolve: {
+                alias: {
+                  ziggy: path.resolve('vendor/tightenco/ziggy/dist/vue.es.js'),
+                },
+              },
             plugins: [
                 laravel({
                     input: ["resources/js/app.js","resources/css/app.css"],
@@ -71,7 +75,6 @@ jobs:
                         },
                     },
                 }),
-                ziggy()
             ],
         });
 
