@@ -87,7 +87,14 @@
                         header="Customer/Organization Name"
                         style="width: 15%"
                     />
-                    <Column field="total" header="Total" style="width: 10%" />
+                    <Column field="total" header="Total" style="width: 10%">
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data.total) }}
+                            <span class="text-xs text-gray-500 ml-1">
+                                (KHR)
+                            </span>
+                        </template>
+                    </Column>
 
                     <!-- Correctly Map the Status Column -->
                     <Column field="status" header="Status" style="width: 10%">
@@ -315,17 +322,25 @@
                                     field="pivot.quantity"
                                     header="QTY"
                                 ></Column>
-                                <Column
-                                    field="pivot.price"
-                                    header="Unit Price"
-                                ></Column>
+                                <Column field="pivot.price" header="Unit Price">
+                                    <template #body="slotProps">
+                                        <span>
+                                            {{
+                                                formatCurrency(
+                                                    slotProps.data.price
+                                                )
+                                            }}
+                                        </span>
+                                    </template>
+                                </Column>
                             </DataTable>
                         </div>
 
                         <br />
                         <p>
                             <strong>Total:</strong>
-                            {{ selectedQuotation.total }}
+                            {{ formatCurrency(selectedQuotation.total) }}
+                            <span class="text-xs text-gray-500 ml-1">(KHR)</span>
                         </p>
                         <p v-if="selectedQuotation.comment">
                             <strong>Comment:</strong>
@@ -994,6 +1009,12 @@ const sendQuotationToCustomer = async () => {
         // Reset the sending state
         isSending.value = false;
     }
+};
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value || 0);
 };
 </script>
 
