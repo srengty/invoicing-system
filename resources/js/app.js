@@ -18,8 +18,8 @@ import ConfirmationService from "primevue/confirmationservice";
 import ConfirmDialog from "primevue/confirmdialog";
 import "../css/app.css";
 import { Ziggy } from "./ziggy";
-import "primevue/resources/themes/aura/theme.css";
-import "primevue/resources/primevue.min.css";
+// import "primevue/resources/themes/aura/theme.css";
+// import "primevue/resources/primevue.min.css";
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 const messages = {
