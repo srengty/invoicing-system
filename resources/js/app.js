@@ -5,7 +5,7 @@ import "./bootstrap";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { createApp, h } from "vue";
-import { ZiggyVue } from "../../vendor/tightenco/ziggy";
+// import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 import PrimeVue from "primevue/config";
 import Aura from "@primevue/themes/aura";
 import Ripple from "primevue/ripple"; // Import the Ripple directive
