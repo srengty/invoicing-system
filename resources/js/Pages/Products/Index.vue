@@ -898,14 +898,6 @@ const categoryOptions = computed(
         })) || []
 );
 
-// const divisionOptions = computed(
-//     () =>
-//         divisions?.map((division) => ({
-//             name: division.division_name_english || division.divison_name_khmer,
-//             id: division.id,
-//         })) || []
-// );
-
 const getCategoryName = (categoryId) => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category
@@ -961,25 +953,32 @@ const form = useForm({
 
 // Open product form
 const openForm = (product = null) => {
+    form.reset();
+    
     if (product) {
+        // Set all product data including nullable fields
         form.id = product.id;
+        form.division_id = product.division_id;
         form.code = product.code;
+        form.acc_code = product.acc_code || "73048 ផលពីសេវាផ្សេងៗ";
         form.name = product.name;
         form.name_kh = product.name_kh;
+        form.desc = product.desc || null;
+        form.desc_kh = product.desc_kh || null;
         form.unit = product.unit;
         form.price = product.price;
         form.category_id = product.category_id;
-        form.division_id = product.division_id;
-        form.desc = product.desc || ""; // ✅ Ensure description is populated
-        form.desc_kh = product.desc_kh || "";
-        form.remark = product.remark || "";
-        form.pdf_url = product.pdf_url || null; // ✅ Ensure PDF URL is correctly set
+        form.pdf_url = product.pdf_url || null;
+        form.remark = product.remark || null;
         form.pdf = null; // Reset file upload
-    } else {
-        form.reset();
     }
+    
     isFormVisible.value = true;
 };
+
+const isEditMode = ref(false);
+
+isEditMode.value = true;
 
 const handleFileUpload = (event) => {
     form.pdf = event.target.files[0];
@@ -1047,19 +1046,6 @@ const toggleStatus = (product) => {
 const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
-// Computed property to filter products based on the search type and search term
-// const filteredProducts = computed(() => {
-//   return products.filter((product) => {
-//     const term = searchTerm.value.toLowerCase();
-//     if (searchType.value === "name_kh") {
-//       return product.name_kh.toLowerCase().includes(term);
-//     } else if (searchType.value === "code") {
-//       return product.code.toLowerCase().includes(term);
-//     }
-//     return false;
-//   });
-// });
-
 const submitForm = () => {
     if (!form) {
         toast.add({
@@ -1083,20 +1069,21 @@ const submitForm = () => {
     }
 
     if (form.id) {
-        form.post(route("products.update", form.id), {
+        formData.append('_method', 'PUT'); // Laravel needs this for PUT requests with FormData
+        
+        router.post(route('products.update', form.id), formData, {
             forceFormData: true,
-            headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                setTimeout(() => showToast("update", "success"), 100);
+                showToast("update", "success");
                 isFormVisible.value = false;
                 reloadData();
             },
             onError: (errors) => {
-                setTimeout(() => showToast("update", "error"), 100);
+                showToast("update", "error");
                 console.error("Update errors:", errors);
             },
         });
-    } else {
+    } else {  // If form.id is not set, create a new product
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
