@@ -50,7 +50,7 @@
                             <!-- Agreement Reference No -->
                             <span class="text-sm">Agreement reference No.</span>
                             <InputText
-                                v-model="form.agreement_reference_no"
+                                v-model="form.agreement_ref_no"
                                 placeholder="Enter reference number"
                                 class="w-full"
                                 size="small"
@@ -111,60 +111,55 @@
                                 :url="route('agreements.upload')"
                                 mode="basic"
                                 auto
-                                accept="application/pdf"
                                 multiple
+                                accept="application/pdf"
                                 @before-upload="beforeUploadAgreementDoc"
                                 @upload="onUploadAgreementDoc"
-                                chooseLabel="Upload Agreement PDF"
+                                chooseLabel="Upload Agreement Doc(s)"
                                 class="custom-file-upload w-full h-9"
                             >
                                 <template #chooseicon>
-                                    <i class="pi pi-file-pdf"></i>
+                                    <i class="pi pi-paperclip mr-2"></i>
                                 </template>
                             </FileUpload>
 
-                            <!-- Agreement Docs List -->
-                            <DataView
-                                :value="agreementDocs"
-                                class="col-span-2 mt-2"
-                            >
+                            <!-- Attachments List -->
+                            <DataView :value="form.agreement_doc" class="w-full">
                                 <template #list="slotProps">
-                                    <div class="grid gap-3 w-full">
+                                    <div class="space-y-2">
                                         <div
                                             v-for="(
                                                 item, index
                                             ) in slotProps.items"
                                             :key="index"
-                                            class="border border-gray-200 rounded-lg p-3 flex items-center hover:bg-gray-50 transition-colors"
+                                            class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                                         >
                                             <span
-                                                class="text-sm font-medium text-gray-700 mr-3"
+                                                class="text-xs font-medium text-gray-700 mr-3"
                                             >
-                                                Agreement Doc {{ index + 1 }}:
+                                                Agreement Doc:{{ index + 1 }}
                                             </span>
-                                            <i
-                                                class="pi pi-file-pdf mr-2 text-red-500"
-                                            ></i>
-                                            <a
-                                                class="hover:underline hover:text-blue-600 flex items-center text-blue-500"
-                                                :href="item.path"
-                                                target="_blank"
+                                            <div
+                                                class="flex items-center gap-2"
                                             >
-                                                {{
-                                                    item.name || "document.pdf"
-                                                }}
-                                            </a>
-                                            <Button
-                                                @click="
-                                                    removeAgreementDoc(index)
-                                                "
-                                                icon="pi pi-times"
-                                                text
-                                                rounded
-                                                severity="danger"
-                                                class="ml-auto hover:bg-red-50"
-                                                v-tooltip="'Remove document'"
-                                            />
+                                                <i
+                                                    class="pi pi-file-pdf text-red-500"
+                                                ></i>
+                                                <a
+                                                    class="text-sm font-medium text-blue-500 hover:underline"
+                                                    :href="item.path"
+                                                    target="_blank"
+                                                >
+                                                    {{ item.name }}
+                                                </a>
+                                            </div>
+                                            <button
+                                                @click="removeAgreementDoc(index)"
+                                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                                                v-tooltip="'Remove attachment'"
+                                            >
+                                                <i class="pi pi-times"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </template>
@@ -175,8 +170,8 @@
                                         <i
                                             class="pi pi-inbox text-2xl text-gray-400 mb-2"
                                         ></i>
-                                        <p class="text-gray-500">
-                                            No agreement document uploaded
+                                        <p class="text-sm text-gray-500">
+                                            No attachments added
                                         </p>
                                     </div>
                                 </template>
@@ -411,7 +406,7 @@ const items = computed(() => [
     { label: "", to: "/", icon: "pi pi-home" },
     { label: "Agreements", to: route("agreements.index") },
     {
-        label: `Edit Agreement ${props.agreement.agreement_no}`,
+        label: `Edit Agreement`,
         to: route("agreements.edit", {
             agreement_no: props.agreement.agreement_no,
         }),
@@ -436,7 +431,7 @@ const formatFileSize = (bytes) => {
 const form = useForm({
     quotation_no: props.agreement.quotation_no,
     agreement_no: props.agreement.agreement_no,
-    agreement_reference_no: props.agreement.agreement_reference_no,
+    agreement_ref_no: props.agreement.agreement_ref_no,
     agreement_date: props.agreement.agreement_date
         ? moment(props.agreement.agreement_date, "DD/MM/YYYY").toDate()
         : new Date(),
@@ -505,6 +500,7 @@ const parsedAgreementDocs = Array.isArray(props.agreement.agreement_doc)
     : JSON.parse(props.agreement.agreement_doc || "[]");
 
 const agreementDocs = ref(parsedAgreementDocs);
+
 form.agreement_doc = parsedAgreementDocs;
 
 // Computed properties
@@ -531,7 +527,7 @@ const beforeUpload = (e) => {
     e.formData.append("_token", page.props.csrf_token);
 };
 const beforeUploadAgreementDoc = (event) => {
-    event.formData.append("_token", page.props.csrf_token); // ✅ Laravel needs this
+    event.formData.append("_token", page.props.csrf_token);
 };
 const beforeUploadAttachment = (event) => {
     event.formData.append("_token", page.props.csrf_token);
@@ -539,45 +535,36 @@ const beforeUploadAttachment = (event) => {
 const onUploadAgreementDoc = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
-        const uploadedFiles = Array.isArray(response) ? response : [response];
-
-        uploadedFiles.forEach((file) => {
-            const newDoc = {
-                path: file.path,
-                name: file.name,
-                size: file.size,
-                mime_type: file.mime_type,
-            };
-            agreementDocs.value.push(newDoc);
+        form.agreement_doc.push({
+            path: response.path,
+            name: response.name,
+            size: response.size,
+            type: response.mime_type,
         });
-        form.agreement_doc = [...agreementDocs.value];
 
         toast.add({
             severity: "success",
             summary: "Uploaded",
-            detail: `${uploadedFiles.length} agreement document(s) uploaded successfully`,
+            detail: `Attachment "${response.name}" added successfully`,
             life: 3000,
         });
     } catch (error) {
-        console.error("Upload error:", error);
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "Failed to upload agreement document(s)",
+            detail: "Failed to upload attachment",
             life: 3000,
         });
     }
 };
 
 const removeAgreementDoc = (index) => {
-    agreementDocs.value.splice(index, 1);
-    form.agreement_doc = [...agreementDocs.value]; //
-    //  form state
-
+    const removedDoc = form.agreement_doc[index];
+    form.agreement_doc.splice(index, 1);
     toast.add({
         severity: "info",
         summary: "Removed",
-        detail: "Agreement document has been removed",
+        detail: `Document "${removedDoc.name}" has been removed`,
         life: 3000,
     });
 };
@@ -639,7 +626,7 @@ const beforeUpdate = (e) => {
 };
 
 const checkDuplicateReference = async () => {
-    if (!form.agreement_reference_no) {
+    if (!form.agreement_ref_no) {
         showDuplicateAlert.value = false;
         return;
     }
@@ -647,7 +634,7 @@ const checkDuplicateReference = async () => {
     try {
         const response = await axios.get("/api/check-agreement-reference", {
             params: {
-                reference_no: form.agreement_reference_no,
+                reference_no: form.agreement_ref_no,
                 exclude_id: props.agreement.id,
             },
         });
@@ -721,6 +708,7 @@ const submitForm = () => {
         }
     );
 };
+
 const cancelChanges = () => {
     router.visit(route("agreements.index"), {
         onStart: () => {

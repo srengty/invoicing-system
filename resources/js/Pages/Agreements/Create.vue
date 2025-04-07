@@ -86,7 +86,7 @@
                             >
                             <span class="text-sm">Agreement reference No.</span>
                             <InputText
-                                v-model="form.agreement_reference_no"
+                                v-model="form.agreement_ref_no"
                                 placeholder="Enter reference number"
                                 class="w-full"
                                 size="small"
@@ -609,7 +609,7 @@ onMounted(() => {
         // Basic form data
         form.quotation_no = props.agreement.quotation_no;
         form.agreement_no = props.agreement.agreement_no;
-        form.agreement_reference_no = props.agreement.agreement_reference_no;
+        form.agreement_ref_no = props.agreement.agreement_ref_no;
         form.agreement_date = moment(
             props.agreement.agreement_date,
             "DD/MM/YYYY"
@@ -898,7 +898,7 @@ const beforeUpdate = (e) => {
 // }));
 const showDuplicateAlert = ref(false);
 const checkDuplicateReference = async () => {
-    if (!form.agreement_reference_no) {
+    if (!form.agreement_ref_no) {
         showDuplicateAlert.value = false;
         return;
     }
@@ -906,7 +906,7 @@ const checkDuplicateReference = async () => {
     try {
         const response = await axios.get("/api/check-agreement-reference", {
             params: {
-                reference_no: form.agreement_reference_no,
+                reference_no: form.agreement_ref_no,
             },
         });
 

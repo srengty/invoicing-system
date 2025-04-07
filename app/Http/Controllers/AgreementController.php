@@ -57,18 +57,18 @@ class AgreementController extends Controller
 
         $data = $request->except('payment_schedule')+[
             'amount' => $request->agreement_amount,
-            'agreement_reference_no' => $request->agreement_reference_no
+            'agreement_ref_no' => $request->agreement_ref_no
         ];
+      // Ensure agreement_doc is an array or object
         $data['agreement_doc'] = json_encode(
-            collect($request->agreement_doc)->map(function ($doc) {
-                return [
-                    'path' => $doc['path'] ?? null,
-                    'name' => $doc['name'] ?? null,
-                    'size' => $doc['size'] ?? null,
-                ];
-            })->toArray()
-        );
-
+                collect($request->agreement_doc)->map(function ($doc) {
+                    return [
+                        'path' => $doc['path'] ?? null,
+                        'name' => $doc['name'] ?? null,
+                        'size' => $doc['size'] ?? null,
+                    ];
+                })->toArray()
+            );
         // Handle attachments (ensure empty array if null)
         $data['attachments'] = json_encode(
             collect($request->attachments ?? [])->map(function ($file) {
@@ -151,7 +151,7 @@ class AgreementController extends Controller
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
-            'agreement_reference_no' => 'nullable|string|unique:agreements,agreement_reference_no,'.$agreement_no.',agreement_no',
+            'agreement_ref_no' => 'nullable|string|unique:agreements,agreement_ref_no,'.$agreement_no.',agreement_no',
             'payment_schedule' => 'required|array|min:1',
             'payment_schedule.*.due_date' => 'required|date_format:d/m/Y',
             'payment_schedule.*.amount' => 'required|numeric|min:0',
@@ -168,7 +168,7 @@ class AgreementController extends Controller
         // Prepare data for update
         $data = $request->only([
             'agreement_no',
-            'agreement_reference_no',
+            'agreement_ref_no',
             'agreement_date',
             'customer_id',
             'address',
@@ -179,7 +179,8 @@ class AgreementController extends Controller
         ]);
 
         $data['amount'] = $request->agreement_amount;
-        $data['agreement_doc'] = json_encode($request->agreement_doc);
+        // $data['agreement_doc'] = json_encode($request->agreement_doc);
+        $data['agreement_doc'] = $request->agreement_doc;
         $data['attachments'] = $request->attachments;
 
         // Update the agreement
@@ -310,7 +311,7 @@ class AgreementController extends Controller
             'reference_no' => 'required|string'
         ]);
 
-        $exists = Agreement::where('agreement_reference_no', $request->reference_no)
+        $exists = Agreement::where('agreement_ref_no', $request->reference_no)
             ->when($request->has('exclude_id'), function($query) use ($request) {
                 $query->where('id', '!=', $request->exclude_id);
             })

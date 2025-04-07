@@ -273,7 +273,7 @@ list agreement
             <!-- Total Progress Payment Dialog -->
             <Dialog
                 v-model:visible="progressPaymentsDialog"
-                :style="{ width: '40vw' }"
+                :style="{ width: '45vw' }"
                 header="Progress Payment Details"
                 :modal="true"
                 :dismissableMask="true"
@@ -381,7 +381,7 @@ list agreement
             <!-- Agreement Details Dialog -->
             <Dialog
                 v-model:visible="agreementDetailsDialog"
-                :style="{ width: '40vw' }"
+                :style="{ width: '45vw' }"
                 header="Agreement Details"
                 :modal="true"
                 :dismissableMask="true"
@@ -520,12 +520,12 @@ list agreement
                                     <Tag
                                         :value="
                                             getStatusLabel(
-                                                selectedAgreement?.status
+                                                selectedAgreementDetails?.status
                                             )
                                         "
                                         :severity="
                                             getStatusSeverity(
-                                                selectedAgreement?.status
+                                                selectedAgreementDetails?.status
                                             )
                                         "
                                     />

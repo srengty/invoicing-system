@@ -1,27 +1,29 @@
 <template>
     <Head title="Agreement Printing" />
     <div class="flex flex-col">
-        <div
-            class="grid grid-cols-2 md:grid-cols-4 print:hidden mb-5 fixed top-6 left-6"
-        >
+        <div class="flex gap-4 mt-4 ml-4 print:hidden">
             <Select
                 :options="currencies"
                 option-value="value"
                 option-label="name"
                 v-model="form.currency"
                 @value-change="changeCurrency()"
-                class="w-full md:w-24 h-8"
+                class="w-28"
                 size="small"
             ></Select>
             <Button
                 @click="doPrint"
-                class="md:col-start-2 md:w-24 h-8"
                 size="small"
-                >Print {{ form.currency }}</Button
-            >
-            <Button @click="back()" class="w-full md:w-28 h-8"
-                >Back to list</Button
-            >
+                icon="pi pi-arrow-right-arrow-left"
+                :label="'Print ' + form.currency"
+            ></Button>
+
+            <Button
+                label="Back to list"
+                icon="pi pi-chevron-circle-left"
+                @click="back()"
+                size="small"
+            />
         </div>
         <div
             class="flex flex-col items-stretch justify-stretch mx-auto aspect-1/1.414 shadow-lg p-20 min-h-svh border print:border-0 print:shadow-none print:p-0 print:mx-0 print:aspect-none print:w-full print:print-container"
@@ -73,10 +75,11 @@
 <script setup>
 import { Button, Select } from "primevue";
 import { reactive, ref, defineProps, onMounted } from "vue";
-import PaymentSchedule from "./PaymentSchedule.vue";
 import { currencies } from "@/constants";
-import moment from "moment";
 import { Head } from "@inertiajs/vue3";
+import PaymentSchedule from "./PaymentSchedule.vue";
+import moment from "moment";
+
 const props = defineProps({
     agreement: Object,
 });
@@ -108,7 +111,7 @@ const form = reactive({
     payment_schedules: props.agreement?.payment_schedules?.map((v) => {
         return {
             ...v,
-            due_date: moment(v.due_date, "DD/MM/YYYY").toDate(),
+            due_date: moment(v.due_date, "YYYY/MM/DD").toDate(),
         };
     }) ?? [
         {
