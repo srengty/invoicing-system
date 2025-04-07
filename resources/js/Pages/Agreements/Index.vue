@@ -138,7 +138,6 @@ list agreement
                             />
                         </template>
                     </Column>
-
                     <!-- column for Total Amount -->
                     <Column
                         v-if="col.field === 'amount'"
@@ -602,18 +601,19 @@ list agreement
         </div>
     </GuestLayout>
 </template>
+
 <script setup>
 import ChooseColumns from "@/Components/ChooseColumns.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import PaymentSchedule from "./PaymentSchedule.vue";
 import { ref, watch, computed } from "vue";
-import moment from "moment";
 import { Head, Link, router } from "@inertiajs/vue3";
-import axios from "axios";
 import { debounce } from "lodash";
 import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
-import PaymentSchedule from "./PaymentSchedule.vue";
+import moment from "moment";
+import axios from "axios";
 import {
     DataTable,
     Column,
@@ -630,6 +630,7 @@ import {
     ProgressSpinner,
     Card,
 } from "primevue";
+
 const toast = useToast();
 const props = defineProps({
     agreements: {
@@ -772,7 +773,7 @@ const showProgressPayments = (agreement) => {
         selectedAgreement.value = { ...agreement };
         selectedProgressPayments.value = [
             ...(agreement.progress_payments || []),
-        ]; // Copy array
+        ];
         progressPaymentsDialog.value = true;
     } catch (error) {
         console.error("Error showing progress payments:", error);

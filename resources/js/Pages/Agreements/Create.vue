@@ -141,7 +141,6 @@
                                 size="small"
                                 readonly
                             />
-                            <!-- <FileUpload name="agreement_doc" auto customUpload @select="onFileSelect" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/> -->
                             <span class="text-sm required">Agreement doc</span>
                             <FileUpload
                                 name="agreement_doc"
@@ -194,7 +193,15 @@
                                                 target="_blank"
                                             >
                                                 {{
-                                                    item.name || "document.pdf"
+                                                    item.name
+                                                        ? item.name.slice(
+                                                              0,
+                                                              20
+                                                          ) +
+                                                          (item.name.length > 20
+                                                              ? "..."
+                                                              : "")
+                                                        : "document.pdf"
                                                 }}
                                             </a>
                                             <Button
@@ -326,13 +333,23 @@
                                                 <i
                                                     class="pi pi-file-pdf text-red-500"
                                                 ></i>
-                                                <!-- Link for the attachment -->
                                                 <a
                                                     :href="item.path"
                                                     target="_blank"
                                                     class="text-sm font-medium text-blue-500 hover:underline"
                                                 >
-                                                    {{ item.name }}
+                                                    {{
+                                                        item.name
+                                                            ? item.name.slice(
+                                                                  0,
+                                                                  20
+                                                              ) +
+                                                              (item.name
+                                                                  .length > 10
+                                                                  ? "..."
+                                                                  : "")
+                                                            : "document.pdf"
+                                                    }}
                                                 </a>
                                             </div>
                                             <button
@@ -385,9 +402,9 @@
                         type="submit"
                         raised
                         class="w-full md:w-28"
-                        :disabled="isStoringAgreement"
                         icon="pi pi-check"
                         size="small"
+                        :disabled="isStoringAgreement"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -406,6 +423,9 @@
 
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import PaymentSchedule from "./PaymentSchedule.vue";
+import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import { Head, router, Link } from "@inertiajs/vue3";
 import { Form } from "@primevue/forms";
 import { useToast } from "primevue/usetoast";
@@ -431,9 +451,6 @@ import {
     Textarea,
     Breadcrumb,
 } from "primevue";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import PaymentSchedule from "./PaymentSchedule.vue";
-import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 
 const toast = useToast();
 // The Breadcrumb Quotations

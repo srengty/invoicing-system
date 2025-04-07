@@ -73,12 +73,12 @@
 </template>
 
 <script setup>
-import { Button, Select } from "primevue";
+import PaymentSchedule from "./PaymentSchedule.vue";
 import { reactive, ref, defineProps, onMounted } from "vue";
 import { currencies } from "@/constants";
 import { Head } from "@inertiajs/vue3";
-import PaymentSchedule from "./PaymentSchedule.vue";
 import moment from "moment";
+import { Button, Select } from "primevue";
 
 const props = defineProps({
     agreement: Object,

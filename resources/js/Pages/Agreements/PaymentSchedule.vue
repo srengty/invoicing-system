@@ -144,11 +144,11 @@
 </template>
 
 <script setup>
+import AddPayment from "@/Components/Agreements/AddPayment.vue";
 import { ref, defineModel, computed, onMounted } from "vue";
 import { currencies } from "@/constants";
-import moment from "moment";
-import AddPayment from "@/Components/Agreements/AddPayment.vue";
 import { useToast } from "primevue/usetoast";
+import moment from "moment";
 import {
     DataTable,
     Column,

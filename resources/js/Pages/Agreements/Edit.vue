@@ -19,14 +19,13 @@
         <div class="edit-agreement pl-4 pr-4">
             <Toast />
             <Form @submit="submitForm" :initial-values="form" class="mt-6">
-                <div class="flex flex-row justify-between gap-4">
+                <div class="flex flex-row justify-between gap-2">
                     <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
                                 >Record Agreement</span
                             >
-
                             <!-- Quotation No -->
                             <span class="text-sm">Quotation No.</span>
                             <InputText
@@ -115,7 +114,7 @@
                                 accept="application/pdf"
                                 @before-upload="beforeUploadAgreementDoc"
                                 @upload="onUploadAgreementDoc"
-                                chooseLabel="Upload Agreement Doc(s)"
+                                chooseLabel="Upload Agreement PDF"
                                 class="custom-file-upload w-full h-9"
                             >
                                 <template #chooseicon>
@@ -124,42 +123,55 @@
                             </FileUpload>
 
                             <!-- Attachments List -->
-                            <DataView :value="form.agreement_doc" class="w-full">
+                            <DataView
+                                :value="agreementDocs"
+                                class="col-span-2 mt-2"
+                            >
                                 <template #list="slotProps">
-                                    <div class="space-y-2">
+                                    <div class="grid gap-3 w-full">
                                         <div
                                             v-for="(
                                                 item, index
                                             ) in slotProps.items"
                                             :key="index"
-                                            class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                                            class="border border-gray-200 rounded-lg p-3 flex items-center hover:bg-gray-50 transition-colors"
                                         >
                                             <span
-                                                class="text-xs font-medium text-gray-700 mr-3"
+                                                class="text-sm font-medium text-gray-700 mr-5"
                                             >
-                                                Agreement Doc:{{ index + 1 }}
+                                                Agreement Doc {{ index + 1 }}:
                                             </span>
-                                            <div
-                                                class="flex items-center gap-2"
+                                            <i
+                                                class="pi pi-file-pdf mr-2 text-red-500"
+                                            ></i>
+                                            <a
+                                                class="hover:underline text-sm hover:text-blue-600 flex items-center text-blue-500"
+                                                :href="item.path"
+                                                target="_blank"
                                             >
-                                                <i
-                                                    class="pi pi-file-pdf text-red-500"
-                                                ></i>
-                                                <a
-                                                    class="text-sm font-medium text-blue-500 hover:underline"
-                                                    :href="item.path"
-                                                    target="_blank"
-                                                >
-                                                    {{ item.name }}
-                                                </a>
-                                            </div>
-                                            <button
-                                                @click="removeAgreementDoc(index)"
-                                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-                                                v-tooltip="'Remove attachment'"
-                                            >
-                                                <i class="pi pi-times"></i>
-                                            </button>
+                                                {{
+                                                    item.name
+                                                        ? item.name.slice(
+                                                              0,
+                                                              20
+                                                          ) +
+                                                          (item.name.length > 20
+                                                              ? "..."
+                                                              : "")
+                                                        : "document.pdf"
+                                                }}
+                                            </a>
+                                            <Button
+                                                @click="
+                                                    removeAgreementDoc(index)
+                                                "
+                                                icon="pi pi-times"
+                                                text
+                                                rounded
+                                                severity="danger"
+                                                class="ml-auto hover:bg-red-50"
+                                                v-tooltip="'Remove document'"
+                                            />
                                         </div>
                                     </div>
                                 </template>
@@ -170,8 +182,8 @@
                                         <i
                                             class="pi pi-inbox text-2xl text-gray-400 mb-2"
                                         ></i>
-                                        <p class="text-sm text-gray-500">
-                                            No attachments added
+                                        <p class="text-gray-500">
+                                            No agreement document uploaded
                                         </p>
                                     </div>
                                 </template>
@@ -274,6 +286,7 @@
                                             :key="index"
                                             class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                                         >
+                                            <!-- Display "Attachment {{ index + 1 }}" -->
                                             <span
                                                 class="text-xs font-medium text-gray-700 mr-3"
                                             >
@@ -286,16 +299,27 @@
                                                     class="pi pi-file-pdf text-red-500"
                                                 ></i>
                                                 <a
-                                                    class="text-sm font-medium text-blue-500 hover:underline"
                                                     :href="item.path"
                                                     target="_blank"
+                                                    class="text-sm font-medium text-blue-500 hover:underline"
                                                 >
-                                                    {{ item.name }}
+                                                    {{
+                                                        item.name
+                                                            ? item.name.slice(
+                                                                  0,
+                                                                  20
+                                                              ) +
+                                                              (item.name
+                                                                  .length > 10
+                                                                  ? "..."
+                                                                  : "")
+                                                            : "document.pdf"
+                                                    }}
                                                 </a>
                                             </div>
                                             <button
                                                 @click="removeAttachment(index)"
-                                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                                                class="text-red-500 text-sm hover:text-red-700 p-1 rounded-full hover:bg-red-50"
                                                 v-tooltip="'Remove attachment'"
                                             >
                                                 <i class="pi pi-times"></i>
@@ -326,19 +350,6 @@
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
                 />
-                <!-- Exchange Rate (if needed) -->
-                <!-- <div
-                    class="flex justify-end items-center gap-2 my-2 px-24"
-                    v-if="hasManyCurrencies"
-                >
-                    <label for="agreement_exchange_rate" class="required"
-                        >Exchange rate</label
-                    >
-                    <InputText
-                        id="agreement_exchange_rate"
-                        v-model="schedule.exchange_rate"
-                    ></InputText>
-                </div> -->
                 <!-- Save Button -->
                 <div class="flex justify-end gap-2 mt-10">
                     <Button
@@ -365,11 +376,17 @@
 </template>
 
 <script setup>
-import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import PaymentSchedule from "./PaymentSchedule.vue";
+import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { ref, computed, onMounted } from "vue";
 import { usePage } from "@inertiajs/vue3";
+import { Form } from "@primevue/forms";
+import { useToast } from "primevue/usetoast";
+import { currencies } from "@/constants";
+import moment from "moment";
 import {
     Button,
     DatePicker,
@@ -383,18 +400,11 @@ import {
     DataView,
     Toast,
     Textarea,
+    Breadcrumb,
 } from "primevue";
-import { Form } from "@primevue/forms";
-import { useToast } from "primevue/usetoast";
-import Breadcrumb from "primevue/breadcrumb";
-import PaymentSchedule from "./PaymentSchedule.vue";
-import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
-import { currencies } from "@/constants";
-import moment from "moment";
 
 const toast = useToast();
 const page = usePage();
-
 const props = defineProps({
     agreement: Object,
     customers: Array,
