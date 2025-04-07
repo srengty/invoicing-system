@@ -79,7 +79,7 @@
                             <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -193,7 +193,7 @@
                             <!-- Start Date -->
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -203,7 +203,7 @@
                             <!-- End Date -->
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -660,7 +660,6 @@ const checkDuplicateReference = async () => {
 
 const submitForm = () => {
     processing.value = true;
-
     // Helper function to format dates consistently
     const formatDate = (date) => {
         if (!date) return null;
@@ -735,11 +734,11 @@ const cancelChanges = () => {
     });
 };
 const formatNumber = (value, decimals = 2) => {
-  if (isNaN(value)) return '0.00';
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  });
+    if (isNaN(value)) return "0.00";
+    return value.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
 };
 </script>
 

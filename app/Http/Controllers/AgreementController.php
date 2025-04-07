@@ -41,6 +41,7 @@ class AgreementController extends Controller
      */
     public function store(Request $request)
     {
+        //dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
             'agreement_doc' => 'required|array|min:1',
@@ -50,19 +51,14 @@ class AgreementController extends Controller
             'customer_id' => 'required',
             'currency' => 'required',
         ]);
-        //dd($request->all());
+        // catch exchange_rate from quotations
+        $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
+        $exchangeRate = $quotation?->exchange_rate ?? 4100;
+
         $data = $request->except('payment_schedule')+[
             'amount' => $request->agreement_amount,
             'agreement_reference_no' => $request->agreement_reference_no
         ];
-        // $data['agreement_doc'] = json_encode([
-        //     'path' => $request->agreement_doc['path'],
-        //     'name' => $request->agreement_doc['name'],
-        //     'size' => $request->agreement_doc['size'],
-        //     'mime_type' => $request->agreement_doc['mime_type']
-        // ]);
-        // $data['agreement_doc'] = json_encode($request->agreement_doc);
-        // $data['attachments'] = json_encode($request->attachments);
         $data['agreement_doc'] = json_encode(
             collect($request->agreement_doc)->map(function ($doc) {
                 return [
@@ -94,6 +90,7 @@ class AgreementController extends Controller
                 'percentage' => $value['percentage'],
                 'short_description' => $value['short_description'],
                 'currency' => $value['currency'],
+                'exchange_rate' => $value['exchange_rate'] ?? ($value['currency'] === 'KHR' ? $exchangeRate : 1),
             ]);
             $schedule->save();
             // $value['agreement_no'] = $request->agreement_no;
@@ -110,6 +107,7 @@ class AgreementController extends Controller
         $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
         return response()->json($agreement);  // Debugging line
     }
+
     public function print(int $id)
     {
         // dd("Hello");
@@ -159,6 +157,10 @@ class AgreementController extends Controller
             'payment_schedule.*.amount' => 'required|numeric|min:0',
             'payment_schedule.*.percentage' => 'required|numeric|min:0|max:100',
         ]);
+
+        // catch exchange rate from quotations
+        $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
+        $exchangeRate = $quotation?->exchange_rate ?? 4100;
 
         // Find the agreement
         $agreement = Agreement::where('agreement_no', $agreement_no)->firstOrFail();
@@ -259,7 +261,6 @@ class AgreementController extends Controller
         return response()->json(['error' => 'No file uploaded'], 400);
     }
 
-
     /**
      * Remove the specified resource from storage.
      */
@@ -281,24 +282,28 @@ class AgreementController extends Controller
 
         return response()->json(null); // Return null if no agreement found
     }
+
     public function searchQuotation(Request $request)
     {
         $quotationNo = $request->input('quotation_no');
         $quotation = Quotation::where('quotation_no', $quotationNo)
-                              ->with('customer') // Ensure the customer is loaded
+                              ->with('customer')
                               ->first();
 
         if ($quotation) {
             return response()->json([
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->customer->address,
-                'customer_id' => $quotation->customer->id, // Include the customer_id
-                'agreement_amount' => $quotation->total, // Replace 'total' with the field name you want
+                'customer_id' => $quotation->customer->id,
+                'agreement_amount' => $quotation->total,
+                'currency' => $quotation->currency,
+                'exchange_rate' => $quotation->exchange_rate,
             ]);
         }
 
         return response()->json(['error' => 'Quotation not found'], 404);
     }
+
     public function checkDuplicateReference(Request $request)
     {
         $request->validate([

@@ -11,7 +11,6 @@
                 >Total agreement amount</label
             >
         </FloatLabel>
-
         <FloatLabel variant="on">
             <DatePicker
                 id="due_date"
@@ -22,7 +21,6 @@
             />
             <label for="due_date" class="required">Due date </label>
         </FloatLabel>
-
         <FloatLabel variant="on">
             <Textarea
                 id="short_description"
@@ -33,7 +31,6 @@
                 >Short description</label
             >
         </FloatLabel>
-
         <FloatLabel variant="on">
             <InputGroup id="percentage">
                 <InputNumber
@@ -48,7 +45,6 @@
             </InputGroup>
             <label for="percentage" class="required z-10">Percentage</label>
         </FloatLabel>
-
         <FloatLabel variant="on">
             <InputGroup id="amount">
                 <InputGroupAddon>{{
@@ -120,6 +116,9 @@
 </template>
 
 <script setup>
+import { onMounted, ref } from "vue";
+import { currencies } from "@/constants";
+import { useToast } from "primevue/usetoast";
 import {
     FloatLabel,
     InputText,
@@ -134,9 +133,6 @@ import {
     Toast,
     Dropdown,
 } from "primevue";
-import { onMounted, ref } from "vue";
-import { currencies } from "@/constants";
-import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const maxPercentage = ref(100);

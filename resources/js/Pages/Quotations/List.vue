@@ -21,7 +21,7 @@
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
-        <div class="quotations text-sm">
+        <div class="quotations text-sm p-4">
             <!-- <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
             </div> -->
@@ -214,13 +214,7 @@
                                     size="small"
                                     outlined
                                 />
-                                <div
-                                    v-tooltip.top="
-                                        slotProps.data.status === 'Pending'
-                                            ? 'Printing is disabled for pending quotations'
-                                            : ''
-                                    "
-                                >
+                                <div>
                                     <Button
                                         icon="pi pi-print"
                                         aria-label="Print out"
@@ -230,10 +224,10 @@
                                         "
                                         size="small"
                                         outlined
-                                        :disabled="
-                                            slotProps.data.status === 'Pending'
-                                        "
                                     />
+                                    <!-- :disabled="
+                                            slotProps.data.status === 'Pending'
+                                        " -->
                                 </div>
                             </div>
                         </template>
@@ -340,7 +334,9 @@
                         <p>
                             <strong>Total:</strong>
                             {{ formatCurrency(selectedQuotation.total) }}
-                            <span class="text-xs text-gray-500 ml-1">(KHR)</span>
+                            <span class="text-xs text-gray-500 ml-1"
+                                >(KHR)</span
+                            >
                         </p>
                         <p v-if="selectedQuotation.comment">
                             <strong>Comment:</strong>

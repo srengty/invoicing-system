@@ -130,15 +130,15 @@ list agreement
                     >
                         <template #body="slotProps">
                             <Tag
-                                :value="slotProps.data.status"
+                                :value="getStatusLabel(slotProps.data.status)"
                                 :severity="
                                     getStatusSeverity(slotProps.data.status)
                                 "
-                                :icon="getStatusIcon(slotProps.data.status)"
-                                rounded
+                                style="text-transform: uppercase"
                             />
                         </template>
                     </Column>
+
                     <!-- column for Total Amount -->
                     <Column
                         v-if="col.field === 'amount'"
@@ -270,7 +270,7 @@ list agreement
                     </Column>
                 </template>
             </DataTable>
-            <!-- Progress Payment Dialog -->
+            <!-- Total Progress Payment Dialog -->
             <Dialog
                 v-model:visible="progressPaymentsDialog"
                 :style="{ width: '40vw' }"
@@ -320,9 +320,18 @@ list agreement
                             <div class="col-12 md:col-6 lg:col-3">
                                 <div class="field flex gap-2">
                                     <label class="font-semibold">Status:</label>
-                                    <div>
-                                        {{ selectedAgreement?.status }}
-                                    </div>
+                                    <Tag
+                                        :value="
+                                            getStatusLabel(
+                                                selectedAgreement?.status
+                                            )
+                                        "
+                                        :severity="
+                                            getStatusSeverity(
+                                                selectedAgreement?.status
+                                            )
+                                        "
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -505,6 +514,23 @@ list agreement
                                     </div>
                                 </div>
                             </div>
+                            <div class="col-12 md:col-6 lg:col-3">
+                                <div class="field flex gap-2">
+                                    <label class="font-semibold">Status:</label>
+                                    <Tag
+                                        :value="
+                                            getStatusLabel(
+                                                selectedAgreement?.status
+                                            )
+                                        "
+                                        :severity="
+                                            getStatusSeverity(
+                                                selectedAgreement?.status
+                                            )
+                                        "
+                                    />
+                                </div>
+                            </div>
                         </div>
                         <Divider class="my-4" />
                         <!-- Payment Schedule Section -->
@@ -587,6 +613,7 @@ import axios from "axios";
 import { debounce } from "lodash";
 import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
+import PaymentSchedule from "./PaymentSchedule.vue";
 import {
     DataTable,
     Column,
@@ -603,8 +630,6 @@ import {
     ProgressSpinner,
     Card,
 } from "primevue";
-import PaymentSchedule from "./PaymentSchedule.vue";
-
 const toast = useToast();
 const props = defineProps({
     agreements: {
@@ -663,7 +688,7 @@ const updateColumns = (columns) => {
 const openCreate = () => {
     router.get(route("agreements.create"));
 };
-const formatDate = (date, format = "YYYY-MM-DD") => {
+const formatDate = (date, format = "YYYY-DD-MM") => {
     if (!date) return "N/A";
     return moment(date).format(format);
 };
@@ -792,34 +817,34 @@ const viewAgreementDetails = async (agreement) => {
         });
     }
 };
-// Status-specific styling
+
 const getStatusSeverity = (status) => {
-    switch (status?.toLowerCase()) {
-        case 'open': return 'success';
-        case 'closed': return 'danger';
-        case 'abnormal closed': return 'info';
-        default: return 'warning';
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+        case "OPEN":
+            return "success";
+        case "CLOSED":
+            return "danger";
+        case "ABNORMAL CLOSED":
+            return "info";
+        default:
+            return "warning";
     }
 };
 
-const getStatusIcon = (status) => {
-    switch (status?.toLowerCase()) {
-        case 'open': return 'pi pi-lock-open';
-        case 'closed': return 'pi pi-check-circle';
-        case 'abnormal closed': return 'pi pi-exclamation-triangle';
-        default: return 'pi pi-question-circle';
+const getStatusLabel = (status) => {
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+        case "OPEN":
+            return "Open";
+        case "CLOSED":
+            return "Closed";
+        case "ABNORMAL CLOSED":
+            return "Abnormal Closed";
+        default:
+            return status || "Unknown";
     }
 };
 </script>
-<style scoped>
-/* Custom tag styling */
-.p-tag {
-    border: 1px solid !important;
-    font-weight: 500;
-}
 
-/* Status-specific border colors */
-.p-tag-success { border-color: var(--green-600) !important; }
-.p-tag-info { border-color: var(--blue-600) !important; }
-.p-tag-danger { border-color: var(--red-600) !important; }
-</style>
+<style scoped></style>

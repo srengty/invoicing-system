@@ -18,9 +18,6 @@
         </div>
         <div class="create-agreement pl-4 pr-4">
             <Toast />
-            <!-- <h1 class="text-2xl">
-                {{ props.edit ? "Update" : "Create" }} Agreement
-            </h1> -->
             <Form
                 @submit="submit"
                 :action="route('agreements.store')"
@@ -469,7 +466,6 @@ const props = defineProps({
     agreement: Object,
     edit: Boolean,
 });
-
 const riels = computed({
     get: () => form.currency === "KHR",
     set: (value) => {
@@ -477,13 +473,10 @@ const riels = computed({
         schedule.value.exchange_rate = value ? 4100 : 1;
     },
 });
-
 const updateAgreementAmount = () => {
     if (form.currency === "USD") {
-        // If USD is selected, the amount remains as is
         schedule.value.agreement_amount = form.agreement_amount;
     } else if (form.currency === "KHR") {
-        // If KHR is selected, apply the exchange rate
         schedule.value.agreement_amount =
             form.agreement_amount * schedule.value.exchange_rate;
     }
@@ -512,7 +505,7 @@ const customerName = ref("");
 const address = ref("");
 const searchQuotation = async () => {
     if (form.quotation_no) {
-        console.log("Searching for quotation no:", form.quotation_no);
+        // console.log("Searching for quotation no:", form.quotation_no);
         try {
             const response = await axios.get("/search-quotation", {
                 params: { quotation_no: form.quotation_no },
@@ -525,24 +518,21 @@ const searchQuotation = async () => {
                 form.agreement_amount = response.data.agreement_amount;
                 schedule.value.agreement_amount =
                     response.data.agreement_amount;
-
-                // Set the exchange rate based on quotation currency
                 if (response.data.currency === "USD") {
                     schedule.value.exchange_rate =
                         response.data.exchange_rate || 4100;
-                    riels.value = false; // ✅ this will auto-update form.currency to KHR
+                    riels.value = false;
                 } else {
                     schedule.value.exchange_rate = 1;
-                    riels.value = true; // ✅ this will auto-update form.currency to USD
+                    riels.value = true;
                 }
             } else {
-                // Handle case where no quotation is found
                 customerName.value = "";
                 form.address = "";
                 form.customer_id = null;
                 form.agreement_amount = 0;
                 schedule.value.agreement_amount = 0;
-                schedule.value.exchange_rate = 1; // Default exchange rate for USD
+                schedule.value.exchange_rate = 1;
             }
         } catch (error) {
             console.error("Error fetching quotation", error);
@@ -552,15 +542,13 @@ const searchQuotation = async () => {
 watch(
     () => form.quotation_no,
     (newVal) => {
-        // Debounce the search to avoid too many requests
         const timer = setTimeout(() => {
             searchQuotation();
-        }, 500); // 500ms delay to avoid excessive requests
+        }, 500);
 
         return () => clearTimeout(timer);
     }
 );
-
 const schedule = ref({
     agreement_amount: form.agreement_amount,
     due_date: new Date(),
@@ -572,7 +560,6 @@ const schedule = ref({
     agreement_currency: "KHR",
     exchange_rate: 4200,
 });
-
 // Form data
 const totalAgreement = ref(10000); // Set your default total amount
 const dueDate = ref();
@@ -594,7 +581,6 @@ const calculateAmount = () => {
         amount.value = null;
     }
 };
-
 const remainingAmount = computed(() => {
     return (
         schedule.value.agreement_amount -
@@ -669,7 +655,6 @@ onMounted(() => {
                 };
             }
         );
-
         // Initialize attachments
         const parsedAttachments = JSON.parse(
             props.agreement.attachments ?? "[]"
@@ -805,7 +790,6 @@ const onUpload = (e) => {
         console.error("Agreement doc upload error:", error);
     }
 };
-
 const removeAgreementDoc = (index) => {
     form.agreement_doc.splice(index, 1);
     agreementDocs.value.splice(index, 1);
@@ -817,7 +801,6 @@ const removeAgreementDoc = (index) => {
         life: 3000,
     });
 };
-
 const onUploadAttachments = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
@@ -851,7 +834,6 @@ const onUploadAttachments = (e) => {
         console.error("Attachment upload error:", error);
     }
 };
-
 const removeAttachment = (index) => {
     form.attachments.splice(index, 1);
     toast.add({
@@ -861,7 +843,6 @@ const removeAttachment = (index) => {
         life: 3000,
     });
 };
-
 const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -869,12 +850,10 @@ const formatFileSize = (bytes) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
-
 const beforeUpload = (e) => {
     e.formData.append("agreement_doc_old", form.agreement_doc?.path || "");
     e.formData.append("_token", page.props.csrf_token); // CSRF token is essential
 };
-
 const beforeUploadAttachment = (e) => {
     e.formData.enctype = "multipart/form-data";
     e.formData.append("_token", page.props.csrf_token);
@@ -936,8 +915,8 @@ const checkDuplicateReference = async () => {
         console.error("Error checking reference:", error);
     }
 };
-const formatDate = (date, format = 'YYYY-MM-DD') => {
-    if (!date) return 'N/A';
+const formatDate = (date, format = "YYYY-DD-MM") => {
+    if (!date) return "N/A";
     return moment(date).format(format);
 };
 </script>
