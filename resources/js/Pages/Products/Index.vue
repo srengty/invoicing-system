@@ -63,7 +63,9 @@
             >
                 <Column header="Division">
                     <template #body="{ data }">
-                        {{ getDivisionDisplay(data.division_id) }}
+                        {{
+                            getDivisionDisplay(data.division_id) || "Short Text"
+                        }}
                     </template>
                 </Column>
                 <Column header="Category">
@@ -427,13 +429,12 @@
                                     placeholder="Select Category"
                                 />
                                 <Message
-                                    v-if="form.errors.category_id"
+                                    v-if="form.errors.division_id"
                                     severity="error"
                                     size="small"
                                     variant="simple"
-                                    class="col-span-2"
                                 >
-                                    {{ form.errors.category_id }}
+                                    {{ form.errors.division_id }}
                                 </Message>
                             </div>
 
@@ -689,13 +690,22 @@
                 </div>
             </Dialog>
         </div>
-        <!-- </BodyLayout> -->
     </GuestLayout>
 </template>
 
 <script setup>
-import { Head, Link } from "@inertiajs/vue3";
+import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from "@/Layouts/BodyLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { Head, Link } from "@inertiajs/vue3";
+import { ref, computed, onMounted } from "vue";
+import { useForm } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
+import { router } from "@inertiajs/vue3";
+import { getDepartment } from "../../data";
+import { usePage } from "@inertiajs/vue3";
+import { route } from "ziggy-js";
 import {
     DataTable,
     Column,
@@ -704,20 +714,11 @@ import {
     InputText,
     InputNumber,
     Select,
+    Message,
+    Dropdown,
+    Breadcrumb,
+    Toast,
 } from "primevue";
-import Message from "primevue/message";
-import { ref, computed, onMounted } from "vue";
-import { useForm } from "@inertiajs/vue3";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { useToast } from "primevue/usetoast";
-import Toast from "primevue/toast";
-import { useConfirm } from "primevue/useconfirm";
-import { router } from "@inertiajs/vue3";
-import { getDepartment } from "../../data";
-import Dropdown from "primevue/dropdown";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -804,6 +805,22 @@ const reloadData = () => {
         preserveScroll: true,
         preserveState: false,
     });
+};
+const setFormData = (product) => {
+    form.id = product.id;
+    form.division_id = product.division_id;
+    form.category_id = product.category_id;
+    form.code = product.code;
+    form.name = product.name;
+    form.name_kh = product.name_kh;
+    form.unit = product.unit;
+    form.price = product.price;
+    form.desc = product.desc || "";
+    form.desc_kh = product.desc_kh || "";
+    form.acc_code = product.acc_code || "73048 ផលពីសេវាផ្សេងៗ";
+    form.pdf_url = product.pdf_url || "";
+    form.remark = product.remark || "";
+    form.pdf = null; // Always reset file
 };
 
 const showToast = (operation, status) => {
@@ -954,23 +971,12 @@ const form = useForm({
 // Open product form
 const openForm = (product = null) => {
     form.reset();
+    form.clearErrors();
 
     if (product) {
-        // Set all product data including nullable fields
-        form.id = product.id;
-        form.division_id = product.division_id;
-        form.code = product.code;
-        form.acc_code = product.acc_code || "73048 ផលពីសេវាផ្សេងៗ";
-        form.name = product.name;
-        form.name_kh = product.name_kh;
-        form.desc = product.desc || null;
-        form.desc_kh = product.desc_kh || null;
-        form.unit = product.unit;
-        form.price = product.price;
-        form.category_id = product.category_id;
-        form.pdf_url = product.pdf_url || null;
-        form.remark = product.remark || null;
-        form.pdf = null; // Reset file upload
+        setFormData(product);
+    } else {
+        form.acc_code = "73048 ផលពីសេវាផ្សេងៗ"; // Default for new
     }
 
     isFormVisible.value = true;
@@ -1047,7 +1053,14 @@ const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
 const submitForm = () => {
-    if (!form) {
+    console.log(form);
+    if (
+        !form.division_id ||
+        !form.category_id ||
+        !form.code ||
+        !form.name ||
+        !form.name_kh
+    ) {
         toast.add({
             group: "tc",
             severity: "error",
@@ -1059,7 +1072,9 @@ const submitForm = () => {
     }
 
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
+    const rawData = form.data();
+
+    Object.entries(rawData).forEach(([key, value]) => {
         if (value !== null && key !== "pdf") {
             formData.append(key, value);
         }
@@ -1067,11 +1082,14 @@ const submitForm = () => {
     if (form.pdf) {
         formData.append("pdf", form.pdf);
     }
+    console.log(
+        "Submitting form data:",
+        Object.fromEntries(formData.entries())
+    );
 
     if (form.id) {
-        formData.append('_method', 'PUT'); // Laravel needs this for PUT requests with FormData
-
-        router.put(route('products.update', form.id), formData, {
+        formData.append("_method", "PUT"); // Laravel needs this for PUT requests with FormData
+        router.post(route("products.update", form.id), formData, {
             forceFormData: true,
             onSuccess: () => {
                 showToast("update", "success");
@@ -1083,7 +1101,8 @@ const submitForm = () => {
                 console.error("Update errors:", errors);
             },
         });
-    } else {  // If form.id is not set, create a new product
+    } else {
+        // If form.id is not set, create a new product
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
