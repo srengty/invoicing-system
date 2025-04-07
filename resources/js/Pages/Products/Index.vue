@@ -1047,19 +1047,6 @@ const toggleStatus = (product) => {
 const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
-// Computed property to filter products based on the search type and search term
-// const filteredProducts = computed(() => {
-//   return products.filter((product) => {
-//     const term = searchTerm.value.toLowerCase();
-//     if (searchType.value === "name_kh") {
-//       return product.name_kh.toLowerCase().includes(term);
-//     } else if (searchType.value === "code") {
-//       return product.code.toLowerCase().includes(term);
-//     }
-//     return false;
-//   });
-// });
-
 const submitForm = () => {
     if (!form) {
         toast.add({

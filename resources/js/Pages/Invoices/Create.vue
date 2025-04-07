@@ -2,10 +2,24 @@
   <meta name="_token" content="{{ csrf_token() }}" />
   <Head title="Create Invoice" />
   <GuestLayout>
-    <div class="create-invoice">
+    <NavbarLayout/>
+    <div class="py-3">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                    >
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
+        </div>
+
+    <div class="create-invoice text-sm">
       <!-- Header Section with Buttons -->
-      <div class="flex justify-between items-center p-3 mr-4">
-        <h1 class="text-2xl">Create Invoice</h1>
+      <div class="flex justify-end items-center p-3 mr-4">
         <div class="flex gap-4">
           <Button
             label="Add Product"
@@ -13,7 +27,7 @@
             class="p-button-success"
             type="button"
             @click="showProductModal = true"
-            rounded
+            size="small"
           />
           <Button
             label="Save Invoice"
@@ -21,16 +35,16 @@
             class="p-button-success"
             type="button"
             @click="submitInvoice"
-            rounded
+            size="small"
           />
         </div>
       </div>
 
       <!-- Invoice Form Section -->
       <form @submit.prevent="submitInvoice">
-        <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
+        <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm">
           <div>
-            <label for="quotation_no" class="block text-lg font-medium">Quotation No</label>
+            <label for="quotation_no" class="block font-medium">Quotation No</label>
             <Select
               v-model="form.quotation_no"
               :options="quotations"
@@ -42,31 +56,36 @@
             />
           </div>
           <div>
-            <label for="agreement_no" class="block text-lg font-medium">Agreement No</label>
-            <Select
-              v-model="form.agreement_no"
-              :options="form.agreement_no || !form.quotation_no
-              ? agreements:agreements.filter(a => a.status === 'Open')"
-              optionLabel="agreement_no"
-              optionValue="agreement_no"
-              placeholder="Select Agreement"
-              class="w-full"
-              required
-            />
+              <label for="agreement_no" class="block font-medium">Agreement No</label>
+              <Select
+                v-model="form.agreement_no"
+                :options="form.agreement_no || !form.quotation_no
+                ? agreements:agreements.filter(a => a.status === 'Open')"
+                optionLabel="agreement_no"
+                optionValue="agreement_no"
+                placeholder="Select Agreement"
+                class="w-full"
+              />
+            </div>
+          <div class="">
+              <div class="">
+                <label for="deposit_no" class="block font-medium">Receipt No (for deposit)</label>
+                <div class="flex w-full gap-3">
+                  <InputText
+                    id="deposit_no"
+                    v-model="form.deposit_no"
+                    class="w-2/3"
+                    placeholder="Enter deposit number"
+                    size="small"
+                    required
+                    
+                  />
+                  <Button class="text-sm p-button-info w-1/3" size="small">Add Receipt</Button>
+              </div>
+            </div>
           </div>
           <div>
-            <label for="deposit_no" class="block text-lg font-medium">Receipt No (for deposit)</label>
-            <InputText
-              id="deposit_no"
-              v-model="form.deposit_no"
-              class="w-1/2"
-              placeholder="Enter deposit number"
-              required
-            />
-            <Button class="w-1/3 ml-4 p-button-info" rounded>Add Receipt</Button>
-          </div>
-          <div>
-            <label for="customer_id" class="block text-lg font-medium">Customer</label>
+            <label for="customer_id" class="block  font-medium">Customer</label>
             <Select
               v-model="form.customer_id"
               :options="customers"
@@ -78,7 +97,7 @@
             />
           </div>
           <div>
-            <label for="status" class="block text-lg font-medium">Status</label>
+            <label for="status" class="block font-medium">Status</label>
             <Select
               v-model="form.status"
               :options="statusOptions"
@@ -90,30 +109,32 @@
             />
           </div>
           <div>
-            <label for="address" class="block text-lg font-medium">Address</label>
+            <label for="address" class="block font-medium">Address</label>
             <InputText
               id="address"
               v-model="form.address"
               class="w-full"
               placeholder="Enter address"
+              size="small"
             />
           </div>
           <div>
-            <label for="phone" class="block text-lg font-medium">Phone</label>
+            <label for="phone" class="block font-medium">Phone</label>
             <InputText
               id="phone"
               v-model="form.phone"
               class="w-full"
               placeholder="Enter phone number"
+              size="small"
             />
           </div>
           <div>
-            <label for="start_date" class="block text-lg font-medium">Date</label>
-            <DatePicker id="start_date" v-model="form.start_date" class="w-full" placeholder="Select date" />
+            <label for="start_date" class="block font-medium">Date</label>
+            <DatePicker id="start_date" v-model="form.start_date" class="w-full" placeholder="Select date" size="small"/>
           </div>
           <div>
-            <label for="end_date" class="block text-lg font-medium">Due Date</label>
-            <DatePicker id="end_date" v-model="form.end_date" class="w-full" placeholder="Select due date" />
+            <label for="end_date" class="block font-medium">Due Date</label>
+            <DatePicker id="end_date" v-model="form.end_date" class="w-full" placeholder="Select due date" size="small"/>
           </div>
         </div>
       </form>
@@ -197,11 +218,14 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select } from 'primevue';
+import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select, Calendar } from 'primevue';
 import { usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { Inertia } from '@inertiajs/inertia';
+import Breadcrumb from "primevue/breadcrumb";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+
 
 const { products, agreements, quotations, customers, product_quotations } = usePage().props;
 
@@ -220,6 +244,16 @@ const form = useForm({
   status: '',
   productQuotations:[], 
 });
+const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
+    { label: page.props.title || "Invoices", to: route("invoices.index") },
+    { label: page.props.title || "Create Invoices", to: route("invoices.create") },
+]);
 
 const statusOptions = [
   { label: 'Pending', value: 'Pending' },
