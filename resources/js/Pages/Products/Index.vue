@@ -1071,7 +1071,7 @@ const submitForm = () => {
     if (form.id) {
         formData.append('_method', 'PUT'); // Laravel needs this for PUT requests with FormData
         
-        router.post(route('products.update', form.id), formData, {
+        router.put(route('products.update', form.id), formData, {
             forceFormData: true,
             onSuccess: () => {
                 showToast("update", "success");
