@@ -208,6 +208,7 @@ import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import Breadcrumb from "primevue/breadcrumb";
 import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
+import { route } from 'ziggy-js';
 
 const toast = useToast();
 const props = defineProps({

@@ -460,6 +460,7 @@ import { InputText } from "primevue";
 import Breadcrumb from "primevue/breadcrumb";
 import html2pdf from "html2pdf.js";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { route } from 'ziggy-js';
 
 const toast = useToast();
 

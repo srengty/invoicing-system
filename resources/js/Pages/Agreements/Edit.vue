@@ -385,6 +385,7 @@ import PaymentSchedule from "./PaymentSchedule.vue";
 import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import { currencies } from "@/constants";
 import moment from "moment";
+import { route } from 'ziggy-js';
 
 const toast = useToast();
 const page = usePage();
