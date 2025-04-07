@@ -954,7 +954,7 @@ const form = useForm({
 // Open product form
 const openForm = (product = null) => {
     form.reset();
-    
+
     if (product) {
         // Set all product data including nullable fields
         form.id = product.id;
@@ -972,7 +972,7 @@ const openForm = (product = null) => {
         form.remark = product.remark || null;
         form.pdf = null; // Reset file upload
     }
-    
+
     isFormVisible.value = true;
 };
 
@@ -1070,7 +1070,7 @@ const submitForm = () => {
 
     if (form.id) {
         formData.append('_method', 'PUT'); // Laravel needs this for PUT requests with FormData
-        
+
         router.put(route('products.update', form.id), formData, {
             forceFormData: true,
             onSuccess: () => {
