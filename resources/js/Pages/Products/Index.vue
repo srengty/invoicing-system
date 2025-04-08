@@ -1089,12 +1089,14 @@ const submitForm = () => {
             _method: 'PUT'
         })).post(route("products.update", form.id), {
             onSuccess: () => {
-                showToast("update", "success");
-                isFormVisible.value = false;
+                setTimeout(() => {
+                    showToast("update", "success");
+                    isFormVisible.value = false;
+                }, 100);
                 reloadData();
             },
             onError: (errors) => {
-                showToast("update", "error");
+                setTimeout(() => showToast("update", "error"), 100);
                 console.error("Update errors:", errors);
             },
         });
@@ -1106,8 +1108,9 @@ const submitForm = () => {
                 setTimeout(() => {
                     showToast("create", "success");
                     isFormVisible.value = false;
-                    reloadData();
+                    
                 }, 100);
+                reloadData();
             },
             onError: (errors) => {
                 console.error("Validation Errors:", errors);
