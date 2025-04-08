@@ -1096,9 +1096,8 @@ const submitForm = () => {
                 }, 100);
             },
             onError: (errors) => {
-                console.error("Validation Errors:", errors);
+                showToast("update", "error");
                 console.error("Update errors:", errors);
-                setTimeout(() => showToast("update", "error"), 100);
             },
         });
     } else {
