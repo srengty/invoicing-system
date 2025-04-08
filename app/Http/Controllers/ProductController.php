@@ -33,6 +33,7 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request->all());
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_kh' => 'required|string|max:255',
@@ -72,6 +73,7 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+        // dd($request->all());
         $data = $request->validate([
             'division_id' => 'required',
             'category_id' => 'required',
@@ -100,7 +102,7 @@ class ProductController extends Controller
 
         $product->update($data);
 
-        return redirect()->route('products.index')->with('success', 'Product updated successfully!');
+        return redirect()->route('products.index')->with('success', 'Product created successfully!');
     }
 
     public function destroy(Product $product)

@@ -1053,7 +1053,7 @@ const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
 const submitForm = () => {
-    console.log(form);
+    console.log("submitForm", form);
     if (
         !form.division_id ||
         !form.category_id ||
@@ -1075,34 +1075,61 @@ const submitForm = () => {
     const rawData = form.data();
 
     Object.entries(rawData).forEach(([key, value]) => {
-        if (value !== null && key !== "pdf") {
+        if (value !== null && value !== undefined && key !== "pdf") {
             formData.append(key, value);
         }
     });
-    if (form.pdf) {
+
+    if (form.pdf instanceof File) {
         formData.append("pdf", form.pdf);
     }
-    console.log(
-        "Submitting form data:",
-        Object.fromEntries(formData.entries())
-    );
 
+    // if (form.id) {
+    //     formData.append("_method", "PUT");
+    //     form.post(route("products.update", form.id), formData, {
+    //         forceFormData: true,
+    //         onSuccess: () => {
+    //             setTimeout(() => showToast("create", "success"), 100);
+    //             isFormVisible.value = false;
+    //             reloadData();
+    //         },
+    //         onError: (errors) => {
+    //             setTimeout(() => showToast("create", "error"), 100);
+    //             console.log("Validation Errors:", errors);
+    //             console.error("Creation errors:", errors);
+    //         },
+    //     });
+    // } else {
+    //     // If form.id is not set, create a new product
+    //     form.post(route("products.store"), {
+    //         forceFormData: true,
+    //         onSuccess: () => {
+    //             setTimeout(() => showToast("create", "success"), 100);
+    //             isFormVisible.value = false;
+    //             reloadData();
+    //         },
+    //         onError: (errors) => {
+    //             setTimeout(() => showToast("create", "error"), 100);
+    //             console.log("Validation Errors:", errors);
+    //             console.error("Creation errors:", errors);
+    //         },
+    //     });
+    // }
     if (form.id) {
-        formData.append("_method", "PUT"); // Laravel needs this for PUT requests with FormData
-        router.post(route("products.update", form.id), formData, {
+        form.post(route("products.update", form.id), {
             forceFormData: true,
+            headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                showToast("update", "success");
+                setTimeout(() => showToast("update", "success"), 100);
                 isFormVisible.value = false;
                 reloadData();
             },
             onError: (errors) => {
-                showToast("update", "error");
+                setTimeout(() => showToast("update", "error"), 100);
                 console.error("Update errors:", errors);
             },
         });
     } else {
-        // If form.id is not set, create a new product
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
