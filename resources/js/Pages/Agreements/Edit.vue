@@ -1,5 +1,5 @@
 <template>
-    <Head :title="`Edit Agreement ${agreement.agreement_no}`"></Head>
+    <Head :title="`Edit Agreement`"></Head>
     <GuestLayout>
         <NavbarLayout />
         <!-- PrimeVue Breadcrumb -->
@@ -19,14 +19,13 @@
         <div class="edit-agreement pl-4 pr-4">
             <Toast />
             <Form @submit="submitForm" :initial-values="form" class="mt-6">
-                <div class="flex flex-row justify-between gap-4">
+                <div class="flex flex-row justify-between gap-2">
                     <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
                                 >Record Agreement</span
                             >
-
                             <!-- Quotation No -->
                             <span class="text-sm">Quotation No.</span>
                             <InputText
@@ -50,7 +49,7 @@
                             <!-- Agreement Reference No -->
                             <span class="text-sm">Agreement reference No.</span>
                             <InputText
-                                v-model="form.agreement_reference_no"
+                                v-model="form.agreement_ref_no"
                                 placeholder="Enter reference number"
                                 class="w-full"
                                 size="small"
@@ -79,7 +78,7 @@
                             <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -111,19 +110,19 @@
                                 :url="route('agreements.upload')"
                                 mode="basic"
                                 auto
-                                accept="application/pdf"
                                 multiple
+                                accept="application/pdf"
                                 @before-upload="beforeUploadAgreementDoc"
                                 @upload="onUploadAgreementDoc"
                                 chooseLabel="Upload Agreement PDF"
                                 class="custom-file-upload w-full h-9"
                             >
                                 <template #chooseicon>
-                                    <i class="pi pi-file-pdf"></i>
+                                    <i class="pi pi-paperclip mr-2"></i>
                                 </template>
                             </FileUpload>
 
-                            <!-- Agreement Docs List -->
+                            <!-- Attachments List -->
                             <DataView
                                 :value="agreementDocs"
                                 class="col-span-2 mt-2"
@@ -138,7 +137,7 @@
                                             class="border border-gray-200 rounded-lg p-3 flex items-center hover:bg-gray-50 transition-colors"
                                         >
                                             <span
-                                                class="text-sm font-medium text-gray-700 mr-3"
+                                                class="text-sm font-medium text-gray-700 mr-5"
                                             >
                                                 Agreement Doc {{ index + 1 }}:
                                             </span>
@@ -146,12 +145,20 @@
                                                 class="pi pi-file-pdf mr-2 text-red-500"
                                             ></i>
                                             <a
-                                                class="hover:underline hover:text-blue-600 flex items-center text-blue-500"
+                                                class="hover:underline text-sm hover:text-blue-600 flex items-center text-blue-500"
                                                 :href="item.path"
                                                 target="_blank"
                                             >
                                                 {{
-                                                    item.name || "document.pdf"
+                                                    item.name
+                                                        ? item.name.slice(
+                                                              0,
+                                                              20
+                                                          ) +
+                                                          (item.name.length > 20
+                                                              ? "..."
+                                                              : "")
+                                                        : "document.pdf"
                                                 }}
                                             </a>
                                             <Button
@@ -193,7 +200,7 @@
                             <!-- Start Date -->
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -203,7 +210,7 @@
                             <!-- End Date -->
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -279,6 +286,7 @@
                                             :key="index"
                                             class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                                         >
+                                            <!-- Display "Attachment {{ index + 1 }}" -->
                                             <span
                                                 class="text-xs font-medium text-gray-700 mr-3"
                                             >
@@ -291,16 +299,27 @@
                                                     class="pi pi-file-pdf text-red-500"
                                                 ></i>
                                                 <a
-                                                    class="text-sm font-medium text-blue-500 hover:underline"
                                                     :href="item.path"
                                                     target="_blank"
+                                                    class="text-sm font-medium text-blue-500 hover:underline"
                                                 >
-                                                    {{ item.name }}
+                                                    {{
+                                                        item.name
+                                                            ? item.name.slice(
+                                                                  0,
+                                                                  20
+                                                              ) +
+                                                              (item.name
+                                                                  .length > 10
+                                                                  ? "..."
+                                                                  : "")
+                                                            : "document.pdf"
+                                                    }}
                                                 </a>
                                             </div>
                                             <button
                                                 @click="removeAttachment(index)"
-                                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                                                class="text-red-500 text-sm hover:text-red-700 p-1 rounded-full hover:bg-red-50"
                                                 v-tooltip="'Remove attachment'"
                                             >
                                                 <i class="pi pi-times"></i>
@@ -331,39 +350,44 @@
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
                 />
-                <!-- Exchange Rate (if needed) -->
-                <!-- <div
-                    class="flex justify-end items-center gap-2 my-2 px-24"
-                    v-if="hasManyCurrencies"
-                >
-                    <label for="agreement_exchange_rate" class="required"
-                        >Exchange rate</label
-                    >
-                    <InputText
-                        id="agreement_exchange_rate"
-                        v-model="schedule.exchange_rate"
-                    ></InputText>
-                </div> -->
                 <!-- Save Button -->
-                <Button
-                    label="Save Changes"
-                    type="submit"
-                    raised
-                    class="w-48 mt-5"
-                    :disabled="processing"
-                    icon="pi pi-check"
-                ></Button>
+                <div class="flex justify-end gap-2 mt-10">
+                    <Button
+                        label="Save Changes"
+                        type="submit"
+                        raised
+                        class="w-full md:w-40"
+                        :disabled="processing"
+                        icon="pi pi-check"
+                    ></Button>
+                    <Button
+                        label="Cancel"
+                        severity="secondary"
+                        raised
+                        class="w-full md:w-28"
+                        :disabled="processing"
+                        icon="pi pi-times"
+                        @click="cancelChanges"
+                    />
+                </div>
             </Form>
         </div>
     </GuestLayout>
 </template>
 
 <script setup>
-import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import PaymentSchedule from "./PaymentSchedule.vue";
+import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { Head, Link, router, useForm } from "@inertiajs/vue3";
 import { ref, computed, onMounted } from "vue";
 import { usePage } from "@inertiajs/vue3";
+import { Form } from "@primevue/forms";
+import { useToast } from "primevue/usetoast";
+import { currencies } from "@/constants";
+import moment from "moment";
+import { route } from 'ziggy-js';
 import {
     Button,
     DatePicker,
@@ -377,19 +401,11 @@ import {
     DataView,
     Toast,
     Textarea,
+    Breadcrumb,
 } from "primevue";
-import { Form } from "@primevue/forms";
-import { useToast } from "primevue/usetoast";
-import Breadcrumb from "primevue/breadcrumb";
-import PaymentSchedule from "./PaymentSchedule.vue";
-import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
-import { currencies } from "@/constants";
-import moment from "moment";
-import { route } from 'ziggy-js';
 
 const toast = useToast();
 const page = usePage();
-
 const props = defineProps({
     agreement: Object,
     customers: Array,
@@ -401,7 +417,7 @@ const items = computed(() => [
     { label: "", to: "/", icon: "pi pi-home" },
     { label: "Agreements", to: route("agreements.index") },
     {
-        label: `Edit Agreement ${props.agreement.agreement_no}`,
+        label: `Edit Agreement`,
         to: route("agreements.edit", {
             agreement_no: props.agreement.agreement_no,
         }),
@@ -426,7 +442,7 @@ const formatFileSize = (bytes) => {
 const form = useForm({
     quotation_no: props.agreement.quotation_no,
     agreement_no: props.agreement.agreement_no,
-    agreement_reference_no: props.agreement.agreement_reference_no,
+    agreement_ref_no: props.agreement.agreement_ref_no,
     agreement_date: props.agreement.agreement_date
         ? moment(props.agreement.agreement_date, "DD/MM/YYYY").toDate()
         : new Date(),
@@ -495,6 +511,7 @@ const parsedAgreementDocs = Array.isArray(props.agreement.agreement_doc)
     : JSON.parse(props.agreement.agreement_doc || "[]");
 
 const agreementDocs = ref(parsedAgreementDocs);
+
 form.agreement_doc = parsedAgreementDocs;
 
 // Computed properties
@@ -521,7 +538,7 @@ const beforeUpload = (e) => {
     e.formData.append("_token", page.props.csrf_token);
 };
 const beforeUploadAgreementDoc = (event) => {
-    event.formData.append("_token", page.props.csrf_token); // ✅ Laravel needs this
+    event.formData.append("_token", page.props.csrf_token);
 };
 const beforeUploadAttachment = (event) => {
     event.formData.append("_token", page.props.csrf_token);
@@ -529,45 +546,36 @@ const beforeUploadAttachment = (event) => {
 const onUploadAgreementDoc = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
-        const uploadedFiles = Array.isArray(response) ? response : [response];
-
-        uploadedFiles.forEach((file) => {
-            const newDoc = {
-                path: file.path,
-                name: file.name,
-                size: file.size,
-                mime_type: file.mime_type,
-            };
-            agreementDocs.value.push(newDoc);
+        form.agreement_doc.push({
+            path: response.path,
+            name: response.name,
+            size: response.size,
+            type: response.mime_type,
         });
-        form.agreement_doc = [...agreementDocs.value];
 
         toast.add({
             severity: "success",
             summary: "Uploaded",
-            detail: `${uploadedFiles.length} agreement document(s) uploaded successfully`,
+            detail: `Attachment "${response.name}" added successfully`,
             life: 3000,
         });
     } catch (error) {
-        console.error("Upload error:", error);
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "Failed to upload agreement document(s)",
+            detail: "Failed to upload attachment",
             life: 3000,
         });
     }
 };
 
 const removeAgreementDoc = (index) => {
-    agreementDocs.value.splice(index, 1);
-    form.agreement_doc = [...agreementDocs.value]; //
-    //  form state
-
+    const removedDoc = form.agreement_doc[index];
+    form.agreement_doc.splice(index, 1);
     toast.add({
         severity: "info",
         summary: "Removed",
-        detail: "Agreement document has been removed",
+        detail: `Document "${removedDoc.name}" has been removed`,
         life: 3000,
     });
 };
@@ -629,7 +637,7 @@ const beforeUpdate = (e) => {
 };
 
 const checkDuplicateReference = async () => {
-    if (!form.agreement_reference_no) {
+    if (!form.agreement_ref_no) {
         showDuplicateAlert.value = false;
         return;
     }
@@ -637,7 +645,7 @@ const checkDuplicateReference = async () => {
     try {
         const response = await axios.get("/api/check-agreement-reference", {
             params: {
-                reference_no: form.agreement_reference_no,
+                reference_no: form.agreement_ref_no,
                 exclude_id: props.agreement.id,
             },
         });
@@ -650,7 +658,6 @@ const checkDuplicateReference = async () => {
 
 const submitForm = () => {
     processing.value = true;
-
     // Helper function to format dates consistently
     const formatDate = (date) => {
         if (!date) return null;
@@ -711,6 +718,26 @@ const submitForm = () => {
             },
         }
     );
+};
+
+const cancelChanges = () => {
+    router.visit(route("agreements.index"), {
+        onStart: () => {
+            toast.add({
+                severity: "secondary",
+                summary: "Cancelled",
+                detail: "Changes were not saved",
+                life: 3000,
+            });
+        },
+    });
+};
+const formatNumber = (value, decimals = 2) => {
+    if (isNaN(value)) return "0.00";
+    return value.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
 };
 </script>
 

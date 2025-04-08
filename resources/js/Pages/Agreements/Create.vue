@@ -18,9 +18,6 @@
         </div>
         <div class="create-agreement pl-4 pr-4">
             <Toast />
-            <!-- <h1 class="text-2xl">
-                {{ props.edit ? "Update" : "Create" }} Agreement
-            </h1> -->
             <Form
                 @submit="submit"
                 :action="route('agreements.store')"
@@ -89,7 +86,7 @@
                             >
                             <span class="text-sm">Agreement reference No.</span>
                             <InputText
-                                v-model="form.agreement_reference_no"
+                                v-model="form.agreement_ref_no"
                                 placeholder="Enter reference number"
                                 class="w-full"
                                 size="small"
@@ -116,7 +113,7 @@
                             >
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -144,7 +141,6 @@
                                 size="small"
                                 readonly
                             />
-                            <!-- <FileUpload name="agreement_doc" auto customUpload @select="onFileSelect" mode="basic" :url="route('agreements.upload')" accept="image/*" :maxFileSize="1000000" @upload="onUpload"/> -->
                             <span class="text-sm required">Agreement doc</span>
                             <FileUpload
                                 name="agreement_doc"
@@ -197,7 +193,15 @@
                                                 target="_blank"
                                             >
                                                 {{
-                                                    item.name || "document.pdf"
+                                                    item.name
+                                                        ? item.name.slice(
+                                                              0,
+                                                              20
+                                                          ) +
+                                                          (item.name.length > 20
+                                                              ? "..."
+                                                              : "")
+                                                        : "document.pdf"
                                                 }}
                                             </a>
                                             <Button
@@ -236,7 +240,7 @@
                             >
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -244,7 +248,7 @@
                             />
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="dd/mm/yy"
+                                date-format="yy/mm/dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -329,13 +333,23 @@
                                                 <i
                                                     class="pi pi-file-pdf text-red-500"
                                                 ></i>
-                                                <!-- Link for the attachment -->
                                                 <a
                                                     :href="item.path"
                                                     target="_blank"
                                                     class="text-sm font-medium text-blue-500 hover:underline"
                                                 >
-                                                    {{ item.name }}
+                                                    {{
+                                                        item.name
+                                                            ? item.name.slice(
+                                                                  0,
+                                                                  20
+                                                              ) +
+                                                              (item.name
+                                                                  .length > 10
+                                                                  ? "..."
+                                                                  : "")
+                                                            : "document.pdf"
+                                                    }}
                                                 </a>
                                             </div>
                                             <button
@@ -382,14 +396,26 @@
                         v-model="schedule.exchange_rate"
                     ></InputText>
                 </div> -->
-                <Button
-                    label="Save"
-                    type="submit"
-                    raised
-                    class="w-48 mt-5"
-                    :disabled="isStoringAgreement"
-                    icon="pi pi-check"
-                ></Button>
+                <div class="flex justify-end gap-2 mt-10">
+                    <Button
+                        label="Save"
+                        type="submit"
+                        raised
+                        class="w-full md:w-28"
+                        icon="pi pi-check"
+                        size="small"
+                        :disabled="isStoringAgreement"
+                    ></Button>
+                    <Button
+                        label="Cancel"
+                        severity="secondary"
+                        raised
+                        class="w-full md:w-28"
+                        @click="cancel"
+                        icon="pi pi-times"
+                        size="small"
+                    ></Button>
+                </div>
             </Form>
         </div>
     </GuestLayout>
@@ -397,7 +423,17 @@
 
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import PaymentSchedule from "./PaymentSchedule.vue";
+import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
 import { Head, router, Link } from "@inertiajs/vue3";
+import { Form } from "@primevue/forms";
+import { useToast } from "primevue/usetoast";
+import { reactive, onMounted, ref, computed, watch } from "vue";
+import { currencies } from "@/constants";
+import { usePage } from "@inertiajs/vue3";
+import moment from "moment";
+import { route } from 'ziggy-js';
 import {
     Button,
     DatePicker,
@@ -413,19 +449,9 @@ import {
     Toast,
     Calendar,
     Dropdown,
+    Textarea,
+    Breadcrumb,
 } from "primevue";
-import { Form } from "@primevue/forms";
-import { useToast } from "primevue/usetoast";
-import { reactive, onMounted, ref, computed, watch } from "vue";
-import Textarea from "primevue/textarea";
-import moment from "moment";
-import { currencies } from "@/constants";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
-import PaymentSchedule from "./PaymentSchedule.vue";
-import PopupAddPaymentSchedule from "./PopupAddPaymentSchedule.vue";
-import { route } from 'ziggy-js';
 
 const toast = useToast();
 // The Breadcrumb Quotations
@@ -458,7 +484,6 @@ const props = defineProps({
     agreement: Object,
     edit: Boolean,
 });
-
 const riels = computed({
     get: () => form.currency === "KHR",
     set: (value) => {
@@ -466,13 +491,10 @@ const riels = computed({
         schedule.value.exchange_rate = value ? 4100 : 1;
     },
 });
-
 const updateAgreementAmount = () => {
     if (form.currency === "USD") {
-        // If USD is selected, the amount remains as is
         schedule.value.agreement_amount = form.agreement_amount;
     } else if (form.currency === "KHR") {
-        // If KHR is selected, apply the exchange rate
         schedule.value.agreement_amount =
             form.agreement_amount * schedule.value.exchange_rate;
     }
@@ -501,7 +523,7 @@ const customerName = ref("");
 const address = ref("");
 const searchQuotation = async () => {
     if (form.quotation_no) {
-        console.log("Searching for quotation no:", form.quotation_no);
+        // console.log("Searching for quotation no:", form.quotation_no);
         try {
             const response = await axios.get("/search-quotation", {
                 params: { quotation_no: form.quotation_no },
@@ -514,24 +536,21 @@ const searchQuotation = async () => {
                 form.agreement_amount = response.data.agreement_amount;
                 schedule.value.agreement_amount =
                     response.data.agreement_amount;
-
-                // Set the exchange rate based on quotation currency
-                if (response.data.currency === "KHR") {
+                if (response.data.currency === "USD") {
                     schedule.value.exchange_rate =
                         response.data.exchange_rate || 4100;
-                    riels.value = true; // ✅ this will auto-update form.currency to KHR
+                    riels.value = false;
                 } else {
                     schedule.value.exchange_rate = 1;
-                    riels.value = false; // ✅ this will auto-update form.currency to USD
+                    riels.value = true;
                 }
             } else {
-                // Handle case where no quotation is found
                 customerName.value = "";
                 form.address = "";
                 form.customer_id = null;
                 form.agreement_amount = 0;
                 schedule.value.agreement_amount = 0;
-                schedule.value.exchange_rate = 1; // Default exchange rate for USD
+                schedule.value.exchange_rate = 1;
             }
         } catch (error) {
             console.error("Error fetching quotation", error);
@@ -541,15 +560,13 @@ const searchQuotation = async () => {
 watch(
     () => form.quotation_no,
     (newVal) => {
-        // Debounce the search to avoid too many requests
         const timer = setTimeout(() => {
             searchQuotation();
-        }, 500); // 500ms delay to avoid excessive requests
+        }, 500);
 
         return () => clearTimeout(timer);
     }
 );
-
 const schedule = ref({
     agreement_amount: form.agreement_amount,
     due_date: new Date(),
@@ -561,7 +578,6 @@ const schedule = ref({
     agreement_currency: "KHR",
     exchange_rate: 4200,
 });
-
 // Form data
 const totalAgreement = ref(10000); // Set your default total amount
 const dueDate = ref();
@@ -583,7 +599,6 @@ const calculateAmount = () => {
         amount.value = null;
     }
 };
-
 const remainingAmount = computed(() => {
     return (
         schedule.value.agreement_amount -
@@ -612,7 +627,7 @@ onMounted(() => {
         // Basic form data
         form.quotation_no = props.agreement.quotation_no;
         form.agreement_no = props.agreement.agreement_no;
-        form.agreement_reference_no = props.agreement.agreement_reference_no;
+        form.agreement_ref_no = props.agreement.agreement_ref_no;
         form.agreement_date = moment(
             props.agreement.agreement_date,
             "DD/MM/YYYY"
@@ -658,7 +673,6 @@ onMounted(() => {
                 };
             }
         );
-
         // Initialize attachments
         const parsedAttachments = JSON.parse(
             props.agreement.attachments ?? "[]"
@@ -719,7 +733,24 @@ const submit = ({ states, valid }) => {
             data
         );
     } else {
-        router.post(route("agreements.store"), data);
+        router.post(route("agreements.store"), data, {
+            onSuccess: () => {
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: "Agreement created successfully",
+                    life: 3000,
+                });
+            },
+            onError: () => {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "Failed to create agreement",
+                    life: 3000,
+                });
+            },
+        });
     }
     isStoringAgreement.value = false;
     //form.post(route('agreements.store'));
@@ -729,6 +760,17 @@ const submit = ({ states, valid }) => {
     // }else{
     //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
     // }
+};
+const cancel = () => {
+    toast.add({
+        severity: "secondary",
+        summary: "Cancelled",
+        detail: "Agreement creation cancelled",
+        life: 3000,
+    });
+    setTimeout(() => {
+        router.visit(route("agreements.index"));
+    }, 500);
 };
 const onUpload = (e) => {
     try {
@@ -740,9 +782,15 @@ const onUpload = (e) => {
         }
 
         uploadedFiles.forEach((file) => {
-            form.agreement_doc.push(file);
-            agreementDocs.value.push(file);
+            form.agreement_doc.push({
+                path: file.path,
+                name: file.name,
+                size: file.size,
+            });
         });
+
+        // Update UI
+        agreementDocs.value = form.agreement_doc;
 
         toast.add({
             severity: "success",
@@ -760,7 +808,6 @@ const onUpload = (e) => {
         console.error("Agreement doc upload error:", error);
     }
 };
-
 const removeAgreementDoc = (index) => {
     form.agreement_doc.splice(index, 1);
     agreementDocs.value.splice(index, 1);
@@ -772,20 +819,21 @@ const removeAgreementDoc = (index) => {
         life: 3000,
     });
 };
-
 const onUploadAttachments = (e) => {
     try {
         const response = JSON.parse(e.xhr.responseText);
+        const uploadedFiles = Array.isArray(response) ? response : [response];
 
         if (!Array.isArray(form.attachments)) {
             form.attachments = [];
         }
 
-        form.attachments.push({
-            path: response.path,
-            name: response.name,
-            size: response.size,
-            type: response.mime_type,
+        uploadedFiles.forEach((file) => {
+            form.attachments.push({
+                path: file.path,
+                name: file.name,
+                size: file.size,
+            });
         });
 
         toast.add({
@@ -804,7 +852,6 @@ const onUploadAttachments = (e) => {
         console.error("Attachment upload error:", error);
     }
 };
-
 const removeAttachment = (index) => {
     form.attachments.splice(index, 1);
     toast.add({
@@ -814,7 +861,6 @@ const removeAttachment = (index) => {
         life: 3000,
     });
 };
-
 const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -822,12 +868,10 @@ const formatFileSize = (bytes) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
-
 const beforeUpload = (e) => {
     e.formData.append("agreement_doc_old", form.agreement_doc?.path || "");
     e.formData.append("_token", page.props.csrf_token); // CSRF token is essential
 };
-
 const beforeUploadAttachment = (e) => {
     e.formData.enctype = "multipart/form-data";
     e.formData.append("_token", page.props.csrf_token);
@@ -872,7 +916,7 @@ const beforeUpdate = (e) => {
 // }));
 const showDuplicateAlert = ref(false);
 const checkDuplicateReference = async () => {
-    if (!form.agreement_reference_no) {
+    if (!form.agreement_ref_no) {
         showDuplicateAlert.value = false;
         return;
     }
@@ -880,7 +924,7 @@ const checkDuplicateReference = async () => {
     try {
         const response = await axios.get("/api/check-agreement-reference", {
             params: {
-                reference_no: form.agreement_reference_no,
+                reference_no: form.agreement_ref_no,
             },
         });
 
@@ -888,6 +932,10 @@ const checkDuplicateReference = async () => {
     } catch (error) {
         console.error("Error checking reference:", error);
     }
+};
+const formatDate = (date, format = "YYYY-DD-MM") => {
+    if (!date) return "N/A";
+    return moment(date).format(format);
 };
 </script>
 

@@ -32,7 +32,14 @@
                 class="px-4 py-2"
                 @click="showConfirmationDialog"
                 size="small"
+                :disabled="!isApproved"
             />
+            <div
+                v-if="!isApproved"
+                class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+                Only approved quotations can be sent
+            </div>
         </div>
     </div>
 
@@ -264,12 +271,24 @@ const sendForm = ref({
 const isSendDialogVisible = ref(false);
 const selectedQuotation = ref(null);
 const isSending = ref(false);
+const isApproved = computed(() => {
+    return quotation.value.status?.toLowerCase() === "approved";
+});
 
 const cancelSend = () => {
     isSendDialogVisible.value = false;
 };
 
 const showConfirmationDialog = () => {
+    if (!isApproved.value) {
+        toast.add({
+            severity: "warn",
+            summary: "Quotation Not Approved",
+            detail: "Only approved quotations can be sent.",
+            life: 3000,
+        });
+        return;
+    }
     selectedQuotation.value = quotation;
     isSendDialogVisible.value = true;
 };
@@ -494,6 +513,10 @@ const sendPDFViaEmail = (pdfBytes, filename) => {
 </script>
 
 <style scoped>
+.p-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 .print-area {
     width: 210mm;
     padding: 10mm;

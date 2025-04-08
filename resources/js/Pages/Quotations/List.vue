@@ -21,7 +21,7 @@
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
-        <div class="quotations text-sm">
+        <div class="quotations text-sm p-4">
             <!-- <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
             </div> -->
@@ -87,7 +87,14 @@
                         header="Customer/Organization Name"
                         style="width: 15%"
                     />
-                    <Column field="total" header="Total" style="width: 10%" />
+                    <Column field="total" header="Total" style="width: 10%">
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data.total) }}
+                            <span class="text-xs text-gray-500 ml-1">
+                                (KHR)
+                            </span>
+                        </template>
+                    </Column>
 
                     <!-- Correctly Map the Status Column -->
                     <Column field="status" header="Status" style="width: 10%">
@@ -207,13 +214,7 @@
                                     size="small"
                                     outlined
                                 />
-                                <div
-                                    v-tooltip.top="
-                                        slotProps.data.status === 'Pending'
-                                            ? 'Printing is disabled for pending quotations'
-                                            : ''
-                                    "
-                                >
+                                <div>
                                     <Button
                                         icon="pi pi-print"
                                         aria-label="Print out"
@@ -223,10 +224,10 @@
                                         "
                                         size="small"
                                         outlined
-                                        :disabled="
-                                            slotProps.data.status === 'Pending'
-                                        "
                                     />
+                                    <!-- :disabled="
+                                            slotProps.data.status === 'Pending'
+                                        " -->
                                 </div>
                             </div>
                         </template>
@@ -315,17 +316,27 @@
                                     field="pivot.quantity"
                                     header="QTY"
                                 ></Column>
-                                <Column
-                                    field="pivot.price"
-                                    header="Unit Price"
-                                ></Column>
+                                <Column field="pivot.price" header="Unit Price">
+                                    <template #body="slotProps">
+                                        <span>
+                                            {{
+                                                formatCurrency(
+                                                    slotProps.data.price
+                                                )
+                                            }}
+                                        </span>
+                                    </template>
+                                </Column>
                             </DataTable>
                         </div>
 
                         <br />
                         <p>
                             <strong>Total:</strong>
-                            {{ selectedQuotation.total }}
+                            {{ formatCurrency(selectedQuotation.total) }}
+                            <span class="text-xs text-gray-500 ml-1"
+                                >(KHR)</span
+                            >
                         </p>
                         <p v-if="selectedQuotation.comment">
                             <strong>Comment:</strong>
@@ -918,6 +929,12 @@ const sendQuotationToCustomer = async () => {
         // Reset the sending state
         isSending.value = false;
     }
+};
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value || 0);
 };
 </script>
 

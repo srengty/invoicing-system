@@ -111,7 +111,7 @@ class CustomerController extends Controller
         $customer->delete();
         return redirect()->route('customers.index', $customer->id)->with('success', 'Customer deleted successfully!');
     }
-
+    // Toggle active status for customers [Deactivate||Activate]
     public function toggleActive(Request $request, Customer $customer)
     {
         // Validate the incoming request data
@@ -123,6 +123,7 @@ class CustomerController extends Controller
         $customer->active = $data['active'];
         $customer->save();
     }
+    // Toggle active status for select customers [Deactivate||Activate]
     public function toggleActivation(Customer $customer)
 {
     $customer->update(['active' => !$customer->active]);

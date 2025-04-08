@@ -18,7 +18,7 @@
             <Column field="due_date" header="Due Date" sortable class="text-sm">
                 <template #body="slotProps">
                     {{
-                        moment(slotProps.data["due_date"]).format("DD/MM/YYYY")
+                        moment(slotProps.data["due_date"]).format("YYYY/MM/DD")
                     }}
                 </template>
             </Column>
@@ -32,7 +32,7 @@
                     <DatePicker
                         v-model="data[field]"
                         fluid
-                        date-format="dd/mm/yy"
+                        date-format="yy/mm/dd"
                     />
                 </template>
             </Column>
@@ -144,7 +144,11 @@
 </template>
 
 <script setup>
+import AddPayment from "@/Components/Agreements/AddPayment.vue";
 import { ref, defineModel, computed, onMounted } from "vue";
+import { currencies } from "@/constants";
+import { useToast } from "primevue/usetoast";
+import moment from "moment";
 import {
     DataTable,
     Column,
@@ -158,10 +162,6 @@ import {
     Dialog,
     Toast,
 } from "primevue";
-import { currencies } from "@/constants";
-import moment from "moment";
-import AddPayment from "@/Components/Agreements/AddPayment.vue";
-import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const items = defineModel({
@@ -247,7 +247,6 @@ const editingSchedule = ref({
     exchange_rate: 4200,
     status: "Pending",
 });
-
 const generatingInvoice = ref(false);
 const generateInvoice = async (paymentItem) => {
     generatingInvoice.value = true;
@@ -285,7 +284,6 @@ const generateInvoice = async (paymentItem) => {
         generatingInvoice.value = false;
     }
 };
-
 const doEditPaymentSchedule = (data) => {
     Object.assign(editingSchedule.value, data);
     editingSchedule.value.agreement_currency = data.currency;
@@ -314,7 +312,6 @@ const doCancel = () => {
         life: 3000,
     });
 };
-
 const doSave = () => {
     isShowing.value = false;
     const schedule = items.value.find((v) => v.id == editingSchedule.value.id);
@@ -336,5 +333,4 @@ const doSave = () => {
     }
 };
 </script>
-
 <style lang="scss" scoped></style>

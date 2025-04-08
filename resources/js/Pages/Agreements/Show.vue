@@ -24,9 +24,9 @@
         >
             <!-- <div><img src="/logo.png" alt="ITC logo" class="w-28" /></div> -->
             <div class="w-full"></div>
-            <h1 class="mx-auto text-2xl">Agreement</h1>
-            <div class="grid grid-cols-2">
-                <div>
+            <h1 class="mx-auto text-3xl font-bold mb-6">Agreement</h1>
+            <div class="grid grid-cols-2 text-sm mb-6">
+                <div class="grid gap-4">
                     <p>
                         <strong>Quotation No:</strong> {{ form.quotation_no }}
                     </p>
@@ -46,15 +46,14 @@
                         >
                     </p>
                 </div>
-                <div class="text-right">
-                    <p><strong>Agreement summary</strong></p>
+                <div class="text-right grid gap-4">
                     <p>
                         <strong>Start Date:</strong> {{ agreement.start_date }}
                     </p>
                     <p><strong>End Date:</strong> {{ agreement.end_date }}</p>
                     <p>
                         <strong>Agreement amount:</strong>
-                        {{ form.amount_no_tax }}
+                        {{ form.amount }}
                     </p>
                     <p class="print:hidden">
                         <strong>Status:</strong> {{ form.status }}

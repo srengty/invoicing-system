@@ -41,28 +41,44 @@ class AgreementController extends Controller
      */
     public function store(Request $request)
     {
+        //dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
-            'agreement_doc' => 'required',
+            'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
         ]);
-        //dd($request->all());
+        // catch exchange_rate from quotations
+        $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
+        $exchangeRate = $quotation?->exchange_rate ?? 4100;
+
         $data = $request->except('payment_schedule')+[
             'amount' => $request->agreement_amount,
-            'agreement_reference_no' => $request->agreement_reference_no
+            'agreement_ref_no' => $request->agreement_ref_no
         ];
-        // $data['agreement_doc'] = json_encode([
-        //     'path' => $request->agreement_doc['path'],
-        //     'name' => $request->agreement_doc['name'],
-        //     'size' => $request->agreement_doc['size'],
-        //     'mime_type' => $request->agreement_doc['mime_type']
-        // ]);
-        $data['agreement_doc'] = json_encode($request->agreement_doc);
-        $data['attachments'] = json_encode($request->attachments);
+      // Ensure agreement_doc is an array or object
+        $data['agreement_doc'] = json_encode(
+                collect($request->agreement_doc)->map(function ($doc) {
+                    return [
+                        'path' => $doc['path'] ?? null,
+                        'name' => $doc['name'] ?? null,
+                        'size' => $doc['size'] ?? null,
+                    ];
+                })->toArray()
+            );
+        // Handle attachments (ensure empty array if null)
+        $data['attachments'] = json_encode(
+            collect($request->attachments ?? [])->map(function ($file) {
+                return [
+                    'path' => $file['path'] ?? null,
+                    'name' => $file['name'] ?? null,
+                    'size' => $file['size'] ?? null,
+                ];
+            })->toArray()
+        );
         $agreement = Agreement::create($data);
         foreach($request->payment_schedule as $key => $value){
             unset($value['id']);
@@ -74,6 +90,7 @@ class AgreementController extends Controller
                 'percentage' => $value['percentage'],
                 'short_description' => $value['short_description'],
                 'currency' => $value['currency'],
+                'exchange_rate' => $value['exchange_rate'] ?? ($value['currency'] === 'KHR' ? $exchangeRate : 1),
             ]);
             $schedule->save();
             // $value['agreement_no'] = $request->agreement_no;
@@ -86,7 +103,15 @@ class AgreementController extends Controller
      */
     public function show(int $id)
     {
-        return Inertia::render('Agreements/Show', [
+
+        $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
+        return response()->json($agreement);  // Debugging line
+    }
+
+    public function print(int $id)
+    {
+        // dd("Hello");
+        return Inertia::render('Agreements/Print', [
             'agreement' => Agreement::with('customer')->with('paymentSchedules')->find($id),
         ]);
     }
@@ -126,12 +151,16 @@ class AgreementController extends Controller
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
-            'agreement_reference_no' => 'nullable|string|unique:agreements,agreement_reference_no,'.$agreement_no.',agreement_no',
+            'agreement_ref_no' => 'nullable|string|unique:agreements,agreement_ref_no,'.$agreement_no.',agreement_no',
             'payment_schedule' => 'required|array|min:1',
             'payment_schedule.*.due_date' => 'required|date_format:d/m/Y',
             'payment_schedule.*.amount' => 'required|numeric|min:0',
             'payment_schedule.*.percentage' => 'required|numeric|min:0|max:100',
         ]);
+
+        // catch exchange rate from quotations
+        $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
+        $exchangeRate = $quotation?->exchange_rate ?? 4100;
 
         // Find the agreement
         $agreement = Agreement::where('agreement_no', $agreement_no)->firstOrFail();
@@ -139,7 +168,7 @@ class AgreementController extends Controller
         // Prepare data for update
         $data = $request->only([
             'agreement_no',
-            'agreement_reference_no',
+            'agreement_ref_no',
             'agreement_date',
             'customer_id',
             'address',
@@ -150,7 +179,8 @@ class AgreementController extends Controller
         ]);
 
         $data['amount'] = $request->agreement_amount;
-        $data['agreement_doc'] = json_encode($request->agreement_doc);
+        // $data['agreement_doc'] = json_encode($request->agreement_doc);
+        $data['agreement_doc'] = $request->agreement_doc;
         $data['attachments'] = $request->attachments;
 
         // Update the agreement
@@ -232,7 +262,6 @@ class AgreementController extends Controller
         return response()->json(['error' => 'No file uploaded'], 400);
     }
 
-
     /**
      * Remove the specified resource from storage.
      */
@@ -254,31 +283,35 @@ class AgreementController extends Controller
 
         return response()->json(null); // Return null if no agreement found
     }
+
     public function searchQuotation(Request $request)
     {
         $quotationNo = $request->input('quotation_no');
         $quotation = Quotation::where('quotation_no', $quotationNo)
-                              ->with('customer') // Ensure the customer is loaded
+                              ->with('customer')
                               ->first();
 
         if ($quotation) {
             return response()->json([
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->customer->address,
-                'customer_id' => $quotation->customer->id, // Include the customer_id
-                'agreement_amount' => $quotation->total, // Replace 'total' with the field name you want
+                'customer_id' => $quotation->customer->id,
+                'agreement_amount' => $quotation->total,
+                'currency' => $quotation->currency,
+                'exchange_rate' => $quotation->exchange_rate,
             ]);
         }
 
         return response()->json(['error' => 'Quotation not found'], 404);
     }
+
     public function checkDuplicateReference(Request $request)
     {
         $request->validate([
             'reference_no' => 'required|string'
         ]);
 
-        $exists = Agreement::where('agreement_reference_no', $request->reference_no)
+        $exists = Agreement::where('agreement_ref_no', $request->reference_no)
             ->when($request->has('exclude_id'), function($query) use ($request) {
                 $query->where('id', '!=', $request->exclude_id);
             })

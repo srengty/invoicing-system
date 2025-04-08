@@ -19,10 +19,10 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
 import AddPayment from "@/Components/Agreements/AddPayment.vue";
-import { Button, Dialog } from "primevue";
+import { onMounted, ref } from "vue";
 import { useToast } from "primevue/usetoast";
+import { Button, Dialog } from "primevue";
 
 const toast = useToast();
 const isShowing = ref(false);
