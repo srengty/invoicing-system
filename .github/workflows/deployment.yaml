@@ -13,13 +13,17 @@ env:
   DB_PASSWORD: invoice@gicitc
   MAIL_USERNAME: itcfinance168@gmail.com
   MAIL_FROM_ADDRESS: itcfinance168@gmail.com
+  MAIL_ENCRYPTION: tls
+  MAIL_HOST: smtp.gmail.com
+  MAIL_PORT: 465
+  MAIL_MAILER: smtp
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-    # - name: Checkout repo
-    #   uses: actions/checkout@v3
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
     - name: Set php for running laravel
       run: |
@@ -32,6 +36,8 @@ jobs:
     - name: Install dependencies
       run: |
         composer install --no-dev --optimize-autoloader
+        npm install
+        npm run build
     - name: Copy .env
       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
     - name: Overwrite vite.config.prod.js
@@ -163,6 +169,10 @@ jobs:
         sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
         sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
         sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
+        sed -i 's/^MAIL_ENCRYPTION=.*/MAIL_ENCRYPTION=${{ env.MAIL_ENCRYPTION}}/' .env
+        sed -i 's/^MAIL_HOST=.*/MAIL_HOST=${{ env.MAIL_HOST}}/' .env
+        sed -i 's/^MAIL_PORT=.*/MAIL_PORT=${{ env.MAIL_PORT}}/' .env
+        sed -i 's/^MAIL_MAILER=.*/MAIL_MAILER=${{ env.MAIL_MAILER}}/' .env
     # - name: Laravel Migrate & Cache
     #   run: |
     #     php artisan migrate --force
@@ -205,3 +215,7 @@ jobs:
       run: |
         echo "$PASSWORD_SERVER"  | sudo -S systemctl restart php8.4-fpm
         echo "$PASSWORD_SERVER"  | sudo -S systemctl reload nginx
+    - name: Show latest commit
+      run: |
+        git config --global --add safe.directory /home/dice/invoice/invoice/invoicing-system/invoicing-system
+        git log -1

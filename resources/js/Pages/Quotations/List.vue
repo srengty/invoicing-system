@@ -224,10 +224,8 @@
                                         "
                                         size="small"
                                         outlined
+
                                     />
-                                    <!-- :disabled="
-                                            slotProps.data.status === 'Pending'
-                                        " -->
                                 </div>
                             </div>
                         </template>
