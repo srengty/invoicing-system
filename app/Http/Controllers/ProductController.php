@@ -151,7 +151,6 @@ class ProductController extends Controller
             'departments' => $departments
               // Pass the data as props to the Vue page
         ]);
-        dd($departments);
     }
 
 

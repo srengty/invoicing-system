@@ -69,18 +69,18 @@ Route::get('/activate-all-customers', function() {
     return 'All customers activated';
 });
 
-Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
-Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
+// Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
+// Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
+// Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
 // Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
-Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+// Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
+// Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
 Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.getDepartments');
 Route::put('/settings/products/{product}/toggleStatus', [ProductCommentController::class, 'store']);
 Route::put('/settings//products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
     ->name('products.toggleStatus');
-// Route::resource('/settings/products', ProductController::class);
+Route::resource('/settings/products', ProductController::class);
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');
