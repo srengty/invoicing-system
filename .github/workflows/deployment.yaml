@@ -3,6 +3,8 @@ name: Deploy Invoice
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 env:
   PASSWORD_SERVER: dice@gic
   DB_CONNECTION: mysql
