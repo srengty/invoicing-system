@@ -76,11 +76,11 @@ Route::post('/settings/products', [ProductController::class, 'store'])->name('pr
 Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
-Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index');
+Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.getDepartments');
 Route::put('/settings/products/{product}/toggleStatus', [ProductCommentController::class, 'store']);
 Route::put('/settings//products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
     ->name('products.toggleStatus');
-Route::resource('/settings/products', ProductController::class);
+// Route::resource('/settings/products', ProductController::class);
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');
