@@ -1084,37 +1084,6 @@ const submitForm = () => {
         formData.append("pdf", form.pdf);
     }
 
-    // if (form.id) {
-    //     formData.append("_method", "PUT");
-    //     form.post(route("products.update", form.id), formData, {
-    //         forceFormData: true,
-    //         onSuccess: () => {
-    //             setTimeout(() => showToast("create", "success"), 100);
-    //             isFormVisible.value = false;
-    //             reloadData();
-    //         },
-    //         onError: (errors) => {
-    //             setTimeout(() => showToast("create", "error"), 100);
-    //             console.log("Validation Errors:", errors);
-    //             console.error("Creation errors:", errors);
-    //         },
-    //     });
-    // } else {
-    //     // If form.id is not set, create a new product
-    //     form.post(route("products.store"), {
-    //         forceFormData: true,
-    //         onSuccess: () => {
-    //             setTimeout(() => showToast("create", "success"), 100);
-    //             isFormVisible.value = false;
-    //             reloadData();
-    //         },
-    //         onError: (errors) => {
-    //             setTimeout(() => showToast("create", "error"), 100);
-    //             console.log("Validation Errors:", errors);
-    //             console.error("Creation errors:", errors);
-    //         },
-    //     });
-    // }
     if (form.id) {
         form.post(route("products.update", form.id), {
             forceFormData: true,
