@@ -1085,7 +1085,7 @@ const submitForm = () => {
     }
 
     if (form.id) {
-        form.post(route("products.update", form.id), {
+        form.put(route("products.update", form.id), {
             forceFormData: true,
             headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
