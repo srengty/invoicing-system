@@ -443,7 +443,7 @@ const form = useForm({
     agreement_no: props.agreement.agreement_no,
     agreement_ref_no: props.agreement.agreement_ref_no,
     agreement_date: props.agreement.agreement_date
-        ? moment(props.agreement.agreement_date, "DD/MM/YYYY").toDate()
+        ? moment(props.agreement.agreement_date, "YYYY/MM/DD").toDate()
         : new Date(),
     customer_id: props.agreement.customer_id,
     address: props.agreement.address,
@@ -451,10 +451,10 @@ const form = useForm({
         ? JSON.parse(props.agreement.agreement_doc)
         : null,
     start_date: props.agreement.start_date
-        ? moment(props.agreement.start_date, "DD/MM/YYYY").toDate()
+        ? moment(props.agreement.start_date, "YYYY/MM/DD").toDate()
         : new Date(),
     end_date: props.agreement.end_date
-        ? moment(props.agreement.end_date, "DD/MM/YYYY").toDate()
+        ? moment(props.agreement.end_date, "YYYY/MM/DD").toDate()
         : new Date(),
     agreement_amount: props.agreement.amount,
     short_description: props.agreement.short_description,
@@ -466,7 +466,7 @@ const form = useForm({
         props.agreement.payment_schedules?.map((item) => ({
             id: item.id,
             due_date: item.due_date
-                ? moment(item.due_date, "DD/MM/YYYY").toDate()
+                ? moment(item.due_date, "YYYY/MM/DD").toDate()
                 : new Date(),
             short_description: item.short_description,
             percentage: item.percentage,
