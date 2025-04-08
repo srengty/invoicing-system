@@ -1053,7 +1053,7 @@ const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
 const submitForm = () => {
-    console.log("submitForm", form);
+    console.log("Form data being submitted:", form.data());
     if (
         !form.division_id ||
         !form.category_id ||
@@ -1084,31 +1084,38 @@ const submitForm = () => {
         formData.append("pdf", form.pdf);
     }
     if (form.id) {
-        form.post(route("products.update", form.id), {
+        formData.append("_method", "PUT");
+        form.put(route("products.update", form.id), {
             forceFormData: true,
-            headers: { "Content-Type": "multipart/form-data" },
             onSuccess: () => {
-                setTimeout(() => showToast("update", "success"), 100);
-                isFormVisible.value = false;
-                reloadData();
+                console.log("Update success");
+                setTimeout(() => {
+                    showToast("update", "success");
+                    isFormVisible.value = false;
+                    reloadData();
+                }, 100);
             },
             onError: (errors) => {
-                setTimeout(() => showToast("update", "error"), 100);
+                console.error("Validation Errors:", errors);
                 console.error("Update errors:", errors);
+                setTimeout(() => showToast("update", "error"), 100);
             },
         });
     } else {
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
-                setTimeout(() => showToast("create", "success"), 100);
-                isFormVisible.value = false;
-                reloadData();
+                console.log("Create success");
+                setTimeout(() => {
+                    showToast("create", "success");
+                    isFormVisible.value = false;
+                    reloadData();
+                }, 100);
             },
             onError: (errors) => {
-                setTimeout(() => showToast("create", "error"), 100);
-                console.log("Validation Errors:", errors);
+                console.error("Validation Errors:", errors);
                 console.error("Creation errors:", errors);
+                setTimeout(() => showToast("create", "error"), 100);
             },
         });
     }
