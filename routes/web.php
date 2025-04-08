@@ -26,7 +26,6 @@ Route::get('/', function () {
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 Route::get('/agreements/show/{id}', [AgreementController::class, 'show'])->name('agreements.show');
-Route::get('/agreements/print/{id}', [AgreementController::class, 'print'])->name('agreements.print');
 Route::post('/agreements/store', [AgreementController::class, 'store'])->name('agreements.store');
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
@@ -76,11 +75,12 @@ Route::get('/activate-all-customers', function() {
 // Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
 // Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
-Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.getDepartments');
+Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index');
 Route::put('/settings/products/{product}/toggleStatus', [ProductCommentController::class, 'store']);
 Route::put('/settings//products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
     ->name('products.toggleStatus');
 Route::resource('/settings/products', ProductController::class);
+
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');
