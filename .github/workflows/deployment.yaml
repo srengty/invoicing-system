@@ -209,3 +209,5 @@ jobs:
       run: |
         echo "$PASSWORD_SERVER"  | sudo -S systemctl restart php8.4-fpm
         echo "$PASSWORD_SERVER"  | sudo -S systemctl reload nginx
+    - name: Show latest commit
+      run: git log -1
