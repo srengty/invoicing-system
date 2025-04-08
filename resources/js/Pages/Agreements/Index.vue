@@ -689,9 +689,14 @@ const updateColumns = (columns) => {
 const openCreate = () => {
     router.get(route("agreements.create"));
 };
-const formatDate = (date, format = "YYYY-DD-MM") => {
+const formatDate = (date, format = "YYYY-MM-DD") => {
     if (!date) return "N/A";
-    return moment(date).format(format);
+    const parsedDate = moment(
+        date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    return parsedDate.isValid() ? parsedDate.format(format) : "Invalid date";
 };
 
 // const momentDate = (date) => {
@@ -731,7 +736,7 @@ const filteredAgreements = computed(() => {
         }
 
         if (searchType.value.includes("date") && fieldValue) {
-            const dateStr = moment(fieldValue).format("DD/MM/YYYY");
+            const dateStr = moment(fieldValue).format("YYYY-DD-MM");
             return dateStr.includes(searchTerm.value);
         }
 
@@ -799,9 +804,11 @@ const viewAgreementDetails = async (agreement) => {
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
-                    due_date: moment(schedule.due_date, "DD/MM/YYYY").format(
-                        "DD/MM/YYYY"
-                    ),
+                    due_date: moment(schedule.due_date, [
+                        "YYYY-MM-DD",
+                        "DD/MM/YYYY",
+                        moment.ISO_8601,
+                    ]).format("YYYY-MM-DD"),
                 })) || [],
         };
 

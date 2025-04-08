@@ -1053,7 +1053,6 @@ const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
 const submitForm = () => {
-    console.log("submitForm", form);
     if (
         !form.division_id ||
         !form.category_id ||
@@ -1083,13 +1082,17 @@ const submitForm = () => {
     if (form.pdf instanceof File) {
         formData.append("pdf", form.pdf);
     }
+
     if (form.id) {
-        form.post(route("products.update", form.id), {
-            forceFormData: true,
-            headers: { "Content-Type": "multipart/form-data" },
+        form.transform((data) => ({
+            ...data,
+            _method: "PUT",
+        })).post(route("products.update", form.id), {
             onSuccess: () => {
-                setTimeout(() => showToast("update", "success"), 100);
-                isFormVisible.value = false;
+                setTimeout(() => {
+                    showToast("update", "success");
+                    isFormVisible.value = false;
+                }, 100);
                 reloadData();
             },
             onError: (errors) => {
@@ -1101,14 +1104,17 @@ const submitForm = () => {
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
-                setTimeout(() => showToast("create", "success"), 100);
-                isFormVisible.value = false;
+                console.log("Create success");
+                setTimeout(() => {
+                    showToast("create", "success");
+                    isFormVisible.value = false;
+                }, 100);
                 reloadData();
             },
             onError: (errors) => {
-                setTimeout(() => showToast("create", "error"), 100);
-                console.log("Validation Errors:", errors);
+                console.error("Validation Errors:", errors);
                 console.error("Creation errors:", errors);
+                setTimeout(() => showToast("create", "error"), 100);
             },
         });
     }
