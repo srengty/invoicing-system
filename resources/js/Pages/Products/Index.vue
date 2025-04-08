@@ -1084,9 +1084,10 @@ const submitForm = () => {
         formData.append("pdf", form.pdf);
     }
     if (form.id) {
-        formData.append("_method", "PUT");
-        form.put(route("products.update", form.id), {
-            forceFormData: true,
+        form.transform((data) => ({
+            ...data,
+            _method: "PUT",
+        })).post(route("products.update", form.id), {
             onSuccess: () => {
                 setTimeout(() => {
                     showToast("update", "success");
@@ -1107,7 +1108,6 @@ const submitForm = () => {
                 setTimeout(() => {
                     showToast("create", "success");
                     isFormVisible.value = false;
-
                 }, 100);
                 reloadData();
             },
