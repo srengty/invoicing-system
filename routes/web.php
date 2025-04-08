@@ -80,7 +80,6 @@ Route::put('/settings/products/{product}/toggleStatus', [ProductCommentControlle
 Route::put('/settings//products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])
     ->name('products.toggleStatus');
 Route::resource('/settings/products', ProductController::class);
-
 Route::get('/settings', [CustomerController::class, 'index'])->name('settings');
 
 Route::get('/settings/customer-categories', [CustomerCategoryController::class, 'index'])->name('customerCategory.index');

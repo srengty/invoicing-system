@@ -1084,21 +1084,18 @@ const submitForm = () => {
     }
 
     if (form.id) {
-        formData.append("_method", "PUT");
-        form.put(route("products.update", form.id), formData, {
-            forceFormData: true,
+        form.transform((data) => ({
+            ...data,
+            _method: 'PUT'
+        })).post(route("products.update", form.id), {
             onSuccess: () => {
-                console.log("Update success");
-                setTimeout(() => {
-                    showToast("update", "success");
-                    isFormVisible.value = false; 
-                    reloadData();
-                }, 100);
+                showToast("update", "success");
+                isFormVisible.value = false;
+                reloadData();
             },
             onError: (errors) => {
-                console.error("Validation Errors:", errors);
+                showToast("update", "error");
                 console.error("Update errors:", errors);
-                setTimeout(() => showToast("update", "error"), 100);
             },
         });
     } else {
