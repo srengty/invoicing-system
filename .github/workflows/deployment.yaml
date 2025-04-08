@@ -13,6 +13,9 @@ env:
   DB_PASSWORD: invoice@gicitc
   MAIL_USERNAME: itcfinance168@gmail.com
   MAIL_FROM_ADDRESS: itcfinance168@gmail.com
+  MAIL_ENCRYPTION: tls
+  MAIL_HOST: smtp.gmail.com
+  MAIL_PORT: 465
 jobs:
   deploy:
     runs-on: self-hosted
@@ -165,6 +168,9 @@ jobs:
         sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=${{ env.DB_PASSWORD }}/' .env
         sed -i 's/^MAIL_USERNAME=.*/MAIL_USERNAME=${{ env.MAIL_USERNAME}}/' .env
         sed -i 's/^MAIL_FROM_ADDRESS=.*/MAIL_FROM_ADDRESS=${{ env.MAIL_FROM_ADDRESS}}/' .env
+        sed -i 's/^MAIL_ENCRYPTION=.*/MAIL_ENCRYPTION=${{ env.MAIL_ENCRYPTION}}/' .env
+        sed -i 's/^MAIL_HOST=.*/MAIL_HOST=${{ env.MAIL_HOST}}/' .env
+        sed -i 's/^MAIL_PORT=.*/MAIL_PORT=${{ env.MAIL_PORT}}/' .env
     # - name: Laravel Migrate & Cache
     #   run: |
     #     php artisan migrate --force
