@@ -1085,8 +1085,7 @@ const submitForm = () => {
 
     if (form.id) {
         form.transform((data) => ({
-            ...data,
-            _method: 'PUT'
+            ...data, _method: 'PUT'
         })).post(route("products.update", form.id), {
             onSuccess: () => {
                 setTimeout(() => {
