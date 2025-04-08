@@ -1088,15 +1088,14 @@ const submitForm = () => {
         form.put(route("products.update", form.id), {
             forceFormData: true,
             onSuccess: () => {
-                console.log("Update success");
                 setTimeout(() => {
                     showToast("update", "success");
                     isFormVisible.value = false;
-                    reloadData();
                 }, 100);
+                reloadData();
             },
             onError: (errors) => {
-                showToast("update", "error");
+                setTimeout(() => showToast("update", "error"), 100);
                 console.error("Update errors:", errors);
             },
         });
@@ -1108,8 +1107,9 @@ const submitForm = () => {
                 setTimeout(() => {
                     showToast("create", "success");
                     isFormVisible.value = false;
-                    reloadData();
+
                 }, 100);
+                reloadData();
             },
             onError: (errors) => {
                 console.error("Validation Errors:", errors);
