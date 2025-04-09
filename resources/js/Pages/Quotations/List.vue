@@ -21,7 +21,7 @@
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
 
-        <div class="quotations text-sm">
+        <div class="quotations text-sm p-4">
             <!-- <div class="flex justify-between items-center p-4">
                 <h1 class="text-2xl">Quotations list</h1>
             </div> -->
@@ -77,42 +77,6 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <Column header="View / Print-out" style="width: 8%">
-                        <template #body="slotProps">
-                            <div class="flex gap-4">
-                                <Button
-                                    icon="pi pi-eye"
-                                    aria-label="View"
-                                    severity="info"
-                                    class="custom-button"
-                                    @click="viewQuotation(slotProps.data)"
-                                    size="small"
-                                    outlined
-                                />
-                                <div
-                                    v-tooltip.top="
-                                        slotProps.data.status === 'Pending'
-                                            ? 'Printing is disabled for pending quotations'
-                                            : ''
-                                    "
-                                >
-                                    <Button
-                                        icon="pi pi-print"
-                                        aria-label="Print out"
-                                        class="custom-button"
-                                        @click="
-                                            printQuotation(slotProps.data.id, 1)
-                                        "
-                                        size="small"
-                                        outlined
-                                        :disabled="
-                                            slotProps.data.status === 'Pending'
-                                        "
-                                    />
-                                </div>
-                            </div>
-                        </template>
-                    </Column>
                     <!-- <Column header="No." style="width: 5%">
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
@@ -123,7 +87,14 @@
                         header="Customer/Organization Name"
                         style="width: 15%"
                     />
-                    <Column field="total" header="Total" style="width: 10%" />
+                    <Column field="total" header="Total" style="width: 10%">
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data.total) }}
+                            <span class="text-xs text-gray-500 ml-1">
+                                (KHR)
+                            </span>
+                        </template>
+                    </Column>
 
                     <!-- Correctly Map the Status Column -->
                     <Column field="status" header="Status" style="width: 10%">
@@ -159,7 +130,7 @@
                     <Column
                         field="customer_status"
                         header="Customer Status"
-                        style="width: 15%"
+                        style="width: 10%"
                     >
                         <template #body="slotProps">
                             <span
@@ -228,6 +199,36 @@
                                 <template v-else>
                                     <span class="no-comment">No comment</span>
                                 </template>
+                            </div>
+                        </template>
+                    </Column>
+                    <Column header="View / Print-out" style="width: 8%">
+                        <template #body="slotProps">
+                            <div class="flex gap-4">
+                                <Button
+                                    icon="pi pi-eye"
+                                    aria-label="View"
+                                    severity="info"
+                                    class="custom-button"
+                                    @click="viewQuotation(slotProps.data)"
+                                    size="small"
+                                    outlined
+                                />
+                                <div>
+                                    <Button
+                                        icon="pi pi-print"
+                                        aria-label="Print out"
+                                        class="custom-button"
+                                        @click="
+                                            printQuotation(slotProps.data.id, 1)
+                                        "
+                                        size="small"
+                                        outlined
+                                    />
+                                    <!-- :disabled="
+                                            slotProps.data.status === 'Pending'
+                                        " -->
+                                </div>
                             </div>
                         </template>
                     </Column>
@@ -315,17 +316,27 @@
                                     field="pivot.quantity"
                                     header="QTY"
                                 ></Column>
-                                <Column
-                                    field="pivot.price"
-                                    header="Unit Price"
-                                ></Column>
+                                <Column field="pivot.price" header="Unit Price">
+                                    <template #body="slotProps">
+                                        <span>
+                                            {{
+                                                formatCurrency(
+                                                    slotProps.data.price
+                                                )
+                                            }}
+                                        </span>
+                                    </template>
+                                </Column>
                             </DataTable>
                         </div>
 
                         <br />
                         <p>
                             <strong>Total:</strong>
-                            {{ selectedQuotation.total }}
+                            {{ formatCurrency(selectedQuotation.total) }}
+                            <span class="text-xs text-gray-500 ml-1"
+                                >(KHR)</span
+                            >
                         </p>
                         <p v-if="selectedQuotation.comment">
                             <strong>Comment:</strong>
@@ -994,6 +1005,12 @@ const sendQuotationToCustomer = async () => {
         // Reset the sending state
         isSending.value = false;
     }
+};
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value || 0);
 };
 </script>
 

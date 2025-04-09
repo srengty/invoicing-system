@@ -202,17 +202,16 @@
                             />
                         </template>
                     </Column>
-                    <Column field="unit" header="Unit" />
                     <Column field="price" header="Unit Price">
                         <template #body="slotProps">
-                            <InputText
+                            <InputNumber
                                 v-model="slotProps.data.price"
                                 @input="updateProductSubtotal(slotProps.data)"
-                                :min="0"
-                                @keydown="preventMinus"
                                 :minFractionDigits="2"
                                 :maxFractionDigits="2"
-                                placeholder="Enter in USD"
+                                :min="0"
+                                @keydown="preventMinus"
+                                placeholder="Enter amount"
                                 class="w-5/6"
                                 size="small"
                             />
@@ -221,16 +220,13 @@
                     <Column field="subTotal" header="Subtotal">
                         <template #body="slotProps">
                             <span>
-                                {{
-                                    slotProps.data.subTotal
-                                        ? slotProps.data.subTotal.toFixed(2)
-                                        : "0.00"
-                                }}
-                                KHR
+                                {{ formatCurrency(slotProps.data.subTotal) }}
+                                <span class="text-xs text-gray-500 ml-1"
+                                    >KHR</span
+                                >
                             </span>
                         </template>
                     </Column>
-
                     <Column header="Actions">
                         <template #body="slotProps">
                             <div class="flex gap-2 items-center">
@@ -339,21 +335,24 @@
                 />
             </div>
             <!-- Form Buttons -->
-            <div class="buttons mt-4 mr-4 mb-10 flex justify-end">
+            <div class="buttons mt-4 mr-4 mb-10 flex justify-end gap-2">
                 <Button
                     :label="isEditing ? 'Update' : 'Create'"
-                    icon="pi pi-check"
                     type="submit"
-                    class="p-button-raised"
+                    class="w-full md:w-28"
                     size="small"
+                    raised
+                    icon="pi pi-check"
                 />
                 <Button
                     v-ripple
-                    icon="pi pi-times"
                     label="Cancel"
-                    class="p-button-raised p-button-secondary ml-2"
-                    @click="cancelOperation"
+                    severity="secondary"
+                    class="w-full md:w-28"
                     size="small"
+                    raised
+                    icon="pi pi-times"
+                    @click="cancelOperation"
                 />
             </div>
         </form>
@@ -421,6 +420,7 @@
                     class="w-full text-sm"
                     @complete="searchProducts"
                     @change="updateSelectedProductDetails"
+                    :input-props="{ id: 'item' }"
                 />
             </div>
             <!-- Item Category (Auto-complete, Read-Only) -->
@@ -737,8 +737,15 @@ const filterProductsByDivision = () => {
         filteredProducts.value = props.products.filter(
             (product) => product.division_id === selectedDivision.value
         );
+    } else if (editingProduct.value) {
+        // If editing, use the product's division
+        selectedDivision.value = editingProduct.value.division_id;
+        filteredProducts.value = props.products.filter(
+            (product) =>
+                product.division_id === editingProduct.value.division_id
+        );
     } else {
-        filteredProducts.value = []; // Clear filtered products if no division is selected
+        filteredProducts.value = [];
     }
 };
 const searchProducts = (event) => {
@@ -839,6 +846,9 @@ const resetAddItemDialog = () => {
     selectedQuantity.value = 1;
     additionalRemark.value = "";
     selectedAccountCode.value = "";
+    selectedItem.value = null;
+    selectedDivision.value = null;
+    filteredProducts.value = [];
     editingProduct.value = null;
 };
 
@@ -1029,6 +1039,10 @@ const editProduct = (productId) => {
         (prod) => prod.id === productId
     );
     if (productToEdit) {
+        // Set the division first
+        selectedDivision.value = productToEdit.division_id;
+
+        // Then set the product and other values
         selectedProduct.value = {
             ...productToEdit,
             quantity: productToEdit.quantity ?? 1,
@@ -1036,6 +1050,16 @@ const editProduct = (productId) => {
             remark: productToEdit.remark || "",
             include_catalog: Boolean(productToEdit.include_catalog),
         };
+
+        // Set the selected item for autocomplete
+        selectedItem.value = {
+            id: productToEdit.id,
+            name: productToEdit.name,
+            division_id: productToEdit.division_id,
+        };
+
+        // Filter products based on the division
+        filterProductsByDivision();
 
         isAddItemDialogVisible.value = true;
         editingProduct.value = productToEdit;
@@ -1240,5 +1264,15 @@ const getRemarkSnippet = (remark) => {
 }
 .p-checkbox .p-checkbox-box {
     visibility: visible !important;
+}
+/* Right-align currency columns */
+:deep(.p-datatable .p-column-subtotal),
+:deep(.p-datatable .p-column-price) {
+    text-align: right !important;
+}
+
+/* Ensure InputNumber fields display correctly */
+:deep(.p-inputnumber-input) {
+    text-align: right;
 }
 </style>

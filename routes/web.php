@@ -26,13 +26,16 @@ Route::get('/', function () {
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
 Route::get('/agreements/show/{id}', [AgreementController::class, 'show'])->name('agreements.show');
+Route::get('/agreements/print/{id}', [AgreementController::class, 'print'])->name('agreements.print');
 Route::post('/agreements/store', [AgreementController::class, 'store'])->name('agreements.store');
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
+Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/agreements/{agreement_no}/edit', [AgreementController::class, 'edit'])->name('agreements.edit');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/quotations/{quotationId}/agreement', [QuotationController::class, 'getAgreementForQuotation']);
 Route::post('/api/invoices/filter', [InvoiceController::class, 'filter']);
 Route::get('/search-quotation', [AgreementController::class, 'searchQuotation']);
+Route::get('/check-agreement-reference', [AgreementController::class, 'checkDuplicateReference']);
 
 Route::resource('quotations', QuotationController::class);
 Route::get('/quotations', [QuotationController::class, 'list']);
@@ -66,12 +69,12 @@ Route::get('/activate-all-customers', function() {
     return 'All customers activated';
 });
 
-Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
-Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
-Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
-Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+// Route::get('/settings/products', [ProductController::class, 'index'])->name('products.index');
+// Route::get('/settings/products/create', [ProductController::class, 'create'])->name('products.create');
+// Route::post('/settings/products', [ProductController::class, 'store'])->name('products.store');
+// Route::get('/settings/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+// Route::post('/settings/products/{product}', [ProductController::class, 'update'])->name('products.update');
+// Route::delete('/settings/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 Route::get('/pdfs/{filename}', [ProductController::class, 'viewPdf'])->where('filename', '.*')->name('pdf.view');
 Route::post('/settings/products', [ProductController::class, 'getDepartments'])->name('products.index');
 Route::put('/settings/products/{product}/toggleStatus', [ProductCommentController::class, 'store']);

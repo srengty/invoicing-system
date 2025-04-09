@@ -63,7 +63,9 @@
             >
                 <Column header="Division">
                     <template #body="{ data }">
-                        {{ getDivisionDisplay(data.division_id) }}
+                        {{
+                            getDivisionDisplay(data.division_id) || "Short Text"
+                        }}
                     </template>
                 </Column>
                 <Column header="Category">
@@ -427,13 +429,12 @@
                                     placeholder="Select Category"
                                 />
                                 <Message
-                                    v-if="form.errors.category_id"
+                                    v-if="form.errors.division_id"
                                     severity="error"
                                     size="small"
                                     variant="simple"
-                                    class="col-span-2"
                                 >
-                                    {{ form.errors.category_id }}
+                                    {{ form.errors.division_id }}
                                 </Message>
                             </div>
 
@@ -689,13 +690,22 @@
                 </div>
             </Dialog>
         </div>
-        <!-- </BodyLayout> -->
     </GuestLayout>
 </template>
 
 <script setup>
-import { Head, Link } from "@inertiajs/vue3";
+import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from "@/Layouts/BodyLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { Head, Link } from "@inertiajs/vue3";
+import { ref, computed, onMounted } from "vue";
+import { useForm } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
+import { router } from "@inertiajs/vue3";
+import { getDepartment } from "../../data";
+import { usePage } from "@inertiajs/vue3";
+import { route } from "ziggy-js";
 import {
     DataTable,
     Column,
@@ -704,20 +714,11 @@ import {
     InputText,
     InputNumber,
     Select,
+    Message,
+    Dropdown,
+    Breadcrumb,
+    Toast,
 } from "primevue";
-import Message from "primevue/message";
-import { ref, computed, onMounted } from "vue";
-import { useForm } from "@inertiajs/vue3";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { useToast } from "primevue/usetoast";
-import Toast from "primevue/toast";
-import { useConfirm } from "primevue/useconfirm";
-import { router } from "@inertiajs/vue3";
-import { getDepartment } from "../../data";
-import Dropdown from "primevue/dropdown";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -804,6 +805,22 @@ const reloadData = () => {
         preserveScroll: true,
         preserveState: false,
     });
+};
+const setFormData = (product) => {
+    form.id = product.id;
+    form.division_id = product.division_id;
+    form.category_id = product.category_id;
+    form.code = product.code;
+    form.name = product.name;
+    form.name_kh = product.name_kh;
+    form.unit = product.unit;
+    form.price = product.price;
+    form.desc = product.desc || "";
+    form.desc_kh = product.desc_kh || "";
+    form.acc_code = product.acc_code || "73048 ផលពីសេវាផ្សេងៗ";
+    form.pdf_url = product.pdf_url || "";
+    form.remark = product.remark || "";
+    form.pdf = null; // Always reset file
 };
 
 const showToast = (operation, status) => {
@@ -898,14 +915,6 @@ const categoryOptions = computed(
         })) || []
 );
 
-// const divisionOptions = computed(
-//     () =>
-//         divisions?.map((division) => ({
-//             name: division.division_name_english || division.divison_name_khmer,
-//             id: division.id,
-//         })) || []
-// );
-
 const getCategoryName = (categoryId) => {
     const category = categories.find((cat) => cat.id === categoryId);
     return category
@@ -961,25 +970,21 @@ const form = useForm({
 
 // Open product form
 const openForm = (product = null) => {
+    form.reset();
+    form.clearErrors();
+
     if (product) {
-        form.id = product.id;
-        form.code = product.code;
-        form.name = product.name;
-        form.name_kh = product.name_kh;
-        form.unit = product.unit;
-        form.price = product.price;
-        form.category_id = product.category_id;
-        form.division_id = product.division_id;
-        form.desc = product.desc || ""; // ✅ Ensure description is populated
-        form.desc_kh = product.desc_kh || "";
-        form.remark = product.remark || "";
-        form.pdf_url = product.pdf_url || null; // ✅ Ensure PDF URL is correctly set
-        form.pdf = null; // Reset file upload
+        setFormData(product);
     } else {
-        form.reset();
+        form.acc_code = "73048 ផលពីសេវាផ្សេងៗ"; // Default for new
     }
+
     isFormVisible.value = true;
 };
+
+const isEditMode = ref(false);
+
+isEditMode.value = true;
 
 const handleFileUpload = (event) => {
     form.pdf = event.target.files[0];
@@ -1047,21 +1052,14 @@ const toggleStatus = (product) => {
 const searchTerm = ref(""); // The search term input
 const searchType = ref("name_kh"); // Default search type is 'name'
 
-// Computed property to filter products based on the search type and search term
-// const filteredProducts = computed(() => {
-//   return products.filter((product) => {
-//     const term = searchTerm.value.toLowerCase();
-//     if (searchType.value === "name_kh") {
-//       return product.name_kh.toLowerCase().includes(term);
-//     } else if (searchType.value === "code") {
-//       return product.code.toLowerCase().includes(term);
-//     }
-//     return false;
-//   });
-// });
-
 const submitForm = () => {
-    if (!form) {
+    if (
+        !form.division_id ||
+        !form.category_id ||
+        !form.code ||
+        !form.name ||
+        !form.name_kh
+    ) {
         toast.add({
             group: "tc",
             severity: "error",
@@ -1073,22 +1071,28 @@ const submitForm = () => {
     }
 
     const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-        if (value !== null && key !== "pdf") {
+    const rawData = form.data();
+
+    Object.entries(rawData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && key !== "pdf") {
             formData.append(key, value);
         }
     });
-    if (form.pdf) {
+
+    if (form.pdf instanceof File) {
         formData.append("pdf", form.pdf);
     }
 
     if (form.id) {
-        form.post(route("products.update", form.id), {
-            forceFormData: true,
-            headers: { "Content-Type": "multipart/form-data" },
+        form.transform((data) => ({
+            ...data,
+            _method: "PUT",
+        })).post(route("products.update", form.id), {
             onSuccess: () => {
-                setTimeout(() => showToast("update", "success"), 100);
-                isFormVisible.value = false;
+                setTimeout(() => {
+                    showToast("update", "success");
+                    isFormVisible.value = false;
+                }, 100);
                 reloadData();
             },
             onError: (errors) => {
@@ -1100,14 +1104,17 @@ const submitForm = () => {
         form.post(route("products.store"), {
             forceFormData: true,
             onSuccess: () => {
-                setTimeout(() => showToast("create", "success"), 100);
-                isFormVisible.value = false;
+                console.log("Create success");
+                setTimeout(() => {
+                    showToast("create", "success");
+                    isFormVisible.value = false;
+                }, 100);
                 reloadData();
             },
             onError: (errors) => {
-                setTimeout(() => showToast("create", "error"), 100);
-                console.log("Validation Errors:", errors);
+                console.error("Validation Errors:", errors);
                 console.error("Creation errors:", errors);
+                setTimeout(() => showToast("create", "error"), 100);
             },
         });
     }
