@@ -8,7 +8,7 @@
         <PanelMenu
             v-model:expandedKeys="expandedKeys"
             :model="items"
-            class="w-full md:w-80 text-xs "
+            class="w-full md:w-80 text-xs"
             :pt="{ panel: { class: 'border-0 bg-transparent p-0' } }"
             multiple
         >
