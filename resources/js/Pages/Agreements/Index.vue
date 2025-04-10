@@ -692,7 +692,12 @@ const openCreate = () => {
 };
 const formatDate = (date, format = "YYYY-MM-DD") => {
     if (!date) return "N/A";
-    return moment(date, "YYYY-MM-DD").format(format); // Make sure the date is in ISO format
+    const parsedDate = moment(
+        date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    return parsedDate.isValid() ? parsedDate.format(format) : "Invalid date";
 };
 
 
