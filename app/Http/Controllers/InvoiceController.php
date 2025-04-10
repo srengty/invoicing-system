@@ -23,9 +23,25 @@ class InvoiceController extends Controller
         $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
         $customers = Customer::all();
         $products = Product::all();
-        
+
         // Pass the full models to the form
         return Inertia::render('Invoices/Create', [
+            'agreements' => $agreements,
+            'quotations' => $quotations,
+            'customers' => $customers,
+            'products' => $products,
+        ]);
+    }
+    public function show()
+    {
+        // Get all agreements, quotations, customers, and products
+        $agreements = Agreement::all();
+        $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
+        $customers = Customer::all();
+        $products = Product::all();
+
+        // Pass the full models to the form
+        return Inertia::render('Invoices/Show', [
             'agreements' => $agreements,
             'quotations' => $quotations,
             'customers' => $customers,
@@ -47,7 +63,7 @@ class InvoiceController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date',
             'products' => 'required|array',
-            'products.*.id' => 'required|exists:products,id', 
+            'products.*.id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:1',
         ]);
 
@@ -102,9 +118,9 @@ class InvoiceController extends Controller
     {
         // Initialize the query builder for the invoices
         $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category');
-        
+
         // Apply the filters from the request, if any
-        
+
         // Filter by invoice number (if provided)
         if ($request->has('invoice_no_start') && $request->invoice_no_start) {
             $query->where('invoice_no', '>=', $request->invoice_no_start);
@@ -140,8 +156,8 @@ class InvoiceController extends Controller
             $query->whereHas('customer.customerCategory', function ($query) use ($request) {
                 $query->where('category_name_english', 'like', '%' . $request->category_name_english . '%');
             });
-        }        
-        
+        }
+
         // Filter by currency
         if ($request->has('currency') && $request->currency) {
             $query->where('currency', $request->currency);
@@ -255,14 +271,14 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted successfully!');
     }
 
-    public function show($id)
-    {
-        $invoice = Invoice::with(['customer', 'products'])->findOrFail($id);
+    // public function show($id)
+    // {
+    //     $invoice = Invoice::with(['customer', 'products'])->findOrFail($id);
 
-        return Inertia::render('Invoices/Show', [
-            'invoice' => $invoice
-        ]);
-    }
+    //     return Inertia::render('Invoices/Show', [
+    //         'invoice' => $invoice
+    //     ]);
+    // }
 
     public function getInvoicesByQuotation($quotation_no)
     {
