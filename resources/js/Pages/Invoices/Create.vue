@@ -150,7 +150,11 @@
               </template>
             </Column>
             <Column field="unit" header="Unit"></Column>
-            <Column field="unitPrice" header="Unit Price"></Column>
+            <Column field="unitPrice" header="Unit Price">
+              <template #body="slotProps">
+                <InputText v-model="slotProps.data.unitPrice" @input="updateProductSubtotal(slotProps.data)" class="w-full" />
+              </template>
+            </Column>
             <Column field="subTotal" header="Sub Total"></Column>
             <Column header="Action">
               <template #body="slotProps">
@@ -177,8 +181,8 @@
             <p>This quote is negotiable for one (1) week from the date stated above.</p>
           </div>
           <div class="buttons mt-4 flex justify-end">
-            <Button label="Submit request for approval" icon="pi pi-check" class="p-button-rounded p-button-success" @click="submitInvoice" />
-            <Button label="Cancel" class="p-button-rounded p-button-secondary ml-2" @click="cancel" />
+            <Button label="Submit request for approval" icon="pi pi-check" class="p-button-success" @click="submitInvoice" />
+            <Button label="Cancel" class="p-button-secondary ml-2" @click="cancel" />
           </div>
         </div>
   
@@ -187,7 +191,7 @@
             v-model:visible="isAddItemDialogVisible"
             modal
             header="Add Item (Popup)"
-            :style="{ width: '450px' }"
+            :style="{ width: '550px' }"
             class="text-sm"
         >
             <div class="p-fluid grid gap-4 text-sm">
@@ -195,15 +199,15 @@
                 <div class="field w-full">
                     <label for="division" class="required">Division</label> <br />
                     <Dropdown
-                    v-model="selectedDivision"
-                    :options="divisionOptions"
-                    optionLabel="displayName"
-                    optionValue="id"
-                    placeholder="Select a Division"
-                    :filter="true"
-                    filterPlaceholder="Search divisions..."
-                    class="w-full"
-                    @change="filterProductsByDivision"
+                      v-model="selectedDivision"
+                      :options="divisionOptions"
+                      optionLabel="displayName"
+                      optionValue="id"
+                      placeholder="Select a Division"
+                      :filter="true"
+                      filterPlaceholder="Search divisions..."
+                      class="w-full"
+                      @change="filterProductsByDivision"
                     />
                 </div>
 
@@ -309,7 +313,7 @@
   </template>
   
   <script setup>
-  import { ref, computed, watch } from 'vue';
+  import { ref, computed, watch, onMounted } from 'vue';
   import { useForm } from '@inertiajs/vue3';
   import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select, Calendar, Dropdown, AutoComplete, InputNumber } from 'primevue';
   import { usePage } from '@inertiajs/vue3';
@@ -318,6 +322,7 @@
   import { Inertia } from '@inertiajs/inertia';
   import Breadcrumb from "primevue/breadcrumb";
   import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+  import { getDepartment } from "../../data";
   
   const { products, agreements, quotations, customers, product_quotations, divisions } = usePage().props;
 
@@ -371,7 +376,7 @@
   const editingProduct = ref(null);
   // Product Selection Dialog State
   const selectedDivision = ref(null);
-  const selectedItem = ref('');
+  const selectedItem = ref(null);
   const filteredProducts = ref([]);
   const selectedProduct = ref({
   id: null,
@@ -385,20 +390,38 @@
   unit: ''
 });
 
-const divisionOptions = computed(() => {
-    return props.divisions?.map(division => ({
-        id: division.id,
-        displayName: division.name
-    })) || [];
+const divisionOptions = ref([]);
+
+onMounted(async () => {
+  const response = await getDepartment();
+  const data = response.data;
+
+  // Filter departments with status === "service"
+  const serviceDepartments = data.filter((dept) => dept.status === "service");
+
+  if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
+    divisionOptions.value = serviceDepartments.map((dept) => ({
+      name: dept.name,
+      id: dept.id,
+      code: dept.code,
+      displayName: `${dept.code} - ${dept.name}`,
+    }));
+  } else {
+    console.warn("No service departments found.");
+    divisionOptions.value = [];
+  }
 });
 
 const openAddItemDialog = () => {
-    console.log('Products:', props.products);
-    console.log('Divisions:', props.divisions);
-    isAddItemDialogVisible.value = true;
-    filteredProducts.value = props.products;
-    resetSelectedProduct();
+  isAddItemDialogVisible.value = true;
+
+  if (editingProduct.value) {
+    selectedDivision.value = editingProduct.value.division_id;
+  }
+
+  filterProductsByDivision();
 };
+
   
   const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
@@ -421,49 +444,83 @@ const openAddItemDialog = () => {
     selectedDivision.value = null;
     editingProduct.value = null;
   };
-  
+
+  const filterProductsByDivision = () => {
+    const divisionId = selectedDivision.value;
+    const selectedProductIds = productsList.value.map(p => p.id);
+    
+    if (divisionId) {
+        // Filter by selected division and exclude already selected products
+        filteredProducts.value = props.products.filter(
+            product => 
+                product.division_id === divisionId &&
+                product.status === "approved" &&
+                !selectedProductIds.includes(product.id))
+    } 
+    else if (editingProduct.value) {
+        // If editing, use the product's division
+        selectedDivision.value = editingProduct.value.division_id;
+        filteredProducts.value = props.products.filter(
+            product =>
+                product.division_id === editingProduct.value.division_id &&
+                product.status === "approved" &&
+                !selectedProductIds.includes(product.id))
+    } 
+    else {
+        // Show all approved products not already selected
+        filteredProducts.value = props.products.filter(
+            product => 
+                product.status === "approved" &&
+                !selectedProductIds.includes(product.id))
+    }
+};
+
 const searchProducts = (event) => {
-    if (!event.query.trim()) {
-        filteredProducts.value = [];
-        return;
+    const query = event.query?.toLowerCase() || "";
+    const divisionId = selectedDivision.value;
+    const selectedProductIds = productsList.value.map(p => p.id);
+    
+    // Start with all approved products not already selected
+    let productsToSearch = props.products.filter(
+        product => 
+            product.status === "approved" &&
+            !selectedProductIds.includes(product.id)
+    );
+    
+    // Apply division filter if one is selected
+    if (divisionId) {
+        productsToSearch = productsToSearch.filter(
+            product => product.division_id === divisionId
+        );
     }
     
-    const query = event.query.toLowerCase();
-    filteredProducts.value = props.products.filter(product => 
-        product.name.toLowerCase().includes(query) &&
-        (selectedDivision.value ? product.division_id === selectedDivision.value : true)
+    // Apply search query filter
+    filteredProducts.value = productsToSearch.filter(product =>
+        product.name.toLowerCase().includes(query)
     );
 };
 
-const filterProductsByDivision = () => {
-    if (selectedDivision.value) {
-        filteredProducts.value = props.products.filter(
-            product => product.division_id === selectedDivision.value
-        );
-    } else {
-        filteredProducts.value = props.products; // Show all products when no division selected
-    }
-    selectedItem.value = '';
-    resetSelectedProduct();
-};
+watch(productsList, () => {
+    // Refresh the filtered list when productsList changes
+    filterProductsByDivision();
+}, { deep: true });
   
 const updateSelectedProductDetails = () => {
   if (!selectedItem.value) return;
 
-  const product = products.find(p => p.name === selectedItem.value);
-  if (product) {
-    selectedProduct.value = {
-      id: product.id,
-      name: product.name,
-      category_id: product.category_id,
-      price: product.price,
-      acc_code: product.acc_code,
-      quantity: 1,
-      remark: '',
-      pdf_url: product.pdf_url,
-      unit: product.unit
-    };
-  }
+  const product = selectedItem.value; // Already the full object
+
+  selectedProduct.value = {
+    id: product.id,
+    name: product.name,
+    category_id: product.category_id,
+    price: product.price,
+    acc_code: product.acc_code,
+    quantity: 1,
+    remark: '',
+    pdf_url: product.pdf_url,
+    unit: product.unit
+  };
 };
   
   const getCategoryName = (categoryId) => {
