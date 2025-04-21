@@ -8,21 +8,23 @@ return new class extends Migration
 {
     
     public function up(): void
-    {
-        Schema::update('invoice_comments', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('invoice_id');
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->string('role')->nullable();
-            $table->string('status')->nullable();              
-            $table->text('comment')->nullable();
-            $table->timestamps();
-
-            $table->foreign('invoice_id')
-                  ->references('id')
-                  ->on('invoices')
-                  ->onDelete('cascade');
-        });
+    {   
+        if (!Schema::hasTable('invoice_comments')) {
+            Schema::update('invoice_comments', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('invoice_id');
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->string('role')->nullable();
+                $table->string('status')->nullable();              
+                $table->text('comment')->nullable();
+                $table->timestamps();
+    
+                $table->foreign('invoice_id')
+                      ->references('id')
+                      ->on('invoices')
+                      ->onDelete('cascade');
+            });
+        }  
     }
 
     public function down(): void
