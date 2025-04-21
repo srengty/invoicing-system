@@ -14,13 +14,15 @@ return new class extends Migration
     {
         Schema::create('invoice_product', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('invoice_id'); // This should be a reference to `invoices.id`
+            $table->unsignedBigInteger('invoice_no')->unique()->nullable();
             $table->unsignedBigInteger('product_id');
             $table->integer('quantity');
+            $table->json('product_unit_prices')->nullable();
+            $table->decimal('price', 10, 2);
             $table->timestamps();
 
             // Foreign key constraints
-            $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
+            $table->foreign('invoice_no')->references('id')->on('invoices')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
         });       
     }
@@ -30,6 +32,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('invoice_product');
         Schema::dropIfExists('invoice_product');
     }
 };

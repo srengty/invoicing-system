@@ -216,6 +216,45 @@
                     sortable
                 />
 
+                <Column field="status" header="Status">
+                    <template #body="{ data }">
+                        <Button
+                                :icon="
+                                    data.status === 'approved'
+                                        ? 'pi pi-check'
+                                        : data.status === 'rejected'
+                                        ? 'pi pi-times'
+                                        : 'pi pi-clock'
+                                "
+                                :label="
+                                    data.status === 'approved'
+                                        ? 'Approved'
+                                        : data.status === 'rejected'
+                                        ? 'Rejected'
+                                        : 'Pending'
+                                "
+                                :class="
+                                    data.status === 'approved'
+                                        ? 'p-button-success'
+                                        : data.status === 'rejected'
+                                        ? 'p-button-danger'
+                                        : 'p-button-warning'
+                                "
+                                size="small"
+                                @click="toggleStatus(data)"
+                                class="text-sm flex-grow"
+                                outlined
+                            />
+                            <Button
+                                v-if="data.comments && data.comments.length > 0"
+                                icon="pi pi-comment"
+                                class="p-button-info ml-2"
+                                @click="viewComment(data.comments)"
+                                outlined
+                            />
+                    </template>
+                </Column>
+
                 <Column header="Amount Due">
                     <template #body="{ data }">
                         <template
@@ -250,24 +289,47 @@
                                 @click="printInvoice(data.invoice_no)"
                                 rounded
                             />
-                            <Button
-                                icon="pi pi-pencil"
-                                class="p-button-warning"
-                                aria-label="Edit"
-                                @click="editInvoice(data.invoice_no)"
-                                rounded
-                            />
-                            <Button
-                                icon="pi pi-trash"
-                                class="p-button-danger"
-                                aria-label="Delete"
-                                @click="deleteInvoice(data.invoice_no)"
-                                rounded
-                            />
                         </div>
                     </template>
                 </Column>
             </DataTable>
+
+            <<Dialog
+    v-model:visible="isStatusDialogVisible"
+    header="Change Invoice Status"
+    :modal="true"
+    class="w-96"
+>
+    <div class="p-4">
+        <p class="text-center text-base mb-3">
+            Do you want to approve or reject this invoice?
+        </p>
+
+        <textarea
+            v-model="commentText"
+            placeholder="Enter your comment..."
+            class="w-full p-2 border rounded"
+        ></textarea>
+
+        <div class="flex justify-center gap-4 mt-4">
+            <Button
+                label="Reject"
+                icon="pi pi-times"
+                class="p-button-danger"
+                size="small"
+                @click="changeStatus('revise')"
+            />
+            <Button
+                label="Approve"
+                icon="pi pi-check"
+                class="p-button-success"
+                size="small"
+                @click="changeStatus('approved')"
+            />
+        </div>
+    </div>
+</Dialog>
+
         </div>
     </GuestLayout>
 </template>
@@ -282,6 +344,7 @@ import {
     DatePicker,
     InputText,
     Dropdown,
+    Dialog,
 } from "primevue";
 import KeyFilter from "primevue/keyfilter";
 import ChooseColumns from "@/Components/ChooseColumns.vue";
@@ -348,17 +411,44 @@ const columns = [
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
     { field: "agreement.amount", header: "Amount Paid" },
-    { field: "status", header: "Status" },
 ];
+const selectedComment = ref("");
+const commentText = ref("");
+const isCommentDialogVisible = ref(false);
+const selectedInvoice = ref(null);
+const isStatusDialogVisible = ref(false);
+
+// Open the status dialog for a selected invoice
+const toggleStatus = (invoice) => {
+    selectedInvoice.value = invoice;
+    isStatusDialogVisible.value = true;
+};
+
+// Change status (approve/reject) with optional comment
+const changeStatus = (status) => {
+    if (!selectedInvoice.value) return;
+
+    Inertia.put(route('invoices.updateStatus', selectedInvoice.value.id), {
+        status: status,
+        comment: commentText.value,
+    }, {
+        onSuccess: () => {
+            isStatusDialogVisible.value = false;
+            commentText.value = "";
+            selectedInvoice.value = null;
+        },
+        onError: (error) => {
+            console.error("Status update failed:", error);
+        },
+    });
+};
+
+
 
 const selectedColumns = ref(columns.slice());
 const showColumns = ref(columns);
 
-const statusOptions = ref([
-    { label: "Paid", value: "Paid" },
-    { label: "Pending", value: "Pending" },
-    { label: "Cancelled", value: "Cancelled" },
-]);
+const statusOptions = ref([]);
 
 const updateColumns = () => {
     showColumns.value = selectedColumns.value;

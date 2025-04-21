@@ -7,6 +7,7 @@ use App\Models\CustomerCategory;
 use App\Models\Quotation;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\InvoiceProduct;
 use App\Models\Product;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -52,66 +53,151 @@ class InvoiceController extends Controller
     // Store a newly created invoice
     public function store(Request $request)
     {
-        // Validate the incoming request
         $validated = Validator::make($request->all(), [
             'invoice_no' => 'nullable|unique:invoices',
-            'agreement_no' => 'required',
-            'quotation_no' => 'required',
-            'customer_id' => 'required',
-            'address' => 'required',
-            'phone' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-            'products' => 'required|array',
-            'products.*.id' => 'required|exists:products,id',
+            'status' => 'required|string|in:Pending,Approved,Revise',
+            'agreement_no' => 'nullable|integer|exists:agreements,agreement_no',
+            'quotation_no' => 'nullable|integer|exists:quotations,quotation_no',
+            'customer_id' => 'required|exists:customers,id',
+            'address' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:255',
+            'terms' => 'nullable|string|max:255',
+            'total_usd' => 'nullable|numeric',
+            'exchange_rate' => 'nullable|numeric|min:0',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'products' => 'nullable|array',
+            'products.*.id' => 'required|integer',
             'products.*.quantity' => 'required|numeric|min:1',
+            'products.*.price' => 'required|numeric|min:0',
+            'products.*.acc_code' => 'nullable|string',
+            'products.*.category_id' => 'nullable|integer',
+            'products.*.remark' => 'nullable|string',
+            'products.*.include_catalog' => 'required|boolean',
+            'products.*.pdf_url' => 'nullable|string',
         ]);
 
         if ($validated->fails()) {
-            return response()->json(['message' => $validated->errors()]);
+            return response()->json(['message' => $validated->errors()], 422);
         }
 
-        // Get validated data
-        $validated = $validated->validated();
+        $data = $validated->validated();
 
-        // Format start_date and end_date using Carbon
-        $startDate = Carbon::parse($validated['start_date'])->toDateTimeString();
-        $endDate = Carbon::parse($validated['end_date'])->toDateTimeString();
+        // Format dates
+        $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : now();
+        $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : now();
 
-        // Calculate the grand total (without storing the subtotal)
+        // Calculate grand total
         $grand_total = 0;
-        foreach ($validated['products'] as $product) {
-            $prod = Product::find($product['id']);
-            $grand_total += $prod->price * $product['quantity'];
+        if (!empty($data['products'])) {
+            foreach ($data['products'] as $product) {
+                $productData = Product::find($product['id']);
+                if ($productData && $productData->status === 'approved') {
+                    $grand_total += $product['price'] * $product['quantity'];
+                }
+            }
         }
 
-        // Assuming tax is 10% of the grand total
-        $tax = 0.0 * $grand_total;
-        $grand_total += $tax;  // Add tax to grand total
+        // Optional USD conversion
+        $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
+            ? $grand_total / $data['exchange_rate']
+            : $data['total_usd'] ?? null;
 
-        // Create the invoice
-        $invoice = Invoice::create([
-            // 'invoice_no' => $validated['invoice_no'],
-            'agreement_no' => $validated['agreement_no'],
-            'quotation_no' => $validated['quotation_no'],
-            'customer_id' => $validated['customer_id'],
-            'address' => $validated['address'],
-            'phone' => $validated['phone'],
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'grand_total' => $grand_total,  // Store only the grand total
+        // Auto-generate invoice number only if status is Approved
+        $invoice_no = null;
+        if ($data['status'] === 'Approved') {
+            $currentYear = date('Y');
+            $baseInvoiceNo = ($currentYear - 2025) * 1000000 + 25000001;
+            $lastInvoice = \App\Models\Invoice::where('invoice_no', '>=', $baseInvoiceNo)
+                            ->orderBy('invoice_no', 'desc')
+                            ->first();
+            $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
+        }
+
+        // Auto-generate invoice_date only if status is Approved
+        $invoiceDate = null;
+        if ($data['status'] === 'Approved') {
+            $invoiceDate = now()->format('Y-m-d H:i:s');
+        } elseif ($request->invoice_date) {
+            $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
+        }
+
+        // Create invoice
+        $invoice = \App\Models\Invoice::create([
+            'invoice_no'     => $invoice_no,
+            'quotation_no'   => $data['quotation_no'] ?? null,
+            'agreement_no'   => $data['agreement_no'] ?? null,
+            'customer_id'    => $data['customer_id'],
+            'address'        => $data['address'] ?? null,
+            'phone'          => $data['phone'] ?? null,
+            'terms'          => $data['terms'] ?? null,
+            'start_date'     => $startDate,
+            'end_date'       => $endDate,
+            'grand_total'    => $grand_total,
+            'total_usd'      => $total_usd,
+            'exchange_rate'  => $data['exchange_rate'] ?? null,
+            'invoice_date'   => $invoiceDate,
+            'status'         => $data['status'],
         ]);
 
-        $invoiceId = $invoice->id;
-
-        // Attach the selected products with their quantities to the invoice
-        foreach ($validated['products'] as $product) {
-            $invoice->products()->attach($product['id'], ['quantity' => $product['quantity']]);
+        // Attach products to pivot table
+        if (!empty($data['products'])) {
+            foreach ($data['products'] as $product) {
+                $productData = Product::find($product['id']);
+                if ($productData && $productData->status === 'approved') {
+                    \App\Models\InvoiceProduct::create([
+                        'invoice_no'       => $invoice->id,
+                        'product_id'       => $product['id'],
+                        'quantity'         => $product['quantity'],
+                        'price'            => $product['price'],
+                        'include_catalog'  => $product['include_catalog'],
+                        'pdf_url'          => $product['pdf_url'] ?? null,
+                    ]);
+                }
+            }
         }
 
-        // Redirect with a success message
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully!');
     }
+
+    public function updateStatus(Request $request, Invoice $invoice)
+{
+    $validated = $request->validate([
+        'status' => 'required|string|in:approved,rejected,pending',
+        'comment' => 'nullable|string|max:1000',
+        'role' => 'nullable|string', // optional
+    ]);
+
+    $invoice->status = $validated['status'];
+
+    if ($invoice->status === 'approved') {
+        if (!$invoice->invoice_no) {
+            $year = date('Y');
+            $baseInvoiceNo = ($year - 2025) * 1000000 + 25000001;
+            $last = Invoice::where('invoice_no', '>=', $baseInvoiceNo)
+                ->orderBy('invoice_no', 'desc')
+                ->first();
+            $invoice->invoice_no = $last ? $last->invoice_no + 1 : $baseInvoiceNo;
+        }
+
+        if (!$invoice->invoice_date) {
+            $invoice->invoice_date = now();
+        }
+    }
+
+    $invoice->save();
+
+    if (!empty($validated['comment'])) {
+        \App\Models\InvoiceComment::create([
+            'invoice_id' => $invoice->id,
+            'status' => $validated['status'],
+            'comment' => $validated['comment'],
+        ]);
+    }
+
+    return;
+}
+
 
     // Show the list of invoices
     public function index(Request $request)

@@ -1,5 +1,5 @@
 <template>
-    <meta name="_token" content="{{ csrf_token() }}" />
+    <meta name="_token" content="{{ csrf_token() }}">
     <Head title="Create Invoice" />
     <GuestLayout>
       <NavbarLayout/>
@@ -142,7 +142,11 @@
         <!-- Product Table Section -->
         <div class="m-6">
           <DataTable :value="productsList" class="p-datatable-striped" responsiveLayout="scroll">
-            <Column field="index" header="No."></Column>
+            <Column header="No.">
+              <template #body="slotProps">
+                {{ slotProps.index + 1 }}
+              </template>
+            </Column>
             <Column field="product" header="Product"></Column>
             <Column field="qty" header="Qty">
               <template #body="slotProps">
@@ -161,19 +165,49 @@
                 <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(slotProps.data.id)" />
               </template>
             </Column>
+            <Column header="Catalog">
+              <template #body="slotProps">
+                <div class="flex items-center gap-2">
+                  <Checkbox
+                    v-model="slotProps.data.include_catalog"
+                    :binary="true"
+                    @change="() => {
+                     checkCatalogAvailability(slotProps.data)
+                    }"
+                  />
+                  <span>
+                    {{ slotProps.data.include_catalog ? 'Included' : 'Include' }}
+                  </span>
+                </div>
+              </template>
+            </Column>
           </DataTable>
   
-          <div class="total-container mt-4 flex justify-between">
-            <p class="font-bold">Total</p>
-            <p class="font-bold">{{ calculateTotal }}</p>
-          </div>
-          <div class="grand-total-container flex justify-between">
-            <p class="font-bold text-lg">Grand Total</p>
-            <p class="font-bold text-lg">{{ calculateGrandTotal }}</p>
-          </div>
-          <div class="flex justify-between mt-4">
-            <p class="font-bold">Instalment Paid</p>
-            <p class="font-bold">{{ form.instalmentPaid }}</p>
+          <div class="pl-2 pr-6">
+            <div class="total-container mt-4 flex justify-between">
+              <p class="font-bold">Total KHR</p>
+              <p class="font-bold">
+                ៛{{ formatCurrency(calculateTotalKHR) }}
+              </p>
+            </div>
+
+            <div class="total-container mt-4 flex justify-between items-center">
+              <p class="font-bold">Total USD</p>
+              <input
+                type="number"
+                v-model.number="form.total_usd"
+                placeholder="Enter USD"
+                step="0.01"
+                class="w-28 h-9 text-sm border border-gray-300 rounded px-2 text-right"
+              />
+            </div>
+
+            <div class="grand-total-container flex justify-between mt-4">
+              <p class="font-bold">Exchange rate</p>
+              <p class="font-bold">
+                {{ calculateExchangeRate }}
+              </p>
+            </div>
           </div>
           <div class="terms mt-4">
             <h3 class="text-lg">Terms and Conditions</h3>
@@ -315,7 +349,7 @@
   <script setup>
   import { ref, computed, watch, onMounted } from 'vue';
   import { useForm } from '@inertiajs/vue3';
-  import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select, Calendar, Dropdown, AutoComplete, InputNumber } from 'primevue';
+  import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select, Checkbox, Dropdown, AutoComplete, InputNumber } from 'primevue';
   import { usePage } from '@inertiajs/vue3';
   import GuestLayout from '@/Layouts/GuestLayout.vue';
   import { Head } from '@inertiajs/vue3';
@@ -336,21 +370,25 @@
     productCategories: Array
 });
   
-  const form = useForm({
-    invoice_no: '',
-    agreement_no: '',
-    quotation_no: '',
-    deposit_no: '',
-    customer_id: '',
-    address: '',
-    phone: '',
-    start_date: '',
-    end_date: '',
-    grand_total: 0,
-    instalmentPaid: 0,
-    status: '',
-    productQuotations:[],
-  });
+const form = useForm({
+  invoice_no: '',               // Optional: generated if blank
+  quotation_no: '',
+  agreement_no: '',
+  customer_id: '',
+  address: '',
+  phone: '',
+  terms: '',
+  start_date: '',
+  end_date: '',
+  grand_total: '',
+  total_usd: '',
+  exchange_rate: '',
+  invoice_date: new Date().toISOString(), // Send in ISO format
+  status: 'Pending',
+  instalmentPaid: 0,           // Optional for frontend tracking
+  products: [],                // Should match backend structure
+});
+
   
   const page = usePage();
   const items = computed(() => [
@@ -378,6 +416,7 @@
   const selectedDivision = ref(null);
   const selectedItem = ref(null);
   const filteredProducts = ref([]);
+  const selectedProductsData = ref([]);
   const selectedProduct = ref({
   id: null,
   name: '',
@@ -391,6 +430,24 @@
 });
 
 const divisionOptions = ref([]);
+
+const formatCurrency = (value) => {
+    if (isNaN(value)) return "0.00";
+    return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
+};
+
+const calculateTotalKHR = computed(() => {
+  return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
+});
+
+const calculateExchangeRate = computed(() => {
+  if (!form.total_usd || form.total_usd <= 0) return 0;
+  return (calculateTotalKHR.value / form.total_usd).toFixed(2);
+});
+
 
 onMounted(async () => {
   const response = await getDepartment();
@@ -521,6 +578,8 @@ const updateSelectedProductDetails = () => {
     pdf_url: product.pdf_url,
     unit: product.unit
   };
+
+  selectedDivision.value = product.division_id || null;
 };
   
   const getCategoryName = (categoryId) => {
@@ -534,41 +593,35 @@ const updateSelectedProductDetails = () => {
   
   // Add/Update Product to List
   const addItemToTable = () => {
-    if (!selectedProduct.value.id) {
-      alert('Please select a valid product');
-      return;
-    }
-    
-    const existingIndex = editingProduct.value !== null 
-      ? editingProduct.value 
-      : productsList.value.findIndex(p => p.id === selectedProduct.value.id);
-    
-    if (existingIndex >= 0 && editingProduct.value !== null) {
-      // Update existing product
-      productsList.value[existingIndex] = {
-        id: selectedProduct.value.id,
-        product: selectedProduct.value.name,
-        qty: selectedProduct.value.quantity,
-        unit: selectedProduct.value.unit,
-        unitPrice: selectedProduct.value.price,
-        subTotal: selectedProduct.value.quantity * selectedProduct.value.price,
-        remark: selectedProduct.value.remark
-      };
-    } else {
-      // Add new product
-      productsList.value.push({
-        id: selectedProduct.value.id,
-        product: selectedProduct.value.name,
-        qty: selectedProduct.value.quantity,
-        unit: selectedProduct.value.unit,
-        unitPrice: selectedProduct.value.price,
-        subTotal: selectedProduct.value.quantity * selectedProduct.value.price,
-        remark: selectedProduct.value.remark
-      });
-    }
-    
-    closeAddItemDialog();
+  if (!selectedProduct.value.id) {
+    alert('Please select a valid product');
+    return;
+  }
+
+  const existingIndex = editingProduct.value !== null 
+    ? editingProduct.value 
+    : productsList.value.findIndex(p => p.id === selectedProduct.value.id);
+
+  const productData = {
+    id: selectedProduct.value.id,
+    product: selectedProduct.value.name,
+    qty: selectedProduct.value.quantity,
+    unit: selectedProduct.value.unit,
+    unitPrice: selectedProduct.value.price,
+    subTotal: selectedProduct.value.quantity * selectedProduct.value.price,
+    remark: selectedProduct.value.remark,
+    include_catalog: false, // default
+    pdf_url: selectedProduct.value.pdf_url,
   };
+
+  if (existingIndex >= 0 && editingProduct.value !== null) {
+    productsList.value[existingIndex] = productData;
+  } else {
+    productsList.value.push(productData);
+  }
+
+  closeAddItemDialog();
+};
   
   // Existing methods from original component
   watch(() => form.quotation_no, (newQuotationId) => {
@@ -582,7 +635,6 @@ const updateSelectedProductDetails = () => {
         form.customer_id = selectedQuotation.customer_id || '';
         form.address = selectedQuotation.address || '';
         form.phone = selectedQuotation.phone_number || '';
-        form.status = selectedQuotation.status || '';
   
         if (selectedQuotation.agreement) {
           console.log("working on agreement")
@@ -599,12 +651,17 @@ const updateSelectedProductDetails = () => {
         // Auto-fill products based on quotation
         if (Array.isArray(selectedQuotation.product_quotations) && selectedQuotation.product_quotations.length > 0) {
           productsList.value = selectedQuotation.product_quotations.map((pq, index) => ({
-            index: index + 1,
+            id: pq.product.id,
             product: pq.product.name || 'Unknown Product',
             qty: pq.quantity || 1,
             unit: pq.product.unit || 'Unit',
             unitPrice: pq.price || 0,
             subTotal: (pq.quantity || 1) * (pq.price || 0),
+            remark: pq.remark || '',
+            category_id: pq.product.category_id || null,
+            acc_code: pq.product.acc_code || '',
+            include_catalog: false, // default when loaded from quotation
+            pdf_url: pq.product.pdf_url || null,
           }));
         } else {
           productsList.value = [];
@@ -694,47 +751,193 @@ const updateSelectedProductDetails = () => {
     productsList.value = [];
   };
   
-  const submitInvoice = async () => {
-    if (productsList.value.length === 0) {
-      alert('Please add at least one product.');
-      return;
+const submitInvoice = async () => {
+  if (productsList.value.length === 0) {
+    alert('Please add at least one product.');
+    return;
+  }
+
+  form.invoice_no = form.invoice_no || '';
+
+  for (let product of selectedProductsData.value) {
+        if (product.include_catalog && !product.pdf_url) {
+            showToast(
+                "error",
+                "Error",
+                "Catalog PDF is missing for an included product.",
+                3000
+            );
+            return;
+        }
     }
-  
-    const invoiceData = {
-      agreement_no: form.agreement_no,
-      quotation_no: form.quotation_no,
-      customer_id: form.customer_id,
-      address: form.address,
-      phone: form.phone,
-      start_date: form.start_date,
-      end_date: form.end_date,
-      grand_total: form.grand_total,
-      status: form.status,
-      products: productsList.value.map(product => ({
-        id: product.id,
-        quantity: product.qty,
-      })),
-    };
-  
-    const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
-  
-    try {
-      const response = await fetch('/invoices', {
-        method: "POST",
-        body: JSON.stringify(invoiceData),
-        headers: {
-          'X-CSRF-TOKEN': csrfToken,
-          "Content-type": "application/json",
-        },
-      });
-  
-      if (!response.ok) {
-        console.error('Failed to submit invoice:', response.statusText);
-        return;
-      }// Redirect after submission
-    } catch (error) {
-      console.error('Error submitting invoice:', error);
+
+    // Prepare the payload
+    form.products = productsList.value.map((prod) => ({
+        id: prod.id,
+        quantity: prod.qty ?? 1,
+        price: prod.unitPrice ?? 0,
+        acc_code: prod.acc_code ?? '',
+        category_id: prod.category_id ?? null,
+        remark: prod.remark ?? '',
+        include_catalog: Boolean(prod.include_catalog),
+        pdf_url: prod.pdf_url ?? null,
+    }));
+
+
+    form.total = calculateTotal.value;
+    form.grand_total = calculateGrandTotal.value;
+    form.total_usd = form.total_usd || 0;
+    form.total = calculateTotalKHR.value;
+    form.exchange_rate = calculateExchangeRate.value;
+
+    // If USD total wasn't set, set it based on exchange rate if available
+    if (!form.total_usd && form.exchange_rate > 0) {
+        form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
+            2
+        );
     }
-  };
+    // Check if we are editing or creating
+    if (form.id) {
+        // PUT request for updating existing quotation
+        try {
+            await form.put(route("quotations.update", { id: form.id }), {
+                onSuccess: () => {
+                    showToast(
+                        "success",
+                        "Updated",
+                        "Quotation updated successfully!"
+                    );
+                    router.get(route("quotations.list"));
+                },
+                onError: (errors) => {
+                    console.error("Update Error:", errors);
+                    showToast(
+                        "error",
+                        "Update Failed",
+                        "Could not update quotation."
+                    );
+                },
+            });
+        } catch (error) {
+            console.error("Unexpected Error in Update:", error);
+            showToast(
+                "error",
+                "Unexpected Error",
+                "Could not update quotation."
+            );
+        }
+    } else {
+        // POST request for creating new quotation
+        try {
+            await form.post(route("quotations.store"), {
+                onSuccess: () => {
+                    showToast(
+                        "success",
+                        "Created",
+                        "Quotation created successfully!"
+                    );
+                    router.get(route("quotations.list"));
+                },
+                onError: (errors) => {
+                    console.error("Creation Error:", errors);
+                    showToast(
+                        "error",
+                        "Creation Failed",
+                        "Could not create quotation."
+                    );
+                },
+            });
+        } catch (error) {
+            console.error("Unexpected Error in Create:", error);
+            showToast(
+                "error",
+                "Unexpected Error",
+                "Could not create quotation."
+            );
+        }
+    }
+
+  // const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
+
+  // const invoiceData = {
+  //   invoice_date: new Date().toISOString(),
+  //   invoice_no: form.invoice_no || null,
+  //   agreement_no: form.agreement_no,
+  //   quotation_no: form.quotation_no,
+  //   customer_id: form.customer_id,
+  //   address: form.address,
+  //   phone: form.phone,
+  //   terms: form.terms || '',
+  //   start_date: form.start_date,
+  //   end_date: form.end_date,
+  //   grand_total: calculateTotal.value,
+  //   total_usd: form.total_usd || null,
+  //   exchange_rate: form.exchange_rate || null,
+  //   status: form.status,
+  //   products: productsList.value.map(product => ({
+  //     id: product.id,
+  //     quantity: product.qty,
+  //     price: product.unitPrice,
+  //     acc_code: product.acc_code || '',
+  //     category_id: product.category_id || null,
+  //     remark: product.remark || '',
+  //     include_catalog: product.include_catalog || false,
+  //     pdf_url: product.pdf_url || null,
+  //   })),
+  // };
+
+  try {
+    form.post('/invoices');
+    // const response = await fetch('/invoices', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'X-CSRF-TOKEN': csrfToken,
+    //     'Accept': 'application/json',
+    //   },
+    //   body: JSON.stringify(invoiceData),
+    // });
+
+    // if (!response.ok) {
+    //   const contentType = response.headers.get('content-type');
+
+    //   if (contentType && contentType.includes('application/json')) {
+    //     const errorData = await response.json();
+    //     console.error('Server validation error:', errorData);
+    //     alert('Failed to submit. Please check the form data.');
+    //   } else {
+    //     const errorText = await response.text();
+    //     console.error('Non-JSON error:', errorText);
+    //     alert('Submission failed with unexpected error.');
+    //   }
+
+    //   return;
+    // }
+
+    // const result = await response.json();
+    // console.log('Invoice created:', result);
+    // window.location.href = '/invoices';
+
+  } catch (error) {
+    console.error('Error submitting invoice:', error);
+    alert('An error occurred while submitting the invoice.');
+  }
+};
+
+
+const checkCatalogAvailability = (product) => {
+    if (product.include_catalog && !product.pdf_url) {
+        console.warn("Product does not include catalog or missing PDF URL.");
+        showToast(
+            "error",
+            "Error",
+            "Catalog PDF is missing for an included product.",
+            3000
+        );
+        return false;
+    }
+    console.log("Product is ready for catalog PDF.");
+    return true;
+};
   
   </script>

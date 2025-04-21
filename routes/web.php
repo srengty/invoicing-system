@@ -4,6 +4,7 @@ use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\CustomerCategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\InvoiceCommentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ProfileController;
@@ -52,6 +53,8 @@ Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.ind
 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
 // Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
+Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'updateStatus'])
+    ->name('invoices.updateStatus');
 
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
