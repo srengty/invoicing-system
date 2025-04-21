@@ -118,6 +118,7 @@
                                 v-model="form.agreement_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <Message
                                 v-if="errors.agreement_date"
@@ -245,6 +246,7 @@
                                 v-model="form.start_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <span class="text-sm">End date</span>
                             <DatePicker
@@ -253,6 +255,7 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">
@@ -452,6 +455,7 @@ import {
     Breadcrumb,
 } from "primevue";
 
+const minDate = new Date();
 const toast = useToast();
 // The Breadcrumb Quotations
 const page = usePage();

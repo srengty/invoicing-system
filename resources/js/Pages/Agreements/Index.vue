@@ -136,6 +136,13 @@ list agreement
                                 "
                                 style="text-transform: uppercase"
                             />
+                            <span
+                                v-if="isExpiringSoon(slotProps.data)"
+                                class="ml-2 text-xs text-yellow-600"
+                            >
+                                (Expires in
+                                {{ daysUntilExpiration(slotProps.data) }} days)
+                            </span>
                         </template>
                     </Column>
                     <!-- column for Total Amount -->
@@ -202,21 +209,39 @@ list agreement
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
-                            <ProgressBar
-                                v-if="
-                                    col.field ===
-                                    'total_progress_payment_percentage'
-                                "
-                                :value="slotProps.data[col.field] || 0"
-                                :showValue="true"
-                                :class="
-                                    progressBarClass(
-                                        slotProps.data[col.field] || 0
-                                    )
-                                "
-                            />
+                            <div
+                                class="progress-bar-wrapper"
+                                style="display: flex; align-items: center"
+                            >
+                                <ProgressBar
+                                    v-if="
+                                        col.field ===
+                                        'total_progress_payment_percentage'
+                                    "
+                                    :value="slotProps.data[col.field] || 0"
+                                    :showValue="false"
+                                    :class="
+                                        progressBarClass(
+                                            slotProps.data[col.field] || 0
+                                        )
+                                    "
+                                    style="flex-grow: 1"
+                                />
+                                <span
+                                    class="progress-bar-text"
+                                    style="margin-left: 10px"
+                                >
+                                    {{
+                                        (
+                                            slotProps.data[col.field] || 0
+                                        ).toFixed(0)
+                                    }}%
+                                    <!-- Display the percentage -->
+                                </span>
+                            </div>
                         </template>
                     </Column>
+
                     <!-- column for view/edit -->
                     <Column
                         v-if="col.field === 'actions'"
@@ -825,7 +850,23 @@ const viewAgreementDetails = async (agreement) => {
         });
     }
 };
+// function to display expries date
+const isExpiringSoon = (agreement) => {
+    if (agreement.status !== "Open") return false;
 
+    const endDate = moment(agreement.end_date, "DD/MM/YYYY");
+    const today = moment();
+    const daysRemaining = endDate.diff(today, "days");
+
+    return daysRemaining <= 30 && daysRemaining >= 0;
+};
+
+const daysUntilExpiration = (agreement) => {
+    const endDate = moment(agreement.end_date, "DD/MM/YYYY");
+    const today = moment();
+    return endDate.diff(today, "days");
+};
+// Status methods for agreement
 const getStatusSeverity = (status) => {
     const upperStatus = status?.toUpperCase();
     switch (upperStatus) {
@@ -834,9 +875,9 @@ const getStatusSeverity = (status) => {
         case "CLOSED":
             return "danger";
         case "ABNORMAL CLOSED":
-            return "info";
+            return "warn";
         default:
-            return "warning";
+            return "info";
     }
 };
 

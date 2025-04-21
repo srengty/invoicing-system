@@ -25,10 +25,31 @@ class AgreementController extends Controller
             ->map(function ($agreement) {
                 return [
                     ...$agreement->toArray(),
-                    'status' => $agreement->status, 
+                    'status' => $this->determineAgreementStatus($agreement),
                 ];
             }),
         ]);
+    }
+    protected function determineAgreementStatus($agreement)
+    {
+        $today = now();
+        $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $agreement->end_date);
+
+        if ($today->gt($endDate)) {
+            // Check if all payments are completed
+            $completedPayments = $agreement->paymentSchedules()
+                ->where('status', 'Completed')
+                ->count();
+            $totalPayments = $agreement->paymentSchedules()->count();
+
+            if ($completedPayments === $totalPayments) {
+                return 'Closed';
+            } else {
+                return 'Abnormal Closed';
+            }
+        }
+
+        return 'Open';
     }
 
     /**

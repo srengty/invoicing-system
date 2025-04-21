@@ -83,6 +83,7 @@
                                 v-model="form.agreement_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
 
                             <!-- Customer Name -->
@@ -205,6 +206,7 @@
                                 v-model="form.start_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
 
                             <!-- End Date -->
@@ -215,6 +217,7 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">
@@ -403,6 +406,7 @@ import {
     Breadcrumb,
 } from "primevue";
 
+const minDate = new Date();
 const toast = useToast();
 const page = usePage();
 const props = defineProps({
@@ -438,10 +442,11 @@ const formatFileSize = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 const safeDate = (input) => {
-    return moment(input, "YYYY/MM/DD", true).isValid()
-        ? moment(input, "YYYY/MM/DD").toDate()
+    return moment(input, "DD/MM/YYYY", true).isValid()
+        ? moment(input, "DD/MM/YYYY").toDate()
         : new Date();
 };
+
 // Form setup
 const form = useForm({
     quotation_no: props.agreement.quotation_no,
