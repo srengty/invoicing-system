@@ -34,7 +34,7 @@ class Agreement extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-    
+
     // In Agreement.php (Agreement Model)
     public function quotation()
     {
@@ -77,5 +77,14 @@ class Agreement extends Model
         return $this->hasMany(PaymentSchedule::class, 'agreement_no');
     }
 
+    // In your Agreement model (app/Models/Agreement.php)
+    protected $appends = ['status'];
 
+    public function getStatusAttribute()
+    {
+        $today = now();
+        $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $this->end_date);
+
+        return $endDate->lt($today) ? 'Closed' : 'Open';
+    }
 }

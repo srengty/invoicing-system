@@ -144,10 +144,6 @@
                             <div class="flex items-center">
                                 <span
                                     @click="handleStatusClick(slotProps.data)"
-                                    v-tooltip.top="
-                                        'Current customer status: ' +
-                                        slotProps.data.customer_status
-                                    "
                                     class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                     :class="{
                                         'bg-blue-100 text-blue-800 border-blue-400':

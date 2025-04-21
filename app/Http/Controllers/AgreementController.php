@@ -18,7 +18,16 @@ class AgreementController extends Controller
     public function index()
     {
         return Inertia::render('Agreements/Index', [
-            'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
+            // 'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
+            'agreements' => Agreement::with('customer')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($agreement) {
+                return [
+                    ...$agreement->toArray(),
+                    'status' => $agreement->status, 
+                ];
+            }),
         ]);
     }
 

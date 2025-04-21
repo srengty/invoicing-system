@@ -437,25 +437,33 @@ const formatFileSize = (bytes) => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
+const safeDate = (input) => {
+    return moment(input, "YYYY/MM/DD", true).isValid()
+        ? moment(input, "YYYY/MM/DD").toDate()
+        : new Date();
+};
 // Form setup
 const form = useForm({
     quotation_no: props.agreement.quotation_no,
     agreement_no: props.agreement.agreement_no,
     agreement_ref_no: props.agreement.agreement_ref_no,
-    agreement_date: props.agreement.agreement_date
-        ? moment(props.agreement.agreement_date, "YYYY/MM/DD").toDate()
-        : new Date(),
+    // agreement_date: props.agreement.agreement_date
+    //     ? moment(props.agreement.agreement_date, "YYYY/MM/DD").toDate()
+    //     : new Date(),
+    agreement_date: safeDate(props.agreement.agreement_date),
     customer_id: props.agreement.customer_id,
     address: props.agreement.address,
     agreement_doc: props.agreement.agreement_doc
         ? JSON.parse(props.agreement.agreement_doc)
         : null,
-    start_date: props.agreement.start_date
-        ? moment(props.agreement.start_date, "YYYY/MM/DD").toDate()
-        : new Date(),
-    end_date: props.agreement.end_date
-        ? moment(props.agreement.end_date, "YYYY/MM/DD").toDate()
-        : new Date(),
+    // start_date: props.agreement.start_date
+    //     ? moment(props.agreement.start_date, "YYYY/MM/DD").toDate()
+    //     : new Date(),
+    // end_date: props.agreement.end_date
+    //     ? moment(props.agreement.end_date, "YYYY/MM/DD").toDate()
+    //     : new Date(),
+    start_date: safeDate(props.agreement.start_date),
+    end_date: safeDate(props.agreement.end_date),
     agreement_amount: props.agreement.amount,
     short_description: props.agreement.short_description,
     currency: props.agreement.currency || "USD",
