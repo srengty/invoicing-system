@@ -6,12 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+    
     public function up(): void
     {
-        Schema::create('invoice_comments', function (Blueprint $table) {
+        Schema::update('invoice_comments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('invoice_id');
             $table->unsignedBigInteger('user_id')->nullable();
@@ -27,9 +25,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('invoice_comments');
