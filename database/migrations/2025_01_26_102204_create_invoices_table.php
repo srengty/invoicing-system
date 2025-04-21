@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('invoice_no')->unique()->nullable();
+            $table->timestamp('invoice_date')->nullable();
             $table->foreignId('agreement_no')->nullable()->constrained('agreements','agreement_no')->nullOnDelete();
             $table->foreignId('quotation_no')->nullable()->constrained('quotations','quotation_no')->nullOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();

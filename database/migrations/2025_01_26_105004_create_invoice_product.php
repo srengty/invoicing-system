@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('quantity');
             $table->json('product_unit_prices')->nullable();
             $table->decimal('price', 10, 2);
+            $table->boolean('include_catalog')->default(false);
             $table->timestamps();
 
             // Foreign key constraints
