@@ -23,3 +23,4 @@ yarn-error.log
 /.zed
 /resources/js/bootstrap.js
 /database/migrations/2025_04_21_100429_create_invoice_comments_table.php
+/package-lock.json
