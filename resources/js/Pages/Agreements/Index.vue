@@ -76,6 +76,7 @@ list agreement
                                 'end_date',
                                 'status',
                                 'amount',
+                                'due_payment',
                                 'total_progress_payment',
                                 'total_progress_payment_percentage',
                             ].includes(col.field)
@@ -160,6 +161,20 @@ list agreement
                             </span>
                         </template>
                     </Column>
+                    <!-- Due Payment Column -->
+                    <Column
+                        v-if="col.field === 'due_payment'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                    >
+                        <template #body="slotProps">
+                            {{ formatCurrency(slotProps.data.due_payment) }}
+                            <span class="text-xs text-gray-500 ml-1">
+                                ({{ slotProps.data.currency }})
+                            </span>
+                        </template>
+                    </Column>
                     <!-- column for total progress payment -->
                     <Column
                         v-if="col.field === 'total_progress_payment'"
@@ -178,13 +193,14 @@ list agreement
                                 >
                                     {{
                                         formatCurrency(
-                                            slotProps.data[col.field]
+                                            slotProps.data.amount -
+                                                slotProps.data.due_payment
                                         )
                                     }}
                                 </span>
                                 <Button
                                     v-if="
-                                        slotProps.data.progress_payments?.length
+                                        slotProps.data.payment_schedules?.length
                                     "
                                     icon="pi pi-info-circle"
                                     @click="
@@ -214,15 +230,17 @@ list agreement
                                 style="display: flex; align-items: center"
                             >
                                 <ProgressBar
-                                    v-if="
-                                        col.field ===
-                                        'total_progress_payment_percentage'
+                                    :value="
+                                        slotProps.data
+                                            .total_progress_payment_percentage ||
+                                        0
                                     "
-                                    :value="slotProps.data[col.field] || 0"
                                     :showValue="false"
                                     :class="
                                         progressBarClass(
-                                            slotProps.data[col.field] || 0
+                                            slotProps.data
+                                                .total_progress_payment_percentage ||
+                                                0
                                         )
                                     "
                                     style="flex-grow: 1"
@@ -233,15 +251,15 @@ list agreement
                                 >
                                     {{
                                         (
-                                            slotProps.data[col.field] || 0
+                                            slotProps.data
+                                                .total_progress_payment_percentage ||
+                                            0
                                         ).toFixed(0)
                                     }}%
-                                    <!-- Display the percentage -->
                                 </span>
                             </div>
                         </template>
                     </Column>
-
                     <!-- column for view/edit -->
                     <Column
                         v-if="col.field === 'actions'"
@@ -402,7 +420,7 @@ list agreement
                     />
                 </template>
             </Dialog>
-            <!-- Agreement Details Dialog -->
+            <!-- Agreement Details Dialog (View)-->
             <Dialog
                 v-model:visible="agreementDetailsDialog"
                 :style="{ width: '45vw' }"
@@ -727,8 +745,8 @@ const formatDate = (date, format = "YYYY-MM-DD") => {
 // const momentDate = (date) => {
 //     return moment(date, "DD/MM/YYYY").fromNow();
 // };
-const searchType = ref("");
 const searchTerm = ref("");
+const searchType = ref("");
 const searchOptions = ref([
     { label: "Agreement Number", value: "agreement_no" },
     { label: "Quotation Number", value: "quotation_no" },
@@ -773,7 +791,6 @@ const filteredAgreements = computed(() => {
 });
 const formatCurrency = (value) => {
     if (value === null || value === undefined || value === "") return "0.00";
-
     const numValue =
         typeof value === "string"
             ? parseFloat(value.replace(/,/g, ""))
@@ -826,6 +843,7 @@ const viewAgreementDetails = async (agreement) => {
 
         const formattedData = {
             ...response.data,
+            ...agreement,
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
@@ -868,31 +886,16 @@ const daysUntilExpiration = (agreement) => {
 };
 // Status methods for agreement
 const getStatusSeverity = (status) => {
-    const upperStatus = status?.toUpperCase();
-    switch (upperStatus) {
-        case "OPEN":
-            return "success";
-        case "CLOSED":
-            return "danger";
-        case "ABNORMAL CLOSED":
-            return "warn";
-        default:
-            return "info";
+    switch (status?.toUpperCase()) {
+        case 'OPEN': return 'success';
+        case 'CLOSED': return 'danger';  
+        case 'ABNORMAL CLOSED': return 'warn';
+        default: return 'info';
     }
 };
 
 const getStatusLabel = (status) => {
-    const upperStatus = status?.toUpperCase();
-    switch (upperStatus) {
-        case "OPEN":
-            return "Open";
-        case "CLOSED":
-            return "Closed";
-        case "ABNORMAL CLOSED":
-            return "Abnormal Closed";
-        default:
-            return status || "Unknown";
-    }
+    return status?.toUpperCase() || "UNKNOWN";
 };
 </script>
 
