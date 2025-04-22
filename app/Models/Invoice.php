@@ -66,14 +66,14 @@ class Invoice extends Model
     public function products()
     {
         return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_no', 'product_id')
-                    ->withPivot(['quantity', 'price', 'include_catalog'])
+                    ->withPivot(['quantity', 'price', 'include_catalog', 'pdf_url'])
                     ->withTimestamps();
     }
 
-    public function comments()
-    {
-        return $this->hasMany(InvoiceComment::class);
-    }
+    public function invoiceComments()
+{
+    return $this->hasMany(InvoiceComment::class);
+}
 
     public function invoices_product():HasMany
     {

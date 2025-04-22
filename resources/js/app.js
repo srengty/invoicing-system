@@ -13,9 +13,12 @@ import Tooltip from "primevue/tooltip";
 import { createI18n } from "vue-i18n";
 import Message from "primevue/message";
 import Toast from "primevue/toast";
+import InputText from 'primevue/inputtext'; 
+import Button from 'primevue/button';
 import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
 import ConfirmDialog from "primevue/confirmdialog";
+import KeyFilter from 'primevue/keyfilter';
 import "../css/app.css";
 import { Ziggy } from "./ziggy";
 // import "primevue/resources/themes/aura/theme.css";
@@ -42,10 +45,7 @@ createInertiaApp({
             `./Pages/${name}.vue`,
             import.meta.glob("./Pages/**/*.vue")
         ),
-    // resolve: (name) => {
-    //     const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
-    //     return pages[`./Pages/${name}.vue`];
-    // },
+
     setup({ el, App, props, plugin }) {
         const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
@@ -61,8 +61,11 @@ createInertiaApp({
             .use(ConfirmationService)
             .directive("ripple", Ripple)
             .directive("tooltip", Tooltip)
+            .directive('keyfilter', KeyFilter)
             .component("Message", Message)
             .component("Toast", Toast)
+            .component('Button', Button)
+            .component('InputText', InputText)
             .component("ConfirmDialog", ConfirmDialog);
 
         return vueApp.mount(el);

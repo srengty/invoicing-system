@@ -130,11 +130,26 @@
             </div>
             <div>
               <label for="start_date" class="block font-medium">Date</label>
-              <DatePicker id="start_date" v-model="form.start_date" class="w-full" placeholder="Select date" size="small"/>
+              <DatePicker 
+                id="start_date" 
+                v-model="form.start_date" 
+                class="w-full" 
+                placeholder="Select date" 
+                size="small" 
+                dateFormat="dd/mm/yy" 
+              />
             </div>
+
             <div>
               <label for="end_date" class="block font-medium">Due Date</label>
-              <DatePicker id="end_date" v-model="form.end_date" class="w-full" placeholder="Select due date" size="small"/>
+              <DatePicker 
+                id="end_date" 
+                v-model="form.end_date" 
+                class="w-full" 
+                placeholder="Select due date" 
+                size="small" 
+                dateFormat="dd/mm/yy" 
+              />
             </div>
           </div>
         </form>
@@ -184,6 +199,12 @@
           </DataTable>
   
           <div class="pl-2 pr-6">
+            <div class="total-container mt-4 flex justify-between">
+              <label for="instalmentPaid" class="block font-medium">Instalment Paid</label>
+              <p class="font-bold">
+                ៛{{ formatCurrency(form.instalmentPaid) }}
+              </p>
+            </div>
             <div class="total-container mt-4 flex justify-between">
               <p class="font-bold">Total KHR</p>
               <p class="font-bold">
@@ -331,13 +352,11 @@
                     label="Cancel"
                     icon="pi pi-times"
                     class="p-button-text"
-                    raised
                     @click="closeAddItemDialog()"
                 />
                 <Button
                     :label="editingProduct ? 'Update Item' : 'Add Item'"
                     icon="pi pi-check"
-                    raised
                     @click="addItemToTable"
                 />
             </template>
@@ -598,6 +617,7 @@ const updateSelectedProductDetails = () => {
     return;
   }
 
+
   const existingIndex = editingProduct.value !== null 
     ? editingProduct.value 
     : productsList.value.findIndex(p => p.id === selectedProduct.value.id);
@@ -622,6 +642,21 @@ const updateSelectedProductDetails = () => {
 
   closeAddItemDialog();
 };
+
+watch(() => form.customer_id, (newCustomerId) => {
+  if (newCustomerId) {
+    const selectedCustomer = customers.find(c => c.id === newCustomerId);
+
+    if (selectedCustomer) {
+      form.address = selectedCustomer.address || '';
+      form.phone = selectedCustomer.phone || selectedCustomer.phone_number || '';
+    }
+  } else {
+    form.address = '';
+    form.phone = '';
+  }
+});
+
   
   // Existing methods from original component
   watch(() => form.quotation_no, (newQuotationId) => {
@@ -685,38 +720,41 @@ const updateSelectedProductDetails = () => {
       productsList.value = [];
     }
   }, { deep: true });
+
   
   watch(() => form.agreement_no, (newAgreementNo) => {
-    if (newAgreementNo) {
-      const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
-  
-      if (selectedAgreement) {
-        console.log("Selected Agreement:", selectedAgreement);
-  
-        // Set quotation if the agreement is linked to one
-        form.quotation_no = selectedAgreement.quotation_no || '';
-  
-        // Auto-fill address only if empty
-        if (!form.address) {
-          form.address = selectedAgreement.address || '';
-        }
-  
-        // Auto-fill start and end dates
-        form.start_date = selectedAgreement.start_date || '';
-        form.end_date = selectedAgreement.end_date || '';
-  
-        // Calculate instalment paid (sum of all invoice amounts related to this agreement)
-        form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
-          ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
-          : 0;
-  
-        // Recalculate Grand Total
-        form.grand_total = calculateTotal.value - form.instalmentPaid;
+  if (newAgreementNo) {
+    const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
+
+    if (selectedAgreement) {
+      console.log("Selected Agreement:", selectedAgreement);
+
+      // Set quotation if the agreement is linked to one
+      form.quotation_no = selectedAgreement.quotation_no || '';
+
+      // Auto-fill address only if empty
+      if (!form.address) {
+        form.address = selectedAgreement.address || '';
       }
-    } else {
-      console.log("Agreement Deselected - Keeping existing data");
+
+      // Auto-fill start and end dates with correct format (yyyy-mm-dd)
+      form.start_date = selectedAgreement.start_date ? selectedAgreement.start_date : '';
+      form.end_date = selectedAgreement.end_date ? selectedAgreement.end_date : '';
+
+      // Calculate instalment paid (sum of all invoice amounts related to this agreement)
+      form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
+        ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
+        : 0;
+
+      // Recalculate Grand Total
+      form.grand_total = calculateTotal.value - form.instalmentPaid;
     }
-  }, { deep: true });
+  } else {
+    console.log("Agreement Deselected - Keeping existing data");
+  }
+}, { deep: true });
+
+
   
   const indexTemplate = (rowData, { index }) => {
     return index + 1; // Return the index + 1 for 1-based index display
@@ -770,6 +808,8 @@ const submitInvoice = async () => {
             return;
         }
     }
+    form.start_date = form.start_date || '';
+    form.end_date = form.end_date || '';
 
     // Prepare the payload
     form.products = productsList.value.map((prod) => ({

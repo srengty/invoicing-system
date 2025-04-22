@@ -7,6 +7,7 @@ use App\Models\CustomerCategory;
 use App\Models\Quotation;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\InvoiceComment;
 use App\Models\InvoiceProduct;
 use App\Models\Product;
 use Inertia\Inertia;
@@ -54,7 +55,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $validated = Validator::make($request->all(), [
-            'invoice_no' => 'nullable|unique:invoices',
+            'invoice_no' => 'nullable|unique:invoices,invoice_no',
             'status' => 'required|string|in:Pending,Approved,Revise',
             'agreement_no' => 'nullable|integer|exists:agreements,agreement_no',
             'quotation_no' => 'nullable|integer|exists:quotations,quotation_no',
@@ -64,8 +65,8 @@ class InvoiceController extends Controller
             'terms' => 'nullable|string|max:255',
             'total_usd' => 'nullable|numeric',
             'exchange_rate' => 'nullable|numeric|min:0',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
+            'start_date' => 'nullable|string', 
+            'end_date' => 'nullable|string',   
             'products' => 'nullable|array',
             'products.*.id' => 'required|integer',
             'products.*.quantity' => 'required|numeric|min:1',
@@ -76,17 +77,24 @@ class InvoiceController extends Controller
             'products.*.include_catalog' => 'required|boolean',
             'products.*.pdf_url' => 'nullable|string',
         ]);
-
+    
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
-
+    
         $data = $validated->validated();
-
-        // Format dates
-        $startDate = isset($data['start_date']) ? Carbon::parse($data['start_date']) : now();
-        $endDate = isset($data['end_date']) ? Carbon::parse($data['end_date']) : now();
-
+    
+        // Format dates (convert from dd/mm/yyyy to Y-m-d format for storing in DB)
+        $startDate = now()->format('Y-m-d');
+        if (!empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])) {
+            $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
+        }
+    
+        $endDate = now()->format('Y-m-d');
+        if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['end_date'])) {
+            $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
+        }
+    
         // Calculate grand total
         $grand_total = 0;
         if (!empty($data['products'])) {
@@ -97,12 +105,12 @@ class InvoiceController extends Controller
                 }
             }
         }
-
+    
         // Optional USD conversion
         $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
             ? $grand_total / $data['exchange_rate']
             : $data['total_usd'] ?? null;
-
+    
         // Auto-generate invoice number only if status is Approved
         $invoice_no = null;
         if ($data['status'] === 'Approved') {
@@ -113,15 +121,20 @@ class InvoiceController extends Controller
                             ->first();
             $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
         }
-
+    
         // Auto-generate invoice_date only if status is Approved
         $invoiceDate = null;
+    
         if ($data['status'] === 'Approved') {
             $invoiceDate = now()->format('Y-m-d H:i:s');
-        } elseif ($request->invoice_date) {
+        } elseif (
+            $data['status'] !== 'Pending' &&
+            !empty($request->invoice_date) &&
+            strtotime($request->invoice_date)
+        ) {
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
-        }
-
+        }    
+    
         // Create invoice
         $invoice = \App\Models\Invoice::create([
             'invoice_no'     => $invoice_no,
@@ -139,31 +152,30 @@ class InvoiceController extends Controller
             'invoice_date'   => $invoiceDate,
             'status'         => $data['status'],
         ]);
-
-        // Attach products to pivot table
+    
+        // Attach multiple products to the pivot table (invoice_product)
         if (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
                 $productData = Product::find($product['id']);
                 if ($productData && $productData->status === 'approved') {
-                    \App\Models\InvoiceProduct::create([
-                        'invoice_no'       => $invoice->id,
-                        'product_id'       => $product['id'],
-                        'quantity'         => $product['quantity'],
-                        'price'            => $product['price'],
-                        'include_catalog'  => $product['include_catalog'],
-                        'pdf_url'          => $product['pdf_url'] ?? null,
+                    $invoice->products()->attach($product['id'], [
+                        'quantity' => $product['quantity'],
+                        'price' => $product['price'],
+                        'include_catalog' => $product['include_catalog'],
+                        'pdf_url' => $product['pdf_url'] ?? null,
                     ]);
                 }
             }
         }
-
+    
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully!');
     }
 
     public function updateStatus(Request $request, Invoice $invoice)
-{
+{   
+
     $validated = $request->validate([
-        'status' => 'required|string|in:approved,rejected,pending',
+        'status' => 'required|string|in:approved,revise,pending',
         'comment' => 'nullable|string|max:1000',
         'role' => 'nullable|string', // optional
     ]);
@@ -180,9 +192,7 @@ class InvoiceController extends Controller
             $invoice->invoice_no = $last ? $last->invoice_no + 1 : $baseInvoiceNo;
         }
 
-        if (!$invoice->invoice_date) {
-            $invoice->invoice_date = now();
-        }
+        $invoice->invoice_date = now();
     }
 
     $invoice->save();
@@ -201,64 +211,68 @@ class InvoiceController extends Controller
 
     // Show the list of invoices
     public function index(Request $request)
-    {
-        // Initialize the query builder for the invoices
-        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category');
+{
+    // Initialize the query builder for the invoices
+    $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments');
 
-        // Apply the filters from the request, if any
+    // Apply the filters from the request, if any
 
-        // Filter by invoice number (if provided)
-        if ($request->has('invoice_no_start') && $request->invoice_no_start) {
-            $query->where('invoice_no', '>=', $request->invoice_no_start);
-        }
-
-        if ($request->has('invoice_no_end') && $request->invoice_no_end) {
-            $query->where('invoice_no', '<=', $request->invoice_no_end);
-        }
-
-        // Filter by customer name (if provided)
-        if ($request->has('customer') && $request->customer) {
-            $query->whereHas('customer', function($query) use ($request) {
-                $query->where('name', 'like', '%' . $request->customer . '%');
-            });
-        }
-
-        // Filter by status (if provided)
-        if ($request->has('status') && $request->status) {
-            $query->where('status', 'like', '%' . $request->status . '%');
-        }
-
-        // Filter by start date
-        if ($request->has('start_date') && $request->start_date) {
-            $query->where('date', '>=', $request->start_date);
-        }
-
-        // Filter by end date
-        if ($request->has('end_date') && $request->end_date) {
-            $query->where('date', '<=', $request->end_date);
-        }
-
-        if ($request->has('category_name_english') && $request->category_name_english) {
-            $query->whereHas('customer.customerCategory', function ($query) use ($request) {
-                $query->where('category_name_english', 'like', '%' . $request->category_name_english . '%');
-            });
-        }
-
-        // Filter by currency
-        if ($request->has('currency') && $request->currency) {
-            $query->where('currency', $request->currency);
-        }
-
-        // Paginate the results (you can adjust the pagination per page)
-        $invoices = $query->paginate();  // Adjust the pagination limit if needed
-
-        $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency']);
-
-        return Inertia::render('Invoices/Index', [
-            'invoices' => $invoices,
-            'filters' => $filters,
-        ]);
+    // Filter by invoice number (if provided)
+    if ($request->has('invoice_no_start') && $request->invoice_no_start) {
+        $query->where('invoice_no', '>=', $request->invoice_no_start);
     }
+
+    if ($request->has('invoice_no_end') && $request->invoice_no_end) {
+        $query->where('invoice_no', '<=', $request->invoice_no_end);
+    }
+
+    // Filter by customer name (if provided)
+    if ($request->has('customer') && $request->customer) {
+        $query->whereHas('customer', function($query) use ($request) {
+            $query->where('name', 'like', '%' . $request->customer . '%');
+        });
+    }
+
+    // Filter by status (if provided)
+    if ($request->has('status') && $request->status) {
+        $query->where('status', 'like', '%' . $request->status . '%');
+    }
+
+    // Filter by start date
+    if ($request->has('start_date') && $request->start_date) {
+        $query->where('start_date', '>=', $request->start_date);
+    }
+
+    // Filter by end date
+    if ($request->has('end_date') && $request->end_date) {
+        $query->where('end_date', '<=', $request->end_date);
+    }
+
+    // Filter by customer category (if provided)
+    if ($request->has('category_name_english') && $request->category_name_english) {
+        $query->whereHas('customer.customerCategory', function ($query) use ($request) {
+            $query->where('category_name_english', 'like', '%' . $request->category_name_english . '%');
+        });
+    }
+
+    // Filter by currency
+    if ($request->has('currency') && $request->currency) {
+        $query->where('currency', $request->currency);
+    }
+
+    // Apply pagination after all filters
+    $invoices = $query->paginate();  // Apply pagination after the filters are added
+
+    // Get the filters for passing them to the view
+    $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
+
+    // Return the filtered invoices to the view
+    return Inertia::render('Invoices/Index', [
+        'invoices' => $invoices,
+        'filters' => $filters,
+    ]);
+}
+
 
 
     // Show the edit page for an existing invoice
