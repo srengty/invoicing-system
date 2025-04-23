@@ -287,6 +287,8 @@
                                 @update="beforeUpdate"
                                 size="small"
                                 class="w-full"
+                                :start_date="form.start_date"
+                                :end_date="form.end_date"
                             />
                         </div>
                     </div>
@@ -296,7 +298,7 @@
                         </h3>
 
                         <div class="space-y-4">
-                            <span class="text-sm required">Attachment</span>
+                            <span class="text-sm">Attachment</span>
                             <FileUpload
                                 name="attachments"
                                 :url="route('agreements.upload')"
@@ -513,7 +515,7 @@ const form = reactive({
     agreement_doc: [],
     progress: null,
     start_date: new Date(),
-    end_date: new Date(),
+    end_date: moment(new Date()).add(14, "days").toDate(),
     agreement_amount: 0,
     short_description: "",
     attachments: [],
@@ -641,7 +643,7 @@ onMounted(() => {
             props.agreement.start_date,
             "DD/MM/YYYY"
         ).toDate();
-        form.end_date = moment(props.agreement.end_date, "DD/MM/YYYY").toDate();
+        form.end_date = moment(form.start_date).add(14, "days").toDate();
         form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
         form.currency = props.agreement.currency;
