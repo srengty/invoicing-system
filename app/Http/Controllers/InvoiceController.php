@@ -273,7 +273,68 @@ class InvoiceController extends Controller
     ]);
 }
 
+public function list(Request $request)
+{
+    // Initialize the query builder for the invoices
+    $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments');
 
+    // Apply the filters from the request, if any
+
+    // Filter by invoice number (if provided)
+    if ($request->has('invoice_no_start') && $request->invoice_no_start) {
+        $query->where('invoice_no', '>=', $request->invoice_no_start);
+    }
+
+    if ($request->has('invoice_no_end') && $request->invoice_no_end) {
+        $query->where('invoice_no', '<=', $request->invoice_no_end);
+    }
+
+    // Filter by customer name (if provided)
+    if ($request->has('customer') && $request->customer) {
+        $query->whereHas('customer', function($query) use ($request) {
+            $query->where('name', 'like', '%' . $request->customer . '%');
+        });
+    }
+
+    // Filter by status (if provided)
+    if ($request->has('status') && $request->status) {
+        $query->where('status', 'like', '%' . $request->status . '%');
+    }
+
+    // Filter by start date
+    if ($request->has('start_date') && $request->start_date) {
+        $query->where('start_date', '>=', $request->start_date);
+    }
+
+    // Filter by end date
+    if ($request->has('end_date') && $request->end_date) {
+        $query->where('end_date', '<=', $request->end_date);
+    }
+
+    // Filter by customer category (if provided)
+    if ($request->has('category_name_english') && $request->category_name_english) {
+        $query->whereHas('customer.customerCategory', function ($query) use ($request) {
+            $query->where('category_name_english', 'like', '%' . $request->category_name_english . '%');
+        });
+    }
+
+    // Filter by currency
+    if ($request->has('currency') && $request->currency) {
+        $query->where('currency', $request->currency);
+    }
+
+    // Apply pagination after all filters
+    $invoices = $query->paginate();  // Apply pagination after the filters are added
+
+    // Get the filters for passing them to the view
+    $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
+
+    // Return the filtered invoices to the view
+    return Inertia::render('Invoices/Index', [
+        'invoices' => $invoices,
+        'filters' => $filters,
+    ]);
+}
 
     // Show the edit page for an existing invoice
     public function edit($id)
