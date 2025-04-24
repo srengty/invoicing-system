@@ -389,6 +389,17 @@
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
                 />
+                <Message
+                    v-if="
+                        form.payment_schedule.length > 0 &&
+                        !isPaymentScheduleComplete
+                    "
+                    severity="error"
+                    class="mt-2"
+                >
+                    Payment schedule must total exactly 100% (Current:
+                    {{ totalPercentage }}%)
+                </Message>
                 <!-- <div
                     class="flex justify-end items-center gap-2 my-2 px-24"
                     v-if="hasManyCurrencies"
@@ -409,7 +420,7 @@
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
-                        :disabled="isStoringAgreement"
+                        :disabled="isStoringAgreement || !isFormValid"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -459,6 +470,7 @@ import {
 
 const minDate = new Date();
 const toast = useToast();
+const isEditing = computed(() => !!form.id);
 // The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
@@ -481,7 +493,6 @@ const getFileName = (path) => {
     const filename = decodeURIComponent(path.split(/[\\/]/).pop());
     return filename || "document.pdf";
 };
-const isEditing = computed(() => !!form.id);
 const props = defineProps({
     errors: Object,
     customers: Array,
@@ -496,14 +507,6 @@ const riels = computed({
         schedule.value.exchange_rate = value ? 4100 : 1;
     },
 });
-const updateAgreementAmount = () => {
-    if (form.currency === "USD") {
-        schedule.value.agreement_amount = form.agreement_amount;
-    } else if (form.currency === "KHR") {
-        schedule.value.agreement_amount =
-            form.agreement_amount * schedule.value.exchange_rate;
-    }
-};
 const form = reactive({
     quotation_no: null,
     agreement_no: props.edit
@@ -585,25 +588,12 @@ const schedule = ref({
 });
 // Form data
 const totalAgreement = ref(10000); // Set your default total amount
-const dueDate = ref();
 const shortDescription = ref("");
 const percentage = ref();
 const amount = ref();
 const currency = ref("USD");
 const locale = ref("en-US");
 const agreementDocs = ref([]);
-const currencyOptions = ref([
-    { name: "US Dollar", code: "USD" },
-    { name: "Euro", code: "EUR" },
-    { name: "British Pound", code: "GBP" },
-]);
-const calculateAmount = () => {
-    if (percentage.value) {
-        amount.value = (totalAgreement.value * percentage.value) / 100;
-    } else {
-        amount.value = null;
-    }
-};
 const remainingAmount = computed(() => {
     return (
         schedule.value.agreement_amount -
@@ -757,6 +747,15 @@ const submit = ({ states, valid }) => {
             },
         });
     }
+    if (!isFormValid.value) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please complete all required fields and ensure payment schedule totals 100%",
+            life: 3000,
+        });
+        return;
+    }
     isStoringAgreement.value = false;
     //form.post(route('agreements.store'));
     // if(e.valid){
@@ -766,6 +765,26 @@ const submit = ({ states, valid }) => {
     //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
     // }
 };
+const totalPercentage = computed(() => {
+    return form.payment_schedule.reduce(
+        (sum, item) => sum + item.percentage,
+        0
+    );
+});
+
+const isPaymentScheduleComplete = computed(() => {
+    return Math.round(totalPercentage.value * 100) / 100 === 100;
+});
+
+const isFormValid = computed(() => {
+    return (
+        isPaymentScheduleComplete.value &&
+        form.quotation_no &&
+        form.agreement_no &&
+        form.customer_id &&
+        form.agreement_date
+    );
+});
 const cancel = () => {
     toast.add({
         severity: "secondary",
@@ -938,10 +957,13 @@ const checkDuplicateReference = async () => {
         console.error("Error checking reference:", error);
     }
 };
-const formatDate = (date, format = "YYYY-DD-MM") => {
-    if (!date) return "N/A";
-    return moment(date).format(format);
-};
+const isValid = computed(() => {
+    return (
+        model.value.percentage > 0 &&
+        model.value.percentage <= 100 &&
+        model.value.amount > 0
+    );
+});
 </script>
 
 <style>

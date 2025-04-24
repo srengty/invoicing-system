@@ -18,48 +18,37 @@ class AgreementController extends Controller
     public function index()
     {
         return Inertia::render('Agreements/Index', [
-            'agreements' => Agreement::with(['customer', 'paymentSchedules'])
-                ->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($agreement) {
-                    return [
-                        ...$agreement->toArray(),
-                        'status' => $this->determineAgreementStatus($agreement),
-                    ];
-                }),
+            // 'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
+            'agreements' => Agreement::with('customer')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($agreement) {
+                return [
+                    ...$agreement->toArray(),
+                    'status' => $this->determineAgreementStatus($agreement),
+                ];
+            }),
         ]);
     }
-
     protected function determineAgreementStatus($agreement)
     {
-        // Ensure we have proper numeric values
-        $totalAmount = (float) $agreement->amount;
-        $duePayment = (float) $agreement->due_payment;
-
-        // Calculate progress
-        $totalPaid = $totalAmount - $duePayment;
-        $progressPercentage = ($totalPaid / $totalAmount) * 100;
-
-        // Closed conditions
-        if ($progressPercentage >= 100 || $duePayment <= 0) {
-            return 'Closed';
-        }
-
-        // Parse dates properly (assuming format is d/m/Y)
         $today = now();
-        try {
-            $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $agreement->end_date);
-        } catch (\Exception $e) {
-            // Fallback if date format is different
-            $endDate = \Carbon\Carbon::parse($agreement->end_date);
+        $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $agreement->end_date);
+
+        if ($today->gt($endDate)) {
+            // Check if all payments are completed
+            $completedPayments = $agreement->paymentSchedules()
+                ->where('status', 'Completed')
+                ->count();
+            $totalPayments = $agreement->paymentSchedules()->count();
+
+            if ($completedPayments === $totalPayments) {
+                return 'Closed';
+            } else {
+                return 'Abnormal Closed';
+            }
         }
 
-        // Abnormal Closed conditions
-        if ($today->gt($endDate) && $progressPercentage < 100) {
-            return 'Abnormal Closed';
-        }
-
-        // Default to Open
         return 'Open';
     }
 

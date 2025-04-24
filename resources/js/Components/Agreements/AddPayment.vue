@@ -18,8 +18,10 @@
                 v-model="model.due_date"
                 fluid
                 date-format="yy/mm/dd"
+                :min-date="minDate"
+                :max-date="maxDate"
             />
-            <label for="due_date" class="required">Due date </label>
+            <label for="due_date" class="required">Due date</label>
         </FloatLabel>
         <FloatLabel variant="on">
             <Textarea
@@ -116,7 +118,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref,computed } from "vue";
 import { currencies } from "@/constants";
 import { useToast } from "primevue/usetoast";
 import {
@@ -141,10 +143,19 @@ const model = defineModel({
     type: Object,
 });
 const props = defineProps({
+    startDate: [String, Date],
+    endDate: [String, Date],
     multiCurrencies: {
         type: Boolean,
         default: () => false,
     },
+});
+const minDate = computed(() => {
+  return props.startDate ? new Date(props.startDate) : new Date();
+});
+
+const maxDate = computed(() => {
+  return props.endDate ? new Date(props.endDate) : null;
 });
 const amountPercentage = ref({
     amount: 0,

@@ -17,9 +17,15 @@
             </Column>
             <Column field="due_date" header="Due Date" sortable class="text-sm">
                 <template #body="slotProps">
-                    {{
-                        moment(slotProps.data["due_date"]).format("YYYY/MM/DD")
-                    }}
+                    {{ formatDate(slotProps.data["due_date"]) }}
+                </template>
+                <template #editor="{ data, field }">
+                    <DatePicker
+                        v-model="data[field]"
+                        date-format="yy/mm/dd"
+                        :min-date="minDate"
+                        :max-date="maxDate"
+                    />
                 </template>
             </Column>
             <Column
@@ -199,6 +205,8 @@ const props = defineProps({
     currency: String,
     readonly: Boolean,
     agreement_amount: Number,
+    startDate: [String, Date],
+    endDate: [String, Date],
 });
 const editingRows = ref([]);
 const exchange_rate = ref(4100);
@@ -212,6 +220,19 @@ const onRowEditSave = (event) => {
         life: 3000,
     });
 };
+const minDate = computed(() => {
+    return props.startDate ? new Date(props.startDate) : new Date();
+});
+
+const maxDate = computed(() => {
+    return props.endDate ? new Date(props.endDate) : null;
+});
+
+const formatDate = (date) => {
+    if (!date) return "";
+    return moment(date).format("YYYY/MM/DD");
+};
+
 const currencySign = computed(
     () => currencies.filter((v) => v.value == props.currency)[0]?.sign ?? "$"
 );
@@ -289,6 +310,10 @@ const doEditPaymentSchedule = (data) => {
     editingSchedule.value.agreement_currency = data.currency;
     editingSchedule.value.agreement_amount = props.agreement_amount ?? 2000;
     console.log(props.agreement_amount);
+    editingSchedule.value = {
+        ...data,
+        due_date: safeDate(data.due_date),
+    };
     isShowing.value = true;
 };
 const doDeletePaymentSchedule = (data) => {

@@ -30,14 +30,8 @@ class Agreement extends Model
         'currency',
         'attachments',
     ];
-     // Add the $appends property here
-    protected $appends = [
-        'status',
-        'total_progress_payment',
-        'due_payment',
-        'total_progress_payment_percentage',
-        'is_fully_paid',
-    ];
+    // In your Agreement model (app/Models/Agreement.php)
+    protected $appends = ['status'];
 
     public function customer()
     {
@@ -90,42 +84,11 @@ class Agreement extends Model
         return $this->paymentSchedules()->sum('amount');
     }
 
-    public function getTotalProgressPaymentAttribute()
-    {
-        return $this->paymentSchedules()
-            ->where('status', 'Paid')
-            ->sum('amount');
-    }
-
-    public function getDuePaymentAttribute()
-    {
-        return $this->amount - $this->total_scheduled_payment;
-    }
-
-    public function getTotalProgressPaymentPercentageAttribute()
-    {
-        if ($this->amount <= 0) return 0;
-        return ($this->total_scheduled_payment / $this->amount) * 100;
-    }
-
-    public function getIsFullyPaidAttribute()
-    {
-        return abs($this->amount - $this->total_progress_payment) < 1;
-    }
-
     public function getStatusAttribute()
     {
         $today = now();
-        $endDate = Carbon::createFromFormat('d/m/Y', $this->end_date);
+        $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $this->end_date);
 
-        if ($this->is_fully_paid && $this->due_payment <= 0) {
-            return 'Closed';
-        }
-
-        if ($today->gt($endDate)) {
-            return 'Abnormal Closed';
-        }
-
-        return 'Open';
+        return $endDate->lt($today) ? 'Closed' : 'Open';
     }
 }

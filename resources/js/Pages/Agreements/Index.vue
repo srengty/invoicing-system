@@ -37,6 +37,22 @@ list agreement
                         class="w-64"
                         size="small"
                     />
+                    <!-- Start Date Filter -->
+                    <Calendar
+                        v-if="searchType === 'start_date'"
+                        v-model="startDateFilter"
+                        dateFormat="yy-mm-dd"
+                        showIcon
+                        class="w-40 text-xs"
+                    />
+                    <!-- End Date Filter -->
+                    <Calendar
+                        v-if="searchType === 'end_date'"
+                        v-model="endDateFilter"
+                        dateFormat="yy-mm-dd"
+                        showIcon
+                        class="w-40 text-xs"
+                    />
                     <Button
                         icon="pi pi-plus"
                         label="New"
@@ -88,13 +104,7 @@ list agreement
                     ></Column>
                     <!-- column for agreement date -->
                     <Column
-                        v-if="
-                            [
-                                'agreement_date',
-                                'start_date',
-                                'end_date',
-                            ].includes(col.field)
-                        "
+                        v-if="['agreement_date'].includes(col.field)"
                         :field="col.field"
                         :header="col.header"
                         sortable
@@ -193,14 +203,13 @@ list agreement
                                 >
                                     {{
                                         formatCurrency(
-                                            slotProps.data.amount -
-                                                slotProps.data.due_payment
+                                            slotProps.data[col.field]
                                         )
                                     }}
                                 </span>
                                 <Button
                                     v-if="
-                                        slotProps.data.payment_schedules?.length
+                                        slotProps.data.progress_payments?.length
                                     "
                                     icon="pi pi-info-circle"
                                     @click="
@@ -230,17 +239,15 @@ list agreement
                                 style="display: flex; align-items: center"
                             >
                                 <ProgressBar
-                                    :value="
-                                        slotProps.data
-                                            .total_progress_payment_percentage ||
-                                        0
+                                    v-if="
+                                        col.field ===
+                                        'total_progress_payment_percentage'
                                     "
+                                    :value="slotProps.data[col.field] || 0"
                                     :showValue="false"
                                     :class="
                                         progressBarClass(
-                                            slotProps.data
-                                                .total_progress_payment_percentage ||
-                                                0
+                                            slotProps.data[col.field] || 0
                                         )
                                     "
                                     style="flex-grow: 1"
@@ -251,13 +258,57 @@ list agreement
                                 >
                                     {{
                                         (
-                                            slotProps.data
-                                                .total_progress_payment_percentage ||
-                                            0
+                                            slotProps.data[col.field] || 0
                                         ).toFixed(0)
                                     }}%
+                                    <!-- Display the percentage -->
                                 </span>
                             </div>
+                        </template>
+                    </Column>
+                    <!-- Start Date Column -->
+                    <Column
+                        v-if="col.field === 'start_date'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-medium">Start Date</span>
+                                <Calendar
+                                    v-model="startDateFilter"
+                                    dateFormat="yy-mm-dd"
+                                    showIcon
+                                    class="w-full text-xs"
+                                />
+                            </div>
+                        </template>
+                        <template #body="slotProps">
+                            {{ formatDate(slotProps.data.start_date) }}
+                        </template>
+                    </Column>
+                    <Column
+                        v-else-if="col.field === 'end_date'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-medium">End Date</span>
+                                <Calendar
+                                    v-model="endDateFilter"
+                                    dateFormat="yy-mm-dd"
+                                    showIcon
+                                    class="w-full text-xs"
+                                />
+                            </div>
+                        </template>
+                        <template #body="slotProps">
+                            {{ formatDate(slotProps.data.end_date) }}
                         </template>
                     </Column>
                     <!-- column for view/edit -->
@@ -672,6 +723,7 @@ import {
     Badge,
     ProgressSpinner,
     Card,
+    Calendar,
 } from "primevue";
 
 const toast = useToast();
@@ -761,34 +813,45 @@ const searchOptions = ref([
 const getFieldValue = (obj, path) => {
     return path.split(".").reduce((o, p) => (o || {})[p], obj) || "";
 };
+const startDateFilter = ref(null);
+const endDateFilter = ref(null);
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
-    if (!searchTerm.value || !searchType.value) {
-        return props.agreements;
-    }
-
     return props.agreements.filter((agreement) => {
+        // Start and End Date Filtering
+        const start = moment(agreement.start_date, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            moment.ISO_8601,
+        ]);
+        const end = moment(agreement.end_date, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            moment.ISO_8601,
+        ]);
+
+        const matchStart =
+            !startDateFilter.value ||
+            start.isSameOrAfter(moment(startDateFilter.value));
+        const matchEnd =
+            !endDateFilter.value ||
+            end.isSameOrBefore(moment(endDateFilter.value));
+        // Other field search logic
         const fieldValue = getFieldValue(agreement, searchType.value);
+        const matchesSearch =
+            !searchTerm.value || !searchType.value
+                ? true
+                : (typeof fieldValue === "string" &&
+                      fieldValue
+                          .toLowerCase()
+                          .includes(searchTerm.value.toLowerCase())) ||
+                  (typeof fieldValue === "number" &&
+                      fieldValue.toString().includes(searchTerm.value));
 
-        if (fieldValue === null || fieldValue === undefined) {
-            return false;
-        }
-
-        if (typeof fieldValue === "number") {
-            return fieldValue.toString().includes(searchTerm.value);
-        }
-
-        if (searchType.value.includes("date") && fieldValue) {
-            const dateStr = moment(fieldValue).format("YYYY-DD-MM");
-            return dateStr.includes(searchTerm.value);
-        }
-
-        return fieldValue
-            .toString()
-            .toLowerCase()
-            .includes(searchTerm.value.toLowerCase());
+        return matchesSearch && matchStart && matchEnd;
     });
 });
+
 const formatCurrency = (value) => {
     if (value === null || value === undefined || value === "") return "0.00";
     const numValue =
@@ -886,16 +949,31 @@ const daysUntilExpiration = (agreement) => {
 };
 // Status methods for agreement
 const getStatusSeverity = (status) => {
-    switch (status?.toUpperCase()) {
-        case 'OPEN': return 'success';
-        case 'CLOSED': return 'danger';  
-        case 'ABNORMAL CLOSED': return 'warn';
-        default: return 'info';
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+        case "OPEN":
+            return "success";
+        case "CLOSED":
+            return "danger";
+        case "ABNORMAL CLOSED":
+            return "warn";
+        default:
+            return "info";
     }
 };
 
 const getStatusLabel = (status) => {
-    return status?.toUpperCase() || "UNKNOWN";
+    const upperStatus = status?.toUpperCase();
+    switch (upperStatus) {
+        case "OPEN":
+            return "Open";
+        case "CLOSED":
+            return "Closed";
+        case "ABNORMAL CLOSED":
+            return "Abnormal Closed";
+        default:
+            return status || "Unknown";
+    }
 };
 </script>
 

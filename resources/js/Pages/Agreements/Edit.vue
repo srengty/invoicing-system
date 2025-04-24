@@ -252,6 +252,8 @@
                                 @update="beforeUpdate"
                                 size="small"
                                 class="w-full"
+                                :start-date="form.start_date"
+                                :end-date="form.end_date"
                             />
                         </div>
                     </div>
@@ -352,6 +354,8 @@
                     v-model="form.payment_schedule"
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
+                    :start-date="form.start_date"
+                    :end-date="form.end_date"
                 />
                 <!-- Save Button -->
                 <div class="flex justify-end gap-2 mt-10">
@@ -442,11 +446,28 @@ const formatFileSize = (bytes) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 const safeDate = (input) => {
-    return moment(input, "DD/MM/YYYY", true).isValid()
-        ? moment(input, "DD/MM/YYYY").toDate()
-        : new Date();
-};
+    if (moment.isMoment(input)) return input.toDate();
+    if (input instanceof Date) return input;
+    if (typeof input === "string") {
+        // Try multiple possible date formats
+        const formats = [
+            "YYYY/MM/DD",
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            "MM/DD/YYYY",
+        ];
 
+        for (const format of formats) {
+            if (moment(input, format, true).isValid()) {
+                return moment(input, format).toDate();
+            }
+        }
+    }
+    return new Date(); // fallback
+};
+const formatDisplayDate = (date) => {
+  return moment(date).format('YYYY/MM/DD');
+};
 // Form setup
 const form = useForm({
     quotation_no: props.agreement.quotation_no,
@@ -478,9 +499,7 @@ const form = useForm({
     payment_schedule:
         props.agreement.payment_schedules?.map((item) => ({
             id: item.id,
-            due_date: item.due_date
-                ? moment(item.due_date, "YYYY/MM/DD").toDate()
-                : new Date(),
+            due_date: safeDate(item.due_date),
             short_description: item.short_description,
             percentage: item.percentage,
             currency: item.currency,
