@@ -66,14 +66,14 @@
                                 </template>
                             </InputText>
                             <Message
-                                v-if="showDuplicateAlert"
-                                severity="warn"
+                                v-if="errors.agreement_ref_no"
+                                severity="error"
                                 variant="simple"
                                 class="col-span-2"
                                 size="small"
-                                >This reference number already exists in our
-                                records</Message
                             >
+                                {{ errors.agreement_ref_no }}
+                            </Message>
 
                             <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
@@ -466,7 +466,7 @@ const safeDate = (input) => {
     return new Date(); // fallback
 };
 const formatDisplayDate = (date) => {
-  return moment(date).format('YYYY/MM/DD');
+    return moment(date).format("YYYY/MM/DD");
 };
 // Form setup
 const form = useForm({

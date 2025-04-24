@@ -15,21 +15,56 @@ class AgreementController extends Controller
     /**
      * Display a listing of the resource.
      */
+    // public function index()
+    // {
+    //     return Inertia::render('Agreements/Index', [
+    //         // 'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
+    //         'agreements' => Agreement::with('customer')
+    //         ->orderBy('created_at', 'desc')
+    //         ->get()
+    //         ->map(function ($agreement) {
+    //             return [
+    //                 ...$agreement->toArray(),
+    //                 'status' => $this->determineAgreementStatus($agreement),
+    //             ];
+    //         }),
+    //     ]);
+    // }
     public function index()
     {
-        return Inertia::render('Agreements/Index', [
-            // 'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
-            'agreements' => Agreement::with('customer')
+        $agreements = Agreement::with(['customer', 'paymentSchedules'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($agreement) {
+                // Check for past due payments and mark them as past
+                $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) {
+                    $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
+                    $status = 'Due';
+                    $amount = $schedule->amount;
+
+                    if ($dueDate->isPast()) {
+                        $status = 'Past Due';
+                        $amount = $schedule->amount;  // You can modify this if needed based on your business logic
+                    }
+
+                    return [
+                        ...$schedule->toArray(),
+                        'status' => $status,
+                        'amount' => $amount
+                    ];
+                });
+
                 return [
                     ...$agreement->toArray(),
-                    'status' => $this->determineAgreementStatus($agreement),
+                    'payment_schedules' => $paymentSchedules
                 ];
-            }),
+            });
+
+        return Inertia::render('Agreements/Index', [
+            'agreements' => $agreements
         ]);
     }
+
     protected function determineAgreementStatus($agreement)
     {
         $today = now();
@@ -74,6 +109,7 @@ class AgreementController extends Controller
         //dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
+            'agreement_ref_no' => 'required|unique:agreements,agreement_ref_no',
             'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
@@ -175,6 +211,7 @@ class AgreementController extends Controller
         // dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
+            'agreement_ref_no' => 'required|unique:agreements,agreement_ref_no,',
             'agreement_doc' => 'required',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',

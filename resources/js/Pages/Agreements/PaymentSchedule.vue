@@ -17,15 +17,7 @@
             </Column>
             <Column field="due_date" header="Due Date" sortable class="text-sm">
                 <template #body="slotProps">
-                    {{ formatDate(slotProps.data["due_date"]) }}
-                </template>
-                <template #editor="{ data, field }">
-                    <DatePicker
-                        v-model="data[field]"
-                        date-format="yy/mm/dd"
-                        :min-date="minDate"
-                        :max-date="maxDate"
-                    />
+                    {{ formatDate(slotProps.data.due_date) }}
                 </template>
             </Column>
             <Column
@@ -66,14 +58,21 @@
                 class="text-sm"
             >
                 <template #body="slotProps">
-                    {{ priceTemplate(slotProps.data) }}
+                    <span>
+                        {{ priceTemplate(slotProps.data) }}
+                    </span>
                 </template>
                 <template #editor="{ data, field }">
                     <InputGroup>
-                        <InputGroupAddon append>{{
-                            props.currency ?? "$"
-                        }}</InputGroupAddon>
-                        <InputNumber v-model="data[field]" fluid />
+                        <InputGroupAddon append>
+                            {{ props.currency ?? "$" }}
+                        </InputGroupAddon>
+                        <InputNumber
+                            v-model="data[field]"
+                            fluid
+                            min="0"
+                            step="0.01"
+                        />
                     </InputGroup>
                 </template>
             </Column>
@@ -237,10 +236,13 @@ const currencySign = computed(
     () => currencies.filter((v) => v.value == props.currency)[0]?.sign ?? "$"
 );
 const priceTemplate = (data) => {
-    return `${
-        currencies.filter((v) => v.value == data.currency)[0]?.sign ?? "$"
-    } ${data.amount.toLocaleString()}`;
+    const currencySign = data.currency === "KHR" ? "៛" : "$"; // Default is USD
+    return `${currencySign} ${data.amount.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
 };
+
 const calculateRate = (propsCurrency, itemCurrency) => {
     if (propsCurrency == "USD" && itemCurrency == "KHR")
         return 1 / exchange_rate.value;
@@ -310,10 +312,6 @@ const doEditPaymentSchedule = (data) => {
     editingSchedule.value.agreement_currency = data.currency;
     editingSchedule.value.agreement_amount = props.agreement_amount ?? 2000;
     console.log(props.agreement_amount);
-    editingSchedule.value = {
-        ...data,
-        due_date: safeDate(data.due_date),
-    };
     isShowing.value = true;
 };
 const doDeletePaymentSchedule = (data) => {

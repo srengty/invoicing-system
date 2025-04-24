@@ -179,9 +179,11 @@ list agreement
                         sortable
                     >
                         <template #body="slotProps">
-                            {{ formatCurrency(slotProps.data.due_payment) }}
-                            <span class="text-xs text-gray-500 ml-1">
-                                ({{ slotProps.data.currency }})
+                            <span>
+                                {{ formatCurrency(slotProps.data.due_payment) }}
+                                <span class="text-xs text-gray-500 ml-1">
+                                    ({{ slotProps.data.currency }})
+                                </span>
                             </span>
                         </template>
                     </Column>

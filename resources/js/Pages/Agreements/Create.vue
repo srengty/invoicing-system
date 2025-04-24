@@ -103,14 +103,14 @@
                                 </template>
                             </InputText>
                             <Message
-                                v-if="showDuplicateAlert"
-                                severity="warn"
+                                v-if="errors.agreement_ref_no"
+                                severity="error"
                                 variant="simple"
                                 class="col-span-2"
                                 size="small"
-                                >This reference number already exists in our
-                                records</Message
                             >
+                                {{ errors.agreement_ref_no }}
+                            </Message>
                             <span class="text-sm required">Date</span>
                             <DatePicker
                                 date-format="yy/mm/dd"
@@ -747,6 +747,15 @@ const submit = ({ states, valid }) => {
             },
         });
     }
+    if (errors.agreement_ref_no) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please correct the agreement reference number",
+            life: 3000,
+        });
+        return;
+    }
     if (!isFormValid.value) {
         toast.add({
             severity: "error",
@@ -756,7 +765,7 @@ const submit = ({ states, valid }) => {
         });
         return;
     }
-    isStoringAgreement.value = false;
+    isStoringAgreement.value = true;
     //form.post(route('agreements.store'));
     // if(e.valid){
     //     router.push(route('agreements.store'), form);
@@ -952,11 +961,21 @@ const checkDuplicateReference = async () => {
             },
         });
 
-        showDuplicateAlert.value = response.data.exists;
+        if (response.data.exists) {
+            showDuplicateAlert.value = true;
+            errors.agreement_ref_no =
+                "The agreement ref no has already been taken.";
+        } else {
+            showDuplicateAlert.value = false;
+            errors.agreement_ref_no = "";
+        }
     } catch (error) {
         console.error("Error checking reference:", error);
+        showDuplicateAlert.value = false;
+        errors.agreement_ref_no = "";
     }
 };
+
 const isValid = computed(() => {
     return (
         model.value.percentage > 0 &&
