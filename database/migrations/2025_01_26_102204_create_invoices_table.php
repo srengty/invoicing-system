@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('invoice_no')->unique()->nullable();
+            $table->timestamp('invoice_date')->nullable();
             $table->foreignId('agreement_no')->nullable()->constrained('agreements','agreement_no')->nullOnDelete();
             $table->foreignId('quotation_no')->nullable()->constrained('quotations','quotation_no')->nullOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
@@ -23,10 +24,13 @@ return new class extends Migration
             $table->string('phone');
             $table->date('start_date');
             $table->date('end_date');
-            $table->enum('status', ['Pending', 'Paid', 'Cancelled'])->default('Pending');
+            $table->string('status', 20)->default('Pending');
             $table->decimal('grand_total', 10, 2)->nullable();
             $table->json('products')->nullable();
-            $table->enum('currency', ['USD', 'KHR'])->default('USD'); // Add currency column with default USD
+            $table->enum('currency', ['USD', 'KHR'])->default('USD');
+            $table->decimal('exchange_rate', 15, 2)->nullable();
+            $table->decimal('total_usd', 15, 2)->nullable();
+            $table->string('terms')->nullable();
             $table->timestamps();
         });
     }

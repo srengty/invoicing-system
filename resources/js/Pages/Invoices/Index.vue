@@ -31,49 +31,54 @@
                         @apply="updateColumns"
                         size="small"
                     />
+                    <Button
+                            label="Search"
+                            icon="pi pi-search"
+                            @click="searchInvoices"
+                            size="small"
+                            class="w-full md:w-32"
+                        />
+                    <Button
+                            label="Clear"
+                            icon="pi pi-times"
+                            severity="secondary"
+                            @click="clearFilters"
+                            size="small"
+                            class="w-full md:w-32"
+                        />
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="mb-8">
-                <div class="text-md font-semibold mb-3">Filter by</div>
-
-                <div class="grid gap-10 w-full grid-cols-4 text-sm mb-2">
+            <div class="mb-8 mt-6">
+                <div class="flex flex-wrap justify-between text-sm mb-2">
                     <!-- Invoice No. Start - Restrict to Numbers -->
-                    <div class="grid grid-cols-2">
-                        <label
-                            class="grid content-center"
-                            for="invoice_no_start"
-                            >Invoice No. Start:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="invoice_no_start" class="mb-1 w-1/2 font-semibold ">Invoice No. Start:</label>
                         <InputText
                             v-model="filters.invoice_no_start"
                             placeholder="Input Invoice No Start"
                             v-keyfilter="['num']"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full mr-8 items-start"
                         />
                     </div>
 
                     <!-- Invoice No. End - Restrict to Numbers -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="invoice_no_end"
-                            >Invoice No. End:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="invoice_no_end" class="mb-1 w-1/2 font-semibold">Invoice No. End:</label>
                         <InputText
                             v-model="filters.invoice_no_end"
                             placeholder="Input Invoice No End"
                             v-keyfilter="['num']"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full mr-8 "
                         />
                     </div>
 
                     <!-- Currency Dropdown -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="currency"
-                            >Currency:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="currency" class="mb-1 w-1/2 font-semibold">Currency:</label>
                         <Dropdown
                             v-model="filters.currency"
                             :options="currencyOptions"
@@ -81,43 +86,37 @@
                             optionLabel="label"
                             optionValue="value"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full"
                         />
                     </div>
                 </div>
 
-                <div class="grid gap-10 w-full grid-cols-4 text-sm mb-2">
-                    <!-- Start Date -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="start_date"
-                            >Start Date:</label
-                        >
+                <div class="flex flex-wrap justify-between text-sm mb-2">
+
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="end_date" class="mb-1 w-1/2 font-semibold">Start Date:</label>
                         <DatePicker
                             v-model="filters.start_date"
                             placeholder="Pick Start Date"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full mr-8"
                         />
                     </div>
 
                     <!-- End Date -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="end_date"
-                            >End Date:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="end_date" class="mb-1 w-1/2 font-semibold">End Date:</label>
                         <DatePicker
                             v-model="filters.end_date"
                             placeholder="Pick End Date"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full mr-8"
                         />
                     </div>
 
                     <!-- Payment Status -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="status"
-                            >Payment Status:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="status" class="mb-1 w-1/2 font-semibold">Payment Status:</label>
                         <Dropdown
                             v-model="filters.status"
                             :options="statusOptions"
@@ -125,33 +124,27 @@
                             optionLabel="label"
                             optionValue="value"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full"
                         />
                     </div>
                 </div>
 
-                <div class="grid gap-10 w-full grid-cols-4 text-sm">
+                <div class="flex flex-wrap justify-between text-sm">
                     <!-- Customer Name - Restrict to Letters Only -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="customer"
-                            >Customer:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="customer" class="mb-1 w-1/2 font-semibold">Customer:</label>
                         <InputText
                             v-model="filters.customer"
                             placeholder="Input Customer Name"
                             v-keyfilter="['alpha']"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full mr-8"
                         />
                     </div>
 
                     <!-- Customer Type -->
-                    <div class="grid grid-cols-2">
-                        <label
-                            class="grid content-center"
-                            for="category_name_english"
-                            >Customer Type:</label
-                        >
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="category_name_english" class="mb-1 w-1/2 font-semibold">Customer Type:</label>
                         <Dropdown
                             v-model="filters.category_name_english"
                             :options="customerTypeOptions"
@@ -159,44 +152,24 @@
                             optionLabel="label"
                             optionValue="value"
                             size="small"
-                            class="w-full md:w-44"
+                            class="w-full mr-8"
                         />
                     </div>
 
-                    <!-- Income Type (No keyfilter as it's a dropdown) -->
-                    <div class="grid grid-cols-2">
-                        <label class="grid content-center" for="income_type"
-                            >Income Type:</label
-                        >
+                    <!-- Income Type -->
+                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
+                        <label for="income_type" class="w-1/2 font-semibold">Income Type:</label>
                         <Dropdown
                             placeholder="Select Income Type"
                             optionLabel="label"
                             optionValue="value"
                             size="small"
-                            class="w-full md:w-44"
-                        />
-                    </div>
-
-                    <!-- Search & Clear Buttons -->
-                    <div class="flex items-end gap-4 grid-cols-2">
-                        <Button
-                            label="Search"
-                            icon="pi pi-search"
-                            @click="searchInvoices"
-                            size="small"
-                            class="w-full md:w-32 shadow-md"
-                        />
-                        <Button
-                            label="Clear"
-                            icon="pi pi-times"
-                            severity="secondary"
-                            @click="clearFilters"
-                            size="small"
-                            class="w-full md:w-32 shadow-md"
+                            class="w-full"
                         />
                     </div>
                 </div>
             </div>
+
 
             <!-- Data Table -->
             <DataTable
@@ -225,13 +198,47 @@
                         >
                             {{ computeAmountDue(data) }}
                         </template>
-                        <template v-else> Not past due </template>
+                        <template v-else> Not Amount due </template>
                     </template>
                 </Column>
 
                 <Column header="Overdue">
                     <template #body="{ data }">
-                        {{ over_due(data) }} days ago
+                        <span :class="{'text-red-500': over_due(data).includes('days ago') && over_due(data) !== 'Not Past Due'}">
+                            {{ over_due(data) }}
+                        </span>
+                    </template>
+                </Column>
+
+
+                <Column field="status" header="Status">
+                    <template #body="{ data }">
+                        <div class="flex">
+                            <Button
+                            :icon="data.status === 'approved' ? 'pi pi-check' :
+                                    data.status === 'rejected' ? 'pi pi-times' :
+                                    data.status === 'revise' ? 'pi pi-pencil' : 'pi pi-clock'"
+                            :label="data.status === 'approved' ? 'Approved' :
+                                    data.status === 'rejected' ? 'Rejected' :
+                                    data.status === 'revise' ? 'Revise' : 'Pending'"
+                            :class="data.status === 'pending' ? 'p-button-warning' :
+                                    data.status === 'approved' ? 'p-button-success' :
+                                    data.status === 'revise' ? 'p-button-danger' :
+                                    'p-button-warning'"  
+                            size="small"
+                            @click="toggleStatus(data)"
+                            class="text-sm flex-grow w-auto"
+                            :disabled="data.status === 'approved'"
+                            outlined
+                        />
+                        <Button
+                            v-if="data.invoice_comments && data.invoice_comments.length > 0"
+                            icon="pi pi-comment"
+                            class="p-button-info ml-2"
+                            @click="viewComment(data.invoice_comments)"
+                            outlined
+                        />
+                        </div>
                     </template>
                 </Column>
 
@@ -248,32 +255,77 @@
                                 class="p-button-info"
                                 aria-label="Print"
                                 @click="printInvoice(data.invoice_no)"
-                                rounded
-                            />
-                            <Button
-                                icon="pi pi-pencil"
-                                class="p-button-warning"
-                                aria-label="Edit"
-                                @click="editInvoice(data.invoice_no)"
-                                rounded
-                            />
-                            <Button
-                                icon="pi pi-trash"
-                                class="p-button-danger"
-                                aria-label="Delete"
-                                @click="deleteInvoice(data.invoice_no)"
-                                rounded
+                                outlined
                             />
                         </div>
                     </template>
                 </Column>
             </DataTable>
+
+            <Dialog
+                v-model:visible="isStatusDialogVisible"
+                header="Change Invoice Status"
+                :modal="true"
+                class="w-96"
+            >
+                <div class="p-4">
+                    <p class="text-center text-base mb-3">
+                        Do you want to approve or reject this invoice?
+                    </p>
+
+                    <textarea
+                        v-model="statusForm.comment"
+                        placeholder="Enter your comment..."
+                        class="w-full p-2 border rounded"
+                        :class="{ 'border-red-500': statusForm.errors.comment }"
+                    ></textarea>
+                    <p v-if="statusForm.errors.comment" class="text-red-500 text-xs mt-1">
+                        {{ statusForm.errors.comment }}
+                    </p>
+
+                    <div class="flex justify-center gap-4 mt-4">
+                        <Button
+                            label="Revise"
+                            icon="pi pi-times"
+                            class="p-button-danger"
+                            size="small"
+                            @click="changeStatus('revise')"
+                            :disabled="statusForm.processing"
+                        />
+                        <Button
+                            label="Approve"
+                            icon="pi pi-check"
+                            class="p-button-success"
+                            size="small"
+                            @click="changeStatus('approved')"
+                            :disabled="statusForm.processing"
+                        />
+                    </div>
+                </div>
+            </Dialog>
+
+            <Dialog v-model:visible="isCommentDialogVisible" header="Comments" class="w-80">
+                <div v-if="selectedComment.length > 0">
+                    <div v-for="(item, index) in selectedComment" :key="index" class="text-border">
+                        <p>{{ item.comment || "No comment text" }}</p>
+                        <small>{{ formatDate(item.created_at) }}</small>
+                    </div>
+                </div>
+                <div v-else>
+                    <p>No comments available</p>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <Button label="Close" class="p-button-secondary" @click="isCommentDialogVisible = false" />
+                </div>
+            </Dialog>
+
         </div>
     </GuestLayout>
 </template>
 
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import { useForm } from '@inertiajs/vue3';
 import { Head, Link } from "@inertiajs/vue3";
 import {
     Button,
@@ -282,6 +334,7 @@ import {
     DatePicker,
     InputText,
     Dropdown,
+    Dialog,
 } from "primevue";
 import KeyFilter from "primevue/keyfilter";
 import ChooseColumns from "@/Components/ChooseColumns.vue";
@@ -337,9 +390,16 @@ const customerTypeOptions = ref([
 ]);
 
 const currencyOptions = ref([
-    { label: "USD", value: "USD" },
-    { label: "KHR", value: "KHR" },
+    { label: "KHR", value: "USD" },
+    { label: "USD", value: "KHR" },
 ]);
+
+const statusOptions = ref([
+    { label: "Pending", value: "pending" },
+    { label: "Approved", value: "approved" },
+    { label: "Revise", value: "revise" }
+]);
+
 
 const columns = [
     { field: "invoice_no", header: "Invoice No" },
@@ -348,17 +408,74 @@ const columns = [
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
     { field: "agreement.amount", header: "Amount Paid" },
-    { field: "status", header: "Status" },
 ];
+const selectedComment = ref("");
+const commentText = ref("");
+const isCommentDialogVisible = ref(false);
+const selectedInvoice = ref(null);
+const isStatusDialogVisible = ref(false);
+
+const statusForm = useForm({
+    status: '',
+    comment: '',
+});
+
+
+// Open the status dialog for a selected invoice
+const toggleStatus = (invoice) => {
+    selectedInvoice.value = invoice;
+    isStatusDialogVisible.value = true;
+
+    // Reset form fields before showing the dialog
+    statusForm.reset();
+};
+
+const changeStatus = (status) => {
+    if (!selectedInvoice.value) return;
+
+    // Ensure the status you're sending is valid
+    const validStatuses = ['approved', 'rejected', 'pending', 'revise']; // Include 'revise'
+    if (!validStatuses.includes(status)) {
+        console.error(`Invalid status: ${status}`);
+        return; // Prevent the API call with invalid status
+    }
+
+    // Set the status and comment from the form
+    statusForm.status = status;
+    statusForm.comment = statusForm.comment.trim();  // Ensure no leading/trailing spaces
+
+    // Update the invoice status via an API request
+    statusForm.put(route('invoices.updateStatus', selectedInvoice.value.id), {
+        onSuccess: () => {
+            // Close dialog and reset after success
+            isStatusDialogVisible.value = false;
+            statusForm.reset();  // Reset the form
+            selectedInvoice.value = null;
+        },
+        onError: (errors) => {
+            console.error("Status update failed:", errors);
+            // Handle any error feedback here
+        },
+    });
+};
+
+const viewComment = (invoiceComments) => {
+    console.log("Comments data:", invoiceComments);
+    if (invoiceComments && Array.isArray(invoiceComments)) {
+        selectedComment.value = invoiceComments;
+        isCommentDialogVisible.value = true;
+    } else {
+        selectedComment.value = [];
+        isCommentDialogVisible.value = true;
+    }
+};
+
+const formatDate = (dateString) => {
+    return moment(dateString).format('MMMM D, YYYY [at] h:mm A');
+};
 
 const selectedColumns = ref(columns.slice());
 const showColumns = ref(columns);
-
-const statusOptions = ref([
-    { label: "Paid", value: "Paid" },
-    { label: "Pending", value: "Pending" },
-    { label: "Cancelled", value: "Cancelled" },
-]);
 
 const updateColumns = () => {
     showColumns.value = selectedColumns.value;
@@ -379,12 +496,16 @@ const deleteInvoice = (id) => {
 };
 
 const over_due = (rowData) => {
-    if (!rowData.end_date) return "-";
+    if (!rowData.end_date) return "-"; // If there's no end date, return "-"
+
     const dueDate = moment(rowData.end_date);
     const currentDate = moment();
     const overdue = currentDate.diff(dueDate, "days");
-    return overdue > 0 ? overdue : 0;
+
+    // If overdue is 0, return "Not Past Due", otherwise return the number of overdue days
+    return overdue > 0 ? `${overdue} days ago` : "Not Past Due";
 };
+
 
 const printInvoice = (id) => {
     const invoiceUrl = `/invoices/${id}`;

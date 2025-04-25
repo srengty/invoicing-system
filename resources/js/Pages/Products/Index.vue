@@ -110,6 +110,7 @@
                                 size="small"
                                 @click="toggleStatus(data)"
                                 class="text-sm flex-grow"
+                                :disabled="data.status === 'approved'"
                                 outlined
                             />
                             <Button
