@@ -14,6 +14,9 @@
                 <li :class="{ active: $page.url === '/invoices' }">
                     <Link href="/invoices">Invoices</Link>
                 </li>
+                <li :class="{ active: $page.url === '/receives' }">
+                    <Link href="/receives">Receives</Link>
+                </li>
                 <li :class="{ active: $page.url === '/settings' }">
                     <Link href="/settings">Settings</Link>
                 </li>
