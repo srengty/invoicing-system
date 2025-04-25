@@ -530,5 +530,12 @@ class QuotationController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function toggleActive($id, Request $request)
+    {
+        $quotation = Quotation::findOrFail($id);
+        $quotation->active = !$quotation->active;
+        $quotation->save();
 
+        return response()->json(['success' => true, 'active' => $quotation->active]);
+    }
 }

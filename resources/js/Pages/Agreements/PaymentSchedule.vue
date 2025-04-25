@@ -9,17 +9,31 @@
             class="p-datatable-striped"
             responsiveLayout="scroll"
             :show-gridlines="true"
+            :rowClass="paymentRowClass"
         >
             <Column field="index" header="No." sortable class="text-sm">
                 <template #body="slotProps">
                     {{ slotProps.index + 1 }}
                 </template>
             </Column>
-            <Column field="due_date" header="Due Date" sortable class="text-sm">
+            <Column field="due_date" header="Due Date" sortable>
                 <template #body="slotProps">
-                    {{
-                        moment(slotProps.data["due_date"]).format("YYYY/MM/DD")
-                    }}
+                    <span
+                        :class="{
+                            'text-red-500 font-semibold': isPastDue(
+                                slotProps.data.due_date
+                            ),
+                        }"
+                    >
+                        {{ formatDate(slotProps.data.due_date) }}
+                    </span>
+                </template>
+                <template #editor="{ data, field }">
+                    <DatePicker
+                        v-model="data[field]"
+                        fluid
+                        date-format="yy/mm/dd"
+                    />
                 </template>
             </Column>
             <Column
@@ -60,15 +74,32 @@
                 class="text-sm"
             >
                 <template #body="slotProps">
-                    {{ priceTemplate(slotProps.data) }}
+                    <span>
+                        {{ priceTemplate(slotProps.data) }}
+                    </span>
                 </template>
                 <template #editor="{ data, field }">
                     <InputGroup>
-                        <InputGroupAddon append>{{
-                            props.currency ?? "$"
-                        }}</InputGroupAddon>
-                        <InputNumber v-model="data[field]" fluid />
+                        <InputGroupAddon append>
+                            {{ props.currency ?? "$" }}
+                        </InputGroupAddon>
+                        <InputNumber
+                            v-model="data[field]"
+                            fluid
+                            min="0"
+                            step="0.01"
+                        />
                     </InputGroup>
+                </template>
+            </Column>
+            <Column header="Status" sortable>
+                <template #body="slotProps">
+                    <Tag
+                        :value="getPaymentStatus(slotProps.data)"
+                        :severity="
+                            getStatusSeverity(getPaymentStatus(slotProps.data))
+                        "
+                    />
                 </template>
             </Column>
             <Column
@@ -96,13 +127,13 @@
                                 doDeletePaymentSchedule({ ...slotProps.data })
                             "
                         />
-                        <Button
+                        <!-- <Button
                             icon="pi pi-file-pdf"
                             class="p-button-success p-button-outlined"
                             label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
-                        />
+                        /> -->
                     </div>
                 </template>
             </Column>
@@ -161,6 +192,7 @@ import {
     ColumnGroup,
     Dialog,
     Toast,
+    Tag,
 } from "primevue";
 
 const toast = useToast();
@@ -199,6 +231,8 @@ const props = defineProps({
     currency: String,
     readonly: Boolean,
     agreement_amount: Number,
+    startDate: [String, Date],
+    endDate: [String, Date],
 });
 const editingRows = ref([]);
 const exchange_rate = ref(4100);
@@ -212,14 +246,30 @@ const onRowEditSave = (event) => {
         life: 3000,
     });
 };
+const minDate = computed(() => {
+    return props.startDate ? new Date(props.startDate) : new Date();
+});
+
+const maxDate = computed(() => {
+    return props.endDate ? new Date(props.endDate) : null;
+});
+
+const formatDate = (date) => {
+    if (!date) return "";
+    return moment(date).format("YYYY/MM/DD");
+};
+
 const currencySign = computed(
     () => currencies.filter((v) => v.value == props.currency)[0]?.sign ?? "$"
 );
 const priceTemplate = (data) => {
-    return `${
-        currencies.filter((v) => v.value == data.currency)[0]?.sign ?? "$"
-    } ${data.amount.toLocaleString()}`;
+    const currencySign = data.currency === "KHR" ? "៛" : "$";
+    return `${currencySign} ${data.amount.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
 };
+
 const calculateRate = (propsCurrency, itemCurrency) => {
     if (propsCurrency == "USD" && itemCurrency == "KHR")
         return 1 / exchange_rate.value;
@@ -284,6 +334,44 @@ const generateInvoice = async (paymentItem) => {
         generatingInvoice.value = false;
     }
 };
+
+// Add these methods to your script setup
+const isPastDue = (date) => {
+    if (!date) return false;
+    const today = moment();
+    const dueDate = moment(
+        date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    return dueDate.isValid() && dueDate.isBefore(today, "day");
+};
+
+const getPaymentStatus = (schedule) => {
+    if (schedule.status === "Paid") return "PAID";
+    return isPastDue(schedule.due_date) ? "PAST DUE" : "UPCOMING";
+};
+
+const getStatusSeverity = (status) => {
+    switch (status) {
+        case "PAID":
+            return "success";
+        case "PAST DUE":
+            return "danger";
+        case "UPCOMING":
+            return "info";
+        default:
+            return "warning";
+    }
+};
+const paymentRowClass = (data) => {
+    return {
+        "bg-red-50": isPastDue(data.due_date) && data.status !== "Paid",
+        "border-l-4 border-red-500":
+            isPastDue(data.due_date) && data.status !== "Paid",
+    };
+};
+
 const doEditPaymentSchedule = (data) => {
     Object.assign(editingSchedule.value, data);
     editingSchedule.value.agreement_currency = data.currency;

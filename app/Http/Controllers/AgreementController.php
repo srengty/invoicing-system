@@ -17,9 +17,59 @@ class AgreementController extends Controller
      */
     public function index()
     {
+        $agreements = Agreement::with(['customer', 'paymentSchedules'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($agreement) {
+                // Check for past due payments and mark them as past
+                $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) {
+                    $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
+                    $status = 'Due';
+                    $amount = $schedule->amount;
+
+                    if ($dueDate->isPast()) {
+                        $status = 'Past Due';
+                        $amount = $schedule->amount;
+                    }
+
+                    return [
+                        ...$schedule->toArray(),
+                        'status' => $status,
+                        'amount' => $amount
+                    ];
+                });
+
+                return [
+                    ...$agreement->toArray(),
+                    'payment_schedules' => $paymentSchedules
+                ];
+            });
+
         return Inertia::render('Agreements/Index', [
-            'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
+            'agreements' => $agreements
         ]);
+    }
+
+    protected function determineAgreementStatus($agreement)
+    {
+        $today = now();
+        $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $agreement->end_date);
+
+        if ($today->gt($endDate)) {
+            // Check if all payments are completed
+            $completedPayments = $agreement->paymentSchedules()
+                ->where('status', 'Completed')
+                ->count();
+            $totalPayments = $agreement->paymentSchedules()->count();
+
+            if ($completedPayments === $totalPayments) {
+                return 'Closed';
+            } else {
+                return 'Abnormal Closed';
+            }
+        }
+
+        return 'Open';
     }
 
     /**
@@ -44,6 +94,7 @@ class AgreementController extends Controller
         //dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
+            'agreement_ref_no' => 'required|unique:agreements,agreement_ref_no',
             'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
@@ -145,6 +196,7 @@ class AgreementController extends Controller
         // dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
+            'agreement_ref_no' => 'required|unique:agreements,agreement_ref_no,',
             'agreement_doc' => 'required',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',

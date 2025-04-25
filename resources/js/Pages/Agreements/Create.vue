@@ -27,6 +27,7 @@
                 <div
                     class="create-agreement flex flex-row justify-between gap-2"
                 >
+                    <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
@@ -103,14 +104,14 @@
                                 </template>
                             </InputText>
                             <Message
-                                v-if="showDuplicateAlert"
-                                severity="warn"
+                                v-if="errors.agreement_ref_no"
+                                severity="error"
                                 variant="simple"
                                 class="col-span-2"
                                 size="small"
-                                >This reference number already exists in our
-                                records</Message
                             >
+                                {{ errors.agreement_ref_no }}
+                            </Message>
                             <span class="text-sm required">Date</span>
                             <DatePicker
                                 date-format="yy/mm/dd"
@@ -118,6 +119,7 @@
                                 v-model="form.agreement_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <Message
                                 v-if="errors.agreement_date"
@@ -233,6 +235,7 @@
                             </DataView>
                         </div>
                     </div>
+                    <!-- Middle Column - Agreement Summary -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 font-semibold text-xl mb-5"
@@ -245,6 +248,7 @@
                                 v-model="form.start_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <span class="text-sm">End date</span>
                             <DatePicker
@@ -253,6 +257,7 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
+                                :min-date="minDate"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">
@@ -284,16 +289,19 @@
                                 @update="beforeUpdate"
                                 size="small"
                                 class="w-full"
+                                :start_date="form.start_date"
+                                :end_date="form.end_date"
                             />
                         </div>
                     </div>
+                    <!-- Right Column - Attachments -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/3">
                         <h3 class="font-semibold text-xl mb-4">
-                            Add Attachment
+                            Add Attachments
                         </h3>
 
                         <div class="space-y-4">
-                            <span class="text-sm required">Attachment</span>
+                            <span class="text-sm">Attachment</span>
                             <FileUpload
                                 name="attachments"
                                 :url="route('agreements.upload')"
@@ -307,7 +315,7 @@
                                 chooseLabel="Upload Attachment(s)"
                             >
                                 <template #chooseicon>
-                                    <i class="pi pi-paperclip mr-2"></i>
+                                    <i class="pi pi-file-pdf"></i>
                                 </template>
                             </FileUpload>
 
@@ -384,6 +392,17 @@
                     :currency="form.currency"
                     :agreement_amount="schedule.agreement_amount"
                 />
+                <Message
+                    v-if="
+                        form.payment_schedule.length > 0 &&
+                        !isPaymentScheduleComplete
+                    "
+                    severity="error"
+                    class="mt-2"
+                >
+                    Payment schedule must total exactly 100% (Current:
+                    {{ totalPercentage }}%)
+                </Message>
                 <!-- <div
                     class="flex justify-end items-center gap-2 my-2 px-24"
                     v-if="hasManyCurrencies"
@@ -404,7 +423,7 @@
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
-                        :disabled="isStoringAgreement"
+                        :disabled="isStoringAgreement || !isFormValid"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -453,7 +472,9 @@ import {
     Breadcrumb,
 } from "primevue";
 
+const minDate = new Date();
 const toast = useToast();
+const isEditing = computed(() => !!form.id);
 // The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
@@ -476,7 +497,6 @@ const getFileName = (path) => {
     const filename = decodeURIComponent(path.split(/[\\/]/).pop());
     return filename || "document.pdf";
 };
-const isEditing = computed(() => !!form.id);
 const props = defineProps({
     errors: Object,
     customers: Array,
@@ -491,14 +511,6 @@ const riels = computed({
         schedule.value.exchange_rate = value ? 4100 : 1;
     },
 });
-const updateAgreementAmount = () => {
-    if (form.currency === "USD") {
-        schedule.value.agreement_amount = form.agreement_amount;
-    } else if (form.currency === "KHR") {
-        schedule.value.agreement_amount =
-            form.agreement_amount * schedule.value.exchange_rate;
-    }
-};
 const form = reactive({
     quotation_no: null,
     agreement_no: props.edit
@@ -510,7 +522,7 @@ const form = reactive({
     agreement_doc: [],
     progress: null,
     start_date: new Date(),
-    end_date: new Date(),
+    end_date: moment(new Date()).add(14, "days").toDate(),
     agreement_amount: 0,
     short_description: "",
     attachments: [],
@@ -580,25 +592,12 @@ const schedule = ref({
 });
 // Form data
 const totalAgreement = ref(10000); // Set your default total amount
-const dueDate = ref();
 const shortDescription = ref("");
 const percentage = ref();
 const amount = ref();
 const currency = ref("USD");
 const locale = ref("en-US");
 const agreementDocs = ref([]);
-const currencyOptions = ref([
-    { name: "US Dollar", code: "USD" },
-    { name: "Euro", code: "EUR" },
-    { name: "British Pound", code: "GBP" },
-]);
-const calculateAmount = () => {
-    if (percentage.value) {
-        amount.value = (totalAgreement.value * percentage.value) / 100;
-    } else {
-        amount.value = null;
-    }
-};
 const remainingAmount = computed(() => {
     return (
         schedule.value.agreement_amount -
@@ -638,7 +637,7 @@ onMounted(() => {
             props.agreement.start_date,
             "DD/MM/YYYY"
         ).toDate();
-        form.end_date = moment(props.agreement.end_date, "DD/MM/YYYY").toDate();
+        form.end_date = moment(form.start_date).add(14, "days").toDate();
         form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
         form.currency = props.agreement.currency;
@@ -752,7 +751,25 @@ const submit = ({ states, valid }) => {
             },
         });
     }
-    isStoringAgreement.value = false;
+    if (errors.agreement_ref_no) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please correct the agreement reference number",
+            life: 3000,
+        });
+        return;
+    }
+    if (!isFormValid.value) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please complete all required fields and ensure payment schedule totals 100%",
+            life: 3000,
+        });
+        return;
+    }
+    isStoringAgreement.value = true;
     //form.post(route('agreements.store'));
     // if(e.valid){
     //     router.push(route('agreements.store'), form);
@@ -761,6 +778,26 @@ const submit = ({ states, valid }) => {
     //     toast.add({ severity: 'error', summary: 'Error', detail: 'Please fill all required fields' });
     // }
 };
+const totalPercentage = computed(() => {
+    return form.payment_schedule.reduce(
+        (sum, item) => sum + item.percentage,
+        0
+    );
+});
+
+const isPaymentScheduleComplete = computed(() => {
+    return Math.round(totalPercentage.value * 100) / 100 === 100;
+});
+
+const isFormValid = computed(() => {
+    return (
+        isPaymentScheduleComplete.value &&
+        form.quotation_no &&
+        form.agreement_no &&
+        form.customer_id &&
+        form.agreement_date
+    );
+});
 const cancel = () => {
     toast.add({
         severity: "secondary",
@@ -928,15 +965,28 @@ const checkDuplicateReference = async () => {
             },
         });
 
-        showDuplicateAlert.value = response.data.exists;
+        if (response.data.exists) {
+            showDuplicateAlert.value = true;
+            errors.agreement_ref_no =
+                "The agreement ref no has already been taken.";
+        } else {
+            showDuplicateAlert.value = false;
+            errors.agreement_ref_no = "";
+        }
     } catch (error) {
         console.error("Error checking reference:", error);
+        showDuplicateAlert.value = false;
+        errors.agreement_ref_no = "";
     }
 };
-const formatDate = (date, format = "YYYY-DD-MM") => {
-    if (!date) return "N/A";
-    return moment(date).format(format);
-};
+
+const isValid = computed(() => {
+    return (
+        model.value.percentage > 0 &&
+        model.value.percentage <= 100 &&
+        model.value.amount > 0
+    );
+});
 </script>
 
 <style>

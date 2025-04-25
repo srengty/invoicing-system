@@ -20,11 +20,9 @@
         </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
+        <ConfirmDialog />
 
         <div class="quotations text-sm p-4">
-            <!-- <div class="flex justify-between items-center p-4">
-                <h1 class="text-2xl">Quotations list</h1>
-            </div> -->
             <div class="flex justify-end p-4 gap-4">
                 <div>
                     <Dropdown
@@ -68,7 +66,6 @@
                         raised
                 /></Link>
             </div>
-
             <div>
                 <DataTable
                     :value="filteredQuotations"
@@ -77,11 +74,6 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <!-- <Column header="No." style="width: 5%">
-                        <template #body="slotProps">
-                            {{ slotProps.index + 1 }}
-                        </template>
-                    </Column> -->
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
@@ -95,37 +87,53 @@
                             </span>
                         </template>
                     </Column>
-
                     <!-- Correctly Map the Status Column -->
                     <Column field="status" header="Status" style="width: 10%">
                         <template #body="slotProps">
-                            <span
-                                class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
-                                :class="{
-                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
-                                        slotProps.data.status === 'Pending',
-                                    'bg-red-100 text-red-800 border-red-400':
-                                        slotProps.data.status === 'Revise',
-                                    'bg-green-100 text-green-800 border-green-400':
-                                        slotProps.data.status === 'Approved',
-                                }"
-                            >
-                                <i
+                            <div class="flex items-center">
+                                <span
+                                    class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
                                     :class="{
-                                        'pi pi-clock':
+                                        'bg-yellow-100 text-yellow-800 border-yellow-400':
                                             slotProps.data.status === 'Pending',
-                                        'pi pi-times':
+                                        'bg-red-100 text-red-800 border-red-400':
                                             slotProps.data.status === 'Revise',
-                                        'pi pi-check':
+                                        'bg-green-100 text-green-800 border-green-400':
                                             slotProps.data.status ===
                                             'Approved',
                                     }"
-                                ></i>
-                                {{ slotProps.data.status }}
-                            </span>
+                                >
+                                    <i
+                                        :class="{
+                                            'pi pi-clock':
+                                                slotProps.data.status ===
+                                                'Pending',
+                                            'pi pi-times':
+                                                slotProps.data.status ===
+                                                'Revise',
+                                            'pi pi-check':
+                                                slotProps.data.status ===
+                                                'Approved',
+                                        }"
+                                    ></i>
+                                    {{ slotProps.data.status }}
+                                </span>
+                                <!-- Button to view comment on status -->
+                                <Button
+                                    v-if="
+                                        slotProps.data.comments &&
+                                        slotProps.data.comments.length > 0
+                                    "
+                                    icon="pi pi-comment"
+                                    class="p-button-info ml-2"
+                                    @click="
+                                        viewComment(slotProps.data.comments)
+                                    "
+                                    outlined
+                                />
+                            </div>
                         </template>
                     </Column>
-
                     <!-- Correctly Map the Customer Status Column -->
                     <Column
                         field="customer_status"
@@ -133,75 +141,62 @@
                         style="width: 10%"
                     >
                         <template #body="slotProps">
-                            <span
-                                @click="handleStatusClick(slotProps.data)"
-                                v-tooltip.top="
-                                    'Current customer status: ' +
-                                    slotProps.data.customer_status
-                                "
-                                class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
-                                :class="{
-                                    'bg-blue-100 text-blue-800 border-blue-400':
-                                        slotProps.data.customer_status ===
-                                        'Sent',
-                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
-                                        slotProps.data.customer_status ===
-                                        'Pending',
-                                    'bg-green-100 text-green-800 border-green-400':
-                                        slotProps.data.customer_status ===
-                                        'Accept',
-                                    'bg-red-100 text-red-800 border-red-400':
-                                        slotProps.data.customer_status ===
-                                        'Reject',
-                                }"
-                            >
-                                <i
+                            <div class="flex items-center">
+                                <span
+                                    @click="handleStatusClick(slotProps.data)"
+                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
                                     :class="{
-                                        'pi pi-send':
+                                        'bg-blue-100 text-blue-800 border-blue-400':
                                             slotProps.data.customer_status ===
                                             'Sent',
-                                        'pi pi-clock':
+                                        'bg-yellow-100 text-yellow-800 border-yellow-400':
                                             slotProps.data.customer_status ===
                                             'Pending',
-                                        'pi pi-check':
+                                        'bg-green-100 text-green-800 border-green-400':
                                             slotProps.data.customer_status ===
                                             'Accept',
-                                        'pi pi-times':
+                                        'bg-red-100 text-red-800 border-red-400':
                                             slotProps.data.customer_status ===
                                             'Reject',
                                     }"
-                                    style="margin-right: 8px"
-                                ></i>
-                                {{ slotProps.data.customer_status }}
-                            </span>
-                        </template>
-                    </Column>
-
-                    <!-- Other columns -->
-                    <Column
-                        header="Customer's Comment"
-                        style="width: 15%; min-width: 200px"
-                        bodyStyle="white-space: normal"
-                    >
-                        <template #body="{ data }">
-                            <div class="comment-container">
-                                <template v-if="data.comments?.length">
-                                    <div class="latest-comment">
-                                        <p class="comment-text">
-                                            {{
-                                                data.comments[
-                                                    data.comments.length - 1
-                                                ].comment
-                                            }}
-                                        </p>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    <span class="no-comment">No comment</span>
-                                </template>
+                                >
+                                    <i
+                                        :class="{
+                                            'pi pi-send':
+                                                slotProps.data
+                                                    .customer_status === 'Sent',
+                                            'pi pi-clock':
+                                                slotProps.data
+                                                    .customer_status ===
+                                                'Pending',
+                                            'pi pi-check':
+                                                slotProps.data
+                                                    .customer_status ===
+                                                'Accept',
+                                            'pi pi-times':
+                                                slotProps.data
+                                                    .customer_status ===
+                                                'Reject',
+                                        }"
+                                        style="margin-right: 8px"
+                                    ></i>
+                                    {{ slotProps.data.customer_status }}
+                                </span>
+                                <!-- Button to view comment on customer status -->
+                                <Button
+                                    v-if="
+                                        slotProps.data.comments &&
+                                        slotProps.data.comments.length > 0
+                                    "
+                                    icon="pi pi-comment"
+                                    class="p-button-info ml-2"
+                                    @click="viewCommentCustomer(slotProps.data)"
+                                    outlined
+                                />
                             </div>
                         </template>
                     </Column>
+                    <!-- Action Column -->
                     <Column header="View / Print-out" style="width: 8%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
@@ -213,6 +208,7 @@
                                     @click="viewQuotation(slotProps.data)"
                                     size="small"
                                     outlined
+                                    :disabled="!slotProps.data.active"
                                 />
                                 <div>
                                     <Button
@@ -224,10 +220,27 @@
                                         "
                                         size="small"
                                         outlined
-
+                                        :disabled="!slotProps.data.active"
                                     />
                                 </div>
                             </div>
+                        </template>
+                    </Column>
+                    <Column header="Active" style="width: 6%">
+                        <template #body="slotProps">
+                            <Button
+                                :icon="
+                                    slotProps.data.active
+                                        ? 'pi pi-unlock'
+                                        : 'pi pi-lock'
+                                "
+                                :severity="
+                                    slotProps.data.active ? 'success' : 'danger'
+                                "
+                                class="p-button-rounded p-button-text"
+                                @click="toggleActive(slotProps.data)"
+                                size="small"
+                            />
                         </template>
                     </Column>
                 </DataTable>
@@ -433,7 +446,7 @@
                         <!-- Approve/Reject Buttons -->
                         <div class="flex justify-end gap-2">
                             <Button
-                                label="Approve"
+                                label="Accept"
                                 severity="success"
                                 @click="handleApprove"
                             />
@@ -445,33 +458,57 @@
                         </div>
                     </div>
                 </Dialog>
+
+                <!-- Confirm Dialog for comment -->
+                <Dialog
+                    v-model:visible="isCommentDialogVisible"
+                    header="Customer's Comment"
+                    modal
+                    :style="{ width: '20rem' }"
+                    class="text-sm"
+                >
+                    <div class="">
+                        <p class="text-gray-700 rounded border p-2">
+                            {{ selectedComment }}
+                        </p>
+                        <div class="flex justify-end mt-4">
+                            <Button
+                                label="Close"
+                                class="p-button-secondary"
+                                @click="isCommentDialogVisible = false"
+                            />
+                        </div>
+                    </div>
+                </Dialog>
             </div>
         </div>
     </GuestLayout>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { Head, Link } from "@inertiajs/vue3";
-import { usePage } from "@inertiajs/vue3";
-import { router } from "@inertiajs/vue3";
-import { useForm } from "@inertiajs/vue3";
-import { Inertia } from "@inertiajs/inertia";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import Dropdown from "primevue/dropdown";
-import Toast from "primevue/toast";
-import { useToast } from "primevue/usetoast";
-import { InputText } from "primevue";
-import Breadcrumb from "primevue/breadcrumb";
-import html2pdf from "html2pdf.js";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import { route } from 'ziggy-js';
+import html2pdf from "html2pdf.js";
+import { ref, computed } from "vue";
+import { Head, Link, usePage, router, useForm } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
+import {
+    InputText,
+    DataTable,
+    Column,
+    Button,
+    Dialog,
+    ConfirmDialog,
+    Dropdown,
+    Toast,
+    Breadcrumb,
+} from "primevue";
 
 const toast = useToast();
+const confirm = useConfirm();
 
 // Reactive properties
 const isViewDialogVisible = ref(false);
@@ -480,7 +517,6 @@ const selectedQuotation = ref(null);
 const userRole = ref("manager");
 const comment = ref("");
 const feedbackComment = ref("");
-const isSending = ref(false);
 
 const searchType = ref("");
 const searchTerm = ref("");
@@ -524,19 +560,6 @@ const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
 };
 
-const openSendDialog = (quotation) => {
-    selectedQuotation.value = quotation;
-    sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
-    isSendDialogVisible.value = true;
-};
-
-const openFeedbackDialog = (quotation) => {
-    if (quotation.customer_status === "Sent") {
-        selectedQuotation.value = quotation;
-        isFeedbackDialogVisible.value = true;
-    }
-};
-
 const showToast = (
     type = "success",
     title = "Success",
@@ -571,20 +594,6 @@ const form = useForm({
     products: [],
 });
 
-const openForm = (quotations = null) => {
-    if (quotations) {
-        form.quotation_no = quotations.id;
-        form.quotation_date = quotations.quotation_date;
-        form.address = quotations.address;
-        form.phone_number = quotations.phone_number;
-        form.email = quotations.email;
-        form.customer_id = quotations.customer_id;
-    } else {
-        form.reset();
-    }
-    isFormVisible.value = true;
-};
-
 const isFormVisible = ref(false);
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
@@ -609,11 +618,6 @@ const editQuotation = () => {
     }
 };
 
-const closeForm = () => {
-    isFormVisible.value = false;
-    form.reset();
-};
-
 const viewQuotation = (quotation) => {
     selectedQuotation.value = quotation;
     if (quotation.comments && quotation.comments.length) {
@@ -626,38 +630,11 @@ const viewQuotation = (quotation) => {
     }
     isViewDialogVisible.value = true;
 };
-
-const columns = [
-    { field: "quotation_no", header: "Quotation No." },
-    { field: "quotation_date", header: "Quotation Date" },
-    { field: "customer.name", header: "Customer/Organization Name" },
-    { field: "address", header: "Address" },
-    { field: "phone_number", header: "Phone Number" },
-    { field: "email", header: "email" },
-    { field: "terms", header: "Terms" },
-    { field: "total", header: "Total" },
-    { field: "tax", header: "Tax" },
-    { field: "status", header: "Status" },
-    { field: "customer_status", header: "Customer Status" },
-];
 const printQuotation = (quotation_no, include_catelog = 0) => {
     const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
     // Inertia.visit(quotUrl);
     const printWindow = window.open(quotUrl, "_self");
 };
-
-const selectedColumns = ref(columns);
-const showColumns = ref(columns);
-const updateColumns = (columns) => {
-    showColumns.value = selectedColumns.value;
-};
-
-const selectedStatus = ref();
-const StatusOptions = ref([
-    { name: "Pending", code: "Pending" },
-    { name: "Approved", code: "Approved" },
-    { name: "Revise", code: "Revise" },
-]);
 
 const updateQuotationStatus = (quotation, message) => {
     router.put(
@@ -933,6 +910,71 @@ const formatCurrency = (value) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(value || 0);
+};
+// To add an Activate/Deactivate button
+const toggleActive = (quotation) => {
+    confirm.require({
+        message: `Are you sure you want to ${
+            quotation.active ? "deactivate" : "activate"
+        } this quotation?`,
+        header: "Confirmation",
+        icon: "pi pi-exclamation-triangle",
+        rejectProps: {
+            label: "Cancel",
+            icon: "pi pi-times",
+            outlined: true,
+            size: "small",
+        },
+        acceptProps: {
+            label: "Save",
+            icon: "pi pi-check",
+            size: "small",
+        },
+        accept: async () => {
+            try {
+                await router.put(`/quotations/${quotation.id}/toggle-active`, {
+                    active: !quotation.active,
+                });
+
+                showToast(
+                    "success",
+                    "Status Updated",
+                    `Quotation ${
+                        quotation.active ? "deactivated" : "activated"
+                    } successfully!`
+                );
+
+                router.get(
+                    route("quotations.list"),
+                    {},
+                    { preserveScroll: true }
+                );
+            } catch (error) {
+                showToast("error", "Error", "Failed to update status.");
+            }
+        },
+    });
+};
+const selectedComment = ref("");
+const isCommentDialogVisible = ref(false);
+
+const viewComment = (comments) => {
+    const latestComment = comments[comments.length - 1].comment;
+    selectedComment.value = latestComment;
+    isCommentDialogVisible.value = true;
+};
+
+const viewCommentCustomer = (customerStatusData) => {
+    const latestCustomerStatusComment =
+        customerStatusData.comments?.[customerStatusData.comments.length - 1]
+            ?.comment;
+    if (latestCustomerStatusComment) {
+        selectedComment.value = latestCustomerStatusComment;
+        isCommentDialogVisible.value = true;
+    } else {
+        selectedComment.value = "No comment available for this status.";
+        isCommentDialogVisible.value = true;
+    }
 };
 </script>
 
