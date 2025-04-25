@@ -744,6 +744,7 @@ import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
 import moment from "moment";
 import axios from "axios";
+import { route } from 'ziggy-js';
 import {
     DataTable,
     Column,

@@ -452,6 +452,7 @@ import { reactive, onMounted, ref, computed, watch } from "vue";
 import { currencies } from "@/constants";
 import { usePage } from "@inertiajs/vue3";
 import moment from "moment";
+import { route } from 'ziggy-js';
 import {
     Button,
     DatePicker,
