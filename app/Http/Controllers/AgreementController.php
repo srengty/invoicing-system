@@ -15,21 +15,6 @@ class AgreementController extends Controller
     /**
      * Display a listing of the resource.
      */
-    // public function index()
-    // {
-    //     return Inertia::render('Agreements/Index', [
-    //         // 'agreements' => Agreement::with('customer')->orderBy('created_at', 'desc')->get(),
-    //         'agreements' => Agreement::with('customer')
-    //         ->orderBy('created_at', 'desc')
-    //         ->get()
-    //         ->map(function ($agreement) {
-    //             return [
-    //                 ...$agreement->toArray(),
-    //                 'status' => $this->determineAgreementStatus($agreement),
-    //             ];
-    //         }),
-    //     ]);
-    // }
     public function index()
     {
         $agreements = Agreement::with(['customer', 'paymentSchedules'])
@@ -44,7 +29,7 @@ class AgreementController extends Controller
 
                     if ($dueDate->isPast()) {
                         $status = 'Past Due';
-                        $amount = $schedule->amount;  // You can modify this if needed based on your business logic
+                        $amount = $schedule->amount;
                     }
 
                     return [

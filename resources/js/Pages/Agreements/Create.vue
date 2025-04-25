@@ -27,6 +27,7 @@
                 <div
                     class="create-agreement flex flex-row justify-between gap-2"
                 >
+                    <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 text-xl font-semibold mb-5"
@@ -234,6 +235,7 @@
                             </DataView>
                         </div>
                     </div>
+                    <!-- Middle Column - Agreement Summary -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
                             <span class="col-span-2 font-semibold text-xl mb-5"
@@ -292,9 +294,10 @@
                             />
                         </div>
                     </div>
+                    <!-- Right Column - Attachments -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/3">
                         <h3 class="font-semibold text-xl mb-4">
-                            Add Attachment
+                            Add Attachments
                         </h3>
 
                         <div class="space-y-4">
@@ -312,7 +315,7 @@
                                 chooseLabel="Upload Attachment(s)"
                             >
                                 <template #chooseicon>
-                                    <i class="pi pi-paperclip mr-2"></i>
+                                    <i class="pi pi-file-pdf"></i>
                                 </template>
                             </FileUpload>
 

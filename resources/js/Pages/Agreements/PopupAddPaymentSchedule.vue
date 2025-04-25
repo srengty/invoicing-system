@@ -4,6 +4,8 @@
             label="Add payment schedule"
             @click="doShow"
             class="w-full h-9 text-md"
+            size="small"
+            icon="pi pi-plus"
         />
         <Dialog
             v-model="isShowing"

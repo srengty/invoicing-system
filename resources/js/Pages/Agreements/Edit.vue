@@ -103,8 +103,6 @@
                                 size="small"
                                 readonly
                             />
-
-                            <!-- Agreement Doc Upload Section -->
                             <span class="text-sm required">Agreement doc</span>
                             <FileUpload
                                 name="agreement_doc"
@@ -119,11 +117,9 @@
                                 class="custom-file-upload w-full h-9"
                             >
                                 <template #chooseicon>
-                                    <i class="pi pi-paperclip mr-2"></i>
+                                    <i class="pi pi-file-pdf"></i>
                                 </template>
                             </FileUpload>
-
-                            <!-- Attachments List -->
                             <DataView
                                 :value="agreementDocs"
                                 class="col-span-2 mt-2"
@@ -154,9 +150,9 @@
                                                     item.name
                                                         ? item.name.slice(
                                                               0,
-                                                              20
+                                                              15
                                                           ) +
-                                                          (item.name.length > 20
+                                                          (item.name.length > 15
                                                               ? "..."
                                                               : "")
                                                         : "document.pdf"
@@ -197,7 +193,6 @@
                             <span class="col-span-2 font-semibold text-xl mb-5"
                                 >Agreement summary</span
                             >
-
                             <!-- Start Date -->
                             <span class="text-sm">Start date</span>
                             <DatePicker
@@ -208,7 +203,6 @@
                                 size="small"
                                 :min-date="minDate"
                             />
-
                             <!-- End Date -->
                             <span class="text-sm">End date</span>
                             <DatePicker
@@ -234,7 +228,6 @@
                                     :value="schedule.agreement_amount"
                                 />
                             </InputGroup>
-
                             <!-- Short Description -->
                             <span class="text-sm">Short description</span>
                             <Textarea
@@ -243,7 +236,6 @@
                                 v-model="form.short_description"
                                 size="small"
                             ></Textarea>
-
                             <!-- Payment Schedule -->
                             <span class="text-sm">Payment schedule</span>
                             <PopupAddPaymentSchedule
@@ -259,10 +251,10 @@
                     </div>
                     <!-- Right Column - Attachments -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/3">
-                        <h3 class="font-semibold text-xl mb-4">Attachments</h3>
+                        <h3 class="font-semibold text-xl mb-4">Add Attachments</h3>
                         <div class="space-y-4">
                             <!-- Attachment Upload Section -->
-                            <span class="text-sm required">Add Attachment</span>
+                            <span class="text-sm">Attachment</span>
                             <FileUpload
                                 name="attachments"
                                 :url="route('agreements.upload')"
@@ -272,11 +264,11 @@
                                 accept="application/pdf"
                                 @before-upload="beforeUploadAttachment"
                                 @upload="onUploadAttachment"
-                                chooseLabel="Upload Attachments"
+                                chooseLabel="Upload Attachment(s)"
                                 class="custom-file-upload w-full h-9"
                             >
                                 <template #chooseicon>
-                                    <i class="pi pi-paperclip mr-2"></i>
+                                    <i class="pi pi-file-pdf"></i>
                                 </template>
                             </FileUpload>
 
@@ -356,6 +348,7 @@
                     :agreement_amount="schedule.agreement_amount"
                     :start-date="form.start_date"
                     :end-date="form.end_date"
+                    :show-status="true"
                 />
                 <!-- Save Button -->
                 <div class="flex justify-end gap-2 mt-10">
@@ -430,21 +423,6 @@ const items = computed(() => [
         }),
     },
 ]);
-const getFileName = (path) => {
-    if (!path) return "document.pdf";
-    // Handle both URL-encoded and regular paths
-    const decodedPath = decodeURIComponent(path);
-    // Extract the file name (handles both forward and backward slashes)
-    const filename = decodedPath.split(/[\\/]/).pop();
-    return filename || "document.pdf";
-};
-const formatFileSize = (bytes) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-};
 const safeDate = (input) => {
     if (moment.isMoment(input)) return input.toDate();
     if (input instanceof Date) return input;
@@ -464,9 +442,6 @@ const safeDate = (input) => {
         }
     }
     return new Date(); // fallback
-};
-const formatDisplayDate = (date) => {
-    return moment(date).format("YYYY/MM/DD");
 };
 // Form setup
 const form = useForm({
@@ -558,11 +533,8 @@ const remainingPercentage = computed(() => {
         form.payment_schedule.reduce((acc, item) => acc + item.percentage, 0)
     );
 });
-const hasManyCurrencies = computed(() => {
-    return form.payment_schedule.some((v) => v.currency != form.currency);
-});
 
-// Methods
+// Methods and event handlers
 const beforeUpload = (e) => {
     e.formData.enctype = "multipart/form-data";
     e.formData.append("agreement_doc_old", form.agreement_doc);
@@ -701,24 +673,27 @@ const submitForm = () => {
     };
     const data = {
         ...form.data(),
-        agreement_amount: schedule.value.agreement_amount,
         agreement_doc:
             agreementDocs.value.length > 0
                 ? JSON.stringify(agreementDocs.value)
                 : null,
-        agreement_date: formatDate(form.agreement_date),
-        start_date: formatDate(form.start_date),
-        end_date: formatDate(form.end_date),
-        payment_schedule: form.payment_schedule.map((item) => ({
-            ...item,
-            due_date: formatDate(item.due_date),
-            amount: parseFloat(item.amount),
-            percentage: parseFloat(item.percentage),
-        })),
         attachments:
             form.attachments.length > 0
                 ? JSON.stringify(form.attachments)
                 : null,
+        agreement_date: formatDate(form.agreement_date),
+        start_date: formatDate(form.start_date),
+        end_date: formatDate(form.end_date),
+        agreement_amount: schedule.value.agreement_amount,
+        payment_schedule: form.payment_schedule.map((item) => ({
+            ...item,
+            status:
+                item.status ||
+                (isPastDue(item.due_date) ? "Past Due" : "Upcoming"),
+            due_date: formatDate(item.due_date),
+            amount: parseFloat(item.amount),
+            percentage: parseFloat(item.percentage),
+        })),
     };
 
     console.log("Formatted data before submission:", data);
@@ -761,13 +736,6 @@ const cancelChanges = () => {
                 life: 3000,
             });
         },
-    });
-};
-const formatNumber = (value, decimals = 2) => {
-    if (isNaN(value)) return "0.00";
-    return value.toLocaleString(undefined, {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals,
     });
 };
 </script>

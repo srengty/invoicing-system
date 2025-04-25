@@ -21,7 +21,6 @@ list agreement
         <Toast position="top-right" group="tr" />
         <div class="agreements pl-4 pr-4">
             <div class="flex justify-end items-center">
-                <!-- <h1 class="text-2xl">Agreements list</h1> -->
                 <div class="flex gap-2">
                     <Dropdown
                         v-model="searchType"
@@ -79,6 +78,7 @@ list agreement
                 resizableColumns
                 columnResizeMode="fit"
                 class="mt-5"
+                :rowClass="rowClass"
             >
                 <template v-for="col of showColumns" :key="col.field">
                     <!-- column for all other columns -->
@@ -184,6 +184,12 @@ list agreement
                                 <span class="text-xs text-gray-500 ml-1">
                                     ({{ slotProps.data.currency }})
                                 </span>
+                                <Tag
+                                    v-if="slotProps.data.due_payment > 0"
+                                    value="PAST DUE"
+                                    severity="danger"
+                                    class="ml-2"
+                                />
                             </span>
                         </template>
                     </Column>
@@ -644,6 +650,7 @@ list agreement
                             :showGridlines="true"
                             class="mt-3"
                             size="small"
+                            :rowClass="paymentScheduleRowClass"
                         >
                             <Column field="id" header="No" sortable>
                                 <template #body="slotProps">
@@ -652,7 +659,18 @@ list agreement
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    {{ formatDate(slotProps.data.due_date) }}
+                                    <span
+                                        :class="{
+                                            'text-red-500 font-semibold':
+                                                isPastDue(
+                                                    slotProps.data.due_date
+                                                ),
+                                        }"
+                                    >
+                                        {{
+                                            formatDate(slotProps.data.due_date)
+                                        }}
+                                    </span>
                                 </template>
                             </Column>
                             <Column
@@ -680,6 +698,22 @@ list agreement
                                 <template #body="slotProps">
                                     {{ formatCurrency(slotProps.data.amount) }}
                                     ({{ slotProps.data.currency }})
+                                </template>
+                            </Column>
+                            <Column header="Status" sortable>
+                                <template #body="slotProps">
+                                    <Tag
+                                        :value="
+                                            isPastDue(slotProps.data.due_date)
+                                                ? 'PAST DUE'
+                                                : 'UPCOMING'
+                                        "
+                                        :severity="
+                                            isPastDue(slotProps.data.due_date)
+                                                ? 'danger'
+                                                : 'success'
+                                        "
+                                    />
                                 </template>
                             </Column>
                         </DataTable>
@@ -795,10 +829,19 @@ const formatDate = (date, format = "YYYY-MM-DD") => {
     );
     return parsedDate.isValid() ? parsedDate.format(format) : "Invalid date";
 };
+const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === "") return "0.00";
+    const numValue =
+        typeof value === "string"
+            ? parseFloat(value.replace(/,/g, ""))
+            : Number(value);
 
-// const momentDate = (date) => {
-//     return moment(date, "DD/MM/YYYY").fromNow();
-// };
+    return numValue.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+// function filter agreements
 const searchTerm = ref("");
 const searchType = ref("");
 const searchOptions = ref([
@@ -817,9 +860,62 @@ const getFieldValue = (obj, path) => {
 };
 const startDateFilter = ref(null);
 const endDateFilter = ref(null);
+// function to calculate due payment
+const rowClass = (data) => {
+    return {
+        "bg-red-50": data.due_payment > 0,
+        "border-l-4 border-red-500": data.due_payment > 0,
+    };
+};
+const calculateDuePayment = (agreement) => {
+    if (
+        !agreement.payment_schedules ||
+        agreement.payment_schedules.length === 0
+    ) {
+        return 0;
+    }
+
+    const today = moment();
+    let duePayment = 0;
+
+    agreement.payment_schedules.forEach((schedule) => {
+        try {
+            // Handle different date formats
+            const dueDate = moment(
+                schedule.due_date,
+                ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+                true
+            );
+            if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+                // Add the amount if the payment is past due
+                duePayment += parseFloat(schedule.amount) || 0;
+            }
+        } catch (error) {
+            console.error("Error processing payment schedule:", error);
+        }
+    });
+
+    return duePayment;
+};
+const processedAgreements = computed(() => {
+    if (!props.agreements) return [];
+
+    return props.agreements.map((agreement) => {
+        // Ensure payment_schedules exists
+        const paymentSchedules = agreement.payment_schedules || [];
+
+        return {
+            ...agreement,
+            due_payment: calculateDuePayment({
+                ...agreement,
+                payment_schedules: paymentSchedules,
+            }),
+        };
+    });
+});
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
-    return props.agreements.filter((agreement) => {
+    return processedAgreements.value.filter((agreement) => {
         // Start and End Date Filtering
         const start = moment(agreement.start_date, [
             "YYYY-MM-DD",
@@ -854,18 +950,6 @@ const filteredAgreements = computed(() => {
     });
 });
 
-const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === "") return "0.00";
-    const numValue =
-        typeof value === "string"
-            ? parseFloat(value.replace(/,/g, ""))
-            : Number(value);
-
-    return numValue.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
-};
 const progressBarClass = (percentage) => {
     if (percentage >= 100) return "bg-green-500";
     if (percentage >= 75) return "bg-blue-500";
@@ -879,7 +963,6 @@ const selectedProgressPayments = ref([]);
 const selectedAgreement = ref(null);
 const paymentDetailsDialog = ref(false);
 const currentPayment = ref(null);
-
 const showProgressPayments = (agreement) => {
     try {
         selectedAgreement.value = { ...agreement };
@@ -932,6 +1015,22 @@ const viewAgreementDetails = async (agreement) => {
             group: "tr",
         });
     }
+};
+// Add this method in your script setup
+const isPastDue = (date) => {
+    if (!date) return false;
+    const today = moment();
+    const dueDate = moment(
+        date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    return dueDate.isValid() && dueDate.isBefore(today, "day");
+};
+const paymentScheduleRowClass = (data) => {
+    return {
+        "bg-red-50": isPastDue(data.due_date),
+    };
 };
 // function to display expries date
 const isExpiringSoon = (agreement) => {
