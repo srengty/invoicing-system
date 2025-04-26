@@ -704,6 +704,7 @@ watch(() => form.customer_id, (newCustomerId) => {
   
         // Recalculate Grand Total
         form.grand_total = calculateTotal.value - form.instalmentPaid;
+        
   
         console.log("Updated Form Data after Quotation Selection:", form);
       }
@@ -897,66 +898,9 @@ const submitInvoice = async () => {
         }
     }
 
-  // const csrfToken = document.querySelector('meta[name="csrf_token"]').getAttribute('content');
-
-  // const invoiceData = {
-  //   invoice_date: new Date().toISOString(),
-  //   invoice_no: form.invoice_no || null,
-  //   agreement_no: form.agreement_no,
-  //   quotation_no: form.quotation_no,
-  //   customer_id: form.customer_id,
-  //   address: form.address,
-  //   phone: form.phone,
-  //   terms: form.terms || '',
-  //   start_date: form.start_date,
-  //   end_date: form.end_date,
-  //   grand_total: calculateTotal.value,
-  //   total_usd: form.total_usd || null,
-  //   exchange_rate: form.exchange_rate || null,
-  //   status: form.status,
-  //   products: productsList.value.map(product => ({
-  //     id: product.id,
-  //     quantity: product.qty,
-  //     price: product.unitPrice,
-  //     acc_code: product.acc_code || '',
-  //     category_id: product.category_id || null,
-  //     remark: product.remark || '',
-  //     include_catalog: product.include_catalog || false,
-  //     pdf_url: product.pdf_url || null,
-  //   })),
-  // };
-
   try {
     form.post('/invoices');
-    // const response = await fetch('/invoices', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'X-CSRF-TOKEN': csrfToken,
-    //     'Accept': 'application/json',
-    //   },
-    //   body: JSON.stringify(invoiceData),
-    // });
 
-    // if (!response.ok) {
-    //   const contentType = response.headers.get('content-type');
-
-    //   if (contentType && contentType.includes('application/json')) {
-    //     const errorData = await response.json();
-    //     console.error('Server validation error:', errorData);
-    //     alert('Failed to submit. Please check the form data.');
-    //   } else {
-    //     const errorText = await response.text();
-    //     console.error('Non-JSON error:', errorText);
-    //     alert('Submission failed with unexpected error.');
-    //   }
-
-    //   return;
-    // }
-
-    // const result = await response.json();
-    // console.log('Invoice created:', result);
-    // window.location.href = '/invoices';
 
   } catch (error) {
     console.error('Error submitting invoice:', error);
@@ -979,5 +923,13 @@ const checkCatalogAvailability = (product) => {
     console.log("Product is ready for catalog PDF.");
     return true;
 };
+
+watch(() => form.start_date, (newStartDate) => {
+  if (newStartDate) {
+    const startDate = new Date(newStartDate);
+    startDate.setDate(startDate.getDate() + 14);
+    form.end_date = startDate.toISOString().split('T')[0]; // Format to yyyy-mm-dd
+  }
+});
   
   </script>

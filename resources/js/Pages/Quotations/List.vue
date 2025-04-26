@@ -524,18 +524,18 @@ const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
 };
 
-const openSendDialog = (quotation) => {
-    selectedQuotation.value = quotation;
-    sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
-    isSendDialogVisible.value = true;
-};
+// const openSendDialog = (quotation) => {
+//     selectedQuotation.value = quotation;
+//     sendForm.value = { emailChecked: false, telegramChecked: false }; // Reset form
+//     isSendDialogVisible.value = true;
+// };
 
-const openFeedbackDialog = (quotation) => {
-    if (quotation.customer_status === "Sent") {
-        selectedQuotation.value = quotation;
-        isFeedbackDialogVisible.value = true;
-    }
-};
+// const openFeedbackDialog = (quotation) => {
+//     if (quotation.customer_status === "Sent") {
+//         selectedQuotation.value = quotation;
+//         isFeedbackDialogVisible.value = true;
+//     }
+// };
 
 const showToast = (
     type = "success",
@@ -827,107 +827,107 @@ const handleStatusClick = (quotation) => {
     }
 };
 
-const sendQuotationToCustomer = async () => {
-    // Ensure the email option is selected
-    if (!sendForm.value.emailChecked && !sendForm.value.telegramChecked) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Please select at least one option (Email or Telegram).",
-            life: 3000,
-        });
-        return;
-    }
+// const sendQuotationToCustomer = async () => {
+//     // Ensure the email option is selected
+//     if (!sendForm.value.emailChecked && !sendForm.value.telegramChecked) {
+//         toast.add({
+//             severity: "error",
+//             summary: "Error",
+//             detail: "Please select at least one option (Email or Telegram).",
+//             life: 3000,
+//         });
+//         return;
+//     }
 
-    isSending.value = true;
+//     isSending.value = true;
 
-    try {
-        // Generate the PDF for the quotation
-        generatePDF(selectedQuotation.value);
+//     try {
+//         // Generate the PDF for the quotation
+//         generatePDF(selectedQuotation.value);
 
-        // Prepare the form data for sending
-        const formData = new FormData();
-        formData.append("quotation_id", selectedQuotation.value.id);
-        formData.append("send_email", sendForm.value.emailChecked);
-        formData.append("send_telegram", sendForm.value.telegramChecked);
+//         // Prepare the form data for sending
+//         const formData = new FormData();
+//         formData.append("quotation_id", selectedQuotation.value.id);
+//         formData.append("send_email", sendForm.value.emailChecked);
+//         formData.append("send_telegram", sendForm.value.telegramChecked);
 
-        // Add the generated PDF to the form data
-        const pdfBlob = await html2pdf()
-            .from(document.createElement("div"))
-            .outputPdf("blob");
-        formData.append(
-            "pdf_file",
-            pdfBlob,
-            `quotation_${selectedQuotation.value.quotation_no}.pdf`
-        );
+//         // Add the generated PDF to the form data
+//         const pdfBlob = await html2pdf()
+//             .from(document.createElement("div"))
+//             .outputPdf("blob");
+//         formData.append(
+//             "pdf_file",
+//             pdfBlob,
+//             `quotation_${selectedQuotation.value.quotation_no}.pdf`
+//         );
 
-        // Get CSRF token from the meta tag
-        const csrfToken = document
-            .querySelector('meta[name="csrf_token"]')
-            .getAttribute("content");
+//         // Get CSRF token from the meta tag
+//         const csrfToken = document
+//             .querySelector('meta[name="csrf_token"]')
+//             .getAttribute("content");
 
-        // Send the request to the backend to save/send the quotation
-        const response = await fetch("/quotations/send", {
-            method: "POST",
-            body: formData, // Send the FormData directly
-            headers: {
-                "X-CSRF-TOKEN": csrfToken, // CSRF token for security
-            },
-        });
+//         // Send the request to the backend to save/send the quotation
+//         const response = await fetch("/quotations/send", {
+//             method: "POST",
+//             body: formData, // Send the FormData directly
+//             headers: {
+//                 "X-CSRF-TOKEN": csrfToken, // CSRF token for security
+//             },
+//         });
 
-        // Parse the JSON response from the server
-        const responseData = await response.json();
+//         // Parse the JSON response from the server
+//         const responseData = await response.json();
 
-        if (responseData.success) {
-            // If the quotation was approved, change the status to "Pending"
-            if (selectedQuotation.value.status === "Approved") {
-                await router.put(
-                    `/quotations/${selectedQuotation.value.id}/update-status`,
-                    {
-                        status: "Approved", // Change the status to Pending
-                    }
-                );
+//         if (responseData.success) {
+//             // If the quotation was approved, change the status to "Pending"
+//             if (selectedQuotation.value.status === "Approved") {
+//                 await router.put(
+//                     `/quotations/${selectedQuotation.value.id}/update-status`,
+//                     {
+//                         status: "Approved", // Change the status to Pending
+//                     }
+//                 );
 
-                showToast(
-                    "success",
-                    "Success",
-                    "Quotation sent and status updated to 'Pending'!",
-                    3000
-                );
-            } else {
-                showToast(
-                    "success",
-                    "Success",
-                    "Quotation sent successfully!",
-                    3000
-                );
-            }
+//                 showToast(
+//                     "success",
+//                     "Success",
+//                     "Quotation sent and status updated to 'Pending'!",
+//                     3000
+//                 );
+//             } else {
+//                 showToast(
+//                     "success",
+//                     "Success",
+//                     "Quotation sent successfully!",
+//                     3000
+//                 );
+//             }
 
-            // Close the send dialog
-            isSendDialogVisible.value = false;
-        } else {
-            // Handle case where sending the quotation fails
-            showToast(
-                "error",
-                "Error",
-                "Failed to send the quotation. Please try again.",
-                3000
-            );
-        }
-    } catch (error) {
-        // Catch any errors and show the error message
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail:
-                error.message || "Failed to send quotation. Please try again.",
-            life: 3000,
-        });
-    } finally {
-        // Reset the sending state
-        isSending.value = false;
-    }
-};
+//             // Close the send dialog
+//             isSendDialogVisible.value = false;
+//         } else {
+//             // Handle case where sending the quotation fails
+//             showToast(
+//                 "error",
+//                 "Error",
+//                 "Failed to send the quotation. Please try again.",
+//                 3000
+//             );
+//         }
+//     } catch (error) {
+//         // Catch any errors and show the error message
+//         toast.add({
+//             severity: "error",
+//             summary: "Error",
+//             detail:
+//                 error.message || "Failed to send quotation. Please try again.",
+//             life: 3000,
+//         });
+//     } finally {
+//         // Reset the sending state
+//         isSending.value = false;
+//     }
+// };
 const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 2,

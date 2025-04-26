@@ -124,7 +124,7 @@ const items = ref([
         items: [
             {
                 label: "List Invoice",
-                href: "/list",
+                href: "/invoices/list",
                 icon: "pi pi-list",
                 shortcut: "⌘+O",
             },

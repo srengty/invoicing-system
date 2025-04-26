@@ -403,8 +403,7 @@ const statusOptions = ref([
 
 const columns = [
     { field: "invoice_no", header: "Invoice No" },
-    { field: "start_date", header: "Date" },
-    { field: "end_date", header: "Due Date" },
+    { field: "invoice_date", header: "Date" },
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
     { field: "agreement.amount", header: "Amount Paid" },

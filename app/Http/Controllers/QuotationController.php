@@ -322,9 +322,6 @@ class QuotationController extends Controller
             'total' => 'required|numeric|min:0',
             'total_usd' => 'nullable|numeric',
             'exchange_rate' => 'nullable|numeric|min:0',
-            // 'tax' => 'required|numeric|min:0',
-            // 'grand_total' => 'required|numeric|min:0',
-            // 'status' => 'sometimes|string|max:20',
             'products'        => 'nullable|array',
             'products.*.id'   => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:1',
@@ -482,7 +479,7 @@ class QuotationController extends Controller
                 Mail::to($customerEmail)->send(new QuotationEmail($quotation, $request->file('pdf_file')));
 
                 // Automatically update statuses when sending email
-                $quotation->customer_status = 'Pending'; // Change from Sent to Pending
+                $quotation->customer_status = 'Pending'; 
                 $quotation->customer->update(['customer_status' => 'Pending']);
             }
 
@@ -500,35 +497,5 @@ class QuotationController extends Controller
             return response();
         }
     }
-
-    public function send(Request $request)
-    {
-        // Validate the request
-        $validated = $request->validate([
-            'quotation_id' => 'required|exists:quotations,id',
-            'pdf_file' => 'required|file|mimes:pdf|max:10240', // Example validation
-            'send_email' => 'required|boolean',
-        ]);
-
-        $quotation = Quotation::findOrFail($request->quotation_id);
-
-        if ($quotation->status !== 'approved') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only approved quotations can be sent.',
-            ], 403);
-        }
-
-        // Get the uploaded file
-        $pdf = $request->file('pdf_file');
-
-        // Handle the PDF (e.g., save it or process it)
-        $path = $pdf->storeAs('quotations', 'quotation_' . $request->quotation_id . '.pdf');
-
-        // Process the email sending here, assuming the email logic is implemented
-
-        return response()->json(['success' => true]);
-    }
-
 
 }
