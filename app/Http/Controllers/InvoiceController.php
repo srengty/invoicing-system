@@ -14,6 +14,12 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;  // Import Carbon for date manipulation
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InvoiceEmail;
+use Illuminate\Support\Facades\DB;
+
+use Exception;
 
 class InvoiceController extends Controller
 {
@@ -28,22 +34,6 @@ class InvoiceController extends Controller
 
         // Pass the full models to the form
         return Inertia::render('Invoices/Create', [
-            'agreements' => $agreements,
-            'quotations' => $quotations,
-            'customers' => $customers,
-            'products' => $products,
-        ]);
-    }
-    public function show()
-    {
-        // Get all agreements, quotations, customers, and products
-        $agreements = Agreement::all();
-        $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
-        $customers = Customer::all();
-        $products = Product::all();
-
-        // Pass the full models to the form
-        return Inertia::render('Invoices/Show', [
             'agreements' => $agreements,
             'quotations' => $quotations,
             'customers' => $customers,
@@ -90,7 +80,8 @@ class InvoiceController extends Controller
             $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
         }
     
-        $endDate = now()->format('Y-m-d');
+        // Set end date to 14 days from start_date if no end_date provided
+        $endDate = now()->addDays(14)->format('Y-m-d');
         if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['end_date'])) {
             $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
         }
@@ -133,7 +124,7 @@ class InvoiceController extends Controller
             strtotime($request->invoice_date)
         ) {
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
-        }    
+        }
     
         // Create invoice
         $invoice = \App\Models\Invoice::create([
@@ -168,8 +159,9 @@ class InvoiceController extends Controller
             }
         }
     
-        return redirect()->route('invoices.index')->with('success', 'Invoice created successfully!');
+        return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
+    
 
     public function updateStatus(Request $request, Invoice $invoice)
 {   
@@ -193,6 +185,7 @@ class InvoiceController extends Controller
         }
 
         $invoice->invoice_date = now();
+        $invoice->customer_status = 'Sent'; 
     }
 
     $invoice->save();
@@ -273,7 +266,129 @@ class InvoiceController extends Controller
     ]);
 }
 
+public function list(Request $request)
+{
+    // Initialize the query builder for the invoices
+    $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments');
 
+    // Apply the filters from the request, if any
+
+    // Filter by invoice number (if provided)
+    if ($request->has('invoice_no_start') && $request->invoice_no_start) {
+        $query->where('invoice_no', '>=', $request->invoice_no_start);
+    }
+
+    if ($request->has('invoice_no_end') && $request->invoice_no_end) {
+        $query->where('invoice_no', '<=', $request->invoice_no_end);
+    }
+
+    // Filter by customer name (if provided)
+    if ($request->has('customer') && $request->customer) {
+        $query->whereHas('customer', function($query) use ($request) {
+            $query->where('name', 'like', '%' . $request->customer . '%');
+        });
+    }
+
+    // Filter by status (if provided)
+    if ($request->has('status') && $request->status) {
+        $query->where('status', 'like', '%' . $request->status . '%');
+    }
+
+    // Filter by start date
+    if ($request->has('start_date') && $request->start_date) {
+        $query->where('start_date', '>=', $request->start_date);
+    }
+
+    // Filter by end date
+    if ($request->has('end_date') && $request->end_date) {
+        $query->where('end_date', '<=', $request->end_date);
+    }
+
+    // Filter by customer category (if provided)
+    if ($request->has('category_name_english') && $request->category_name_english) {
+        $query->whereHas('customer.customerCategory', function ($query) use ($request) {
+            $query->where('category_name_english', 'like', '%' . $request->category_name_english . '%');
+        });
+    }
+
+    // Filter by currency
+    if ($request->has('currency') && $request->currency) {
+        $query->where('currency', $request->currency);
+    }
+
+    // Apply pagination after all filters
+    $invoices = $query->paginate();  // Apply pagination after the filters are added
+
+    // Get the filters for passing them to the view
+    $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
+
+    // Return the filtered invoices to the view
+    return Inertia::render('Invoices/List', [
+        'invoices' => $invoices,
+        'filters' => $filters,
+    ]);
+}
+
+public function show($invoice_no)
+{
+    // Load the invoice with customer
+    $invoice = Invoice::with('customer')->where('id', $invoice_no)->firstOrFail();
+
+    if ($invoice->status === 'Approved') {
+        abort(403, 'This invoice has been paid and can no longer be modified.');
+    }
+
+    // Get products manually via invoice_product
+    $products = DB::table('invoice_product')
+    ->join('products', 'invoice_product.product_id', '=', 'products.id')
+    ->where('invoice_product.invoice_no', $invoice->id)
+    ->select(
+        'products.id as product_id',
+        'products.name as product_name',
+        'products.name_kh as product_name_kh',
+        'products.code as product_code',
+        'products.desc',      
+        'products.desc_kh',   
+        'invoice_product.quantity',
+        'invoice_product.price',
+        'invoice_product.include_catalog'
+    )
+    ->get();
+
+
+    return Inertia::render('Invoices/Print', [
+        'invoice' => [
+            'id' => $invoice->id,
+            'invoice_no' => $invoice->invoice_no,
+            'invoice_date' => $invoice->invoice_date
+                ? Carbon::parse($invoice->invoice_date)->format('Y-m-d')
+                : null,
+            'due_date' => $invoice->due_date
+                ? Carbon::parse($invoice->due_date)->format('Y-m-d')
+                : null,
+            'customer_id' => $invoice->customer_id,
+            'customer_name' => $invoice->customer->name,
+            'customer_name_kh' => $invoice->customer->name_kh ?? $invoice->customer->name,
+            'address' => $invoice->address ?? $invoice->customer->address,
+            'phone_number' => $invoice->phone_number ?? $invoice->customer->phone_number,
+            'email' => $invoice->email ?? $invoice->customer->email,
+            'products' => $products,
+            'grand_total' => $invoice->grand_total,
+            'total_usd' => $invoice->total_usd,
+            'exchange_rate' => $invoice->exchange_rate,
+            'terms' => $invoice->terms ?? 'Standard payment terms apply',
+            'status' => $invoice->status,
+            'payment_status' => $invoice->payment_status,
+            'authorized_by' => $invoice->authorized_by,
+            'accepted_by' => $invoice->accepted_by,
+            'quotation_no' => $invoice->quotation_no,
+            'agreement_no' => $invoice->agreement_no,
+            'acceptance_date' => $invoice->acceptance_date
+                ? Carbon::parse($invoice->acceptance_date)->format('Y-m-d')
+                : null,
+        ],
+    ]);
+}
 
     // Show the edit page for an existing invoice
     public function edit($id)
@@ -371,15 +486,6 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted successfully!');
     }
 
-    // public function show($id)
-    // {
-    //     $invoice = Invoice::with(['customer', 'products'])->findOrFail($id);
-
-    //     return Inertia::render('Invoices/Show', [
-    //         'invoice' => $invoice
-    //     ]);
-    // }
-
     public function getInvoicesByQuotation($quotation_no)
     {
         // Fetch invoices for the given quotation_no and status=paid
@@ -390,4 +496,76 @@ class InvoiceController extends Controller
         // Return the invoices as a JSON response
         return response()->json($invoices);
     }
+
+    public function updateCustomerStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'customer_status' => 'required|in:Sent,Pending,Accept,Reject',
+            'comment' => 'nullable|string',
+        ]);
+
+        $quotation = Quotation::findOrFail($id);
+
+        $quotation->update([
+            'customer_status' => $validated['customer_status'],
+        ]);
+
+        if ($request->has('comment')) {
+            // Save comment logic here
+            $quotation->comments()->create([
+                'comment' => $validated['comment'],
+                // 'role' => auth()->user()->role, // or get role from request
+            ]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function sendInvoice(Request $request)
+{
+    // Find the invoice by its ID
+    $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
+
+    if (!$invoice) {
+        return response()->json(['error' => 'Invoice not found'], 404);
+    }
+
+    try {
+        // Email validation (only if sending email)
+        if ($request->input('send_email')) {
+            $customerEmail = $invoice->customer->email;
+            if (!$customerEmail) {
+                throw new Exception('Customer email not found.');
+            }
+        }
+
+        // PDF handling
+        if ($request->hasFile('pdf_file')) {
+            // Save the PDF file in the public storage
+            $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
+            Log::info('Invoice PDF saved to: ' . $pdfPath);
+        } else {
+            throw new Exception('Invoice PDF file not found.');
+        }
+
+        // Email sending
+        if ($request->input('send_email')) {
+            Log::info('Sending email to: ' . $customerEmail);
+            Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
+
+            // Automatically update statuses when sending email
+            $invoice->customer_status = 'Pending'; // Change the invoice status to 'Sent'
+            $invoice->customer->update(['customer_status' => 'Pending']); // Update customer status to Pending
+        }
+
+        // Save the invoice (status remains unless changed elsewhere)
+        $invoice->save();
+
+        return ;
+    } catch (Exception $e) {
+        Log::error('Failed to send invoice: ' . $e->getMessage());
+        return;
+    }
+}
+
 }

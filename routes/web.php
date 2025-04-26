@@ -50,13 +50,14 @@ Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])
 // Route::put('/quotations/{id}', [QuotationController::class, 'update'])->name('quotations.update');
 Route::put('/quotations/{id}/toggle-active', [QuotationController::class, 'toggleActive']);
 
+Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
 Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
-// Route::get('/invoices/show', [InvoiceController::class, 'show'])->name('invoices.show');
 Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
 Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'updateStatus'])
     ->name('invoices.updateStatus');
+Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
 
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
@@ -93,19 +94,6 @@ Route::get('/settings/product-categories', [ProductCategoryController::class, 'i
 // routes/api.php
 Route::post('/quotations/send',[QuotationController::class, 'sendQuotation'])->name('quotations.send');
 Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
-Route::get('/send-test-email', function () {
-    $data = [
-        'name' => 'John Doe',
-        'message' => 'This is a test email from Laravel.',
-    ];
-
-    // Assuming the PDF file is located in the storage path
-    $filePath = storage_path('app/public/pdfs/1740554871_67bec27779d17_DourngDariya_CV.pdf');
-
-    Mail::to('monopich1823@gmail.com')->send(new TestMail($data, $filePath));
-
-    return 'Test email sent with attachment!';
-});
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

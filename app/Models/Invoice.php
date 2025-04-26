@@ -19,9 +19,10 @@ class Invoice extends Model
         'customer_id',
         'address',
         'phone',
+        'products',
         'start_date',
         'end_date',
-        'total',
+        'total_usd',
         'grand_total',
         'exchange_rate',
         'terms',
@@ -64,11 +65,17 @@ class Invoice extends Model
 
     // Relationship with Products (many-to-many with pivot table for quantities)
     public function products()
-    {
-        return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_no', 'product_id')
-                    ->withPivot(['quantity', 'price', 'include_catalog', 'pdf_url'])
-                    ->withTimestamps();
-    }
+{
+    return $this->belongsToMany(
+        Product::class,       // Related model
+        'invoice_product',    // Pivot table name
+        'invoice_no',         // Foreign key on pivot (matches invoice_no in pivot)
+        'product_id',         // Related key on pivot (links to products.id)
+        'invoice_no',         // Local key (matches invoice_no in invoices table)
+        'id'                  // Related key (products.id)
+    )->withPivot(['quantity', 'price', 'include_catalog', 'pdf_url']);
+}
+
 
     public function invoiceComments()
 {

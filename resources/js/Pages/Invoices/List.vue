@@ -51,45 +51,6 @@
 
             <!-- Filters -->
             <div class="mb-8 mt-6">
-                <div class="flex flex-wrap justify-between text-sm mb-2">
-                    <!-- Invoice No. Start - Restrict to Numbers -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="invoice_no_start" class="mb-1 w-1/2 font-semibold ">Invoice No. Start:</label>
-                        <InputText
-                            v-model="filters.invoice_no_start"
-                            placeholder="Input Invoice No Start"
-                            v-keyfilter="['num']"
-                            size="small"
-                            class="w-full mr-8 items-start"
-                        />
-                    </div>
-
-                    <!-- Invoice No. End - Restrict to Numbers -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="invoice_no_end" class="mb-1 w-1/2 font-semibold">Invoice No. End:</label>
-                        <InputText
-                            v-model="filters.invoice_no_end"
-                            placeholder="Input Invoice No End"
-                            v-keyfilter="['num']"
-                            size="small"
-                            class="w-full mr-8 "
-                        />
-                    </div>
-
-                    <!-- Currency Dropdown -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="currency" class="mb-1 w-1/2 font-semibold">Currency:</label>
-                        <Dropdown
-                            v-model="filters.currency"
-                            :options="currencyOptions"
-                            placeholder="Select Currency"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full"
-                        />
-                    </div>
-                </div>
 
                 <div class="flex flex-wrap justify-between text-sm mb-2">
 
@@ -116,7 +77,7 @@
 
                     <!-- Payment Status -->
                     <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="status" class="mb-1 w-1/2 font-semibold">Payment Status:</label>
+                        <label for="status" class="mb-1 w-1/2 font-semibold">Status:</label>
                         <Dropdown
                             v-model="filters.status"
                             :options="statusOptions"
@@ -189,27 +150,6 @@
                     sortable
                 />
 
-                <Column header="Amount Due">
-                    <template #body="{ data }">
-                        <template
-                            v-if="
-                                moment(data.due_date).isBefore(moment(), 'day')
-                            "
-                        >
-                            {{ computeAmountDue(data) }}
-                        </template>
-                        <template v-else> Not Amount due </template>
-                    </template>
-                </Column>
-
-                <Column header="Overdue">
-                    <template #body="{ data }">
-                        <span :class="{'text-red-500': over_due(data).includes('days ago') && over_due(data) !== 'Not Past Due'}">
-                            {{ over_due(data) }}
-                        </span>
-                    </template>
-                </Column>
-
 
                 <Column field="status" header="Status">
                     <template #body="{ data }">
@@ -242,6 +182,34 @@
                     </template>
                 </Column>
 
+                <Column field="customer_status" header="Customer Status">
+                    <template #body="slotProps">
+                        <span
+                            @click="handleStatusClick(slotProps.data)"
+                            v-tooltip.top="'Current customer status: ' + (slotProps.data.customer_status || 'Unknown')"
+                            class="p-2 border rounded w-auto h-8 flex items-center justify-center cursor-pointer"
+                            :class="{
+                                'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.customer_status === 'Sent',
+                                'bg-yellow-100 text-yellow-800 border-yellow-400': slotProps.data.customer_status === 'Pending',
+                                'bg-green-100 text-green-800 border-green-400': slotProps.data.customer_status === 'Accept',
+                                'bg-red-100 text-red-800 border-red-400': slotProps.data.customer_status === 'Reject',
+                                'bg-gray-100 text-gray-800 border-gray-400': !slotProps.data.customer_status
+                            }"
+                        >
+                            <i
+                                :class="{
+                                    'pi pi-send': slotProps.data.customer_status === 'Sent',
+                                    'pi pi-clock': slotProps.data.customer_status === 'Pending',
+                                    'pi pi-check': slotProps.data.customer_status === 'Accept',
+                                    'pi pi-times': slotProps.data.customer_status === 'Reject',
+                                }"
+                                style="margin-right: 8px"
+                            ></i>
+                            {{ slotProps.data.customer_status }}
+                        </span>
+                    </template>
+                </Column>
+
                 <!-- Actions -->
                 <Column
                     header="Actions"
@@ -254,7 +222,7 @@
                                 icon="pi pi-print"
                                 class="p-button-info"
                                 aria-label="Print"
-                                @click="printInvoice(data.invoice_no)"
+                                @click="printInvoice(data.id)"
                                 outlined
                             />
                         </div>
@@ -318,6 +286,57 @@
                     <Button label="Close" class="p-button-secondary" @click="isCommentDialogVisible = false" />
                 </div>
             </Dialog>
+
+            <Dialog
+                    v-model:visible="isFeedbackDialogVisible"
+                    header="Customer Feedback"
+                    modal
+                    :style="{ width: '30rem' }"
+                    class="text-sm"
+                >
+                    <div v-if="selectedInvoice" class="flex flex-col gap-4">
+                        <p>
+                            <strong>Quotation No.:</strong>
+                            {{ selectedInvoice.invoice_no }}
+                        </p>
+                        <p>
+                            <strong>Customer Name:</strong>
+                            {{ selectedInvoice.customer?.name || "N/A" }}
+                        </p>
+                        <p>
+                            <strong>Total:</strong>
+                            {{ selectedInvoice.total }}
+                        </p>
+
+                        <!-- Comment Input -->
+                        <div class="flex flex-col gap-2">
+                            <label for="feedbackComment" class="block font-bold"
+                                >Comment:</label
+                            >
+                            <textarea
+                                id="feedbackComment"
+                                v-model="feedbackComment"
+                                rows="3"
+                                class="w-full border rounded p-2"
+                                placeholder="Enter your feedback here..."
+                            ></textarea>
+                        </div>
+
+                        <!-- Approve/Reject Buttons -->
+                        <div class="flex justify-end gap-2">
+                            <Button
+                                label="Approve"
+                                severity="success"
+                                @click="handleApprove"
+                            />
+                            <Button
+                                label="Reject"
+                                severity="danger"
+                                @click="handleReject"
+                            />
+                        </div>
+                    </div>
+                </Dialog>
 
         </div>
     </GuestLayout>
@@ -402,12 +421,13 @@ const statusOptions = ref([
 
 
 const columns = [
-    { field: "invoice_no", header: "Invoice No" },
-    { field: "invoice_date", header: "Date" },
+    { field: "start_date", header: "Date" },
+    { field: "end_date", header: "Due Date" },
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
-    { field: "agreement.amount", header: "Amount Paid" },
 ];
+
+
 const selectedComment = ref("");
 const commentText = ref("");
 const isCommentDialogVisible = ref(false);
@@ -469,6 +489,16 @@ const viewComment = (invoiceComments) => {
     }
 };
 
+const handleStatusClick = (invoice) => {
+    selectedInvoice.value = invoice;
+
+    if (invoice.customer_status === "Pending") {
+        isSendDialogVisible.value = true;
+    } else if (invoice.customer_status === "Sent") {
+        isFeedbackDialogVisible.value = true;
+    }
+};
+
 const formatDate = (dateString) => {
     return moment(dateString).format('MMMM D, YYYY [at] h:mm A');
 };
@@ -484,9 +514,6 @@ const navigateToCreate = () => {
     Inertia.visit("/invoices/create");
 };
 
-const editInvoice = (id) => {
-    Inertia.visit(`/invoices/${id}/edit`);
-};
 
 const deleteInvoice = (id) => {
     if (confirm("Are you sure you want to delete this invoice?")) {
@@ -506,12 +533,9 @@ const over_due = (rowData) => {
 };
 
 
-const printInvoice = (id) => {
-    const invoiceUrl = `/invoices/${id}`;
-    const printWindow = window.open(invoiceUrl, "_blank");
-    setTimeout(() => {
-        printWindow.print();
-    }, 1000);
+const printInvoice = (invoice_no, include_catelog = 0) => {
+    const invoiceUrl = `/invoices/${invoice_no}?include_catelog=${include_catelog}`;
+    const printWindow = window.open(invoiceUrl, "_self");
 };
 
 const searchInvoices = () => {

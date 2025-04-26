@@ -123,6 +123,12 @@ const items = ref([
         shortcut: "⌘+W",
         items: [
             {
+                label: "List Invoice",
+                href: "/invoices/list",
+                icon: "pi pi-list",
+                shortcut: "⌘+O",
+            },
+            {
                 label: "Create Invoice",
                 href: "/invoices/create",
                 icon: "pi pi-cog",
