@@ -79,5 +79,10 @@ class Invoice extends Model
     {
         return $this->hasMany(InvoiceProduct::class, 'invoice_no', 'id');
     }
+
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class);
+    }
 }
 

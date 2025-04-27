@@ -16,7 +16,7 @@ class FixInvoiceProductConstraints extends Migration
 
         // Drop the unique index on invoice_no (as it's used by the foreign key constraint)
         DB::statement('ALTER TABLE invoice_product DROP INDEX invoice_product_invoice_no_unique');
-        
+
         // Add a new composite unique constraint for invoice_no and product_id
         DB::statement('ALTER TABLE invoice_product ADD UNIQUE INDEX invoice_product_unique (invoice_no, product_id)');
     }
@@ -25,7 +25,7 @@ class FixInvoiceProductConstraints extends Migration
     {
         // Reverse the changes if needed
         DB::statement('ALTER TABLE invoice_product DROP INDEX invoice_product_unique');
-        
+
         // Add the old unique index back if needed (adjust the name accordingly)
         DB::statement('ALTER TABLE invoice_product ADD UNIQUE INDEX invoice_product_invoice_no_unique (invoice_no)');
 

@@ -132,14 +132,14 @@ const items = ref([
     },
     {
         key: 5,
-        label: "Receives",
-        href: "/receives",
+        label: "Receipts",
+        href: "/receipts",
         icon: "pi pi-receipt",
         shortcut: "⌘+W",
         items: [
             {
-                label: "Create Receive",
-                href: "/receives/create",
+                label: "Create Receipt",
+                href: "/receipts/create",
                 icon: "pi pi-plus",
                 shortcut: "⌘+O",
             },

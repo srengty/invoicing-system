@@ -1,2 +1,3 @@
 *.sqlite*
 /resources/js/bootstrap.js
+/database/migrations/2025_04_26_060848_create_invoice_comments_table.php
