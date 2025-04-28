@@ -423,7 +423,7 @@
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
-                        :disabled="isStoringAgreement || !isFormValid"
+                        :disabled="!isPaymentScheduleComplete"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -452,7 +452,7 @@ import { reactive, onMounted, ref, computed, watch } from "vue";
 import { currencies } from "@/constants";
 import { usePage } from "@inertiajs/vue3";
 import moment from "moment";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import {
     Button,
     DatePicker,
@@ -751,7 +751,7 @@ const submit = ({ states, valid }) => {
             },
         });
     }
-    if (errors.agreement_ref_no) {
+    if (props.errors.agreement_ref_no) {
         toast.add({
             severity: "error",
             summary: "Validation Error",

@@ -94,7 +94,7 @@ class AgreementController extends Controller
         //dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
-            'agreement_ref_no' => 'required|unique:agreements,agreement_ref_no',
+            'agreement_ref_no' => 'nullable|unique:agreements,agreement_ref_no',
             'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
@@ -196,7 +196,7 @@ class AgreementController extends Controller
         // dd($request->all());
         $request->validate([
             'agreement_no' => 'required',
-            'agreement_ref_no' => 'required|unique:agreements,agreement_ref_no,',
+            'agreement_ref_no' => 'nullable|unique:agreements,agreement_ref_no,',
             'agreement_doc' => 'required',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
