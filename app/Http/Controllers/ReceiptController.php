@@ -51,21 +51,22 @@ class ReceiptController extends Controller
             'payment_reference_no' => 'nullable|string',
         ]);
 
-        // Get the next receipt number (don't rely on frontend to provide it)
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
         $receipt_no = $lastReceipt ? ((int)substr($lastReceipt->receipt_no, 5)) + 1 : 25000001;
 
-        $data = $request->only([
-            'invoice_no',
-            'receipt_date',
-            'customer_id',
-            'amount_paid',
-            'payment_method',
-            'payment_reference_no'
-        ]);
+        $customer = Customer::findOrFail($request->customer_id);
 
-        $data['receipt_no'] = 'R' . date('Y') . str_pad($receipt_no, 5, '0', STR_PAD_LEFT);
-        $data['amount_in_words'] = $this->convertToWords($request->amount_paid);
+        $data = [
+            'invoice_no' => $request->invoice_no,
+            'receipt_no' => 'R' . date('Y') . str_pad($receipt_no, 5, '0', STR_PAD_LEFT),
+            'receipt_date' => $request->receipt_date,
+            'customer_id' => $request->customer_id,
+            'customer_code' => $customer->customer_code,
+            'amount_paid' => $request->amount_paid,
+            'amount_in_words' => $this->convertToWords($request->amount_paid),
+            'payment_method' => $request->payment_method,
+            'payment_reference_no' => $request->payment_reference_no,
+        ];
 
         $receipt = Receipt::create($data);
 
@@ -75,7 +76,6 @@ class ReceiptController extends Controller
             'receipt' => $receipt
         ]);
     }
-
 
     /**
      * Display the specified resource.

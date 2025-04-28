@@ -2,7 +2,6 @@
     <Head title="Receipts" />
     <GuestLayout>
         <NavbarLayout />
-
         <div class="py-3">
             <Breadcrumb
                 :model="breadcrumbItems"
@@ -19,10 +18,8 @@
                 </template>
             </Breadcrumb>
         </div>
-
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
-
         <div class="receipts px-4">
             <!-- Page Header -->
             <div class="flex justify-end items-center mb-3">

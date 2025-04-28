@@ -4,6 +4,7 @@
         header="Create New Receipt"
         :modal="true"
         :style="{ width: '50vw' }"
+        @hide="closeDialog"
     >
         <form @submit.prevent="createReceipt">
             <div class="grid">
@@ -50,13 +51,10 @@
                         <label for="amount_paid" class="required"
                             >Customer Code</label
                         >
-                        <InputNumber
-                            v-model="formData.amount_paid"
-                            mode="currency"
-                            currency="USD"
-                            locale="en-US"
+                        <InputText
+                            v-model="selectedCustomerCode"
                             class="w-full"
-                            size="small"
+                            readonly
                         />
                     </div>
                 </div>
@@ -68,7 +66,7 @@
                         <Dropdown
                             v-model="formData.customer_id"
                             :options="customers"
-                            optionLabel="name"
+                            optionLabel="displayName"
                             optionValue="id"
                             placeholder="Select a customer"
                             class="w-full"
@@ -134,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineExpose } from "vue";
+import { ref, computed, onMounted, defineExpose, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import axios from "axios";
@@ -152,7 +150,7 @@ import {
 const toast = useToast();
 const formData = ref({
     invoice_no: null,
-    receipt_no: "", // Ensure receipt_no is initialized
+    receipt_no: "",
     receipt_date: new Date().toISOString().split("T")[0],
     customer_id: null,
     amount_paid: null,
@@ -162,20 +160,93 @@ const formData = ref({
 
 const nextReceiptNo = ref(0);
 const dialogVisible = ref(false);
+const customers = ref([]);
+const selectedCustomerCode = ref("");
+const invoices = ref([]);
+// Watch for customer_id changes to update the customer code
+watch(
+    () => formData.value.customer_id,
+    (newCustomerId) => {
+        if (newCustomerId) {
+            const selectedCustomer = customers.value.find(
+                (c) => c.id === newCustomerId
+            );
+            selectedCustomerCode.value = selectedCustomer
+                ? selectedCustomer.customer_code
+                : "";
+        } else {
+            selectedCustomerCode.value = "";
+        }
+    },
+    { immediate: true }
+);
+
+const paymentMethods = ref([
+    { label: "Cash", value: "cash" },
+    { label: "Bank Transfer", value: "bank_transfer" },
+    { label: "Credit Card", value: "credit_card" },
+]);
+
+onMounted(async () => {
+    try {
+        const [invoicesResponse, customersResponse] = await Promise.all([
+            axios.get(route("invoices.index")),
+            axios.get(route("customers.index")),
+        ]);
+
+        invoices.value = invoicesResponse.data;
+
+        customers.value = (
+            Array.isArray(customersResponse.data) ? customersResponse.data : []
+        ).map((customer) => ({
+            ...customer,
+            displayName: `${customer.customer_code} - ${customer.name}`,
+        }));
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+});
 
 const show = async () => {
     try {
-        const response = await axios.get(route("receipts.create"));
+        // Reset form when showing
+        formData.value = {
+            invoice_no: null,
+            receipt_no: "",
+            receipt_date: new Date().toISOString().split("T")[0],
+            customer_id: null,
+            amount_paid: null,
+            payment_method: null,
+            payment_reference_no: null,
+        };
+        selectedCustomerCode.value = "";
 
-        if (response.data && response.data.nextReceiptNo) {
-            formData.value.receipt_no = response.data.nextReceiptNo;
-        } else {
-            throw new Error("Invalid response from server");
+        // Fetch customers
+        const customerRes = await axios.get(route("customers.index"));
+
+        // Process customers data
+        customers.value = Array.isArray(customerRes.data?.data)
+            ? customerRes.data.data
+            : Array.isArray(customerRes.data)
+            ? customerRes.data
+            : [];
+
+        customers.value = customers.value.map((customer) => ({
+            id: customer.id,
+            customer_code: customer.customer_code || "-",
+            name: customer.name,
+            displayName: `${customer.customer_code} - ${customer.name}`,
+        }));
+
+        // Fetch next receipt number
+        const receiptResponse = await axios.get(route("receipts.create"));
+        if (receiptResponse.data?.nextReceiptNo) {
+            formData.value.receipt_no = receiptResponse.data.nextReceiptNo;
         }
 
         dialogVisible.value = true;
     } catch (error) {
-        console.error("Error fetching next receipt number:", error);
+        console.error("Error preparing receipt form:", error);
         toast.add({
             severity: "error",
             summary: "Error",
@@ -186,36 +257,6 @@ const show = async () => {
 };
 
 defineExpose({ show });
-
-const invoices = ref([]);
-const customers = ref([]);
-const paymentMethods = ref([
-    { label: "Cash", value: "cash" },
-    { label: "Bank Transfer", value: "bank_transfer" },
-    { label: "Credit Card", value: "credit_card" },
-]);
-
-// Fetch data
-onMounted(async () => {
-    try {
-        const [invoicesResponse, customersResponse] = await Promise.all([
-            axios.get(route("invoices.index")),
-            axios.get(route("customers.index")),
-        ]);
-        invoices.value = invoicesResponse.data;
-        customers.value = Array.isArray(customersResponse.data)
-            ? customersResponse.data
-            : [];
-    } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to load data",
-            life: 3000,
-        });
-    }
-});
 
 const closeDialog = () => {
     dialogVisible.value = false;
@@ -236,12 +277,12 @@ const createReceipt = async () => {
     }
 
     try {
-        formData.value.receipt_no = nextReceiptNo.value; // Ensure this is included in the form data
+        const payload = {
+            ...formData.value,
+            customer_code: selectedCustomerCode.value,
+        };
 
-        const response = await axios.post(
-            route("receipts.store"),
-            formData.value
-        );
+        const response = await axios.post(route("receipts.store"), payload);
 
         toast.add({
             severity: "success",
@@ -250,13 +291,13 @@ const createReceipt = async () => {
             life: 3000,
         });
 
-        dialogVisible.value = false; // Close the dialog after submission
+        dialogVisible.value = false;
     } catch (error) {
         console.error("Error Creating Receipt:", error);
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "Failed to create receipt",
+            detail: error.response?.data?.message || "Failed to create receipt",
             life: 3000,
         });
     }
