@@ -423,7 +423,7 @@
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
-                        :disabled="isStoringAgreement || !isFormValid"
+                        :disabled="!isPaymentScheduleComplete"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -751,7 +751,7 @@ const submit = ({ states, valid }) => {
             },
         });
     }
-    if (errors.agreement_ref_no) {
+    if (props.errors.agreement_ref_no) {
         toast.add({
             severity: "error",
             summary: "Validation Error",
