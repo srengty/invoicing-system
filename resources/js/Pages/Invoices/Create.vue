@@ -199,11 +199,9 @@
           </DataTable>
   
           <div class="pl-2 pr-6">
-            <div class="total-container mt-4 flex justify-between">
-              <label for="instalmentPaid" class="block font-medium">Instalment Paid</label>
-              <p class="font-bold">
-                ៛{{ formatCurrency(form.instalmentPaid) }}
-              </p>
+            <div v-if="form.instalmentPaid !== undefined" class="total-container mt-4 flex justify-between">
+              <p class="font-bold">Instalment Paid: </p>
+              <p class="font-bold"> ៛{{ formatCurrency(form.instalmentPaid) }}</p>
             </div>
             <div class="total-container mt-4 flex justify-between">
               <p class="font-bold">Total KHR</p>
@@ -211,7 +209,6 @@
                 ៛{{ formatCurrency(calculateTotalKHR) }}
               </p>
             </div>
-
             <div class="total-container mt-4 flex justify-between items-center">
               <p class="font-bold">Total USD</p>
               <input
@@ -449,6 +446,7 @@ const form = useForm({
 });
 
 const divisionOptions = ref([]);
+const paymentSchedules = ref([]);
 
 const formatCurrency = (value) => {
     if (isNaN(value)) return "0.00";
@@ -723,7 +721,7 @@ watch(() => form.customer_id, (newCustomerId) => {
   }, { deep: true });
 
   
-  watch(() => form.agreement_no, (newAgreementNo) => {
+  watch(() => form.agreement_no, async (newAgreementNo) => {
   if (newAgreementNo) {
     const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
 
@@ -754,6 +752,7 @@ watch(() => form.customer_id, (newCustomerId) => {
     console.log("Agreement Deselected - Keeping existing data");
   }
 }, { deep: true });
+
 
 
   
@@ -926,10 +925,42 @@ const checkCatalogAvailability = (product) => {
 
 watch(() => form.start_date, (newStartDate) => {
   if (newStartDate) {
-    const startDate = new Date(newStartDate);
+    // If newStartDate is a Date object, we format it to "mm/dd/yyyy"
+    if (newStartDate instanceof Date) {
+      const month = String(newStartDate.getMonth() + 1).padStart(2, '0');
+      const day = String(newStartDate.getDate()).padStart(2, '0');
+      const year = newStartDate.getFullYear();
+      newStartDate = `${month}/${day}/${year}`;
+    }
+
+    // Now safely split newStartDate if it's a string in mm/dd/yyyy format
+    const [month, day, year] = newStartDate.split("/");
+
+    // Create a Date object from the split values
+    const startDate = new Date(`${year}-${month}-${day}`);
+
+    // Add 14 days to the startDate
     startDate.setDate(startDate.getDate() + 14);
-    form.end_date = startDate.toISOString().split('T')[0]; // Format to yyyy-mm-dd
+
+    // Format the end date as "mm/dd/yyyy"
+    const endDateFormatted =
+      String(startDate.getMonth() + 1).padStart(2, '0') + "/" +
+      String(startDate.getDate()).padStart(2, '0') + "/" +
+      startDate.getFullYear();
+
+    // Set form.end_date automatically
+    form.end_date = endDateFormatted;
+
+    console.log('Auto-set end_date:', form.end_date);
   }
+
+  const autoFillEndDate = () => {
+  // Auto-calculate end date based on start date
+  if (form.start_date) {
+    const startDate = new Date(form.start_date);
+    startDate.setDate(startDate.getDate() + 14);
+    form.end_date = `${startDate.getMonth() + 1}/${startDate.getDate()}/${startDate.getFullYear()}`;
+  }
+};
 });
-  
-  </script>
+</script>

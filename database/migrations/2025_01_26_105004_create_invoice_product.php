@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('invoice_product', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('invoice_no')->unique()->nullable();
+            $table->unsignedBigInteger('invoice_id')->unique()->nullable();
             $table->unsignedBigInteger('product_id');
             $table->integer('quantity');
             $table->json('product_unit_prices')->nullable();
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Foreign key constraints
-            $table->foreign('invoice_no')->references('id')->on('invoices')->onDelete('cascade');
+            $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
         });       
     }

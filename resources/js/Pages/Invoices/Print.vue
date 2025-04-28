@@ -470,12 +470,20 @@ const generateAndSendPDF = async () => {
             throw new Error("Print area not available");
         }
 
+        // Generate the invoice PDF
         const invoicePDF = await generatePDF(printArea.value);
+
+        // If you have catalog PDFs, generate and merge them
         const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
         const mergedPDF = await mergePDFs([invoicePDF, ...catalogPDFs]);
 
-        await sendPDFViaEmail(mergedPDF, `invoice_${invoice.value.invoice_no}.pdf`);
-        
+        // Create a Blob from the merged PDF
+        const pdfBlob = new Blob([mergedPDF], { type: 'application/pdf' });
+        const filename = `invoice_${invoice.value.invoice_no}.pdf`; // Set the filename to invoice_no
+
+        // Send the PDF with the filename to the backend via email
+        await sendPDFViaEmail(pdfBlob, filename);
+
         toast.add({
             severity: "success",
             summary: "Invoice Sent",
@@ -483,8 +491,8 @@ const generateAndSendPDF = async () => {
             group: "tr",
             life: 5000,
         });
-        
-        isSendDialogVisible.value = false;
+
+        isSendDialogVisible.value = false; // Close the dialog after sending
     } catch (error) {
         console.error("Error sending invoice:", error);
         toast.add({
@@ -499,51 +507,39 @@ const generateAndSendPDF = async () => {
     }
 };
 
-const sendPDFViaEmail = async (pdfBytes, filename) => {
+const sendPDFViaEmail = async (pdfBlob, filename) => {
     isSending.value = true;
-    
-    try {
-        // Create a new form instance for each request
-        const form = useForm({
-            invoice_id: invoice.value.id,
-            send_email: sendForm.value.emailChecked,
-            send_telegram: sendForm.value.telegramChecked,
-            pdf_file: new Blob([pdfBytes], { type: "application/pdf" })
-        });
 
-        await form.post('/invoices/send', {
-            forceFormData: true,
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.add({
-                    severity: "success",
-                    summary: "Success",
-                    detail: "Invoice sent successfully!",
-                    group: "tr",
-                    life: 3000
-                });
-                isSendDialogVisible.value = false;
-            },
-            onError: (errors) => {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "Failed to send invoice",
-                    group: "tr",
-                    life: 3000
-                });
-                console.error("Submission errors:", errors);
-            },
-            onFinish: () => {
-                isSending.value = false;
+    try {
+        // Create a new FormData instance to send the PDF with the correct filename
+        const formData = new FormData();
+        formData.append('invoice_id', invoice.value.id);
+        formData.append('send_email', sendForm.value.emailChecked);
+        formData.append('send_telegram', sendForm.value.telegramChecked);
+        formData.append('pdf_file', pdfBlob, filename); // Attach the PDF Blob with the filename
+
+        // POST the form data to the backend for sending the email
+        await axios.post('/invoices/send', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data', // Ensure we use multipart for file uploads
             }
         });
-        window.location.href = route("invoices.list");
+
+        window.location.href = route("invoices.list"); // Redirect after successful submission
     } catch (error) {
         console.error("Unexpected error:", error);
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to send the invoice.",
+            group: "tr",
+            life: 5000,
+        });
+    } finally {
         isSending.value = false;
     }
 };
+
 
 onMounted(() => {
     // Initialize currency display based on invoice data

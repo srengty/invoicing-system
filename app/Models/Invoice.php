@@ -27,6 +27,8 @@ class Invoice extends Model
         'exchange_rate',
         'terms',
         'status',
+        'payment_status',
+        'installment_paid',
     ];
 
     protected $casts = [
@@ -65,26 +67,33 @@ class Invoice extends Model
 
     // Relationship with Products (many-to-many with pivot table for quantities)
     public function products()
-{
-    return $this->belongsToMany(
-        Product::class,       // Related model
-        'invoice_product',    // Pivot table name
-        'invoice_no',         // Foreign key on pivot (matches invoice_no in pivot)
-        'product_id',         // Related key on pivot (links to products.id)
-        'invoice_no',         // Local key (matches invoice_no in invoices table)
-        'id'                  // Related key (products.id)
-    )->withPivot(['quantity', 'price', 'include_catalog', 'pdf_url']);
-}
-
+    {
+        return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_id', 'product_id')
+                    ->withPivot('quantity', 'price', 'include_catalog', 'pdf_url');
+    }
 
     public function invoiceComments()
-{
-    return $this->hasMany(InvoiceComment::class);
-}
+    {
+        return $this->hasMany(InvoiceComment::class);
+    }
 
     public function invoices_product():HasMany
     {
         return $this->hasMany(InvoiceProduct::class, 'invoice_no', 'id');
+    }
+
+    public function getPaymentStatusAttribute()
+    {
+        // Example logic to automatically set payment status
+        if ($this->paid_amount >= $this->grand_total) {
+            return 'Fully Paid';
+        } elseif ($this->paid_amount > 0) {
+            return 'Partially Paid';
+        } elseif ($this->due_date < now()) {
+            return 'Overdue';
+        } else {
+            return 'Pending';
+        }
     }
 }
 
