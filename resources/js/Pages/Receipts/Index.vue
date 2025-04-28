@@ -41,14 +41,14 @@
                     <Button
                         icon="pi pi-plus"
                         label="New"
-                        @click="openCreate"
                         raised
                         size="small"
+                        @click="openCreate"
                     />
                 </div>
             </div>
             <DataTable
-                :value="receipts"
+                :value="filteredReceipts"
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -61,6 +61,12 @@
                 <Column
                     field="receipt_no"
                     header="Receipt No"
+                    sortable
+                    style="width: 5%; font-size: 14px"
+                ></Column>
+                <Column
+                    field="customer.code"
+                    header="Customer Code"
                     sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
@@ -151,7 +157,7 @@ const props = defineProps({
 
 // Breadcrumb items for navigation
 const breadcrumbItems = computed(() => [
-    { label: "Home", to: "/" },
+    { label: "Dashbaord", to: "/" },
     { label: "Receipts", to: route("receipts.index") },
 ]);
 

@@ -31,9 +31,11 @@ class ReceiptController extends Controller
     public function create()
     {
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
-        $nextReceiptNo = $lastReceipt ? (intval($lastReceipt->receipt_no) + 1) : 25000001;
+        $nextReceiptNo = $this->generateReceiptNumber($lastReceipt);
+
+        // Ensure it's returning a valid number
         return response()->json([
-            'nextReceiptNo' =>'R' . str_pad($nextReceiptNo, 8, '0', STR_PAD_LEFT),  // Format the number to always have 8 digits
+            'nextReceiptNo' => $nextReceiptNo,
         ]);
     }
 
@@ -46,22 +48,24 @@ class ReceiptController extends Controller
             'invoice_no' => 'nullable|exists:invoices,invoice_no',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
+            'customer_code' => 'nullable|string|max:255',
             'amount_paid' => 'required|numeric',
             'payment_method' => 'required|string',
             'payment_reference_no' => 'nullable|string',
         ]);
 
+        // Generate receipt_no based on the latest one
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
-        $receipt_no = $lastReceipt ? ((int)substr($lastReceipt->receipt_no, 5)) + 1 : 25000001;
+        $receiptNo = $this->generateReceiptNumber($lastReceipt);
 
         $customer = Customer::findOrFail($request->customer_id);
 
         $data = [
             'invoice_no' => $request->invoice_no,
-            'receipt_no' => 'R' . date('Y') . str_pad($receipt_no, 5, '0', STR_PAD_LEFT),
+            'receipt_no' => $receiptNo,
             'receipt_date' => $request->receipt_date,
             'customer_id' => $request->customer_id,
-            'customer_code' => $customer->customer_code,
+            'customer_code' => $customer->code,
             'amount_paid' => $request->amount_paid,
             'amount_in_words' => $this->convertToWords($request->amount_paid),
             'payment_method' => $request->payment_method,
@@ -123,7 +127,7 @@ class ReceiptController extends Controller
         ]);
 
         $receipt->update([
-            'receipt_no' => 'required',
+            'receipt_no' => $receipt->receipt_no, // Updated logic keeps the original receipt_no
             'invoice_no' => $request->invoice_no,
             'receipt_date' => $request->receipt_date,
             'customer_id' => $request->customer_id,
@@ -151,19 +155,20 @@ class ReceiptController extends Controller
 
     protected function generateReceiptNumber($latestReceipt)
     {
-        $year = date('Y'); // Current year
-        $baseNumber = 25000001; // Base number for generating receipts
+        $currentYear = date('y'); // Get last 2 digits of the year
+        $baseNumber = (int) ($currentYear . '000001'); // Start from 25000001
 
-        // Get the last receipt number for the current year
-        if ($latestReceipt) {
-            $lastNumber = (int) substr($latestReceipt->receipt_no, 5); // Skip the 'R2025' part
-            $baseNumber = $lastNumber + 1;
+        if (!$latestReceipt) {
+            return $baseNumber; // If no receipts exist, start from base
         }
 
-        // Format the receipt number with leading zeros (e.g., '00001')
-        $formattedNumber = str_pad($baseNumber, 5, '0', STR_PAD_LEFT);
+        $lastYear = (int) substr($latestReceipt->receipt_no, 0, 2); // Extract year portion from receipt_no
 
-        return 'R' . $year . $formattedNumber; // Concatenate the year and formatted number
+        if ($lastYear != $currentYear) {
+            return $baseNumber; // Reset sequence if the year has changed
+        }
+
+        return $latestReceipt->receipt_no + 1; // Increment receipt number
     }
 
     /**
@@ -172,7 +177,7 @@ class ReceiptController extends Controller
     protected function convertToWords($amount)
     {
         $formatter = new NumberFormatter('en', NumberFormatter::SPELLOUT);
-        return ucfirst($formatter->format($amount));
+        return ucfirst($formatter->format($amount)); // Convert number to words
     }
 
     /**

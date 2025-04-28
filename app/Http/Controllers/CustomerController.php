@@ -19,6 +19,16 @@ class CustomerController extends Controller
         ]);
     }
 
+    public function apiIndex()
+    {
+        $customers = Customer::orderBy('name', 'asc')
+            ->get(['id', 'name', 'code as customer_code']);
+
+        return response()->json([
+            'customers' => $customers
+        ]);
+    }
+
     // Show create form
     public function create()
     {

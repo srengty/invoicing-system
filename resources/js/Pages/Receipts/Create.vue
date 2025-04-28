@@ -11,13 +11,26 @@
                 <div class="col-12 md:col-6">
                     <div class="field">
                         <label for="invoice_no">Invoice No</label>
-                        <Dropdown
-                            v-model="formData.invoice_no"
-                            optionLabel="invoice_no"
-                            optionValue="invoice_no"
-                            placeholder="Select Invoice"
-                            class="w-full"
-                        />
+                        <div class="flex gap-2">
+                            <Dropdown
+                                v-model="formData.invoice_no"
+                                :options="invoices"
+                                optionLabel="invoice_no"
+                                optionValue="invoice_no"
+                                placeholder="Select
+                            Invoice"
+                                class="w-full"
+                                @change="updateInvoiceDetails"
+                            />
+                            <Button
+                                icon="pi pi-plus"
+                                label="Add Invoice"
+                                raised
+                                size="small"
+                                class="w-40"
+                                @click="openInvoiceDialog"
+                            />
+                        </div>
                     </div>
                 </div>
                 <div class="col-12 md:col-6">
@@ -48,32 +61,36 @@
                 </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
-                        <label for="amount_paid" class="required"
-                            >Customer Code</label
+                        <label for="customer_id" class="required"
+                            >Customer</label
                         >
+                        <Dropdown
+                            v-model="formData.customer_id"
+                            :options="customers"
+                            optionLabel="name"
+                            optionValue="id"
+                            placeholder="Select a customer"
+                            class="w-full"
+                            @change="updateCustomerDetails"
+                            :filter="true"
+                            filterPlaceholder="Search customers"
+                            :showClear="true"
+                        >
+                        </Dropdown>
+                    </div>
+                </div>
+
+                <div class="col-12 md:col-6">
+                    <div class="field">
+                        <label>Customer Code</label>
                         <InputText
-                            v-model="selectedCustomerCode"
+                            v-model="formData.customer_code"
                             class="w-full"
                             readonly
                         />
                     </div>
                 </div>
-                <div class="col-12 md:col-6">
-                    <div class="field">
-                        <label for="customer_id" class="required"
-                            >Customer / Organization name</label
-                        >
-                        <Dropdown
-                            v-model="formData.customer_id"
-                            :options="customers"
-                            optionLabel="displayName"
-                            optionValue="id"
-                            placeholder="Select a customer"
-                            class="w-full"
-                            size="small"
-                        />
-                    </div>
-                </div>
+
                 <div class="col-12 md:col-6">
                     <div class="field">
                         <label for="amount_paid">Amount Paid</label>
@@ -132,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, defineExpose, watch } from "vue";
+import { ref, computed, onMounted, defineExpose } from "vue";
 import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import axios from "axios";
@@ -148,157 +165,152 @@ import {
 } from "primevue";
 
 const toast = useToast();
+const dialogVisible = ref(false);
+const emit = defineEmits(["receipt-created"]);
+
 const formData = ref({
     invoice_no: null,
     receipt_no: "",
     receipt_date: new Date().toISOString().split("T")[0],
     customer_id: null,
+    customer_code: "",
+    customer_name: "",
     amount_paid: null,
     payment_method: null,
     payment_reference_no: null,
 });
 
-const nextReceiptNo = ref(0);
-const dialogVisible = ref(false);
 const customers = ref([]);
-const selectedCustomerCode = ref("");
 const invoices = ref([]);
-// Watch for customer_id changes to update the customer code
-watch(
-    () => formData.value.customer_id,
-    (newCustomerId) => {
-        if (newCustomerId) {
-            const selectedCustomer = customers.value.find(
-                (c) => c.id === newCustomerId
-            );
-            selectedCustomerCode.value = selectedCustomer
-                ? selectedCustomer.customer_code
-                : "";
-        } else {
-            selectedCustomerCode.value = "";
-        }
-    },
-    { immediate: true }
-);
-
+const getCustomerName = (customerId) => {
+    const customer = customers.value.find((c) => c.id === customerId);
+    return customer ? customer.name : "";
+};
 const paymentMethods = ref([
     { label: "Cash", value: "cash" },
     { label: "Bank Transfer", value: "bank_transfer" },
     { label: "Credit Card", value: "credit_card" },
 ]);
 
-onMounted(async () => {
-    try {
-        const [invoicesResponse, customersResponse] = await Promise.all([
-            axios.get(route("invoices.index")),
-            axios.get(route("customers.index")),
-        ]);
+const updateCustomerDetails = () => {
+    const selectedCustomer = customers.value.find(
+        (customer) => customer.id === formData.value.customer_id
+    );
 
-        invoices.value = invoicesResponse.data;
-
-        customers.value = (
-            Array.isArray(customersResponse.data) ? customersResponse.data : []
-        ).map((customer) => ({
-            ...customer,
-            displayName: `${customer.customer_code} - ${customer.name}`,
-        }));
-    } catch (error) {
-        console.error("Error fetching data:", error);
+    if (selectedCustomer) {
+        formData.value.customer_code = selectedCustomer.customer_code || "";
+        formData.value.customer_name = selectedCustomer.name || "";
+    } else {
+        formData.value.customer_code = "";
+        formData.value.customer_name = "";
     }
-});
+};
 
-const show = async () => {
+const loadCustomers = async () => {
     try {
-        // Reset form when showing
-        formData.value = {
-            invoice_no: null,
-            receipt_no: "",
-            receipt_date: new Date().toISOString().split("T")[0],
-            customer_id: null,
-            amount_paid: null,
-            payment_method: null,
-            payment_reference_no: null,
-        };
-        selectedCustomerCode.value = "";
-
-        // Fetch customers
-        const customerRes = await axios.get(route("customers.index"));
-
-        // Process customers data
-        customers.value = Array.isArray(customerRes.data?.data)
-            ? customerRes.data.data
-            : Array.isArray(customerRes.data)
-            ? customerRes.data
-            : [];
-
-        customers.value = customers.value.map((customer) => ({
-            id: customer.id,
-            customer_code: customer.customer_code || "-",
-            name: customer.name,
-            displayName: `${customer.customer_code} - ${customer.name}`,
-        }));
-
-        // Fetch next receipt number
-        const receiptResponse = await axios.get(route("receipts.create"));
-        if (receiptResponse.data?.nextReceiptNo) {
-            formData.value.receipt_no = receiptResponse.data.nextReceiptNo;
-        }
-
-        dialogVisible.value = true;
+        const response = await axios.get("/api/customers");
+        customers.value = response.data.customers || [];
     } catch (error) {
-        console.error("Error preparing receipt form:", error);
+        console.error("Error loading customers", error);
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "Failed to load receipt data",
-            life: 3000,
+            detail: "Failed to load customers",
         });
     }
+};
+const loadInvoices = async () => {
+    try {
+        const response = await axios.get("/api/invoices");
+        invoices.value = response.data.invoices || [];
+    } catch (error) {
+        console.error("Error loading invoices", error);
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to load invoices",
+        });
+    }
+};
+
+const show = async () => {
+    await loadCustomers();
+    await loadInvoices();
+    try {
+        const receiptNoResponse = await axios.get(route("receipts.create"));
+        // Ensure the response contains 'nextReceiptNo' and is a number
+        formData.value.receipt_no = String(
+            receiptNoResponse.data.nextReceiptNo
+        ).padStart(8, "0");
+    } catch (error) {
+        console.error("Error getting receipt number", error);
+    }
+
+    dialogVisible.value = true;
 };
 
 defineExpose({ show });
 
 const closeDialog = () => {
     dialogVisible.value = false;
+    formData.value = {
+        invoice_no: null,
+        receipt_no: "",
+        receipt_date: new Date().toISOString().split("T")[0],
+        customer_id: null,
+        customer_code: "",
+        customer_name: "",
+        amount_paid: null,
+        payment_method: null,
+        payment_reference_no: null,
+    };
 };
-const createReceipt = async () => {
-    if (
-        !formData.value.customer_id ||
-        !formData.value.amount_paid ||
-        !formData.value.receipt_date
-    ) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Please fill all required fields",
-            life: 3000,
-        });
-        return;
+
+const openInvoiceDialog = () => {
+    toast.add({
+        severity: "info",
+        summary: "Info",
+        detail: "Open invoice creation dialog here",
+    });
+};
+const updateInvoiceDetails = () => {
+    const selectedInvoice = invoices.value.find(
+        (invoice) => invoice.invoice_no === formData.value.invoice_no
+    );
+
+    if (selectedInvoice) {
+        formData.value.invoice_amount = selectedInvoice.amount || 0; // Example logic
     }
+};
 
+const createReceipt = async () => {
     try {
-        const payload = {
-            ...formData.value,
-            customer_code: selectedCustomerCode.value,
-        };
+        console.log("Form Data: ", formData.value); // Check if customer_code is present
+        if (!formData.value.customer_id) {
+            throw new Error("Please select a customer");
+        }
 
-        const response = await axios.post(route("receipts.store"), payload);
+        const response = await axios.post(
+            route("receipts.store"),
+            formData.value
+        );
 
         toast.add({
             severity: "success",
             summary: "Success",
             detail: "Receipt created successfully",
-            life: 3000,
         });
 
         dialogVisible.value = false;
+        emit("receipt-created", response.data.receipt);
     } catch (error) {
-        console.error("Error Creating Receipt:", error);
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: error.response?.data?.message || "Failed to create receipt",
-            life: 3000,
+            detail:
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to create receipt",
         });
     }
 };

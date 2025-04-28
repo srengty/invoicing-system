@@ -60,6 +60,7 @@ Route::resource('receipts', ReceiptController::class);
 Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
 
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
+Route::get('/api/customers', [CustomerController::class, 'apiIndex']);
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
 Route::post('/settings/customers', [CustomerController::class, 'store'])->name('customers.store'); // Store new customer
 Route::get('/settings/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');

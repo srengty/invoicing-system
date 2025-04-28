@@ -12,10 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('receipts', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('invoice_no')->nullable();
-            $table->foreign('invoice_no')->references('invoice_no')->on('invoices')->nullOnDelete();
-            $table->string('receipt_no')->unique()->comment('Format: R202500001 where 2025 is year and 00001 is sequence');
+            // $table->id(); // Remove this line
+            $table->unsignedBigInteger('receipt_no')->primary()->comment('25000001:year 2025, agreement no 1');
+            $table->foreignId('invoice_no')->nullable()->constrained('invoices', 'invoice_no')->nullOnDelete();
             $table->date('receipt_date')->useCurrent();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->string('customer_code', 255)->nullable();
@@ -26,6 +25,7 @@ return new class extends Migration
             $table->string('payment_reference_no')->nullable();
             $table->timestamps();
         });
+
     }
 
     /**
