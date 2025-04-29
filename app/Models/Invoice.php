@@ -14,6 +14,7 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_no',
         'invoice_date',
+        'invoice_end_date',
         'agreement_no',
         'quotation_no',
         'customer_id',
@@ -29,6 +30,7 @@ class Invoice extends Model
         'status',
         'payment_status',
         'installment_paid',
+        'paid_amount',
     ];
 
     protected $casts = [
@@ -36,6 +38,7 @@ class Invoice extends Model
         'total' => 'double',
         'exchange_rate' => 'double',
         'invoice_date' => 'datetime:Y-m-d',
+        'invoice_end_date' => 'datetime:Y-m-d',
     ];
 
     // Relationship with Customer
@@ -84,16 +87,31 @@ class Invoice extends Model
 
     public function getPaymentStatusAttribute()
     {
-        // Example logic to automatically set payment status
+        // If the invoice has been fully paid (paid_amount >= grand_total)
         if ($this->paid_amount >= $this->grand_total) {
             return 'Fully Paid';
-        } elseif ($this->paid_amount > 0) {
-            return 'Partially Paid';
-        } elseif ($this->due_date < now()) {
-            return 'Overdue';
-        } else {
-            return 'Pending';
         }
+
+        // If there has been some payment but not fully paid (paid_amount > 0 and < grand_total)
+        if ($this->paid_amount > 0) {
+            return 'Partially Paid';
+        }
+
+        // If payment has not been made and the invoice is overdue (compare invoice_due_date with current date)
+        // Assume invoice_due_date is already set and represents the due date for payment
+        if ($this->invoice_due_date && $this->invoice_due_date < now()) {
+            return 'Overdue';
+        }
+
+        // If payment is still pending (no payment made, and it's not overdue)
+        return 'Pending';
     }
+
+    public function getPaidAmountAttribute()
+    {
+        // Sum the 'amount' field from the related payment schedules
+        return $this->paymentSchedules()->sum('amount');
+    }
+
 }
 

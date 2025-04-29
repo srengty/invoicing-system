@@ -99,8 +99,8 @@
             <div>
               <label for="status" class="block font-medium">Status</label>
               <Select
-                v-model="form.status"
-                :options="statusOptions"
+                v-model="form.payment_status"
+                :options="paymentStatusOptions"
                 optionLabel="label"
                 optionValue="value"
                 placeholder="Select Status"
@@ -209,8 +209,20 @@
                 ៛{{ formatCurrency(calculateTotalKHR) }}
               </p>
             </div>
+
+            <div v-if="form.paid_amount !== undefined" class="total-container mt-4 flex justify-between">
+              <p class="font-bold">Paid Amount:</p>
+              <p class="font-bold"> ៛{{ formatCurrency(form.paid_amount) }}</p>
+            </div>
+
+            <!-- Total KHR -->
+            <div class="total-container mt-4 flex justify-between">
+              <p class="font-bold">Total KHR</p>
+              <p class="font-bold"> ៛{{ formatCurrency(calculateTotalKHR) }}</p>
+            </div>
+
             <div class="total-container mt-4 flex justify-between items-center">
-              <p class="font-bold">Total USD</p>
+              <p class="font-bold">Final Total USD</p>
               <input
                 type="number"
                 v-model.number="form.total_usd"
@@ -401,8 +413,10 @@ const form = useForm({
   exchange_rate: '',
   invoice_date: new Date().toISOString(), // Send in ISO format
   status: 'Pending',
+  payment_status: '',
   instalmentPaid: 0,           // Optional for frontend tracking
-  products: [],                // Should match backend structure
+  products: [],  
+  paid_amount: 0,
 });
 
   
@@ -417,11 +431,11 @@ const form = useForm({
       { label: page.props.title || "Create Invoices", to: route("invoices.create") },
   ]);
   
-  const statusOptions = [
-    { label: 'Pending', value: 'Pending' },
-    { label: 'Approved', value: 'Approved' },
-    { label: 'Revise', value: 'Revise' },
-  ];
+  const paymentStatusOptions = [
+  { label: 'Fully Paid', value: 'Fully Paid' },
+  { label: 'Partially Paid', value: 'Partially Paid' },
+  { label: 'Overdue', value: 'Overdue' }
+];
   
   // Product List and Dialog Management
   const productsList = ref([]);
@@ -458,6 +472,11 @@ const formatCurrency = (value) => {
 
 const calculateTotalKHR = computed(() => {
   return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
+});
+
+const finalTotalKHR = computed(() => {
+  // Final Total KHR is total KHR minus paid amount
+  return calculateTotalKHR.value - form.paid_amount;
 });
 
 const calculateExchangeRate = computed(() => {
@@ -702,7 +721,7 @@ watch(() => form.customer_id, (newCustomerId) => {
   
         // Recalculate Grand Total
         form.grand_total = calculateTotal.value - form.instalmentPaid;
-        
+        form.paid_amount = selectedAgreement.paymentSchedules.reduce((acc, schedule) => acc + schedule.amount, 0);
   
         console.log("Updated Form Data after Quotation Selection:", form);
       }
@@ -747,6 +766,7 @@ watch(() => form.customer_id, (newCustomerId) => {
 
       // Recalculate Grand Total
       form.grand_total = calculateTotal.value - form.instalmentPaid;
+      form.paid_amount = selectedAgreement.paymentSchedules.reduce((acc, schedule) => acc + schedule.amount, 0);
     }
   } else {
     console.log("Agreement Deselected - Keeping existing data");
