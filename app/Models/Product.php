@@ -49,7 +49,7 @@ class Product extends Model
     public function invoices()
     {
         return $this->belongsToMany(Invoice::class, 'invoice_product')
-                    ->withPivot(['quantity', 'price', 'name', 'unit', 'include_catalog', 'pdf_url']) 
+                    ->withPivot(['quantity', 'price', 'include_catalog', 'pdf_url']) 
                     ->withTimestamps();
     }
 

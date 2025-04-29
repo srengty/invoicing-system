@@ -14,6 +14,7 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_no',
         'invoice_date',
+        'invoice_end_date',
         'agreement_no',
         'quotation_no',
         'customer_id',
@@ -27,6 +28,9 @@ class Invoice extends Model
         'exchange_rate',
         'terms',
         'status',
+        'payment_status',
+        'installment_paid',
+        'paid_amount',
     ];
 
     protected $casts = [
@@ -34,6 +38,7 @@ class Invoice extends Model
         'total' => 'double',
         'exchange_rate' => 'double',
         'invoice_date' => 'datetime:Y-m-d',
+        'invoice_end_date' => 'datetime:Y-m-d',
     ];
 
     // Relationship with Customer
@@ -65,31 +70,54 @@ class Invoice extends Model
 
     // Relationship with Products (many-to-many with pivot table for quantities)
     public function products()
-{
-    return $this->belongsToMany(
-        Product::class,       // Related model
-        'invoice_product',    // Pivot table name
-        'invoice_no',         // Foreign key on pivot (matches invoice_no in pivot)
-        'product_id',         // Related key on pivot (links to products.id)
-        'invoice_no',         // Local key (matches invoice_no in invoices table)
-        'id'                  // Related key (products.id)
-    )->withPivot(['quantity', 'price', 'include_catalog', 'pdf_url']);
-}
-
+    {
+        return $this->belongsToMany(Product::class, 'invoice_product', 'invoice_id', 'product_id')
+                    ->withPivot('quantity', 'price', 'include_catalog', 'pdf_url');
+    }
 
     public function invoiceComments()
-{
-    return $this->hasMany(InvoiceComment::class);
-}
+    {
+        return $this->hasMany(InvoiceComment::class);
+    }
 
     public function invoices_product():HasMany
     {
         return $this->hasMany(InvoiceProduct::class, 'invoice_no', 'id');
     }
 
+
     public function receipts()
     {
         return $this->hasMany(Receipt::class);
     }
+
+    public function getPaymentStatusAttribute()
+    {
+        // If the invoice has been fully paid (paid_amount >= grand_total)
+        if ($this->paid_amount >= $this->grand_total) {
+            return 'Fully Paid';
+        }
+
+        // If there has been some payment but not fully paid (paid_amount > 0 and < grand_total)
+        if ($this->paid_amount > 0) {
+            return 'Partially Paid';
+        }
+
+        // If payment has not been made and the invoice is overdue (compare invoice_due_date with current date)
+        // Assume invoice_due_date is already set and represents the due date for payment
+        if ($this->invoice_due_date && $this->invoice_due_date < now()) {
+            return 'Overdue';
+        }
+
+        // If payment is still pending (no payment made, and it's not overdue)
+        return 'Pending';
+    }
+
+    public function getPaidAmountAttribute()
+    {
+        // Sum the 'amount' field from the related payment schedules
+        return $this->paymentSchedules()->sum('amount');
+    }
+
 }
 

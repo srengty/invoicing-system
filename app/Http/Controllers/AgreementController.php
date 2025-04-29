@@ -372,5 +372,16 @@ class AgreementController extends Controller
         return response()->json(['exists' => $exists]);
     }
 
+    public function getAgreementWithPayments($agreementId)
+    {
+        $agreement = Agreement::with('paymentSchedules')->find($agreementId);
+
+        return response()->json([
+            'agreement' => $agreement,
+            'payment_schedules' => $agreement->paymentSchedules
+        ]);
+    }
+
+
 
 }

@@ -21,6 +21,7 @@ import ConfirmDialog from "primevue/confirmdialog";
 import KeyFilter from 'primevue/keyfilter';
 import "../css/app.css";
 import { Ziggy } from "./ziggy";
+import { Link, Head } from '@inertiajs/vue3';
 // import "primevue/resources/themes/aura/theme.css";
 // import "primevue/resources/primevue.min.css";
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
@@ -36,7 +37,7 @@ const i18n = createI18n({
     fallbackLocale: "en",
     messages,
     globalInjection: true, // ✅ Allows `$t()` globally in setup()
-});
+});  
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -66,8 +67,9 @@ createInertiaApp({
             .component("Toast", Toast)
             .component('Button', Button)
             .component('InputText', InputText)
-            .component("ConfirmDialog", ConfirmDialog);
-
+            .component("ConfirmDialog", ConfirmDialog)
+            .component('Head', Head)
+            .component('Link', Link);
         return vueApp.mount(el);
     },
     progress: {

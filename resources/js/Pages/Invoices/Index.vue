@@ -210,37 +210,28 @@
                     </template>
                 </Column>
 
-
-                <Column field="status" header="Status">
+                <Column field="payment_status" header="Payment Status">
                     <template #body="{ data }">
                         <div class="flex">
                             <Button
-                            :icon="data.status === 'approved' ? 'pi pi-check' :
-                                    data.status === 'rejected' ? 'pi pi-times' :
-                                    data.status === 'revise' ? 'pi pi-pencil' : 'pi pi-clock'"
-                            :label="data.status === 'approved' ? 'Approved' :
-                                    data.status === 'rejected' ? 'Rejected' :
-                                    data.status === 'revise' ? 'Revise' : 'Pending'"
-                            :class="data.status === 'pending' ? 'p-button-warning' :
-                                    data.status === 'approved' ? 'p-button-success' :
-                                    data.status === 'revise' ? 'p-button-danger' :
-                                    'p-button-warning'"  
-                            size="small"
-                            @click="toggleStatus(data)"
-                            class="text-sm flex-grow w-auto"
-                            :disabled="data.status === 'approved'"
-                            outlined
-                        />
-                        <Button
-                            v-if="data.invoice_comments && data.invoice_comments.length > 0"
-                            icon="pi pi-comment"
-                            class="p-button-info ml-2"
-                            @click="viewComment(data.invoice_comments)"
-                            outlined
-                        />
+                                :icon="data.payment_status === 'Fully Paid' ? 'pi pi-check' :
+                                    data.payment_status === 'Partially Paid' ? 'pi pi-pencil' :
+                                    data.payment_status === 'Overdue' ? 'pi pi-times' : 'pi pi-clock'"
+                                :label="data.payment_status === 'Fully Paid' ? 'Fully Paid' :
+                                        data.payment_status === 'Partially Paid' ? 'Partially Paid' :
+                                        data.payment_status === 'Overdue' ? 'Overdue' : 'Pending'"
+                                :class="data.payment_status === 'Fully Paid' ? 'p-button-success' :
+                                        data.payment_status === 'Partially Paid' ? 'p-button-warning' :
+                                        data.payment_status === 'Overdue' ? 'p-button-danger' :
+                                        'p-button-secondary'"
+                                size="small"
+                                class="text-sm flex-grow w-auto"
+                                outlined
+                            />
                         </div>
                     </template>
                 </Column>
+
 
                 <!-- Actions -->
                 <Column
@@ -377,7 +368,7 @@ const filters = ref(
               start_date: null,
               end_date: null,
               customer: null,
-              status: null,
+              payment_status: null,
               income_type: null,
           }
 );
@@ -395,10 +386,12 @@ const currencyOptions = ref([
 ]);
 
 const statusOptions = ref([
-    { label: "Pending", value: "pending" },
-    { label: "Approved", value: "approved" },
-    { label: "Revise", value: "revise" }
+  { label: "Pending", value: "Pending" },
+  { label: "Fully Paid", value: "Fully Paid" },
+  { label: "Partially Paid", value: "Partially Paid" },
+  { label: "Overdue", value: "Overdue" }
 ]);
+
 
 
 const columns = [
@@ -408,8 +401,7 @@ const columns = [
     { field: "grand_total", header: "Amount" },
     { field: "agreement.amount", header: "Amount Paid" },
 ];
-const selectedComment = ref("");
-const commentText = ref("");
+
 const isCommentDialogVisible = ref(false);
 const selectedInvoice = ref(null);
 const isStatusDialogVisible = ref(false);
@@ -427,46 +419,6 @@ const toggleStatus = (invoice) => {
 
     // Reset form fields before showing the dialog
     statusForm.reset();
-};
-
-const changeStatus = (status) => {
-    if (!selectedInvoice.value) return;
-
-    // Ensure the status you're sending is valid
-    const validStatuses = ['approved', 'rejected', 'pending', 'revise']; // Include 'revise'
-    if (!validStatuses.includes(status)) {
-        console.error(`Invalid status: ${status}`);
-        return; // Prevent the API call with invalid status
-    }
-
-    // Set the status and comment from the form
-    statusForm.status = status;
-    statusForm.comment = statusForm.comment.trim();  // Ensure no leading/trailing spaces
-
-    // Update the invoice status via an API request
-    statusForm.put(route('invoices.updateStatus', selectedInvoice.value.id), {
-        onSuccess: () => {
-            // Close dialog and reset after success
-            isStatusDialogVisible.value = false;
-            statusForm.reset();  // Reset the form
-            selectedInvoice.value = null;
-        },
-        onError: (errors) => {
-            console.error("Status update failed:", errors);
-            // Handle any error feedback here
-        },
-    });
-};
-
-const viewComment = (invoiceComments) => {
-    console.log("Comments data:", invoiceComments);
-    if (invoiceComments && Array.isArray(invoiceComments)) {
-        selectedComment.value = invoiceComments;
-        isCommentDialogVisible.value = true;
-    } else {
-        selectedComment.value = [];
-        isCommentDialogVisible.value = true;
-    }
 };
 
 const formatDate = (dateString) => {
@@ -531,7 +483,7 @@ const searchInvoices = () => {
         start_date: formattedStartDate,
         end_date: formattedEndDate,
         customer: filters.value.customer,
-        status: filters.value.status,
+        payment_status: filters.value.payment_status,
         income_type: filters.value.income_type,
     };
 

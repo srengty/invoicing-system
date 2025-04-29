@@ -91,4 +91,20 @@ class Agreement extends Model
 
         return $endDate->lt($today) ? 'Closed' : 'Open';
     }
+
+    // AgreementController method to fetch agreement with payment schedules
+    public function getAgreementData($agreement_no)
+    {
+        $agreement = Agreement::with('paymentSchedules')->find($agreement_no);
+
+        if (!$agreement) {
+            return response()->json(['message' => 'Agreement not found'], 404);
+        }
+
+        // Calculate paid amount from payment schedules
+        $paid_amount = $agreement->paymentSchedules->sum('amount');
+
+        return;
+    }
+
 }
