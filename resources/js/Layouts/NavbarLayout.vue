@@ -77,6 +77,7 @@ const pageTitle = computed(() => {
         "/agreements/create": "Create Agreement",
         "/invoices": "Invoices",
         "/invoices/create": "Create Invoice",
+        "/receipts": " Receipts",
         "/settings": "Settings",
         "/settings/customers": "Customers",
         "/settings/products": "Items",

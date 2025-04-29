@@ -7,6 +7,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceCommentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -44,10 +45,7 @@ Route::get('/quotations/create', [QuotationController::class, 'create'])->name('
 Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
 Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updateStatus']);
 Route::post('/quotations/{quotationId}/comments', [QuotationController::class, 'storeComment']);
-// Route::get('/quotations/{quotation_no}', [QuotationController::class, 'show'])->name('quotations.show'); // For printing
 Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
-// Route::put('/quotations/{id}', [QuotationController::class, 'update'])->name('quotations.update');
-// Route::put('/quotations/{id}', [QuotationController::class, 'update'])->name('quotations.update');
 Route::put('/quotations/{id}/toggle-active', [QuotationController::class, 'toggleActive']);
 
 Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
@@ -59,7 +57,11 @@ Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'upda
     ->name('invoices.updateStatus');
 Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
 
+Route::resource('receipts', ReceiptController::class);
+Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
+
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
+Route::get('/api/customers', [CustomerController::class, 'apiIndex']);
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
 Route::post('/settings/customers', [CustomerController::class, 'store'])->name('customers.store'); // Store new customer
 Route::get('/settings/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');
