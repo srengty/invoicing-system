@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Receipt;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\CustomerCategory;
 use Illuminate\Http\Request;
 use NumberFormatter;
 use Inertia\Inertia;
@@ -44,16 +45,18 @@ class ReceiptController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'invoice_no' => 'nullable|exists:invoices,invoice_no',
+        $validated = $request->validate([
+            'receipt_no' => 'required|string|unique:receipts',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
-            'customer_code' => 'nullable|string|max:255',
-            'amount_paid' => 'required|numeric',
-            'payment_method' => 'required|string',
+            'customer_code' => 'required|string',
+            'amount_paid' => 'nullable|numeric|min:0.01',
+            'amount_in_words' => 'nullable|string',
+            'payment_method' => 'nullable|string|in:Cash,Bank Transfer,Credit Card',
             'payment_reference_no' => 'nullable|string',
+            'purpose' => 'nullable|string',
+            'invoice_no' => 'nullable|string',
         ]);
-
         // Generate receipt_no based on the latest one
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
         $receiptNo = $this->generateReceiptNumber($lastReceipt);

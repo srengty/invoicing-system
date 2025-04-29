@@ -61,19 +61,16 @@
                 <Column
                     field="receipt_no"
                     header="Receipt No"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
                     field="customer.code"
                     header="Customer Code"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
                     field="receipt_date"
                     header="Date"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 >
                     <template #body="slotProps">
@@ -83,19 +80,16 @@
                 <Column
                     field="invoice_no"
                     header="Invoice No"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
                     field="customer.name"
                     header="Customer"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
                     field="amount_paid"
                     header="Amount Paid"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 >
                     <template #body="slotProps">
@@ -105,13 +99,11 @@
                 <Column
                     field="payment_method"
                     header="Payment Method"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
                     field="payment_reference_no"
                     header="Payment Reference No (if any)"
-                    sortable
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column header="View" style="width: 5%; font-size: 14px">
@@ -126,7 +118,129 @@
                 </Column>
             </DataTable>
         </div>
-        <CreateReceiptDialog ref="receiptDialog" />
+        <!-- Receipt Detail Dialog -->
+        <Dialog
+            v-model:visible="dialogVisible"
+            header="Receipt Details"
+            :modal="true"
+            :style="{ width: '50vw' }"
+            @hide="closeDialog"
+        >
+            <div
+                class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
+            >
+                <div class="col-6">
+                    <div class="field">
+                        <label for="invoice_no">Invoice No</label>
+                        <input
+                            v-model="selectedReceipt.invoice_no"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="receipt_no">Receipt No</label>
+                        <input
+                            v-model="selectedReceipt.receipt_no"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="receipt_date">Date</label>
+                        <!-- Format date using a computed property or method, but bind to the raw value -->
+                        <input
+                            :value="formatDate(selectedReceipt.receipt_date)"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="customer_code">Customer Code</label>
+                        <input
+                            v-model="selectedReceipt.customer.code"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="customer_name">Customer Name</label>
+                        <input
+                            v-model="selectedReceipt.customer.name"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="purpose">Purpose</label>
+                        <input
+                            v-model="selectedReceipt.purpose"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="amount_paid">Amount Paid</label>
+                        <!-- Use the computed value for the formatted amount -->
+                        <input
+                            :value="formatCurrency(selectedReceipt.amount_paid)"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="amount_in_words">Amount in Words</label>
+                        <input
+                            v-model="selectedReceipt.amount_in_words"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="payment_method">Payment Method</label>
+                        <input
+                            v-model="selectedReceipt.payment_method"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="field">
+                        <label for="payment_reference_no"
+                            >Payment Reference No</label
+                        >
+                        <input
+                            v-model="selectedReceipt.payment_reference_no"
+                            class="p-inputtext p-component"
+                            disabled
+                        />
+                    </div>
+                </div>
+            </div>
+        </Dialog>
+
+        <CreateReceiptDialog
+            ref="receiptDialog"
+            :customerCategories="customerCategories"
+            @receipt-created="handleReceiptCreated"
+        />
     </GuestLayout>
 </template>
 
@@ -134,6 +248,7 @@
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
+import { useToast } from "primevue/usetoast";
 import { ref, computed } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
@@ -146,7 +261,14 @@ import {
     Column,
     Toast,
     Breadcrumb,
+    Dialog,
 } from "primevue";
+
+const toast = useToast();
+const receiptDialog = ref(null);
+const dialogVisible = ref(false);
+const selectedReceipt = ref(null);
+const customerCategories = ref([]);
 
 const props = defineProps({
     receipts: {
@@ -157,11 +279,14 @@ const props = defineProps({
 
 // Breadcrumb items for navigation
 const breadcrumbItems = computed(() => [
-    { label: "Dashbaord", to: "/" },
+    {
+        label: "",
+        to: "/",
+        icon: "pi pi-home",
+    },
     { label: "Receipts", to: route("receipts.index") },
 ]);
 
-const receiptDialog = ref(null);
 const openCreate = () => {
     if (receiptDialog.value) {
         receiptDialog.value.show();
@@ -189,10 +314,13 @@ const filteredReceipts = computed(() => {
 });
 
 const viewReceipt = (receipt) => {
-    router.get(route("receipts.show", { id: receipt.id }));
+    selectedReceipt.value = receipt;
+    dialogVisible.value = true;
+};
+const closeDialog = () => {
+    dialogVisible.value = false;
 };
 
-// Formatting functions for date and currency
 const formatDate = (date, format = "YYYY-MM-DD") => {
     if (!date) return "N/A";
     const parsedDate = moment(date, ["YYYY-MM-DD", moment.ISO_8601], true);
@@ -209,6 +337,29 @@ const formatCurrency = (value) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
+};
+
+const handleReceiptCreated = async ({ shouldReload }) => {
+    if (shouldReload) {
+        try {
+            await router.reload();
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: "Receipt added successfully",
+                life: 3000,
+                group: "tc",
+            });
+        } catch (error) {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Failed to refresh receipts",
+                life: 3000,
+                group: "tc",
+            });
+        }
+    }
 };
 </script>
 

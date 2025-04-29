@@ -137,12 +137,12 @@ const items = ref([
         icon: "pi pi-receipt",
         shortcut: "⌘+W",
         items: [
-            {
-                label: "Create Receipt",
-                href: "/receipts/create",
-                icon: "pi pi-plus",
-                shortcut: "⌘+O",
-            },
+            // {
+            //     label: "Create Receipt",
+            //     href: "/receipts/create",
+            //     icon: "pi pi-plus",
+            //     shortcut: "⌘+O",
+            // },
         ],
     },
     {
