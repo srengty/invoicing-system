@@ -199,7 +199,7 @@
           </DataTable>
   
           <div class="pl-2 pr-6">
-            <div v-if="form.instalmentPaid !== undefined" class="total-container mt-4 flex justify-between">
+            <div v-if="form.instalmentPaid !== undefined" class="total-container mt-4 flex justify-between items-center">
               <p class="font-bold">Instalment Paid: </p>
               <p class="font-bold"> ៛{{ formatCurrency(form.instalmentPaid) }}</p>
             </div>
@@ -210,19 +210,19 @@
               </p>
             </div>
 
-            <div v-if="form.paid_amount !== undefined" class="total-container mt-4 flex justify-between">
-              <p class="font-bold">Paid Amount:</p>
-              <p class="font-bold"> ៛{{ formatCurrency(form.paid_amount) }}</p>
-            </div>
-
-            <!-- Total KHR -->
-            <div class="total-container mt-4 flex justify-between">
-              <p class="font-bold">Total KHR</p>
-              <p class="font-bold"> ៛{{ formatCurrency(calculateTotalKHR) }}</p>
+            <div class="total-container mt-4 flex justify-between items-center">
+              <p class="font-bold">Final Total KHR:</p>
+              <input
+                type="number"
+                v-model.number="form.paid_amount"
+                placeholder="Enter Amount"
+                step="0.01"
+                class="w-28 h-9 text-sm border border-gray-300 rounded px-2 text-right"
+              />
             </div>
 
             <div class="total-container mt-4 flex justify-between items-center">
-              <p class="font-bold">Final Total USD</p>
+              <p class="font-bold">Final Total USD:</p>
               <input
                 type="number"
                 v-model.number="form.total_usd"
@@ -406,6 +406,7 @@ const form = useForm({
   address: '',
   phone: '',
   terms: '',
+  amount: 0,
   start_date: '',
   end_date: '',
   grand_total: '',
@@ -415,8 +416,7 @@ const form = useForm({
   status: 'Pending',
   payment_status: '',
   instalmentPaid: 0,           // Optional for frontend tracking
-  products: [],  
-  paid_amount: 0,
+  products: [],                // Should match backend structure
 });
 
   
@@ -474,16 +474,10 @@ const calculateTotalKHR = computed(() => {
   return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
 });
 
-const finalTotalKHR = computed(() => {
-  // Final Total KHR is total KHR minus paid amount
-  return calculateTotalKHR.value - form.paid_amount;
-});
-
 const calculateExchangeRate = computed(() => {
-  if (!form.total_usd || form.total_usd <= 0) return 0;
-  return (calculateTotalKHR.value / form.total_usd).toFixed(2);
+  if (!form.total_usd || form.total_usd <= 0 || form.paid_amount <= 0) return 0;
+  return (form.paid_amount / form.total_usd).toFixed(2);
 });
-
 
 onMounted(async () => {
   const response = await getDepartment();
@@ -721,7 +715,7 @@ watch(() => form.customer_id, (newCustomerId) => {
   
         // Recalculate Grand Total
         form.grand_total = calculateTotal.value - form.instalmentPaid;
-        form.paid_amount = selectedAgreement.paymentSchedules.reduce((acc, schedule) => acc + schedule.amount, 0);
+        
   
         console.log("Updated Form Data after Quotation Selection:", form);
       }
@@ -766,7 +760,6 @@ watch(() => form.customer_id, (newCustomerId) => {
 
       // Recalculate Grand Total
       form.grand_total = calculateTotal.value - form.instalmentPaid;
-      form.paid_amount = selectedAgreement.paymentSchedules.reduce((acc, schedule) => acc + schedule.amount, 0);
     }
   } else {
     console.log("Agreement Deselected - Keeping existing data");
