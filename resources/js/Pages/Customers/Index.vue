@@ -356,6 +356,17 @@ const toggleActive = (customer) => {
         message: `Are you sure you want to ${action} this customer?`,
         header: "Confirmation",
         icon: "pi pi-exclamation-triangle",
+           rejectProps: {
+            label: "Cancel",
+            icon: "pi pi-times",
+            outlined: true,
+            size: "small",
+        },
+        acceptProps: {
+            label: "Save",
+            icon: "pi pi-check",
+            size: "small",
+        },
         accept: () => {
             // Call API to toggle the active status
             router.put(

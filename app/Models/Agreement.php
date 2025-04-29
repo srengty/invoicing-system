@@ -30,11 +30,14 @@ class Agreement extends Model
         'currency',
         'attachments',
     ];
+    // In your Agreement model (app/Models/Agreement.php)
+    protected $appends = ['status'];
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
-    
+
     // In Agreement.php (Agreement Model)
     public function quotation()
     {
@@ -76,6 +79,16 @@ class Agreement extends Model
     {
         return $this->hasMany(PaymentSchedule::class, 'agreement_no');
     }
+    public function getTotalScheduledPaymentAttribute()
+    {
+        return $this->paymentSchedules()->sum('amount');
+    }
 
+    public function getStatusAttribute()
+    {
+        $today = now();
+        $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $this->end_date);
 
+        return $endDate->lt($today) ? 'Closed' : 'Open';
+    }
 }

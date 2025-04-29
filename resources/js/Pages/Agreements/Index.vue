@@ -21,7 +21,6 @@ list agreement
         <Toast position="top-right" group="tr" />
         <div class="agreements pl-4 pr-4">
             <div class="flex justify-end items-center">
-                <!-- <h1 class="text-2xl">Agreements list</h1> -->
                 <div class="flex gap-2">
                     <Dropdown
                         v-model="searchType"
@@ -36,6 +35,22 @@ list agreement
                         placeholder="Search"
                         class="w-64"
                         size="small"
+                    />
+                    <!-- Start Date Filter -->
+                    <Calendar
+                        v-if="searchType === 'start_date'"
+                        v-model="startDateFilter"
+                        dateFormat="yy-mm-dd"
+                        showIcon
+                        class="w-40 text-xs"
+                    />
+                    <!-- End Date Filter -->
+                    <Calendar
+                        v-if="searchType === 'end_date'"
+                        v-model="endDateFilter"
+                        dateFormat="yy-mm-dd"
+                        showIcon
+                        class="w-40 text-xs"
                     />
                     <Button
                         icon="pi pi-plus"
@@ -63,6 +78,7 @@ list agreement
                 resizableColumns
                 columnResizeMode="fit"
                 class="mt-5"
+                :rowClass="rowClass"
             >
                 <template v-for="col of showColumns" :key="col.field">
                     <!-- column for all other columns -->
@@ -76,6 +92,7 @@ list agreement
                                 'end_date',
                                 'status',
                                 'amount',
+                                'due_payment',
                                 'total_progress_payment',
                                 'total_progress_payment_percentage',
                             ].includes(col.field)
@@ -87,13 +104,7 @@ list agreement
                     ></Column>
                     <!-- column for agreement date -->
                     <Column
-                        v-if="
-                            [
-                                'agreement_date',
-                                'start_date',
-                                'end_date',
-                            ].includes(col.field)
-                        "
+                        v-if="['agreement_date'].includes(col.field)"
                         :field="col.field"
                         :header="col.header"
                         sortable
@@ -136,6 +147,13 @@ list agreement
                                 "
                                 style="text-transform: uppercase"
                             />
+                            <span
+                                v-if="isExpiringSoon(slotProps.data)"
+                                class="ml-2 text-xs text-yellow-600"
+                            >
+                                (Expires in
+                                {{ daysUntilExpiration(slotProps.data) }} days)
+                            </span>
                         </template>
                     </Column>
                     <!-- column for Total Amount -->
@@ -150,6 +168,28 @@ list agreement
                             {{ formatCurrency(slotProps.data[col.field]) }}
                             <span class="text-xs text-gray-500 ml-1">
                                 ({{ slotProps.data.currency }})
+                            </span>
+                        </template>
+                    </Column>
+                    <!-- Due Payment Column -->
+                    <Column
+                        v-if="col.field === 'due_payment'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                    >
+                        <template #body="slotProps">
+                            <span>
+                                {{ formatCurrency(slotProps.data.due_payment) }}
+                                <span class="text-xs text-gray-500 ml-1">
+                                    ({{ slotProps.data.currency }})
+                                </span>
+                                <Tag
+                                    v-if="slotProps.data.due_payment > 0"
+                                    value="PAST DUE"
+                                    severity="danger"
+                                    class="ml-2"
+                                />
                             </span>
                         </template>
                     </Column>
@@ -202,19 +242,81 @@ list agreement
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
-                            <ProgressBar
-                                v-if="
-                                    col.field ===
-                                    'total_progress_payment_percentage'
-                                "
-                                :value="slotProps.data[col.field] || 0"
-                                :showValue="true"
-                                :class="
-                                    progressBarClass(
-                                        slotProps.data[col.field] || 0
-                                    )
-                                "
-                            />
+                            <div
+                                class="progress-bar-wrapper"
+                                style="display: flex; align-items: center"
+                            >
+                                <ProgressBar
+                                    v-if="
+                                        col.field ===
+                                        'total_progress_payment_percentage'
+                                    "
+                                    :value="slotProps.data[col.field] || 0"
+                                    :showValue="false"
+                                    :class="
+                                        progressBarClass(
+                                            slotProps.data[col.field] || 0
+                                        )
+                                    "
+                                    style="flex-grow: 1"
+                                />
+                                <span
+                                    class="progress-bar-text"
+                                    style="margin-left: 10px"
+                                >
+                                    {{
+                                        (
+                                            slotProps.data[col.field] || 0
+                                        ).toFixed(0)
+                                    }}%
+                                    <!-- Display the percentage -->
+                                </span>
+                            </div>
+                        </template>
+                    </Column>
+                    <!-- Start Date Column -->
+                    <Column
+                        v-if="col.field === 'start_date'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-medium">Start Date</span>
+                                <Calendar
+                                    v-model="startDateFilter"
+                                    dateFormat="yy-mm-dd"
+                                    showIcon
+                                    class="w-full text-xs"
+                                />
+                            </div>
+                        </template>
+                        <template #body="slotProps">
+                            {{ formatDate(slotProps.data.start_date) }}
+                        </template>
+                    </Column>
+                    <Column
+                        v-else-if="col.field === 'end_date'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template>
+                            <div class="flex flex-col gap-1">
+                                <span class="font-medium">End Date</span>
+                                <Calendar
+                                    v-model="endDateFilter"
+                                    dateFormat="yy-mm-dd"
+                                    showIcon
+                                    class="w-full text-xs"
+                                />
+                            </div>
+                        </template>
+                        <template #body="slotProps">
+                            {{ formatDate(slotProps.data.end_date) }}
                         </template>
                     </Column>
                     <!-- column for view/edit -->
@@ -377,7 +479,7 @@ list agreement
                     />
                 </template>
             </Dialog>
-            <!-- Agreement Details Dialog -->
+            <!-- Agreement Details Dialog (View)-->
             <Dialog
                 v-model:visible="agreementDetailsDialog"
                 :style="{ width: '45vw' }"
@@ -548,6 +650,7 @@ list agreement
                             :showGridlines="true"
                             class="mt-3"
                             size="small"
+                            :rowClass="paymentScheduleRowClass"
                         >
                             <Column field="id" header="No" sortable>
                                 <template #body="slotProps">
@@ -556,7 +659,18 @@ list agreement
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    {{ formatDate(slotProps.data.due_date) }}
+                                    <span
+                                        :class="{
+                                            'text-red-500 font-semibold':
+                                                isPastDue(
+                                                    slotProps.data.due_date
+                                                ),
+                                        }"
+                                    >
+                                        {{
+                                            formatDate(slotProps.data.due_date)
+                                        }}
+                                    </span>
                                 </template>
                             </Column>
                             <Column
@@ -584,6 +698,22 @@ list agreement
                                 <template #body="slotProps">
                                     {{ formatCurrency(slotProps.data.amount) }}
                                     ({{ slotProps.data.currency }})
+                                </template>
+                            </Column>
+                            <Column header="Status" sortable>
+                                <template #body="slotProps">
+                                    <Tag
+                                        :value="
+                                            isPastDue(slotProps.data.due_date)
+                                                ? 'PAST DUE'
+                                                : 'UPCOMING'
+                                        "
+                                        :severity="
+                                            isPastDue(slotProps.data.due_date)
+                                                ? 'danger'
+                                                : 'success'
+                                        "
+                                    />
                                 </template>
                             </Column>
                         </DataTable>
@@ -630,6 +760,7 @@ import {
     Badge,
     ProgressSpinner,
     Card,
+    Calendar,
 } from "primevue";
 
 const toast = useToast();
@@ -699,13 +830,21 @@ const formatDate = (date, format = "YYYY-MM-DD") => {
     );
     return parsedDate.isValid() ? parsedDate.format(format) : "Invalid date";
 };
+const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === "") return "0.00";
+    const numValue =
+        typeof value === "string"
+            ? parseFloat(value.replace(/,/g, ""))
+            : Number(value);
 
-
-// const momentDate = (date) => {
-//     return moment(date, "YYYY/MM/DD").fromNow();
-// };
-const searchType = ref("");
+    return numValue.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+// function filter agreements
 const searchTerm = ref("");
+const searchType = ref("");
 const searchOptions = ref([
     { label: "Agreement Number", value: "agreement_no" },
     { label: "Quotation Number", value: "quotation_no" },
@@ -720,47 +859,98 @@ const searchOptions = ref([
 const getFieldValue = (obj, path) => {
     return path.split(".").reduce((o, p) => (o || {})[p], obj) || "";
 };
-// Filter agreements locally (alternative to server-side search)
-const filteredAgreements = computed(() => {
-    if (!searchTerm.value || !searchType.value) {
-        return props.agreements;
+const startDateFilter = ref(null);
+const endDateFilter = ref(null);
+// function to calculate due payment
+const rowClass = (data) => {
+    return {
+        "bg-red-50": data.due_payment > 0,
+        "border-l-4 border-red-500": data.due_payment > 0,
+    };
+};
+const calculateDuePayment = (agreement) => {
+    if (
+        !agreement.payment_schedules ||
+        agreement.payment_schedules.length === 0
+    ) {
+        return 0;
     }
 
-    return props.agreements.filter((agreement) => {
-        const fieldValue = getFieldValue(agreement, searchType.value);
+    const today = moment();
+    let duePayment = 0;
 
-        if (fieldValue === null || fieldValue === undefined) {
-            return false;
+    agreement.payment_schedules.forEach((schedule) => {
+        try {
+            // Handle different date formats
+            const dueDate = moment(
+                schedule.due_date,
+                ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+                true
+            );
+            if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+                // Add the amount if the payment is past due
+                duePayment += parseFloat(schedule.amount) || 0;
+            }
+        } catch (error) {
+            console.error("Error processing payment schedule:", error);
         }
+    });
 
-        if (typeof fieldValue === "number") {
-            return fieldValue.toString().includes(searchTerm.value);
-        }
+    return duePayment;
+};
+const processedAgreements = computed(() => {
+    if (!props.agreements) return [];
 
-        if (searchType.value.includes("date") && fieldValue) {
-            const dateStr = moment(fieldValue).format("YYYY/MM/DD");
-            return dateStr.includes(searchTerm.value);
-        }
+    return props.agreements.map((agreement) => {
+        // Ensure payment_schedules exists
+        const paymentSchedules = agreement.payment_schedules || [];
 
-        return fieldValue
-            .toString()
-            .toLowerCase()
-            .includes(searchTerm.value.toLowerCase());
+        return {
+            ...agreement,
+            due_payment: calculateDuePayment({
+                ...agreement,
+                payment_schedules: paymentSchedules,
+            }),
+        };
     });
 });
-const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === "") return "0.00";
+// Filter agreements locally (alternative to server-side search)
+const filteredAgreements = computed(() => {
+    return processedAgreements.value.filter((agreement) => {
+        // Start and End Date Filtering
+        const start = moment(agreement.start_date, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            moment.ISO_8601,
+        ]);
+        const end = moment(agreement.end_date, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            moment.ISO_8601,
+        ]);
 
-    const numValue =
-        typeof value === "string"
-            ? parseFloat(value.replace(/,/g, ""))
-            : Number(value);
+        const matchStart =
+            !startDateFilter.value ||
+            start.isSameOrAfter(moment(startDateFilter.value));
+        const matchEnd =
+            !endDateFilter.value ||
+            end.isSameOrBefore(moment(endDateFilter.value));
+        // Other field search logic
+        const fieldValue = getFieldValue(agreement, searchType.value);
+        const matchesSearch =
+            !searchTerm.value || !searchType.value
+                ? true
+                : (typeof fieldValue === "string" &&
+                      fieldValue
+                          .toLowerCase()
+                          .includes(searchTerm.value.toLowerCase())) ||
+                  (typeof fieldValue === "number" &&
+                      fieldValue.toString().includes(searchTerm.value));
 
-    return numValue.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        return matchesSearch && matchStart && matchEnd;
     });
-};
+});
+
 const progressBarClass = (percentage) => {
     if (percentage >= 100) return "bg-green-500";
     if (percentage >= 75) return "bg-blue-500";
@@ -774,7 +964,6 @@ const selectedProgressPayments = ref([]);
 const selectedAgreement = ref(null);
 const paymentDetailsDialog = ref(false);
 const currentPayment = ref(null);
-
 const showProgressPayments = (agreement) => {
     try {
         selectedAgreement.value = { ...agreement };
@@ -803,12 +992,15 @@ const viewAgreementDetails = async (agreement) => {
 
         const formattedData = {
             ...response.data,
+            ...agreement,
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
-                    due_date: moment(schedule.due_date, "YYYY/MM/DD").format(
-                        "YYYY/MM/DD"
-                    ),
+                    due_date: moment(schedule.due_date, [
+                        "YYYY-MM-DD",
+                        "DD/MM/YYYY",
+                        moment.ISO_8601,
+                    ]).format("YYYY-MM-DD"),
                 })) || [],
         };
 
@@ -825,7 +1017,39 @@ const viewAgreementDetails = async (agreement) => {
         });
     }
 };
+// Add this method in your script setup
+const isPastDue = (date) => {
+    if (!date) return false;
+    const today = moment();
+    const dueDate = moment(
+        date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    return dueDate.isValid() && dueDate.isBefore(today, "day");
+};
+const paymentScheduleRowClass = (data) => {
+    return {
+        "bg-red-50": isPastDue(data.due_date),
+    };
+};
+// function to display expries date
+const isExpiringSoon = (agreement) => {
+    if (agreement.status !== "Open") return false;
 
+    const endDate = moment(agreement.end_date, "DD/MM/YYYY");
+    const today = moment();
+    const daysRemaining = endDate.diff(today, "days");
+
+    return daysRemaining <= 30 && daysRemaining >= 0;
+};
+
+const daysUntilExpiration = (agreement) => {
+    const endDate = moment(agreement.end_date, "DD/MM/YYYY");
+    const today = moment();
+    return endDate.diff(today, "days");
+};
+// Status methods for agreement
 const getStatusSeverity = (status) => {
     const upperStatus = status?.toUpperCase();
     switch (upperStatus) {
@@ -834,9 +1058,9 @@ const getStatusSeverity = (status) => {
         case "CLOSED":
             return "danger";
         case "ABNORMAL CLOSED":
-            return "info";
+            return "warn";
         default:
-            return "warning";
+            return "info";
     }
 };
 
