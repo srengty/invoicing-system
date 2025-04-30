@@ -22,5 +22,5 @@ yarn-error.log
 /.vscode
 /.zed
 /resources/js/bootstrap.js
-/database/migrations/2025_04_21_100429_create_invoice_comments_table.php
+/database/migrations/2025_04_26_060848_create_invoice_comments_table.php
 /package-lock.json
