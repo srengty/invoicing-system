@@ -12,7 +12,6 @@ class AddCustomerStatusToInvoicesTable extends Migration
             // Add the new columns
             $table->string('customer_status')->nullable(); // customer status
             $table->text('customer_status_comment')->nullable(); // customer status comment
-            $table->string('payment_status')->nullable(); // payment status
         });
     }
 
@@ -22,7 +21,6 @@ class AddCustomerStatusToInvoicesTable extends Migration
             // Remove the columns in case of rollback
             $table->dropColumn('customer_status');
             $table->dropColumn('customer_status_comment');
-            $table->dropColumn('payment_status');
         });
     }
 }
