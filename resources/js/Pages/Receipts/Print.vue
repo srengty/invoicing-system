@@ -22,6 +22,7 @@
             <h1 class="mx-auto text-3xl font-bold mb-6">Receipt</h1>
 
             <div class="flex flex-row justify-between mb-6 text-sm">
+                <!-- Left column for Receipt and Customer Info -->
                 <div class="flex flex-col w-1/2 items-start gap-4">
                     <p><strong>Receipt No:</strong> {{ receipt.receipt_no }}</p>
                     <p><strong>Date:</strong> {{ receipt.receipt_date }}</p>
@@ -38,12 +39,26 @@
                         {{ receipt.amount_in_words }}
                     </p>
                 </div>
+
+                <!-- Right column for Invoice Info -->
                 <div class="flex flex-col ml-28 items-start gap-4">
                     <p><strong>Invoice No:</strong> {{ receipt.invoice_no }}</p>
                 </div>
             </div>
 
-            <!-- You can add any additional receipt details here -->
+            <!-- Optional extra space for signatures -->
+            <div class="flex flex-row justify-between mt-6 text-sm">
+                <div class="flex flex-col w-1/2 items-start gap-4">
+                    <p>
+                        <strong>Customer Signature:</strong>
+                        ____________________
+                    </p>
+                    <p>
+                        <strong>Authorized Signature:</strong>
+                        ____________________
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </template>
