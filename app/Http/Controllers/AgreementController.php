@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Agreement;
 use App\Models\Customer;
 use App\Models\PaymentSchedule;
+use App\Models\Invoice;
 use App\Models\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -382,6 +383,20 @@ class AgreementController extends Controller
         ]);
     }
 
+    public function getPaymentSchedulesForInvoice($invoiceId)
+    {
+        // Get the invoice by its ID
+        $invoice = Invoice::with('agreement.paymentSchedules')->find($invoiceId);
+
+        // Check if invoice exists and if associated agreement has payment schedules
+        if ($invoice && $invoice->agreement && $invoice->agreement->paymentSchedules->isNotEmpty()) {
+            return response()->json([
+                'payment_schedules' => $invoice->agreement->paymentSchedules,
+            ]);
+        }
+
+        return response()->json(['error' => 'No payment schedules found'], 404);
+    }
 
 
 }

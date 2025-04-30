@@ -28,7 +28,6 @@ class Invoice extends Model
         'exchange_rate',
         'terms',
         'status',
-        'payment_status',
         'installment_paid',
         'paid_amount',
     ];
@@ -113,11 +112,21 @@ class Invoice extends Model
         return 'Pending';
     }
 
-    public function getPaidAmountAttribute()
+    public function paymentSchedules()
     {
-        // Sum the 'amount' field from the related payment schedules
-        return $this->paymentSchedules()->sum('amount');
+        return $this->belongsToMany(PaymentSchedule::class, 'invoices', 'invoice_no', 'payment_schedule_id');
     }
+
+    public function getPaymentSchedules()
+{
+    // Fetch all active payment schedules (you can add additional filters as necessary)
+    $paymentSchedules = PaymentSchedule::select('id', 'amount', 'short_description')
+        ->where('status', 'Pending') // Optional: Filter by 'Pending' status, or adjust as needed
+        ->get();
+
+    // Return as JSON for the frontend
+    return response()->json($paymentSchedules);
+}
 
 }
 

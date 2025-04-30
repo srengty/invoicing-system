@@ -32,6 +32,7 @@ class InvoiceController extends Controller
         $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
         $customers = Customer::all();
         $products = Product::all();
+        $paymentSchedules = PaymentSchedule::all();
 
         // Pass the full models to the form
         return Inertia::render('Invoices/Create', [
@@ -39,6 +40,7 @@ class InvoiceController extends Controller
             'quotations' => $quotations,
             'customers' => $customers,
             'products' => $products,
+            'paymentSchedules' => $paymentSchedules
         ]);
     }
 
@@ -57,9 +59,11 @@ class InvoiceController extends Controller
             'terms' => 'nullable|string|max:255',
             'total_usd' => 'nullable|numeric',
             'exchange_rate' => 'nullable|numeric|min:0',
+            'payment_schedule_id' => 'nullable|exists:payment_schedules,id',
             'currency' => 'nullable|string|in:KHR,USD',
             'start_date' => 'nullable|string', 
-            'end_date' => 'nullable|string',   
+            'end_date' => 'nullable|string',
+            'paid_amount' => 'nullable|numeric|min:0',  
             'products' => 'nullable|array',
             'products.*.id' => 'required|integer',
             'products.*.quantity' => 'required|numeric|min:1',
@@ -69,26 +73,25 @@ class InvoiceController extends Controller
             'products.*.remark' => 'nullable|string',
             'products.*.include_catalog' => 'required|boolean',
             'products.*.pdf_url' => 'nullable|string',
-            'payment_status' => 'nullable|in:Fully Paid,Partially Paid,Pending,Overdue,Cancelled',
         ]);
-    
+        
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
-    
+        
         $data = $validated->validated();
-    
+        
         // Format the start and end dates
         $startDate = now()->format('Y-m-d');
         if (!empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])) {
             $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
         }
-    
+        
         $endDate = now()->addDays(14)->format('Y-m-d');
         if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['end_date'])) {
             $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
         }
-    
+        
         // Calculate grand total from products
         $grand_total = 0;
         if (!empty($data['products'])) {
@@ -99,15 +102,15 @@ class InvoiceController extends Controller
                 }
             }
         }
-    
+        
         // USD conversion if applicable
         $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
             ? $grand_total / $data['exchange_rate']
             : $data['total_usd'] ?? null;
-    
+        
         // Set default currency as 'KHR' if not provided
         $currency = $data['currency'] ?? 'KHR';
-    
+        
         // Generate invoice number if status is 'Approved'
         $invoice_no = null;
         if ($data['status'] === 'Approved') {
@@ -118,7 +121,7 @@ class InvoiceController extends Controller
                             ->first();
             $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
         }
-    
+        
         // Set invoice date only if status is Approved
         $invoiceDate = null;
         if ($data['status'] === 'Approved') {
@@ -126,23 +129,9 @@ class InvoiceController extends Controller
         } elseif ($data['status'] !== 'Pending' && !empty($request->invoice_date) && strtotime($request->invoice_date)) {
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
         }
-    
-        // Calculate paid amount from the payment schedules of the agreement or quotation
-        $paid_amount = 0;
-        if ($data['agreement_no']) {
-            $agreement = Agreement::with('paymentSchedules')->find($data['agreement_no']);
-            if ($agreement && $agreement->paymentSchedules->count() > 0) {
-                // Sum the amounts of all payment schedules
-                $paid_amount = $agreement->paymentSchedules->sum('amount');
-            }
-        } elseif ($data['quotation_no']) {
-            $quotation = Quotation::with('paymentSchedules')->find($data['quotation_no']);
-            if ($quotation && $quotation->paymentSchedules->count() > 0) {
-                // Sum the amounts of all payment schedules
-                $paid_amount = $quotation->paymentSchedules->sum('amount');
-            }
-        }
-    
+
+        $paid_amount = $data['paid_amount'] ?? 0;
+        
         // Create the invoice
         $invoice = \App\Models\Invoice::create([
             'invoice_no'     => $invoice_no,
@@ -160,10 +149,10 @@ class InvoiceController extends Controller
             'currency'       => $currency,
             'invoice_date'   => $invoiceDate,
             'status'         => $data['status'],
-            'payment_status' => $request->input('payment_status'),
-            'paid_amount'    => $paid_amount,  // Add the paid_amount here
+            'paid_amount'    => $paid_amount,
+            'payment_schedule_id' => $data['payment_schedule_id'] ?? null,
         ]);
-    
+        
         // Attach products to the pivot table using invoice_id
         if (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
@@ -180,9 +169,16 @@ class InvoiceController extends Controller
             }
         }
     
+        if (!empty($data['payment_schedules'])) {
+            $invoice->paymentSchedules()->attach($data['payment_schedules']);
+        }
+    
+        // Eager load payment schedules with the invoice and return the response
+        $invoice = $invoice->load('paymentSchedules');
+        
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
-     
+    
 
 public function updateStatus(Request $request, Invoice $invoice)
 {   
@@ -263,6 +259,8 @@ public function updateStatus(Request $request, Invoice $invoice)
     if ($request->has('status') && $request->status) {
         $query->where('status', 'like', '%' . $request->status . '%');
     }
+
+    $query->where('status', 'approved');
 
     // Filter by start date
     if ($request->has('start_date') && $request->start_date) {

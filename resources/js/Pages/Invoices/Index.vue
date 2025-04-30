@@ -191,14 +191,14 @@
 
                 <Column header="Amount Due">
                     <template #body="{ data }">
-                        <template
-                            v-if="
-                                moment(data.due_date).isBefore(moment(), 'day')
-                            "
-                        >
+                        <template v-if="data.due_date && moment(data.due_date).isBefore(moment(), 'day')">
+                            <!-- Invoice is overdue, compute the amount due in red color -->
+                            <span class="text-red-500"> {{ computeAmountDue(data) }}</span>
+                        </template>
+                        <template v-else>
+                            <!-- Invoice is not overdue, compute the amount due with regular styling -->
                             {{ computeAmountDue(data) }}
                         </template>
-                        <template v-else> Not Amount due </template>
                     </template>
                 </Column>
 
@@ -214,16 +214,16 @@
                     <template #body="{ data }">
                         <div class="flex">
                             <Button
-                                :icon="data.payment_status === 'Fully Paid' ? 'pi pi-check' :
-                                    data.payment_status === 'Partially Paid' ? 'pi pi-pencil' :
-                                    data.payment_status === 'Overdue' ? 'pi pi-times' : 'pi pi-clock'"
-                                :label="data.payment_status === 'Fully Paid' ? 'Fully Paid' :
-                                        data.payment_status === 'Partially Paid' ? 'Partially Paid' :
-                                        data.payment_status === 'Overdue' ? 'Overdue' : 'Pending'"
-                                :class="data.payment_status === 'Fully Paid' ? 'p-button-success' :
-                                        data.payment_status === 'Partially Paid' ? 'p-button-warning' :
-                                        data.payment_status === 'Overdue' ? 'p-button-danger' :
-                                        'p-button-secondary'"
+                                :icon="paymentStatus(data) === 'Fully Paid' ? 'pi pi-check' :
+                                    paymentStatus(data) === 'Partially Paid' ? 'pi pi-pencil' :
+                                    paymentStatus(data) === 'Overdue' ? 'pi pi-times' : 'pi pi-clock'"
+                                :label="paymentStatus(data)"
+                                :class="{
+                                    'p-button-success': paymentStatus(data) === 'Fully Paid',
+                                    'p-button-info': paymentStatus(data) === 'Partially Paid',
+                                    'p-button-danger': paymentStatus(data) === 'Overdue',
+                                    'p-button-secondary': paymentStatus(data) === 'Pending'
+                                }"
                                 size="small"
                                 class="text-sm flex-grow w-auto"
                                 outlined
@@ -232,9 +232,8 @@
                     </template>
                 </Column>
 
-
                 <!-- Actions -->
-                <Column
+                <!-- <Column
                     header="Actions"
                     headerStyle="text-align: center"
                     bodyStyle="text-align: center"
@@ -250,7 +249,7 @@
                             />
                         </div>
                     </template>
-                </Column>
+                </Column> -->
             </DataTable>
 
             <Dialog
@@ -397,9 +396,10 @@ const statusOptions = ref([
 const columns = [
     { field: "invoice_no", header: "Invoice No" },
     { field: "invoice_date", header: "Date" },
+    { field: "invoice_end_date", header: "Due Date" },
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
-    { field: "agreement.amount", header: "Amount Paid" },
+    { field: "paid_amount", header: "Amount Paid" },
 ];
 
 const isCommentDialogVisible = ref(false);
@@ -507,11 +507,26 @@ const clearFilters = () => {
     searchInvoices();
 };
 
+const paymentStatus = (invoice) => {
+    const amountDue = computeAmountDue(invoice);
+    
+    if (amountDue <= 0) {
+        return "Fully Paid";
+    } else if (amountDue < invoice.grand_total) {
+        return "Partially Paid";
+    } else if (over_due(invoice) !== "Not Past Due") {
+        return "Overdue";
+    } else {
+        return "Pending";
+    }
+};
+
 const computeAmountDue = (invoice) => {
     const grandTotal = invoice.grand_total || 0;
-    const amountPaid = invoice.agreement?.amount || 0;
-    return (grandTotal - amountPaid).toFixed(2);
+    const amountPaid = invoice.paid_amount || 0;  // Ensure you are using the correct field
+    return (grandTotal - amountPaid).toFixed(2);  // Return as a fixed decimal number
 };
+
 </script>
 
 <style scoped>

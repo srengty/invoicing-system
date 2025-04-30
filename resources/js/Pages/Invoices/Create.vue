@@ -42,7 +42,7 @@
   
         <!-- Invoice Form Section -->
         <form @submit.prevent="submitInvoice">
-          <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm">
+          <div class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm">
             <div>
               <label for="quotation_no" class="block font-medium">Quotation No</label>
               <Select
@@ -66,7 +66,18 @@
                   placeholder="Select Agreement"
                   class="w-full"
                 />
-              </div>
+            </div>
+            <div>
+              <label for="payment_schedule" class="block font-medium">Payment Schedule</label>
+              <Select
+                v-model="form.payment_schedule_id" 
+                :options="formattedPaymentSchedules" 
+                optionLabel="label"
+                optionValue="id" 
+                placeholder="Select Payment Schedule"
+                class="w-full"
+              />
+            </div>
             <div class="">
                 <div class="">
                   <label for="deposit_no" class="block font-medium">Receipt No (for deposit)</label>
@@ -99,8 +110,8 @@
             <div>
               <label for="status" class="block font-medium">Status</label>
               <Select
-                v-model="form.payment_status"
-                :options="paymentStatusOptions"
+                v-model="form.status"
+                :options="StatusOptions"
                 optionLabel="label"
                 optionValue="value"
                 placeholder="Select Status"
@@ -213,11 +224,11 @@
             <div class="total-container mt-4 flex justify-between items-center">
               <p class="font-bold">Final Total KHR:</p>
               <input
-                type="number"
-                v-model.number="form.paid_amount"
-                placeholder="Enter Amount"
-                step="0.01"
-                class="w-28 h-9 text-sm border border-gray-300 rounded px-2 text-right"
+                  type="number"
+                  v-model.number="form.paid_amount"
+                  placeholder="Enter Amount"
+                  step="0.01"
+                  class="h-9 text-sm border border-gray-300 rounded px-2"
               />
             </div>
 
@@ -228,7 +239,7 @@
                 v-model.number="form.total_usd"
                 placeholder="Enter USD"
                 step="0.01"
-                class="w-28 h-9 text-sm border border-gray-300 rounded px-2 text-right"
+                class="h-9 text-sm border border-gray-300 rounded px-2"
               />
             </div>
 
@@ -238,8 +249,23 @@
                 {{ calculateExchangeRate }}
               </p>
             </div>
+
+            <div class="grand-total-container flex justify-between mt-4">
+              <p class="font-bold">Bank Name:</p>
+              
+            </div>
+
+            <div class="grand-total-container flex justify-between mt-4">
+              <p class="font-bold">Bank account name:</p>
+              
+            </div>
+
+            <div class="grand-total-container flex justify-between mt-4">
+              <p class="font-bold">Bank account number:</p>
+              
+            </div>
           </div>
-          <div class="terms mt-4">
+          <!-- <div class="terms mt-4">
             <h3 class="text-lg">Terms and Conditions</h3>
             <p>Full payment is required upon quote acceptance.</p>
             <p>This quote is negotiable for one (1) week from the date stated above.</p>
@@ -247,7 +273,7 @@
           <div class="buttons mt-4 flex justify-end">
             <Button label="Submit request for approval" icon="pi pi-check" class="p-button-success" @click="submitInvoice" />
             <Button label="Cancel" class="p-button-secondary ml-2" @click="cancel" />
-          </div>
+          </div> -->
         </div>
   
         <!-- Modal to Select Product -->
@@ -386,7 +412,7 @@
   import NavbarLayout from "@/Layouts/NavbarLayout.vue";
   import { getDepartment } from "../../data";
   
-  const { products, agreements, quotations, customers, product_quotations, divisions } = usePage().props;
+  const { products, agreements, quotations, customers, paymentSchedules } = usePage().props;
 
   const props = defineProps({
     customers: Array,
@@ -395,7 +421,8 @@
     quotations: Array,
     product_quotations: Array,
     divisions: Array,
-    productCategories: Array
+    productCategories: Array,
+    paymentSchedules: Array
 });
   
 const form = useForm({
@@ -407,6 +434,7 @@ const form = useForm({
   phone: '',
   terms: '',
   amount: 0,
+  payment_schedule_id: '',
   start_date: '',
   end_date: '',
   grand_total: '',
@@ -414,8 +442,8 @@ const form = useForm({
   exchange_rate: '',
   invoice_date: new Date().toISOString(), // Send in ISO format
   status: 'Pending',
-  payment_status: '',
-  instalmentPaid: 0,           // Optional for frontend tracking
+  instalmentPaid: 0,  
+  paid_amount: 0,         // Optional for frontend tracking
   products: [],                // Should match backend structure
 });
 
@@ -431,10 +459,10 @@ const form = useForm({
       { label: page.props.title || "Create Invoices", to: route("invoices.create") },
   ]);
   
-  const paymentStatusOptions = [
-  { label: 'Fully Paid', value: 'Fully Paid' },
-  { label: 'Partially Paid', value: 'Partially Paid' },
-  { label: 'Overdue', value: 'Overdue' }
+  const StatusOptions = [
+  { label: 'Pending', value: 'Pending' },
+  { label: 'Approved', value: 'Approved' },
+  { label: 'Revise', value: 'Revise' }
 ];
   
   // Product List and Dialog Management
@@ -460,7 +488,6 @@ const form = useForm({
 });
 
 const divisionOptions = ref([]);
-const paymentSchedules = ref([]);
 
 const formatCurrency = (value) => {
     if (isNaN(value)) return "0.00";
@@ -470,6 +497,25 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
+const filteredPaymentSchedules = ref([]);
+
+function getOrdinalSuffix(number) {
+  const suffixes = ['th', 'st', 'nd', 'rd'];
+  const remainder = number % 100;
+
+  return suffixes[(remainder - 20) % 10] || suffixes[remainder] || suffixes[0];
+}
+
+const formattedPaymentSchedules = computed(() => {
+  return filteredPaymentSchedules.value.map((ps, index) => {
+    const rankID = index + 1; // Starting from 1
+    const suffix = getOrdinalSuffix(rankID); // Get the correct ordinal suffix
+    return {
+      id: ps.id, // The original ID
+      label: `${ps.agreement_no} (${rankID}${suffix} Payment)` // Use rankID with ordinal suffix
+    };
+  });
+});
 const calculateTotalKHR = computed(() => {
   return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
 });
@@ -729,12 +775,13 @@ watch(() => form.customer_id, (newCustomerId) => {
       form.start_date = '';
       form.end_date = '';
       form.instalmentPaid = 0;
+      form.paid_amount = '';
       productsList.value = [];
     }
   }, { deep: true });
 
   
-  watch(() => form.agreement_no, async (newAgreementNo) => {
+watch(() => form.agreement_no, async (newAgreementNo) => {
   if (newAgreementNo) {
     const selectedAgreement = agreements.find(a => a.agreement_no === newAgreementNo);
 
@@ -743,6 +790,9 @@ watch(() => form.customer_id, (newCustomerId) => {
 
       // Set quotation if the agreement is linked to one
       form.quotation_no = selectedAgreement.quotation_no || '';
+      filteredPaymentSchedules.value = props.paymentSchedules.filter(
+        (ps) => ps.agreement_no === newAgreementNo // Assuming paymentSchedules have agreement_no field
+      );
 
       // Auto-fill address only if empty
       if (!form.address) {
@@ -753,6 +803,14 @@ watch(() => form.customer_id, (newCustomerId) => {
       form.start_date = selectedAgreement.start_date ? selectedAgreement.start_date : '';
       form.end_date = selectedAgreement.end_date ? selectedAgreement.end_date : '';
 
+      // Auto-fill payment schedule if available
+      if (selectedAgreement) {
+      // Filter paymentSchedules based on the selected agreement
+      filteredPaymentSchedules.value = props.paymentSchedules
+        .filter((ps) => ps.agreement_no === newAgreementNo) // Assuming paymentSchedules have agreement_no field
+        .sort((a, b) => a.id - b.id); // Sort by ID to determine rankID (1-based)
+    }
+
       // Calculate instalment paid (sum of all invoice amounts related to this agreement)
       form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
         ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
@@ -760,13 +818,25 @@ watch(() => form.customer_id, (newCustomerId) => {
 
       // Recalculate Grand Total
       form.grand_total = calculateTotal.value - form.instalmentPaid;
+
+      console.log("Updated Form Data after Agreement Selection:", form);
     }
   } else {
     console.log("Agreement Deselected - Keeping existing data");
+
+    // Reset payment schedule when agreement is deselected
+    form.payment_schedule = '';  // Reset the payment schedule field
+    filteredPaymentSchedules.value = [];  // Reset available payment schedules
+
+    // Reset other fields if necessary
+    form.start_date = '';
+    form.end_date = '';
+    form.instalmentPaid = 0;
+    filteredPaymentSchedules.value = [];
+
+    console.log("Reset Form Data after Agreement Deselection:", form);
   }
 }, { deep: true });
-
-
 
   
   const indexTemplate = (rowData, { index }) => {
@@ -842,6 +912,7 @@ const submitInvoice = async () => {
     form.total_usd = form.total_usd || 0;
     form.total = calculateTotalKHR.value;
     form.exchange_rate = calculateExchangeRate.value;
+    form.paid_amount = form.paid_amount || 0;
 
     // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
@@ -975,5 +1046,19 @@ watch(() => form.start_date, (newStartDate) => {
     form.end_date = `${startDate.getMonth() + 1}/${startDate.getDate()}/${startDate.getFullYear()}`;
   }
 };
+});
+
+watch(() => form.payment_schedule_id, (newPaymentScheduleId) => {
+  if (newPaymentScheduleId) {
+    // Find the selected payment schedule
+    const selectedPaymentSchedule = props.paymentSchedules.find(
+      (ps) => ps.id === newPaymentScheduleId
+    );
+
+    if (selectedPaymentSchedule) {
+      // Auto-fill the paid_amount based on the selected payment schedule's amount
+      form.paid_amount = selectedPaymentSchedule.amount || 0; // Default to 0 if no amount
+    }
+  }
 });
 </script>
