@@ -1,12 +1,12 @@
 <template>
     <Dialog
         v-model:visible="dialogVisible"
-        header="Create New Receipt"
+        :header="isEditMode ? 'Edit Receipt' : 'Create New Receipt'"
         :modal="true"
         :style="{ width: '50vw' }"
         @hide="closeDialog"
     >
-        <form @submit.prevent="createReceipt">
+        <form @submit.prevent="isEditMode ? updateReceipt() : createReceipt()">
             <div class="grid">
                 <div class="col-12 md:col-6">
                     <div class="field">
@@ -120,8 +120,6 @@
                         <label for="amount_paid">Amount Paid</label>
                         <InputNumber
                             v-model="formData.amount_paid"
-                            mode="currency"
-                            currency="USD"
                             locale="en-US"
                             class="w-full"
                             size="small"
@@ -215,7 +213,7 @@
 <script setup>
 import Customers from "@/Components/Customers.vue";
 import { convertCurrencyToWords } from "@/utils/currencyWords";
-import { ref, computed, onMounted, defineExpose } from "vue";
+import { ref, computed, onMounted, defineExpose, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import axios from "axios";
@@ -237,10 +235,9 @@ const amountInWords = ref("");
 const isCreateCustomerVisible = ref(false);
 
 const props = defineProps({
-    customerCategories: {
-        type: Array,
-        required: true,
-        default: () => [],
+    receipt: {
+        type: Object,
+        default: null,
     },
 });
 onMounted(async () => {
@@ -248,7 +245,7 @@ onMounted(async () => {
     await loadInvoices();
     await loadCustomerCategories();
 });
-
+const isEditMode = ref(false);
 const formData = ref({
     invoice_no: null,
     receipt_no: "",
@@ -318,6 +315,23 @@ const loadCustomerCategories = async () => {
     }
 };
 
+watch(
+    () => props.receipt,
+    (newVal) => {
+        if (newVal) {
+            isEditMode.value = true;
+            formData.value = {
+                ...newVal,
+                customer_id: newVal.customer?.id,
+            };
+        } else {
+            isEditMode.value = false;
+        }
+    }
+);
+const updateReceipt = async () => {
+    emit("receipt-updated", {});
+};
 const updateCustomerDetails = () => {
     const selectedCustomer = customers.value.find(
         (customer) => customer.id === formData.value.customer_id

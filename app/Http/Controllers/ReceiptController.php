@@ -69,6 +69,7 @@ class ReceiptController extends Controller
             'receipt_date' => $request->receipt_date,
             'customer_id' => $request->customer_id,
             'customer_code' => $customer->code,
+            'purpose' => $request->purpose,
             'amount_paid' => $request->amount_paid,
             'amount_in_words' => $this->convertToWords($request->amount_paid),
             'payment_method' => $request->payment_method,

@@ -64,11 +64,6 @@
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
-                    field="customer.code"
-                    header="Customer Code"
-                    style="width: 5%; font-size: 14px"
-                ></Column>
-                <Column
                     field="receipt_date"
                     header="Date"
                     style="width: 5%; font-size: 14px"
@@ -94,6 +89,9 @@
                 >
                     <template #body="slotProps">
                         {{ formatCurrency(slotProps.data.amount_paid) }}
+                        <span class="text-xs text-gray-500 ml-1">
+                            ( KHR )
+                        </span>
                     </template>
                 </Column>
                 <Column
@@ -103,16 +101,42 @@
                 ></Column>
                 <Column
                     field="payment_reference_no"
-                    header="Payment Reference No (if any)"
+                    header="Payment Reference No"
                     style="width: 5%; font-size: 14px"
                 ></Column>
-                <Column header="View" style="width: 5%; font-size: 14px">
+                <Column header="Actions" style="width: 10%; font-size: 14px">
                     <template #body="slotProps">
                         <Button
+                            severity="info"
+                            aria-label="View"
                             icon="pi pi-eye"
-                            class="p-button-text p-button-info"
                             size="small"
                             @click="viewReceipt(slotProps.data)"
+                            outlined
+                            class="mr-2"
+                        />
+                        <Button
+                            severity="warning"
+                            aria-label="Edit"
+                            icon="pi pi-pencil"
+                            size="small"
+                            @click="editReceipt(slotProps.data)"
+                            outlined
+                            class="mr-2"
+                        />
+                        <Button
+                            severity=""
+                            aria-label="Print"
+                            icon="pi pi-print"
+                            size="small"
+                            @click="
+                                router.get(
+                                    route('receipts.print', {
+                                        id: slotProps.data.receipt_no,
+                                    })
+                                )
+                            "
+                            outlined
                         />
                     </template>
                 </Column>
@@ -193,7 +217,6 @@
                 <div class="col-6">
                     <div class="field">
                         <label for="amount_paid">Amount Paid</label>
-                        <!-- Use the computed value for the formatted amount -->
                         <input
                             :value="formatCurrency(selectedReceipt.amount_paid)"
                             class="p-inputtext p-component"
@@ -235,11 +258,19 @@
                 </div>
             </div>
         </Dialog>
-
+        <!-- Dialog for Create Receipts -->
         <CreateReceiptDialog
             ref="receiptDialog"
             :customerCategories="customerCategories"
             @receipt-created="handleReceiptCreated"
+        />
+        <!-- Dialog for Edit  -->
+        <CreateReceiptDialog
+            ref="receiptDialog"
+            :customer-categories="customerCategories"
+            :receipt="editingReceipt"
+            @receipt-created="handleReceiptCreated"
+            @receipt-updated="handleReceiptUpdated"
         />
     </GuestLayout>
 </template>
@@ -317,6 +348,7 @@ const viewReceipt = (receipt) => {
     selectedReceipt.value = receipt;
     dialogVisible.value = true;
 };
+
 const closeDialog = () => {
     dialogVisible.value = false;
 };
@@ -333,32 +365,47 @@ const formatCurrency = (value) => {
         typeof value === "string"
             ? parseFloat(value.replace(/,/g, ""))
             : Number(value);
+
     return numValue.toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
 };
+const editingReceipt = ref(null);
+const editReceipt = (receipt) => {
+    editingReceipt.value = {
+        ...receipt,
+        customer_id: receipt.customer.id,
+        receipt_date: new Date(receipt.receipt_date),
+    };
+
+    if (receiptDialog.value) {
+        receiptDialog.value.show();
+    }
+};
 
 const handleReceiptCreated = async ({ shouldReload }) => {
     if (shouldReload) {
-        try {
-            await router.reload();
-            toast.add({
-                severity: "success",
-                summary: "Success",
-                detail: "Receipt added successfully",
-                life: 3000,
-                group: "tc",
-            });
-        } catch (error) {
-            toast.add({
-                severity: "error",
-                summary: "Error",
-                detail: "Failed to refresh receipts",
-                life: 3000,
-                group: "tc",
-            });
-        }
+        await router.reload();
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: "Receipt created successfully",
+            life: 3000,
+        });
+    }
+};
+
+const handleReceiptUpdated = async ({ shouldReload }) => {
+    editingReceipt.value = null;
+    if (shouldReload) {
+        await router.reload();
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: "Receipt updated successfully",
+            life: 3000,
+        });
     }
 };
 </script>
