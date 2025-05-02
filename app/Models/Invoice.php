@@ -30,6 +30,8 @@ class Invoice extends Model
         'status',
         'installment_paid',
         'paid_amount',
+        'receipt_no',
+        'payment_schedule_id'
     ];
 
     protected $casts = [
