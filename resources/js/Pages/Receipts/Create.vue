@@ -13,6 +13,7 @@
                         <label for="invoice_no">Invoice No</label>
                         <div class="flex gap-2">
                             <Dropdown
+                                v-if="!isEditMode || !formData.invoice_no"
                                 v-model="formData.invoice_no"
                                 :options="invoices"
                                 :optionLabel="invoiceLabel"
@@ -22,6 +23,14 @@
                                 filterPlaceholder="Search invoices"
                                 showClear
                                 @change="updateInvoiceDetails"
+                                size="small"
+                            />
+                            <!-- Show read-only input when editing with invoice -->
+                            <InputText
+                                v-else
+                                v-model="formData.invoice_no"
+                                class="w-full"
+                                readonly
                                 size="small"
                             />
                             <Button
@@ -76,9 +85,7 @@
                 </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
-                        <label for="customer_id" class="required"
-                            >Customer</label
-                        >
+                        <label for="customer_id">Customer</label>
                         <div class="flex gap-2">
                             <Dropdown
                                 v-model="formData.customer_id"
@@ -187,9 +194,9 @@
             </div>
             <div class="flex justify-end gap-2 mt-4">
                 <Button
-                    label="Save Receipt"
+                    :label="isEditMode ? 'Update Receipt' : 'Save Receipt'"
                     icon="pi pi-check"
-                    @click="createReceipt"
+                    @click="isEditMode ? updateReceipt() : createReceipt()"
                     :loading="isLoading"
                     :disabled="isLoading"
                 />
@@ -248,6 +255,7 @@ const dialogVisible = ref(false);
 const emit = defineEmits(["receipt-created", "receipt-updated"]);
 const amountInWords = ref("");
 const isCreateCustomerVisible = ref(false);
+const isEditMode = ref(false);
 
 const props = defineProps({
     customerCategories: {
@@ -264,7 +272,6 @@ onMounted(async () => {
     await loadInvoices();
     await loadCustomerCategories();
 });
-const isEditMode = ref(false);
 const formData = ref({
     invoice_no: null,
     receipt_no: "",
@@ -286,6 +293,22 @@ const paymentMethods = ref([
     { label: "Bank Transfer", value: "Bank Transfer" },
     { label: "Credit Card", value: "Credit Card" },
 ]);
+
+const resetForm = () => {
+    formData.value = {
+        invoice_no: null,
+        receipt_no: "",
+        receipt_date: new Date(),
+        customer_id: null,
+        customer_code: "",
+        customer_name: "",
+        purpose: "",
+        paid_amount: null,
+        payment_method: null,
+        payment_reference_no: null,
+    };
+    amountInWords.value = "";
+};
 
 const loadCustomers = async () => {
     try {
@@ -345,9 +368,20 @@ watch(
         if (newVal) {
             isEditMode.value = true;
             formData.value = {
-                ...newVal,
-                customer_id: newVal.customer?.id,
+                invoice_no: newVal.invoice_no,
+                receipt_no: newVal.receipt_no,
+                receipt_date: new Date(newVal.receipt_date),
+                customer_id: newVal.customer_id,
+                customer_code: newVal.customer_code,
+                customer_name: newVal.customer?.name || "",
+                purpose: newVal.purpose || "",
+                paid_amount: Number(newVal.paid_amount),
+                payment_method: newVal.payment_method,
+                payment_reference_no: newVal.payment_reference_no || null,
             };
+
+            // Update amount in words
+            updateAmountInWords();
 
             // If editing, ensure the current invoice is in the list
             if (newVal.invoice_no) {
@@ -361,22 +395,50 @@ watch(
                         {
                             invoice_no: newVal.invoice_no,
                             customer_code: newVal.customer_code,
-                            customer_name: newVal.customer_name,
+                            customer_name: newVal.customer?.name || "",
                             paid_amount: newVal.paid_amount,
-                            has_receipt: true, // Mark as having receipt
+                            has_receipt: true,
                         },
                     ];
                 }
             }
         } else {
             isEditMode.value = false;
+            resetForm();
         }
     },
-    { immediate: true }
+    { immediate: true, deep: true }
 );
+
 const updateReceipt = async () => {
-    emit("receipt-updated", {});
+    try {
+        const response = await axios.put(
+            route("receipts.update", formData.value.receipt_no),
+            formData.value
+        );
+        emit("receipt-updated", response.data);
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: "Receipt updated successfully.",
+        });
+    } catch (error) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to update receipt.",
+        });
+    }
 };
+watch(
+    () => props.receipt,
+    (newReceipt) => {
+        if (newReceipt) {
+            isEditMode.value = true;
+        }
+    }
+);
+
 const updateCustomerDetails = () => {
     const selectedCustomer = customers.value.find(
         (customer) => customer.id === formData.value.customer_id
@@ -545,20 +607,6 @@ const createReceipt = async () => {
             throw new Error("Please select a payment method.");
         }
 
-        // Check if the selected invoice already has a receipt
-        if (formData.value.invoice_no) {
-            const selectedInv = invoices.value.find(
-                (inv) => inv.invoice_no === formData.value.invoice_no
-            );
-
-            if (selectedInv?.has_receipt) {
-                throw new Error(
-                    "This invoice already has a receipt. Please select another invoice."
-                );
-            }
-        }
-
-        // Proceed with the rest of the receipt creation logic...
         const payload = {
             invoice_no: formData.value.invoice_no
                 ? String(formData.value.invoice_no)
@@ -570,9 +618,7 @@ const createReceipt = async () => {
             customer_id: Number(formData.value.customer_id),
             customer_code: String(formData.value.customer_code),
             purpose: formData.value.purpose || null,
-            paid_amount: Number(
-                String(formData.value.paid_amount).replace(/,/g, "")
-            ),
+            paid_amount: Number(formData.value.paid_amount),
             amount_in_words: String(amountInWords.value),
             payment_method: String(formData.value.payment_method),
             payment_reference_no: formData.value.payment_reference_no || null,
@@ -580,32 +626,11 @@ const createReceipt = async () => {
 
         const response = await axios.post(route("receipts.store"), payload);
 
-        // Handle success
         dialogVisible.value = false;
         emit("receipt-created", {
             receipt: response.data.receipt,
             shouldReload: true,
         });
-
-        // Reset invoice_no and selectedInvoice
-        formData.value.invoice_no = null; // Reset the invoice_no field
-        selectedInvoice.value = null; // Reset the selected invoice reference
-
-        // Reset formData to initial values
-        formData.value = {
-            invoice_no: null,
-            receipt_no: String(parseInt(response.data.nextReceiptNo)).padStart(
-                8,
-                "0"
-            ),
-            receipt_date: new Date(),
-            customer_id: null,
-            customer_code: "",
-            customer_name: "",
-            paid_amount: null,
-            payment_method: null,
-            payment_reference_no: null,
-        };
 
         toast.add({
             severity: "success",
@@ -615,10 +640,8 @@ const createReceipt = async () => {
         });
     } catch (error) {
         console.error("Error:", error);
-
         let errorMessage =
             error.response?.data?.message ||
-            error.response?.data?.error ||
             error.message ||
             "Failed to create receipt";
 

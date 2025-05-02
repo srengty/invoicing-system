@@ -97,6 +97,7 @@ class ReceiptController extends Controller
         // }
 
         if ($validated['invoice_no']) {
+            // Check if the invoice already has a receipt
             $existingReceipt = Receipt::where('invoice_no', $validated['invoice_no'])->first();
             if ($existingReceipt) {
                 return response()->json([
@@ -175,24 +176,52 @@ class ReceiptController extends Controller
             'invoice_no' => 'nullable|exists:invoices,invoice_no',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
+            'customer_code' => 'required|string',
             'paid_amount' => 'required|numeric',
             'payment_method' => 'required|string',
             'payment_reference_no' => 'nullable|string',
+            'purpose' => 'nullable|string',
         ]);
+
+         // Check if invoice is being changed and validate it
+         if ($request->has('invoice_no') && $request->invoice_no !== $receipt->invoice_no) {
+            if ($request->invoice_no) {
+                $existingReceipt = Receipt::where('invoice_no', $request->invoice_no)
+                    ->where('id', '!=', $id)
+                    ->first();
+
+                if ($existingReceipt) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This invoice already has a receipt',
+                    ], 422);
+                }
+            }
+
+            // If removing invoice association, set to null
+            $validated['invoice_no'] = $request->invoice_no ?: null;
+        }
+
+        $customer = Customer::findOrFail($validated['customer_id']);
 
         $receipt->update([
-            'receipt_no' => $receipt->receipt_no, // Updated logic keeps the original receipt_no
-            'invoice_no' => $request->invoice_no,
-            'receipt_date' => $request->receipt_date,
-            'customer_id' => $request->customer_id,
-            'paid_amount' => $request->paid_amount,
-            'amount_in_words' => $this->convertToWords($request->paid_amount),
-            'payment_method' => $request->payment_method,
-            'payment_reference_no' => $request->payment_reference_no,
+            'invoice_no' => $validated['invoice_no'],
+            'receipt_no' => $validated['receipt_no'],
+            'receipt_date' => $validated['receipt_date'],
+            'customer_id' => $validated['customer_id'],
+            'customer_code' => $customer->code,
+            'purpose' => $validated['purpose'] ?? null,
+            'paid_amount' => $validated['paid_amount'],
+            'amount_in_words' => $this->convertToWords($validated['paid_amount']),
+            'payment_method' => $validated['payment_method'],
+            'payment_reference_no' => $validated['payment_reference_no'] ?? null,
         ]);
 
-        return redirect()->route('receipts.index')
-            ->with('success', 'Receipt updated successfully.');
+        return response()->json([
+            'success' => true,
+            'message' => 'Receipt updated successfully',
+            'receipt' => $receipt->fresh()
+        ]);
     }
 
     /**

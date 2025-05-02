@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('percentage', 10, 2);
             $table->decimal('amount', 10, 2);
             $table->string('currency')->default('KHR');
-            $table->enum('status', ['Pending', 'Paid', 'Cancelled'])->default('Pending');
+            $table->enum('status', ['UPCOMING', 'PAST DUE', 'PAID'])->default('UPCOMING');
             $table->timestamps();
         });
     }

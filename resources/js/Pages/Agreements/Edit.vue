@@ -483,7 +483,7 @@ const form = useForm({
             currency: item.currency,
             remark: item.remark,
             amount: item.amount,
-            status: item.status || "Pending",
+            status: item.status || "UPCOMING",
             agreement_currency: props.agreement.currency,
             exchange_rate:
                 item.exchange_rate || (item.currency === "KHR" ? 4100 : 1),
@@ -631,7 +631,7 @@ const doSave = (e) => {
         currency: e.currency,
         remark: e.remark,
         amount: e.amount,
-        status: e.status ?? "Pending",
+        status: e.status ?? "UPCOMING",
         agreement_currency: form.currency,
         exchange_rate: e.currency === "KHR" ? 4100 : 1,
     });

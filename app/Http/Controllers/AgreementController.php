@@ -49,10 +49,10 @@ class AgreementController extends Controller
                         $isPaid = $agreement->invoices()
                             ->whereHas('receipts', function($query) use ($schedule) {
                                 $query->where('payment_schedule_id', $schedule->id)
-                                    ->orWhere(function($q) use ($schedule) {
-                                        $q->where('paid_amount', '>=', $schedule->amount)
+                                      ->orWhere(function($q) use ($schedule) {
+                                          $q->where('paid_amount', '>=', $schedule->amount)
                                             ->whereDate('receipt_date', '>=', $dueDate);
-                                    });
+                                      });
                             })
                             ->exists();
 
@@ -182,7 +182,7 @@ class AgreementController extends Controller
                 'agreement_no' => $request->agreement_no,
                 'due_date' => $value['due_date'],
                 'amount' => $value['amount'],
-                'status' => 'Pending',
+                'status' => 'UPCOMING',
                 'percentage' => $value['percentage'],
                 'short_description' => $value['short_description'],
                 'currency' => $value['currency'],
@@ -292,7 +292,7 @@ class AgreementController extends Controller
                 'agreement_no' => $agreement->agreement_no,
                 'due_date' => $schedule['due_date'],
                 'amount' => $schedule['amount'],
-                'status' => $schedule['status'] ?? 'Pending',
+                'status' => $schedule['status'] ?? 'UPCOMING',
                 'percentage' => $schedule['percentage'],
                 'short_description' => $schedule['short_description'],
                 'remark' => $schedule['remark'] ?? null,

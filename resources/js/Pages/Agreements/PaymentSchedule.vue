@@ -100,6 +100,7 @@
                     />
                 </template>
             </Column>
+
             <Column
                 header="Action"
                 :exportable="false"
@@ -293,7 +294,7 @@ const editingSchedule = ref({
     currency: "KHR",
     agreement_currency: "KHR",
     exchange_rate: 4200,
-    status: "Pending",
+    status: "UPCOMING",
 });
 const generatingInvoice = ref(false);
 const generateInvoice = async (paymentItem) => {
@@ -333,7 +334,6 @@ const generateInvoice = async (paymentItem) => {
     }
 };
 
-// Add these methods to your script setup
 const isPastDue = (date) => {
     if (!date) return false;
     const today = moment();
@@ -342,14 +342,13 @@ const isPastDue = (date) => {
 };
 
 const getPaymentStatus = (schedule) => {
-    // If status is explicitly set to "Paid", return that
-    if (schedule.status === "Paid" || schedule.status === "PAID") return "PAID";
-
-    // If payment has receipts (paid), return PAID
-    if (schedule.paid_amount > 0) return "PAID";
-
-    // Otherwise determine based on due date
-    return isPastDue(schedule.due_date) ? "PAST DUE" : "UPCOMING";
+    if (schedule.status === "PAID" || schedule.paid_amount > 0) {
+        return "PAID";
+    }
+    if (isPastDue(schedule.due_date)) {
+        return "PAST DUE";
+    }
+    return "UPCOMING";
 };
 
 const getStatusSeverity = (schedule) => {

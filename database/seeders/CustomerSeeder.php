@@ -36,7 +36,7 @@ class CustomerSeeder extends Seeder
             ],
             [
                 'name' => 'DIN PIC',
-                'code' => 'GLB002',
+                'code' => 'C002',
                 'credit_period' => 20,
                 'address' => '789 Industrial Park, Chicago, IL 60601',
                 'website' => 'https://moodle.ccun.edu.kh/',

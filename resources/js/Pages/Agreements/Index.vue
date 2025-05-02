@@ -714,15 +714,14 @@ list agreement
                                 <template #body="slotProps">
                                     <Tag
                                         :value="
-                                            isPastDue(slotProps.data.due_date)
-                                                ? 'PAST DUE'
-                                                : 'UPCOMING'
+                                            getPaymentStatus(slotProps.data)
                                         "
                                         :severity="
-                                            isPastDue(slotProps.data.due_date)
-                                                ? 'danger'
-                                                : 'success'
+                                            getStatusSeverityPayment(
+                                                slotProps.data
+                                            )
                                         "
+                                        class="text-transform: uppercase"
                                     />
                                 </template>
                             </Column>
@@ -1075,6 +1074,29 @@ const getStatusLabel = (status) => {
             return "Abnormal Closed";
         default:
             return status || "Unknown";
+    }
+};
+
+const getPaymentStatus = (schedule) => {
+    if (schedule.status === "PAID" || schedule.paid_amount > 0) {
+        return "PAID";
+    }
+    if (isPastDue(schedule.due_date)) {
+        return "PAST DUE";
+    }
+    return "UPCOMING";
+};
+const getStatusSeverityPayment = (schedule) => {
+    const status = getPaymentStatus(schedule);
+    switch (status) {
+        case "PAID":
+            return "success"; // Green for PAID
+        case "PAST DUE":
+            return "danger"; // Red for PAST DUE
+        case "UPCOMING":
+            return "info"; // Blue for UPCOMING
+        default:
+            return "warning"; // Default severity for undefined statuses
     }
 };
 </script>
