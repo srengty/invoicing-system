@@ -79,10 +79,10 @@ class Agreement extends Model
             (Carbon::createFromFormat('d/m/Y',$value))
         );
     }
-    public function paymentSchedules():HasMany
-    {
-        return $this->hasMany(PaymentSchedule::class, 'agreement_no');
-    }
+    // public function paymentSchedules():HasMany
+    // {
+    //     return $this->hasMany(PaymentSchedule::class, 'agreement_no');
+    // }
     public function getTotalScheduledPaymentAttribute()
     {
         return $this->paymentSchedules()->sum('amount');
@@ -109,6 +109,16 @@ class Agreement extends Model
         $paid_amount = $agreement->paymentSchedules->sum('amount');
 
         return;
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'agreement_no', 'agreement_no');
+    }
+
+    public function paymentSchedules()
+    {
+        return $this->hasMany(PaymentSchedule::class, 'agreement_no', 'agreement_no');
     }
 
 }

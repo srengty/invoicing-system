@@ -15,22 +15,41 @@ class AgreementController extends Controller
 {
     /**
      * Display a listing of the resource.
-     */
-    public function index()
+     */public function index()
     {
-        $agreements = Agreement::with(['customer', 'paymentSchedules'])
+        $agreements = Agreement::with(['customer', 'paymentSchedules', 'invoices.receipts'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($agreement) {
-                // Check for past due payments and mark them as past
+                // Calculate total paid amount from all receipts
+                $totalPaid = 0;
+                foreach ($agreement->invoices as $invoice) {
+                    foreach ($invoice->receipts as $receipt) {
+                        $totalPaid += $receipt->paid_amount;
+                    }
+                }
+
+                // Calculate due payment (sum of all past due payment schedules)
+                $duePayment = 0;
+                $today = now();
+                foreach ($agreement->paymentSchedules as $schedule) {
+                    $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
+                    if ($dueDate->isPast() && $schedule->status !== 'Completed') {
+                        $duePayment += $schedule->amount;
+                    }
+                }
+
+                // Calculate payment percentage
+                $paymentPercentage = $agreement->amount > 0 ? ($totalPaid / $agreement->amount) * 100 : 0;
+
+                // Format payment schedules
                 $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) {
                     $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
-                    $status = 'Due';
+                    $status = 'Pending';
                     $amount = $schedule->amount;
 
                     if ($dueDate->isPast()) {
                         $status = 'Past Due';
-                        $amount = $schedule->amount;
                     }
 
                     return [
@@ -42,7 +61,21 @@ class AgreementController extends Controller
 
                 return [
                     ...$agreement->toArray(),
-                    'payment_schedules' => $paymentSchedules
+                    'payment_schedules' => $paymentSchedules,
+                    'due_payment' => $duePayment,
+                    'total_progress_payment' => $totalPaid,
+                    'total_progress_payment_percentage' => $paymentPercentage,
+                    'progress_payments' => $agreement->invoices->flatMap(function ($invoice) {
+                        return $invoice->receipts->map(function ($receipt) {
+                            return [
+                                'payment_no' => $receipt->id,
+                                'receipt_no' => $receipt->receipt_no,
+                                'amount' => $receipt->paid_amount,
+                                'invoice_no' => $receipt->invoice_no,
+                                'receipt_date' => $receipt->receipt_date,
+                            ];
+                        });
+                    })->toArray()
                 ];
             });
 

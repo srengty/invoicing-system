@@ -52,10 +52,10 @@ class Invoice extends Model
     }
 
     // Relationship with Agreement
-    public function agreement()
-    {
-        return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
-    }
+    // public function agreement()
+    // {
+    //     return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
+    // }
 
     public function quotation()
     {
@@ -85,10 +85,10 @@ class Invoice extends Model
     }
 
 
-    public function receipts()
-    {
-        return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
-    }
+    // public function receipts()
+    // {
+    //     return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
+    // }
 
     public function getPaymentStatusAttribute()
     {
@@ -118,15 +118,24 @@ class Invoice extends Model
     }
 
     public function getPaymentSchedules()
-{
-    // Fetch all active payment schedules (you can add additional filters as necessary)
-    $paymentSchedules = PaymentSchedule::select('id', 'amount', 'short_description')
-        ->where('status', 'Pending') // Optional: Filter by 'Pending' status, or adjust as needed
-        ->get();
+    {
+        // Fetch all active payment schedules (you can add additional filters as necessary)
+        $paymentSchedules = PaymentSchedule::select('id', 'amount', 'short_description')
+            ->where('status', 'Pending') // Optional: Filter by 'Pending' status, or adjust as needed
+            ->get();
 
-    // Return as JSON for the frontend
-    return response()->json($paymentSchedules);
-}
+        // Return as JSON for the frontend
+        return response()->json($paymentSchedules);
+    }
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
+    }
+
+    public function agreement()
+    {
+        return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
+    }
 
 }
 

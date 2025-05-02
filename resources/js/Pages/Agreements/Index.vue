@@ -171,7 +171,7 @@ list agreement
                             </span>
                         </template>
                     </Column>
-                    <!-- Due Payment Column -->
+                    <!-- Update the due_payment column to show the calculated due payment -->
                     <Column
                         v-if="col.field === 'due_payment'"
                         :field="col.field"
@@ -193,7 +193,8 @@ list agreement
                             </span>
                         </template>
                     </Column>
-                    <!-- column for total progress payment -->
+
+                    <!-- Update the total_progress_payment column to show the sum of all receipts -->
                     <Column
                         v-if="col.field === 'total_progress_payment'"
                         :field="col.field"
@@ -211,7 +212,8 @@ list agreement
                                 >
                                     {{
                                         formatCurrency(
-                                            slotProps.data[col.field]
+                                            slotProps.data
+                                                .total_progress_payment
                                         )
                                     }}
                                 </span>
@@ -233,7 +235,8 @@ list agreement
                             </div>
                         </template>
                     </Column>
-                    <!-- column for total progress payment percentage -->
+
+                    <!-- Update the total_progress_payment_percentage column to show the percentage -->
                     <Column
                         v-if="col.field === 'total_progress_payment_percentage'"
                         :field="col.field"
@@ -247,15 +250,17 @@ list agreement
                                 style="display: flex; align-items: center"
                             >
                                 <ProgressBar
-                                    v-if="
-                                        col.field ===
-                                        'total_progress_payment_percentage'
+                                    :value="
+                                        slotProps.data
+                                            .total_progress_payment_percentage ||
+                                        0
                                     "
-                                    :value="slotProps.data[col.field] || 0"
                                     :showValue="false"
                                     :class="
                                         progressBarClass(
-                                            slotProps.data[col.field] || 0
+                                            slotProps.data
+                                                .total_progress_payment_percentage ||
+                                                0
                                         )
                                     "
                                     style="flex-grow: 1"
@@ -266,10 +271,11 @@ list agreement
                                 >
                                     {{
                                         (
-                                            slotProps.data[col.field] || 0
+                                            slotProps.data
+                                                .total_progress_payment_percentage ||
+                                            0
                                         ).toFixed(0)
                                     }}%
-                                    <!-- Display the percentage -->
                                 </span>
                             </div>
                         </template>
