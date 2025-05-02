@@ -191,14 +191,9 @@
 
                 <Column header="Amount Due">
                     <template #body="{ data }">
-                        <template v-if="data.due_date && moment(data.due_date).isBefore(moment(), 'day')">
-                            <!-- Invoice is overdue, compute the amount due in red color -->
-                            <span class="text-red-500"> {{ computeAmountDue(data) }}</span>
-                        </template>
-                        <template v-else>
-                            <!-- Invoice is not overdue, compute the amount due with regular styling -->
+                        <span :class="{ 'text-red-500': data.due_date && moment(data.due_date).isBefore(moment(), 'day') && computeAmountDue(data) > 0 }">
                             {{ computeAmountDue(data) }}
-                        </template>
+                        </span>
                     </template>
                 </Column>
 
@@ -214,16 +209,9 @@
                     <template #body="{ data }">
                         <div class="flex">
                             <Button
-                                :icon="paymentStatus(data) === 'Fully Paid' ? 'pi pi-check' :
-                                    paymentStatus(data) === 'Partially Paid' ? 'pi pi-pencil' :
-                                    paymentStatus(data) === 'Overdue' ? 'pi pi-times' : 'pi pi-clock'"
+                                :icon="statusIcon(data)"
                                 :label="paymentStatus(data)"
-                                :class="{
-                                    'p-button-success': paymentStatus(data) === 'Fully Paid',
-                                    'p-button-info': paymentStatus(data) === 'Partially Paid',
-                                    'p-button-danger': paymentStatus(data) === 'Overdue',
-                                    'p-button-secondary': paymentStatus(data) === 'Pending'
-                                }"
+                                :class="statusClass(paymentStatus(data))"
                                 size="small"
                                 class="text-sm flex-grow w-auto"
                                 outlined
@@ -231,6 +219,7 @@
                         </div>
                     </template>
                 </Column>
+
 
                 <!-- Actions -->
                 <!-- <Column
@@ -457,6 +446,33 @@ const over_due = (rowData) => {
     return overdue > 0 ? `${overdue} days ago` : "Not Past Due";
 };
 
+const statusIcon = (invoice) => {
+    const status = paymentStatus(invoice);
+    return status === 'Fully Paid' ? 'pi pi-check'
+         : status === 'Partially Paid' ? 'pi pi-pencil'
+         : status === 'Overdue' ? 'pi pi-times'
+         : 'pi pi-clock';
+};
+
+const statusClass = (status) => {
+    return {
+        'p-button-success': status === 'Fully Paid',
+        'p-button-info': status === 'Partially Paid',
+        'p-button-danger': status === 'Overdue',
+        'p-button-secondary': status === 'Pending',
+    };
+};
+
+const paymentStatus = (invoice) => {
+    const grandTotal = Number(invoice.grand_total || 0);
+    const amountPaid = Number(invoice.paid_amount || 0);
+    const amountDue = grandTotal - amountPaid;
+
+    if (amountDue <= 0) return "Fully Paid";
+    if (amountDue < grandTotal) return "Partially Paid";
+    if (over_due(invoice) !== "Not Past Due") return "Overdue";
+    return "Pending";
+};
 
 const printInvoice = (id) => {
     const invoiceUrl = `/invoices/${id}`;
@@ -493,6 +509,8 @@ const searchInvoices = () => {
     Inertia.get("/invoices", invoiceFilters);
 };
 
+
+
 const clearFilters = () => {
     filters.value = {
         invoice_no_start: null,
@@ -505,20 +523,6 @@ const clearFilters = () => {
         status: null,
     };
     searchInvoices();
-};
-
-const paymentStatus = (invoice) => {
-    const amountDue = computeAmountDue(invoice);
-    
-    if (amountDue <= 0) {
-        return "Fully Paid";
-    } else if (amountDue < invoice.grand_total) {
-        return "Partially Paid";
-    } else if (over_due(invoice) !== "Not Past Due") {
-        return "Overdue";
-    } else {
-        return "Pending";
-    }
 };
 
 const computeAmountDue = (invoice) => {

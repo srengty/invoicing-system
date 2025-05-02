@@ -79,19 +79,19 @@
               />
             </div>
             <div class="">
-                <div class="">
-                  <label for="deposit_no" class="block font-medium">Receipt No (for deposit)</label>
-                  <div class="flex w-full gap-3">
-                    <InputText
-                      id="deposit_no"
-                      v-model="form.deposit_no"
-                      class="w-2/3"
-                      placeholder="Enter deposit number"
-                      size="small"
-                      required
-  
-                    />
-                    <Button class="text-sm p-button-info w-1/3" size="small">Add Receipt</Button>
+              <div class="">
+                <!-- Display label as 'Receipt No' but bind the id to the model -->
+                <label for="receipt_no" class="block font-medium">Receipt No (for deposit)</label>
+                <div class="flex w-full gap-3">
+                  <Select
+                    v-model="form.receipt_no"  
+                    :options="receipts"
+                    optionLabel="receipt_no"  
+                    optionValue="receipt_no" 
+                    placeholder="Select Receipt"
+                    class="w-full"
+                  />
+                  <Button class="text-sm p-button-info w-1/3" size="small">Receipt</Button>
                 </div>
               </div>
             </div>
@@ -210,9 +210,9 @@
           </DataTable>
   
           <div class="pl-2 pr-6">
-            <div v-if="form.instalmentPaid !== undefined" class="total-container mt-4 flex justify-between items-center">
-              <p class="font-bold">Instalment Paid: </p>
-              <p class="font-bold"> ៛{{ formatCurrency(form.instalmentPaid) }}</p>
+            <div v-if="form.installment_paid !== undefined" class="total-container mt-4 flex justify-between items-center">
+              <p class="font-bold">Installment Paid: </p>
+              <p class="font-bold"> ៛{{ form.installment_paid }}</p>
             </div>
             <div class="total-container mt-4 flex justify-between">
               <p class="font-bold">Total KHR</p>
@@ -412,7 +412,7 @@
   import NavbarLayout from "@/Layouts/NavbarLayout.vue";
   import { getDepartment } from "../../data";
   
-  const { products, agreements, quotations, customers, paymentSchedules } = usePage().props;
+  const { products, agreements, quotations, customers, paymentSchedules, receipts } = usePage().props;
 
   const props = defineProps({
     customers: Array,
@@ -422,7 +422,8 @@
     product_quotations: Array,
     divisions: Array,
     productCategories: Array,
-    paymentSchedules: Array
+    paymentSchedules: Array,
+    receipts: Array,
 });
   
 const form = useForm({
@@ -442,9 +443,10 @@ const form = useForm({
   exchange_rate: '',
   invoice_date: new Date().toISOString(), // Send in ISO format
   status: 'Pending',
-  instalmentPaid: 0,  
-  paid_amount: 0,         // Optional for frontend tracking
-  products: [],                // Should match backend structure
+  installment_paid: 0,  
+  paid_amount: 0,
+  products: [],
+  receipt_no: '',
 });
 
   
@@ -510,12 +512,18 @@ const formattedPaymentSchedules = computed(() => {
   return filteredPaymentSchedules.value.map((ps, index) => {
     const rankID = index + 1; // Starting from 1
     const suffix = getOrdinalSuffix(rankID); // Get the correct ordinal suffix
+    
+    // Disable the first payment schedule if it's already created
+    const isDisabled = index === 0 && ps.is_created;
+
     return {
       id: ps.id, // The original ID
-      label: `${ps.agreement_no} (${rankID}${suffix} Payment)` // Use rankID with ordinal suffix
+      label: `${ps.agreement_no} (${rankID}${suffix} Payment)`, // Use rankID with ordinal suffix
+      disabled: isDisabled // Disable if it's the first payment and is already created
     };
   });
 });
+
 const calculateTotalKHR = computed(() => {
   return productsList.value.reduce((acc, product) => acc + product.subTotal, 0);
 });
@@ -760,7 +768,7 @@ watch(() => form.customer_id, (newCustomerId) => {
         }
   
         // Recalculate Grand Total
-        form.grand_total = calculateTotal.value - form.instalmentPaid;
+        form.grand_total = calculateTotal.value - form.installment_paid;
         
   
         console.log("Updated Form Data after Quotation Selection:", form);
@@ -774,7 +782,7 @@ watch(() => form.customer_id, (newCustomerId) => {
       form.phone = '';
       form.start_date = '';
       form.end_date = '';
-      form.instalmentPaid = 0;
+      form.installment_paid = 0;
       form.paid_amount = '';
       productsList.value = [];
     }
@@ -812,12 +820,12 @@ watch(() => form.agreement_no, async (newAgreementNo) => {
     }
 
       // Calculate instalment paid (sum of all invoice amounts related to this agreement)
-      form.instalmentPaid = Array.isArray(selectedAgreement.invoices)
+      form.installment_paid = Array.isArray(selectedAgreement.invoices)
         ? selectedAgreement.invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
         : 0;
 
       // Recalculate Grand Total
-      form.grand_total = calculateTotal.value - form.instalmentPaid;
+      form.grand_total = calculateTotal.value - form.installment_paid;
 
       console.log("Updated Form Data after Agreement Selection:", form);
     }
@@ -825,13 +833,13 @@ watch(() => form.agreement_no, async (newAgreementNo) => {
     console.log("Agreement Deselected - Keeping existing data");
 
     // Reset payment schedule when agreement is deselected
-    form.payment_schedule = '';  // Reset the payment schedule field
+    form.payment_schedules = '';  // Reset the payment schedule field
     filteredPaymentSchedules.value = [];  // Reset available payment schedules
 
     // Reset other fields if necessary
     form.start_date = '';
     form.end_date = '';
-    form.instalmentPaid = 0;
+    form.installment_paid = 0;
     filteredPaymentSchedules.value = [];
 
     console.log("Reset Form Data after Agreement Deselection:", form);
@@ -848,7 +856,7 @@ watch(() => form.agreement_no, async (newAgreementNo) => {
   });
   
   const calculateGrandTotal = computed(() => {
-    return calculateTotal.value - form.instalmentPaid;
+    return calculateTotal.value - form.installment_paid;
   });
   
   const actionTemplate = (data) => {
@@ -913,6 +921,8 @@ const submitInvoice = async () => {
     form.total = calculateTotalKHR.value;
     form.exchange_rate = calculateExchangeRate.value;
     form.paid_amount = form.paid_amount || 0;
+    form.installment_paid = form.installment_paid || 0;
+    form.receipt_no = form.receipt_no || '';
 
     // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
@@ -991,6 +1001,13 @@ const submitInvoice = async () => {
   }
 };
 
+  const updatePaymentDetails = () => {
+    const selectedPaymentSchedule = paymentSchedules.find(ps => ps.id === form.payment_schedule_id);
+    if (selectedPaymentSchedule) {
+      form.installment_paid = selectedPaymentSchedule.amount;
+      form.paid_amount = selectedPaymentSchedule.amount;
+    }
+  };
 
 const checkCatalogAvailability = (product) => {
     if (product.include_catalog && !product.pdf_url) {
@@ -1056,9 +1073,18 @@ watch(() => form.payment_schedule_id, (newPaymentScheduleId) => {
     );
 
     if (selectedPaymentSchedule) {
-      // Auto-fill the paid_amount based on the selected payment schedule's amount
-      form.paid_amount = selectedPaymentSchedule.amount || 0; // Default to 0 if no amount
+      form.paid_amount = selectedPaymentSchedule.amount || 0;
+      form.installment_paid = selectedPaymentSchedule.amount || 0;
+      
+      // Disable the first payment if it's already created
+      if (selectedPaymentSchedule.is_created) {
+        form.payment_schedule_id = null; // Reset the payment schedule selection
+      }
     }
   }
 });
+
+watch(() => form.receipt_no, (newValue) => {
+  console.log('Selected Receipt ID:', newValue);
+})
 </script>

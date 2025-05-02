@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceComment;
 use App\Models\PaymentSchedule;
+use App\Models\Receipt;
 use App\Models\InvoiceProduct;
 use App\Models\Product;
 use Inertia\Inertia;
@@ -33,6 +34,7 @@ class InvoiceController extends Controller
         $customers = Customer::all();
         $products = Product::all();
         $paymentSchedules = PaymentSchedule::all();
+        $receipts = Receipt::all();
 
         // Pass the full models to the form
         return Inertia::render('Invoices/Create', [
@@ -40,7 +42,8 @@ class InvoiceController extends Controller
             'quotations' => $quotations,
             'customers' => $customers,
             'products' => $products,
-            'paymentSchedules' => $paymentSchedules
+            'paymentSchedules' => $paymentSchedules,
+            'receipts'=> $receipts,
         ]);
     }
 
@@ -73,6 +76,7 @@ class InvoiceController extends Controller
             'products.*.remark' => 'nullable|string',
             'products.*.include_catalog' => 'required|boolean',
             'products.*.pdf_url' => 'nullable|string',
+            'receipt_no' => 'nullable|integer|exists:receipts,receipt_no',
         ]);
 
         if ($validated->fails()) {
@@ -130,7 +134,33 @@ class InvoiceController extends Controller
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
         }
 
+        $paymentSchedule = PaymentSchedule::find($data['payment_schedule_id']);
+
         $paid_amount = $data['paid_amount'] ?? 0;
+
+
+        $installment_paid = 0;
+
+        if ($paymentSchedule) {
+            // Auto-fill the paid_amount and installment_paid based on the selected payment schedule
+
+            // First, retrieve the current invoice
+            $invoice = Invoice::findOrFail($invoice_no);  // Assuming you have the invoice ID
+
+            // Set the paid_amount and installment_paid from the selected payment schedule
+            $paid_amount = $paymentSchedule->amount;
+
+            // Add the current installment_paid value (if any) from the invoice
+            $installment_paid = $invoice->installment_paid + $paymentSchedule->amount;
+
+            // Update the invoice fields with the new values
+            $invoice->paid_amount = $paid_amount;
+            $invoice->installment_paid = $installment_paid;
+
+            // Save the updated invoice
+            $invoice->save();
+        }
+
 
         // Create the invoice
         $invoice = \App\Models\Invoice::create([
@@ -151,6 +181,8 @@ class InvoiceController extends Controller
             'status'         => $data['status'],
             'paid_amount'    => $paid_amount,
             'payment_schedule_id' => $data['payment_schedule_id'] ?? null,
+            'installment_paid' => $installment_paid,
+            'receipt_no'         => $data['receipt_no'] ?? null,
         ]);
 
         // Attach products to the pivot table using invoice_id
