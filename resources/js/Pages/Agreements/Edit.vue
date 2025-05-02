@@ -661,7 +661,12 @@ const checkDuplicateReference = async () => {
         console.error("Error checking reference:", error);
     }
 };
-
+const isPastDue = (date) => {
+    if (!date) return false;
+    const today = moment();
+    const dueDate = moment(date);
+    return dueDate.isValid() && dueDate.isBefore(today, 'day');
+};
 const submitForm = () => {
     processing.value = true;
     // Helper function to format dates consistently
@@ -690,9 +695,10 @@ const submitForm = () => {
         agreement_amount: schedule.value.agreement_amount,
         payment_schedule: form.payment_schedule.map((item) => ({
             ...item,
+            // Preserve existing status if set, otherwise determine based on date
             status:
                 item.status ||
-                (isPastDue(item.due_date) ? "Past Due" : "Upcoming"),
+                (isPastDue(item.due_date) ? "PAST DUE" : "UPCOMING"),
             due_date: formatDate(item.due_date),
             amount: parseFloat(item.amount),
             percentage: parseFloat(item.percentage),

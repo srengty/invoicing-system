@@ -60,6 +60,8 @@ Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('i
 Route::resource('receipts', ReceiptController::class);
 Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
 
+Route::post('/record-payment', [PaymentController::class, 'recordPayment'])->name('payments.record');
+
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
 Route::get('/api/customers', [CustomerController::class, 'apiIndex']);
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer

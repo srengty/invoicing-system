@@ -51,12 +51,6 @@ class Invoice extends Model
         return $this->belongsTo(CustomerCategory::class);
     }
 
-    // Relationship with Agreement
-    // public function agreement()
-    // {
-    //     return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
-    // }
-
     public function quotation()
     {
         return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
@@ -84,31 +78,20 @@ class Invoice extends Model
         return $this->hasMany(InvoiceProduct::class, 'invoice_no', 'id');
     }
 
-
-    // public function receipts()
-    // {
-    //     return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
-    // }
-
     public function getPaymentStatusAttribute()
     {
-        // If the invoice has been fully paid (paid_amount >= grand_total)
         if ($this->paid_amount >= $this->grand_total) {
             return 'Fully Paid';
         }
 
-        // If there has been some payment but not fully paid (paid_amount > 0 and < grand_total)
         if ($this->paid_amount > 0) {
             return 'Partially Paid';
         }
 
-        // If payment has not been made and the invoice is overdue (compare invoice_due_date with current date)
-        // Assume invoice_due_date is already set and represents the due date for payment
         if ($this->invoice_due_date && $this->invoice_due_date < now()) {
             return 'Overdue';
         }
 
-        // If payment is still pending (no payment made, and it's not overdue)
         return 'Pending';
     }
 
@@ -119,12 +102,10 @@ class Invoice extends Model
 
     public function getPaymentSchedules()
     {
-        // Fetch all active payment schedules (you can add additional filters as necessary)
         $paymentSchedules = PaymentSchedule::select('id', 'amount', 'short_description')
             ->where('status', 'Pending') // Optional: Filter by 'Pending' status, or adjust as needed
             ->get();
 
-        // Return as JSON for the frontend
         return response()->json($paymentSchedules);
     }
     public function receipts()

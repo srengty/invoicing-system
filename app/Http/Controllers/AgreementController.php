@@ -28,7 +28,6 @@ class AgreementController extends Controller
                         $totalPaid += $receipt->paid_amount;
                     }
                 }
-
                 // Calculate due payment (sum of all past due payment schedules)
                 $duePayment = 0;
                 $today = now();
@@ -38,24 +37,36 @@ class AgreementController extends Controller
                         $duePayment += $schedule->amount;
                     }
                 }
-
                 // Calculate payment percentage
                 $paymentPercentage = $agreement->amount > 0 ? ($totalPaid / $agreement->amount) * 100 : 0;
-
                 // Format payment schedules
-                $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) {
+                $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) use ($totalPaid) {
                     $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
-                    $status = 'Pending';
-                    $amount = $schedule->amount;
+                    $status = $schedule->status;
 
-                    if ($dueDate->isPast()) {
-                        $status = 'Past Due';
+                    // If no explicit status, determine based on payment and date
+                    if (empty($status)) {
+                        $isPaid = $agreement->invoices()
+                            ->whereHas('receipts', function($query) use ($schedule) {
+                                $query->where('payment_schedule_id', $schedule->id)
+                                    ->orWhere(function($q) use ($schedule) {
+                                        $q->where('paid_amount', '>=', $schedule->amount)
+                                            ->whereDate('receipt_date', '>=', $dueDate);
+                                    });
+                            })
+                            ->exists();
+
+                        if ($isPaid) {
+                            $status = 'PAID';
+                        } else {
+                            $status = $dueDate->isPast() ? 'PAST DUE' : 'UPCOMING';
+                        }
                     }
 
                     return [
                         ...$schedule->toArray(),
                         'status' => $status,
-                        'amount' => $amount
+                        'amount' => $schedule->amount
                     ];
                 });
 

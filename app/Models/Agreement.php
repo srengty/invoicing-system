@@ -30,7 +30,6 @@ class Agreement extends Model
         'currency',
         'attachments',
     ];
-    // In your Agreement model (app/Models/Agreement.php)
     protected $appends = ['status'];
 
     public function customer()
@@ -79,10 +78,6 @@ class Agreement extends Model
             (Carbon::createFromFormat('d/m/Y',$value))
         );
     }
-    // public function paymentSchedules():HasMany
-    // {
-    //     return $this->hasMany(PaymentSchedule::class, 'agreement_no');
-    // }
     public function getTotalScheduledPaymentAttribute()
     {
         return $this->paymentSchedules()->sum('amount');

@@ -38,4 +38,19 @@ class PaymentSchedule extends Model
             (Carbon::createFromFormat('d/m/Y',$value))
             );
     }
+
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class);
+    }
+
+    public function getPaidAmountAttribute()
+    {
+        return $this->receipts->sum('paid_amount');
+    }
+
+    public function getIsPaidAttribute()
+    {
+        return $this->paid_amount >= $this->amount;
+    }
 }

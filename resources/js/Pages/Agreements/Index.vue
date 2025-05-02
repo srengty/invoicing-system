@@ -456,7 +456,11 @@ list agreement
                     class="mt-3 text-sm"
                     size="small"
                 >
-                    <Column field="payment_no" header="No" sortable></Column>
+                    <Column field="index" header="No." sortable class="text-sm">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
                     <Column
                         field="receipt_no"
                         header="Receipt No"

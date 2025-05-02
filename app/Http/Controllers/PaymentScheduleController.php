@@ -62,4 +62,43 @@ class PaymentScheduleController extends Controller
     {
         //
     }
+
+    public function recordPayment(Request $request)
+    {
+        $request->validate([
+            'schedule_id' => 'required|exists:payment_schedules,id',
+            'amount' => 'required|numeric|min:0',
+            'receipt_no' => 'required|string',
+            'receipt_date' => 'required|date',
+        ]);
+
+        // Find the schedule
+        $schedule = PaymentSchedule::findOrFail($request->schedule_id);
+
+        // Create receipt
+        $receipt = Receipt::create([
+            'payment_schedule_id' => $schedule->id,
+            'receipt_no' => $request->receipt_no,
+            'paid_amount' => $request->amount,
+            'receipt_date' => Carbon::createFromFormat('d/m/Y', $request->receipt_date),
+            // Add other receipt fields as needed
+        ]);
+
+        $schedule->paid_amount = ($schedule->paid_amount ?? 0) + $request->amount;
+
+        if ($schedule->paid_amount >= $schedule->amount) {
+            $schedule->status = 'PAID';
+        } else {
+            $schedule->status = 'PARTIALLY_PAID';
+        }
+
+        $schedule->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment recorded successfully',
+            'receipt' => $receipt,
+            'schedule' => $schedule->fresh()
+        ]);
+    }
 }

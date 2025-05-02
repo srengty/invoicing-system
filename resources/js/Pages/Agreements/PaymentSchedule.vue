@@ -96,9 +96,7 @@
                 <template #body="slotProps">
                     <Tag
                         :value="getPaymentStatus(slotProps.data)"
-                        :severity="
-                            getStatusSeverity(getPaymentStatus(slotProps.data))
-                        "
+                        :severity="getStatusSeverity(slotProps.data)"
                     />
                 </template>
             </Column>
@@ -339,20 +337,23 @@ const generateInvoice = async (paymentItem) => {
 const isPastDue = (date) => {
     if (!date) return false;
     const today = moment();
-    const dueDate = moment(
-        date,
-        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
-        true
-    );
+    const dueDate = moment(date);
     return dueDate.isValid() && dueDate.isBefore(today, "day");
 };
 
 const getPaymentStatus = (schedule) => {
-    if (schedule.status === "Paid") return "PAID";
+    // If status is explicitly set to "Paid", return that
+    if (schedule.status === "Paid" || schedule.status === "PAID") return "PAID";
+
+    // If payment has receipts (paid), return PAID
+    if (schedule.paid_amount > 0) return "PAID";
+
+    // Otherwise determine based on due date
     return isPastDue(schedule.due_date) ? "PAST DUE" : "UPCOMING";
 };
 
-const getStatusSeverity = (status) => {
+const getStatusSeverity = (schedule) => {
+    const status = getPaymentStatus(schedule);
     switch (status) {
         case "PAID":
             return "success";
@@ -364,11 +365,16 @@ const getStatusSeverity = (status) => {
             return "warning";
     }
 };
+
 const paymentRowClass = (data) => {
+    const status = getPaymentStatus(data);
     return {
-        "bg-red-50": isPastDue(data.due_date) && data.status !== "Paid",
-        "border-l-4 border-red-500":
-            isPastDue(data.due_date) && data.status !== "Paid",
+        "bg-green-50": status === "PAID",
+        "border-l-4 border-green-500": status === "PAID",
+        "bg-red-50": status === "PAST DUE",
+        "border-l-4 border-red-500": status === "PAST DUE",
+        "bg-blue-50": status === "UPCOMING",
+        "border-l-4 border-blue-500": status === "UPCOMING",
     };
 };
 
