@@ -51,32 +51,27 @@
         </h1>
         <div class="flex flex-row justify-between mb-6">
             <div class="flex flex-col w-1/2 gap-4">
+                <p><strong>Invoice No.:</strong> {{ invoice.invoice_no }}</p>
                 <p>
-                        <strong>Invoice No.:</strong>
-                        {{ invoice.invoice_no }}
-                    </p>
-                    <p>
-                        <strong>Invoice Date:</strong>
-                        {{ formatDate(invoice.invoice_date) }}
-                    </p>
+                    <strong>Invoice Date:</strong>
+                    {{ formatDate(invoice.invoice_date) }}
+                </p>
                 <p>
                     <strong>Customer Name:</strong>
                     {{ invoice.customer_name || "N/A" }}
                 </p>
                 <p><strong>Address:</strong> {{ invoice.address }}</p>
-                <p>
-                    <strong>Phone Number:</strong> {{ invoice.phone_number }}
-                </p>
+                <p><strong>Phone Number:</strong> {{ invoice.phone_number }}</p>
             </div>
-            <div class="flex flex-col w-1/2 items-end gap-4">
-                <div class="grid gap-4">
+            <div class=" flex flex-col w-1/2 items-end gap-4">
+                <div class="right grid gap-4 mr-10">
                     <p>
                         <strong>Quotation No:</strong>
-                        {{ invoice.quotation_no}}
+                        {{ invoice.quotation_no || "N/A" }}
                     </p>
                     <p>
                         <strong>Agreement No:</strong>
-                        {{ invoice.agreement_no}}
+                        {{ invoice.agreement_no || "N/A" }}
                     </p>
                 </div>
             </div>
@@ -100,16 +95,27 @@
                 </div>
 
                 <!-- Table Body -->
-                <div v-for="(product, index) in invoice.products" :key="product.product_id"
+                <div
+                    v-for="(product, index) in invoice.products"
+                    :key="product.product_id"
                     class="grid grid-cols-[70px_170px_110px_170px_150px] border-b py-2 px-4 text-start"
                 >
                     <div class="text-start">{{ index + 1 }}</div>
                     <div>
                         <div class="font-medium">
-                            {{ isUSD ? product.product_name : (product.product_name_kh || product.product_name) }}
+                            {{
+                                isUSD
+                                    ? product.product_name
+                                    : product.product_name_kh ||
+                                      product.product_name
+                            }}
                         </div>
                         <p class="text-gray-600 text-xs">
-                            {{ isUSD ? product.desc : (product.desc_kh || product.desc) }}
+                            {{
+                                isUSD
+                                    ? product.desc
+                                    : product.desc_kh || product.desc
+                            }}
                         </p>
                     </div>
                     <div class="text-start">{{ product.quantity }}</div>
@@ -117,7 +123,13 @@
                         {{ formatCurrency(convertCurrency(product.price)) }}
                     </div>
                     <div class="text-start font-semibold">
-                        {{ formatCurrency(convertCurrency(product.price * product.quantity)) }}
+                        {{
+                            formatCurrency(
+                                convertCurrency(
+                                    product.price * product.quantity
+                                )
+                            )
+                        }}
                     </div>
                 </div>
             </div>
@@ -128,7 +140,11 @@
                     <p class="font-bold">
                         Total ({{ currencyLabel }}):
                         <!-- If isKhmer is true, show grand_total, else show calculated totalAmount -->
-                        {{ isKhmer ? invoice.grand_total : formatCurrency(totalAmount) }}
+                        {{
+                            isKhmer
+                                ? invoice.grand_total
+                                : formatCurrency(totalAmount)
+                        }}
                     </p>
                 </div>
                 <div v-if="!isKhmer" class="pt-2 flex justify-end">
@@ -144,7 +160,10 @@
                 <div
                     class="w-full border rounded-md p-3 text-sm text-gray-800 overflow-y-auto max-h-32"
                 >
-                    {{ invoice.terms || "Full payment is required upon invoice acceptance." }}
+                    {{
+                        invoice.terms ||
+                        "Full payment is required upon invoice acceptance."
+                    }}
                 </div>
             </div>
 
@@ -247,7 +266,7 @@ import { useToast } from "primevue/usetoast";
 import Dialog from "primevue/dialog";
 import { Head } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
-import { useForm } from '@inertiajs/vue3';
+import { useForm } from "@inertiajs/vue3";
 
 const toast = useToast();
 
@@ -261,7 +280,7 @@ const sendMail = useForm({
     invoice_id: null,
     send_email: false,
     send_telegram: false,
-    pdf_file: null
+    pdf_file: null,
 });
 
 // Other reactive state variables
@@ -292,7 +311,7 @@ const showConfirmationDialog = () => {
             summary: "Invoice Not Approved",
             detail: "Only approved invoices can be sent.",
             life: 3000,
-            group: 'tr'
+            group: "tr",
         });
         return;
     }
@@ -331,13 +350,16 @@ const formatDate = (dateString) => {
     return date.toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
-        year: "numeric"
+        year: "numeric",
     });
 };
 
 const handleToggleChange = () => {
     isUSD.value = !isKhmer.value;
-    if (isUSD.value && (!invoice.value.total_usd || invoice.value.total_usd <= 0)) {
+    if (
+        isUSD.value &&
+        (!invoice.value.total_usd || invoice.value.total_usd <= 0)
+    ) {
         toast.add({
             severity: "warn",
             summary: "Missing USD Information",
@@ -350,13 +372,18 @@ const handleToggleChange = () => {
 
 // Compute total amount
 const totalAmount = computed(() => {
-    const totalKHR = invoice.value.total || 
-        (invoice.value.products?.reduce(
+    const totalKHR =
+        invoice.value.total ||
+        invoice.value.products?.reduce(
             (sum, product) =>
-                sum + (product.pivot?.quantity || 0) * (product.pivot?.price || 0),
+                sum +
+                (product.pivot?.quantity || 0) * (product.pivot?.price || 0),
             0
-        ) || 0);
-    return isUSD.value ? (invoice.value.total_usd || totalKHR / exchangeRate.value) : totalKHR;
+        ) ||
+        0;
+    return isUSD.value
+        ? invoice.value.total_usd || totalKHR / exchangeRate.value
+        : totalKHR;
 });
 
 // Format product details
@@ -377,18 +404,22 @@ const formattedProducts = computed(() => {
     }));
 });
 
-
 const generatePDF = (element) => {
     const opt = {
         margin: 10,
         filename: `invoice_${invoice.value.invoice_no}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     };
-    
+
     return new Promise((resolve) => {
-        html2pdf().set(opt).from(element).toPdf().outputPdf("blob").then(resolve);
+        html2pdf()
+            .set(opt)
+            .from(element)
+            .toPdf()
+            .outputPdf("blob")
+            .then(resolve);
     });
 };
 
@@ -425,27 +456,30 @@ const generateCatalogPDFs = async (products) => {
                     if (!response.ok) throw new Error("Failed to fetch PDF");
                     return await response.blob();
                 } catch (error) {
-                    console.error(`Error fetching catalog for product ${product.id}:`, error);
+                    console.error(
+                        `Error fetching catalog for product ${product.id}:`,
+                        error
+                    );
                     return null;
                 }
             }
             return null;
         })
     );
-    return catalogPDFs.filter(pdf => pdf !== null);
+    return catalogPDFs.filter((pdf) => pdf !== null);
 };
 
 const mergePDFs = async (pdfBlobs) => {
     try {
         const pdfDoc = await PDFDocument.create();
-        
+
         for (const pdfBlob of pdfBlobs) {
             if (!pdfBlob) continue;
             const pdf = await PDFDocument.load(await pdfBlob.arrayBuffer());
             const pages = await pdfDoc.copyPages(pdf, pdf.getPageIndices());
-            pages.forEach(page => pdfDoc.addPage(page));
+            pages.forEach((page) => pdfDoc.addPage(page));
         }
-        
+
         return await pdfDoc.save();
     } catch (error) {
         console.error("Error merging PDFs:", error);
@@ -478,7 +512,7 @@ const generateAndSendPDF = async () => {
         const mergedPDF = await mergePDFs([invoicePDF, ...catalogPDFs]);
 
         // Create a Blob from the merged PDF
-        const pdfBlob = new Blob([mergedPDF], { type: 'application/pdf' });
+        const pdfBlob = new Blob([mergedPDF], { type: "application/pdf" });
         const filename = `invoice_${invoice.value.invoice_no}.pdf`; // Set the filename to invoice_no
 
         // Send the PDF with the filename to the backend via email
@@ -513,16 +547,16 @@ const sendPDFViaEmail = async (pdfBlob, filename) => {
     try {
         // Create a new FormData instance to send the PDF with the correct filename
         const formData = new FormData();
-        formData.append('invoice_id', invoice.value.id);
-        formData.append('send_email', sendForm.value.emailChecked);
-        formData.append('send_telegram', sendForm.value.telegramChecked);
-        formData.append('pdf_file', pdfBlob, filename); // Attach the PDF Blob with the filename
+        formData.append("invoice_id", invoice.value.id);
+        formData.append("send_email", sendForm.value.emailChecked);
+        formData.append("send_telegram", sendForm.value.telegramChecked);
+        formData.append("pdf_file", pdfBlob, filename); // Attach the PDF Blob with the filename
 
         // POST the form data to the backend for sending the email
-        await axios.post('/invoices/send', formData, {
+        await axios.post("/invoices/send", formData, {
             headers: {
-                'Content-Type': 'multipart/form-data', // Ensure we use multipart for file uploads
-            }
+                "Content-Type": "multipart/form-data", // Ensure we use multipart for file uploads
+            },
         });
 
         window.location.href = route("invoices.list"); // Redirect after successful submission
@@ -539,7 +573,6 @@ const sendPDFViaEmail = async (pdfBlob, filename) => {
         isSending.value = false;
     }
 };
-
 
 onMounted(() => {
     // Initialize currency display based on invoice data
@@ -583,6 +616,8 @@ onMounted(() => {
         display: none !important;
     }
 
+
+
     .print-area {
         margin: 0;
         padding: 5mm;
@@ -618,7 +653,9 @@ onMounted(() => {
         height: auto;
     }
 }
-
+.right{
+        margin-left: 30px;
+    }
 .page-break {
     page-break-inside: avoid;
 }

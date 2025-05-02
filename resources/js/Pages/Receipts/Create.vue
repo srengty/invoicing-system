@@ -19,10 +19,10 @@
                                 optionValue="invoice_no"
                                 placeholder="Select Invoice"
                                 class="w-full"
-                                filter
                                 filterPlaceholder="Search invoices"
                                 showClear
                                 @change="updateInvoiceDetails"
+                                size="small"
                             />
                             <Button
                                 icon="pi pi-plus"
@@ -129,6 +129,8 @@
                             :currency="selectedInvoice?.currency || 'USD'"
                             locale="en-US"
                             readonly
+                            size="small"
+                            @input="updateAmountInWords"
                         />
                         <!-- Else allow manual input -->
                         <InputNumber
@@ -139,6 +141,7 @@
                             currency="USD"
                             locale="en-US"
                             placeholder="Enter amount paid  "
+                            size="small"
                         />
                     </div>
                 </div>
@@ -304,10 +307,20 @@ const loadCustomers = async () => {
 const loadInvoices = async () => {
     try {
         const response = await axios.get(route("receipts.create"));
-        invoices.value = response.data.invoices || [];
+        invoices.value = (response.data.invoices || [])
+            .filter((invoice) => !invoice.has_receipt) // Exclude invoices with receipts
+            .map((invoice) => ({
+                ...invoice,
+                label: `${invoice.invoice_no} - ${invoice.customer_name}`,
+            }));
     } catch (error) {
         console.error("Error loading invoices", error);
-        // Show error toast
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to load invoices",
+            life: 3000,
+        });
     }
 };
 
@@ -335,10 +348,31 @@ watch(
                 ...newVal,
                 customer_id: newVal.customer?.id,
             };
+
+            // If editing, ensure the current invoice is in the list
+            if (newVal.invoice_no) {
+                const existingInvoice = invoices.value.find(
+                    (inv) => inv.invoice_no === newVal.invoice_no
+                );
+
+                if (!existingInvoice) {
+                    invoices.value = [
+                        ...invoices.value,
+                        {
+                            invoice_no: newVal.invoice_no,
+                            customer_code: newVal.customer_code,
+                            customer_name: newVal.customer_name,
+                            paid_amount: newVal.paid_amount,
+                            has_receipt: true, // Mark as having receipt
+                        },
+                    ];
+                }
+            }
         } else {
             isEditMode.value = false;
         }
-    }
+    },
+    { immediate: true }
 );
 const updateReceipt = async () => {
     emit("receipt-updated", {});
@@ -366,6 +400,12 @@ const updateAmountInWords = () => {
         amountInWords.value = "";
     }
 };
+watch(
+    () => formData.value.paid_amount,
+    (newValue) => {
+        updateAmountInWords(); // This will be triggered automatically whenever paid_amount changes
+    }
+);
 
 const show = async () => {
     await loadCustomers();
@@ -411,33 +451,60 @@ const openInvoiceDialog = () => {
 
 const selectedInvoice = ref(null);
 const updateInvoiceDetails = () => {
-    if (formData.value.invoice_no) {
-        const invoice = invoices.value.find(
-            (inv) => inv.invoice_no === formData.value.invoice_no
-        );
-
-        if (invoice) {
-            selectedInvoice.value = invoice;
-            formData.value.paid_amount = invoice.paid_amount;
-            formData.value.customer_id = invoice.customer_id;
-            formData.value.customer_code = invoice.customer_code;
-            formData.value.customer_name = invoice.customer_name;
-
-            updateAmountInWords();
-        }
-    } else {
-        selectedInvoice.value = null;
-        formData.value.customer_id = null;
-        formData.value.customer_code = "";
-        formData.value.customer_name = "";
-        formData.value.paid_amount = null;
-        amountInWords.value = "";
+    if (!formData.value.invoice_no) {
+        resetInvoiceFields();
+        return;
     }
+
+    const invoice = invoices.value.find(
+        (inv) => inv.invoice_no === formData.value.invoice_no
+    );
+
+    if (!invoice) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Selected invoice not found",
+            life: 3000,
+        });
+        resetInvoiceFields();
+        return;
+    }
+
+    // Check if invoice already has a receipt
+    if (invoice.has_receipt) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "This invoice already has a receipt",
+            life: 3000,
+        });
+        resetInvoiceFields();
+        return;
+    }
+
+    selectedInvoice.value = invoice;
+    formData.value.paid_amount = invoice.paid_amount;
+    formData.value.customer_id = invoice.customer_id;
+    formData.value.customer_code = invoice.customer_code;
+    formData.value.customer_name = invoice.customer_name;
+    updateAmountInWords();
+};
+
+const resetInvoiceFields = () => {
+    formData.value.invoice_no = null;
+    selectedInvoice.value = null;
+    formData.value.customer_id = null;
+    formData.value.customer_code = "";
+    formData.value.customer_name = "";
+    formData.value.paid_amount = null;
+    amountInWords.value = "";
 };
 
 const invoiceLabel = (invoice) => {
     if (!invoice) return "";
     return `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
+    // return `${invoice.invoice_no}`;
 };
 const customerLabel = (customer) => {
     if (!customer) return "";
@@ -478,6 +545,20 @@ const createReceipt = async () => {
             throw new Error("Please select a payment method.");
         }
 
+        // Check if the selected invoice already has a receipt
+        if (formData.value.invoice_no) {
+            const selectedInv = invoices.value.find(
+                (inv) => inv.invoice_no === formData.value.invoice_no
+            );
+
+            if (selectedInv?.has_receipt) {
+                throw new Error(
+                    "This invoice already has a receipt. Please select another invoice."
+                );
+            }
+        }
+
+        // Proceed with the rest of the receipt creation logic...
         const payload = {
             invoice_no: formData.value.invoice_no
                 ? String(formData.value.invoice_no)
@@ -506,7 +587,11 @@ const createReceipt = async () => {
             shouldReload: true,
         });
 
-        // Reset form
+        // Reset invoice_no and selectedInvoice
+        formData.value.invoice_no = null; // Reset the invoice_no field
+        selectedInvoice.value = null; // Reset the selected invoice reference
+
+        // Reset formData to initial values
         formData.value = {
             invoice_no: null,
             receipt_no: String(parseInt(response.data.nextReceiptNo)).padStart(
@@ -516,7 +601,7 @@ const createReceipt = async () => {
             receipt_date: new Date(),
             customer_id: null,
             customer_code: "",
-            purpose: "",
+            customer_name: "",
             paid_amount: null,
             payment_method: null,
             payment_reference_no: null,
@@ -550,6 +635,28 @@ const createReceipt = async () => {
 </script>
 
 <style scoped>
+.p-dropdown-item.p-disabled {
+    opacity: 0.6;
+    background-color: #f8f9fa;
+    color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.p-dropdown-item.p-disabled .pi-ban {
+    color: #dc3545;
+    margin-right: 5px;
+}
+
+.p-dropdown .p-dropdown-item.p-disabled {
+    color: #f8f9fa;
+    background-color: #f8f9fa;
+}
+
+.p-dropdown .p-dropdown-item.p-disabled:hover {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
 .required:after {
     content: " *";
     color: red;

@@ -336,10 +336,21 @@ const searchOptions = ref([
 // Filter logic for the receipt list
 const filteredReceipts = computed(() => {
     return props.receipts.filter((receipt) => {
-        const fieldValue = receipt[searchType.value] || "";
+        if (!searchTerm.value) return true; // If no search term, return all receipts
+
+        let fieldValue = receipt[searchType.value] || ""; // Get the field value
+        // Handle nested fields (like 'customer.name')
+        if (searchType.value === "customer.name") {
+            fieldValue = receipt.customer ? receipt.customer.name : ""; // Access the customer name
+        }
+
         const matchesSearch =
-            !searchTerm.value ||
-            fieldValue.toLowerCase().includes(searchTerm.value.toLowerCase());
+            fieldValue &&
+            fieldValue
+                .toString()
+                .toLowerCase()
+                .includes(searchTerm.value.toLowerCase());
+
         return matchesSearch;
     });
 });
