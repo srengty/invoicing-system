@@ -83,12 +83,12 @@
                     style="width: 5%; font-size: 14px"
                 ></Column>
                 <Column
-                    field="amount_paid"
+                    field="paid_amount"
                     header="Amount Paid"
                     style="width: 5%; font-size: 14px"
                 >
                     <template #body="slotProps">
-                        {{ formatCurrency(slotProps.data.amount_paid) }}
+                        {{ formatCurrency(slotProps.data.paid_amount) }}
                         <span class="text-xs text-gray-500 ml-1">
                             ( KHR )
                         </span>
@@ -216,9 +216,9 @@
                 </div>
                 <div class="col-6">
                     <div class="field">
-                        <label for="amount_paid">Amount Paid</label>
+                        <label for="paid_amount">Amount Paid</label>
                         <input
-                            :value="formatCurrency(selectedReceipt.amount_paid)"
+                            :value="formatCurrency(selectedReceipt.paid_amount)"
                             class="p-inputtext p-component"
                             disabled
                         />

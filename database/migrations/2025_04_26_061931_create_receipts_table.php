@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->string('customer_code', 255)->nullable();
             $table->string('purpose')->nullable();
-            $table->decimal('amount_paid', 10, 2);
+            $table->decimal('paid_amount', 10, 2);
             $table->string('amount_in_words')->nullable();
             $table->string('payment_method');
             $table->string('payment_reference_no')->nullable();

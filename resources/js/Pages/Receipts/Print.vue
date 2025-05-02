@@ -40,7 +40,7 @@
                     </p>
                     <p>
                         <strong>Amount Paid:</strong>
-                        {{ receipt.amount_paid }}
+                        {{ receipt.paid_amount }}
                     </p>
                     <p>
                         <strong>Amount in Words:</strong>

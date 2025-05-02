@@ -9,6 +9,7 @@ use App\Models\CustomerCategory;
 use Illuminate\Http\Request;
 use NumberFormatter;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class ReceiptController extends Controller
 {
@@ -29,14 +30,49 @@ class ReceiptController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+    // In ReceiptController.php
+    // public function create()
+    // {
+    //     $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
+    //     $nextReceiptNo = $this->generateReceiptNumber($lastReceipt);
+
+    //     // Get invoices with their paid amounts and remaining balance
+    //     $invoices = Invoice::select('id', 'invoice_no', 'grand_total', 'paid_amount', 'currency')
+    //         ->where('status', 'Approved')
+    //         ->get()
+    //         ->map(function ($invoice) {
+    //             $invoice->remaining_amount = $invoice->grand_total - ($invoice->paid_amount ?? 0);
+    //             return $invoice;
+    //         });
+
+    //     return response()->json([
+    //         'nextReceiptNo' => $nextReceiptNo,
+    //         'invoices' => $invoices,
+    //     ]);
+    // }
+
     public function create()
     {
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
         $nextReceiptNo = $this->generateReceiptNumber($lastReceipt);
 
-        // Ensure it's returning a valid number
+        $invoices = Invoice::with('customer') // ✅ eager load customer
+            ->select('id', 'invoice_no', 'grand_total', 'paid_amount', 'currency', 'customer_id')
+            ->where('status', 'Approved')
+            ->get()
+            ->map(function ($invoice) {
+                $invoice->remaining_amount = $invoice->grand_total - ($invoice->paid_amount ?? 0);
+
+                // ✅ add customer_name and code
+                $invoice->customer_name = $invoice->customer?->name ?? null;
+                $invoice->customer_code = $invoice->customer?->code ?? null;
+
+                return $invoice;
+            });
+
         return response()->json([
             'nextReceiptNo' => $nextReceiptNo,
+            'invoices' => $invoices,
         ]);
     }
 
@@ -50,18 +86,34 @@ class ReceiptController extends Controller
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
             'customer_code' => 'required|string',
-            'amount_paid' => 'nullable|numeric|min:0.01',
             'amount_in_words' => 'nullable|string',
             'payment_method' => 'nullable|string|in:Cash,Bank Transfer,Credit Card',
             'payment_reference_no' => 'nullable|string',
             'purpose' => 'nullable|string',
-            'invoice_no' => 'nullable|string',
+            'invoice_no' => 'nullable|regex:/^\d+$/|exists:invoices,invoice_no',
+            'paid_amount' => 'nullable|numeric|min:0.01',
         ]);
         // Generate receipt_no based on the latest one
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
         $receiptNo = $this->generateReceiptNumber($lastReceipt);
 
         $customer = Customer::findOrFail($request->customer_id);
+
+        // $invoice = null;
+        // if ($validated['invoice_no']) {
+        //     $invoice = Invoice::where('invoice_no', $validated['invoice_no'])->first();
+
+        //     // Update the invoice's paid amount
+        //     if ($invoice) {
+        //         $newPaidAmount = ($invoice->paid_amount ?? 0) + $validated['paid_amount'];
+        //         $invoice->update([
+        //             'paid_amount' => $newPaidAmount,
+        //             'payment_status' => $newPaidAmount >= $invoice->grand_total
+        //                 ? 'Fully Paid'
+        //                 : 'Partially Paid'
+        //         ]);
+        //     }
+        // }
 
         $data = [
             'invoice_no' => $request->invoice_no,
@@ -70,8 +122,8 @@ class ReceiptController extends Controller
             'customer_id' => $request->customer_id,
             'customer_code' => $customer->code,
             'purpose' => $request->purpose,
-            'amount_paid' => $request->amount_paid,
-            'amount_in_words' => $this->convertToWords($request->amount_paid),
+            'paid_amount' => $request->paid_amount,
+            'amount_in_words' => $this->convertToWords($request->paid_amount),
             'payment_method' => $request->payment_method,
             'payment_reference_no' => $request->payment_reference_no,
         ];
@@ -83,6 +135,96 @@ class ReceiptController extends Controller
             'message' => 'Receipt created successfully',
             'receipt' => $receipt
         ]);
+    }
+    // public function store(Request $request)
+    // {
+
+    //     try {
+    //         $validated = $request->validate([
+    //             'invoice_no' => 'nullable|string|exists:invoices,invoice_no',
+    //             'receipt_no' => 'required|string|unique:receipts,receipt_no',
+    //             'receipt_date' => 'required|date',
+    //             'customer_id' => 'required|exists:customers,id',
+    //             'customer_code' => 'required|string',
+    //             'purpose' => 'nullable|string|max:500',
+    //             'paid_amount' => 'required|numeric|min:0.01',
+    //             'amount_in_words' => 'nullable|string',
+    //             'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
+    //             'payment_reference_no' => 'nullable|string|max:255',
+    //         ]);
+
+    //         // Find customer and verify code
+    //         $customer = Customer::findOrFail($validated['customer_id']);
+    //         if ($customer->code !== $validated['customer_code']) {
+    //             throw new \Exception("Customer code doesn't match");
+    //         }
+
+    //         // Handle invoice if provided
+    //         $invoice = null;
+    //         if (!empty($validated['invoice_no'])) {
+    //             $invoice = Invoice::where('invoice_no', $validated['invoice_no'])->firstOrFail();
+
+    //             // Verify invoice belongs to customer
+    //             if ($invoice->customer_id != $customer->id) {
+    //                 throw new \Exception("Invoice doesn't belong to this customer");
+    //             }
+
+    //             // Update invoice payment status
+    //             $newPaidAmount = $invoice->paid_amount + $validated['paid_amount'];
+    //             if ($newPaidAmount > $invoice->grand_total) {
+    //                 throw new \Exception("Payment exceeds invoice total");
+    //             }
+
+    //             $invoice->update([
+    //                 'paid_amount' => $newPaidAmount,
+    //                 'payment_status' => $newPaidAmount >= $invoice->grand_total
+    //                     ? 'Fully Paid'
+    //                     : 'Partially Paid'
+    //             ]);
+    //         }
+
+    //         // Create receipt
+    //         $receipt = Receipt::create([
+    //             'invoice_no' => $validated['invoice_no'] ?? null,
+    //             'receipt_no' => $validated['receipt_no'],
+    //             'receipt_date' => $validated['receipt_date'],
+    //             'customer_id' => $validated['customer_id'],
+    //             'customer_code' => $validated['customer_code'],
+    //             'purpose' => $validated['purpose'] ?? null,
+    //             'paid_amount' => $validated['paid_amount'],
+    //             'amount_in_words' => !empty($validated['amount_in_words'])
+    //             ? $validated['amount_in_words']
+    //             : $this->convertToWords((float) $validated['paid_amount']),
+    //             'payment_method' => $validated['payment_method'],
+    //             'payment_reference_no' => $validated['payment_reference_no'] ?? null,
+    //         ]);
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'receipt' => $receipt,
+    //             'nextReceiptNo' => $this->generateNextReceiptNumber($receipt->receipt_no)
+    //         ]);
+
+    //     } catch (\Exception $e) {
+
+    //         \Log::error('Receipt creation failed: ' . $e->getMessage(), [
+    //             'exception' => $e,
+    //             'request' => $request->all()
+    //         ]);
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => $e->getMessage(),
+    //             'error' => config('app.debug') ? $e->getTrace() : null
+    //         ], 500);
+    //     }
+    // }
+
+    protected function generateNextReceiptNumber($currentReceiptNo)
+    {
+        // Assuming receipt_no is numeric and increments by 1
+        $numericPart = (int) preg_replace('/[^0-9]/', '', $currentReceiptNo);
+        return str_pad($numericPart + 1, strlen($currentReceiptNo), '0', STR_PAD_LEFT);
     }
 
     /**
@@ -125,7 +267,7 @@ class ReceiptController extends Controller
             'invoice_no' => 'nullable|exists:invoices,invoice_no',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
-            'amount_paid' => 'required|numeric',
+            'paid_amount' => 'required|numeric',
             'payment_method' => 'required|string',
             'payment_reference_no' => 'nullable|string',
         ]);
@@ -135,8 +277,8 @@ class ReceiptController extends Controller
             'invoice_no' => $request->invoice_no,
             'receipt_date' => $request->receipt_date,
             'customer_id' => $request->customer_id,
-            'amount_paid' => $request->amount_paid,
-            'amount_in_words' => $this->convertToWords($request->amount_paid),
+            'paid_amount' => $request->paid_amount,
+            'amount_in_words' => $this->convertToWords($request->paid_amount),
             'payment_method' => $request->payment_method,
             'payment_reference_no' => $request->payment_reference_no,
         ]);

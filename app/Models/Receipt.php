@@ -19,7 +19,7 @@ class Receipt extends Model
         'customer_id',
         'customer_code',
         'purpose',
-        'amount_paid',
+        'paid_amount',
         'amount_in_words',
         'payment_method',
         'payment_reference_no',
