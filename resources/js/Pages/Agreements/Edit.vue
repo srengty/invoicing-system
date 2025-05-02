@@ -251,7 +251,9 @@
                     </div>
                     <!-- Right Column - Attachments -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/3">
-                        <h3 class="font-semibold text-xl mb-4">Add Attachments</h3>
+                        <h3 class="font-semibold text-xl mb-4">
+                            Add Attachments
+                        </h3>
                         <div class="space-y-4">
                             <!-- Attachment Upload Section -->
                             <span class="text-sm">Attachment</span>
@@ -387,7 +389,7 @@ import { Form } from "@primevue/forms";
 import { useToast } from "primevue/usetoast";
 import { currencies } from "@/constants";
 import moment from "moment";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import {
     Button,
     DatePicker,

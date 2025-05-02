@@ -44,6 +44,10 @@ class Agreement extends Model
         return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
     }
 
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
+    }
 
     // protected $dateFormat = 'Y-m-d';
     protected function casts(){

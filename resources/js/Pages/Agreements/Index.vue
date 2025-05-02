@@ -744,7 +744,7 @@ import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
 import moment from "moment";
 import axios from "axios";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import {
     DataTable,
     Column,
@@ -868,6 +868,7 @@ const rowClass = (data) => {
         "border-l-4 border-red-500": data.due_payment > 0,
     };
 };
+// In your list agreement component
 const calculateDuePayment = (agreement) => {
     if (
         !agreement.payment_schedules ||
@@ -880,40 +881,29 @@ const calculateDuePayment = (agreement) => {
     let duePayment = 0;
 
     agreement.payment_schedules.forEach((schedule) => {
-        try {
-            // Handle different date formats
-            const dueDate = moment(
-                schedule.due_date,
-                ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
-                true
-            );
-            if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
-                // Add the amount if the payment is past due
-                duePayment += parseFloat(schedule.amount) || 0;
-            }
-        } catch (error) {
-            console.error("Error processing payment schedule:", error);
+        const dueDate = moment(schedule.due_date, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            moment.ISO_8601,
+        ]);
+        if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+            // Add the amount if the payment is past due
+            duePayment += parseFloat(schedule.amount) || 0;
         }
     });
 
     return duePayment;
 };
+// Process your agreements data to include due_payment
 const processedAgreements = computed(() => {
-    if (!props.agreements) return [];
-
     return props.agreements.map((agreement) => {
-        // Ensure payment_schedules exists
-        const paymentSchedules = agreement.payment_schedules || [];
-
         return {
             ...agreement,
-            due_payment: calculateDuePayment({
-                ...agreement,
-                payment_schedules: paymentSchedules,
-            }),
+            due_payment: calculateDuePayment(agreement),
         };
     });
 });
+
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
     return processedAgreements.value.filter((agreement) => {

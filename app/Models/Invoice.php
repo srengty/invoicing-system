@@ -87,7 +87,7 @@ class Invoice extends Model
 
     public function receipts()
     {
-        return $this->hasMany(Receipt::class);
+        return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
     }
 
     public function getPaymentStatusAttribute()

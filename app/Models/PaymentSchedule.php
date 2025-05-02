@@ -38,9 +38,4 @@ class PaymentSchedule extends Model
             (Carbon::createFromFormat('d/m/Y',$value))
             );
     }
-
-    public function invoice()
-    {
-        return $this->belongsTo(Invoice::class);
-    }
 }
