@@ -97,10 +97,10 @@
                     <Tag
                         :value="getPaymentStatus(slotProps.data)"
                         :severity="getStatusSeverity(slotProps.data)"
+                        class="text-transform: uppercase"
                     />
                 </template>
             </Column>
-
             <Column
                 header="Action"
                 :exportable="false"
@@ -342,12 +342,17 @@ const isPastDue = (date) => {
 };
 
 const getPaymentStatus = (schedule) => {
-    if (schedule.status === "PAID" || schedule.paid_amount > 0) {
+    if (schedule.status === "PAID" || schedule.paid_amount >= schedule.amount) {
         return "PAID";
     }
-    if (isPastDue(schedule.due_date)) {
+
+    const today = moment();
+    const dueDate = moment(schedule.due_date);
+
+    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
         return "PAST DUE";
     }
+
     return "UPCOMING";
 };
 

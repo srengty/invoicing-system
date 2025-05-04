@@ -12,15 +12,16 @@ class PaymentSchedule extends Model
 {
     /** @use HasFactory<\Database\Factories\PaymentScheduleFactory> */
     use HasFactory;
-    protected $fillable = [
-        'agreement_no',
-        'due_date',
-        'short_description',
-        'percentage',
-        'amount',
-        'currency',
-        'status',
-    ];
+   protected $fillable = [
+    'agreement_no',
+    'due_date',
+    'amount',
+    'status',
+    'percentage',
+    'short_description',
+    'currency',
+    'paid_amount',
+];
     public function agreement():BelongsTo
     {
         return $this->belongsTo(Agreement::class);

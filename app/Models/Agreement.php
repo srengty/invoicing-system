@@ -29,6 +29,9 @@ class Agreement extends Model
         'short_description',
         'currency',
         'attachments',
+        'due_payment',
+        'total_progress_payment',
+        'total_progress_payment_percentage',
     ];
     protected $appends = ['status'];
 
