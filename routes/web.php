@@ -58,9 +58,10 @@ Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'upda
 Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
 
 Route::resource('receipts', ReceiptController::class);
+Route::put('/receipts/{receipt_no}', [ReceiptController::class, 'update'])
+    ->where('receipt_no', '[0-9]+')
+    ->name('receipts.update');
 Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
-
-Route::post('/record-payment', [PaymentController::class, 'recordPayment'])->name('payments.record');
 
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
 Route::get('/api/customers', [CustomerController::class, 'apiIndex']);

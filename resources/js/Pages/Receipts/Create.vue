@@ -1,4 +1,5 @@
 <template>
+    <Toast position="top-center" />
     <Dialog
         v-model:visible="dialogVisible"
         :header="isEditMode ? 'Edit Receipt' : 'Create New Receipt'"
@@ -236,6 +237,8 @@
 import Customers from "@/Components/Customers.vue";
 import { convertCurrencyToWords } from "@/utils/currencyWords";
 import { ref, computed, onMounted, defineExpose, watch } from "vue";
+import { router } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
 import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import axios from "axios";
@@ -293,7 +296,16 @@ const paymentMethods = ref([
     { label: "Bank Transfer", value: "Bank Transfer" },
     { label: "Credit Card", value: "Credit Card" },
 ]);
+const showSuccessToast = () => {
+    toast.add({
+        severity: "success",
+        summary: "Test Toast",
+        detail: "This is a test",
+        life: 3000,
+    });
+};
 
+showSuccessToast();
 const resetForm = () => {
     formData.value = {
         invoice_no: null,
@@ -410,26 +422,6 @@ watch(
     { immediate: true, deep: true }
 );
 
-const updateReceipt = async () => {
-    try {
-        const response = await axios.put(
-            route("receipts.update", formData.value.receipt_no),
-            formData.value
-        );
-        emit("receipt-updated", response.data);
-        toast.add({
-            severity: "success",
-            summary: "Success",
-            detail: "Receipt updated successfully.",
-        });
-    } catch (error) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to update receipt.",
-        });
-    }
-};
 watch(
     () => props.receipt,
     (newReceipt) => {
@@ -474,13 +466,15 @@ const show = async () => {
     await loadInvoices();
     await loadCustomerCategories();
 
-    try {
-        const receiptNoResponse = await axios.get(route("receipts.create"));
-        formData.value.receipt_no = String(
-            receiptNoResponse.data.nextReceiptNo
-        ).padStart(8, "0");
-    } catch (error) {
-        console.error("Error getting receipt number", error);
+    if (!isEditMode.value) {
+        try {
+            const receiptNoResponse = await axios.get(route("receipts.create"));
+            formData.value.receipt_no = String(
+                receiptNoResponse.data.nextReceiptNo
+            ).padStart(8, "0");
+        } catch (error) {
+            console.error("Error getting receipt number", error);
+        }
     }
 
     dialogVisible.value = true;
@@ -592,19 +586,80 @@ const handleCustomerCreated = (newCustomer) => {
 };
 
 const isLoading = ref(false);
+
+const updateReceipt = async () => {
+    isLoading.value = true;
+
+    try {
+        const payload = {
+            ...formData.value,
+            receipt_no: String(formData.value.receipt_no),
+            invoice_no: formData.value.invoice_no
+                ? String(formData.value.invoice_no)
+                : null,
+            receipt_date: formData.value.receipt_date
+                .toISOString()
+                .split("T")[0],
+            amount_in_words: amountInWords.value,
+        };
+
+        const response = await axios.put(
+            route("receipts.update", { receipt_no: formData.value.receipt_no }),
+            payload
+        );
+
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: `Receipt ${formData.value.receipt_no} updated successfully`,
+            life: 3000,
+        });
+        // router.replace(route("receipts.index"));
+        Inertia.visit(route("receipts.index"), {
+            method: "get",
+            preserveState: true,
+        });
+        closeDialog();
+    } catch (error) {
+        console.error("Update error:", error.response);
+        let errorDetail = "Failed to update receipt";
+        if (error.response?.status === 422) {
+            errorDetail = Object.values(error.response.data.errors).join(" ");
+        } else if (error.response?.data?.message) {
+            errorDetail = error.response.data.message;
+        } else if (error.message) {
+            errorDetail = error.message;
+        }
+
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorDetail,
+            life: 5000,
+        });
+    } finally {
+        isLoading.value = false;
+    }
+};
+
 const createReceipt = async () => {
     isLoading.value = true;
 
     try {
         // Validate required fields
-        if (!formData.value.customer_id) {
-            throw new Error("Please select a customer.");
-        }
-        if (!formData.value.paid_amount || formData.value.paid_amount <= 0) {
-            throw new Error("Please enter a valid amount greater than zero.");
-        }
-        if (!formData.value.payment_method) {
-            throw new Error("Please select a payment method.");
+        const requiredFields = {
+            customer_id: "Please select a customer",
+            paid_amount: "Please enter a valid amount greater than zero",
+            payment_method: "Please select a payment method",
+        };
+
+        for (const [field, message] of Object.entries(requiredFields)) {
+            if (
+                !formData.value[field] ||
+                (field === "paid_amount" && formData.value[field] <= 0)
+            ) {
+                throw new Error(message);
+            }
         }
 
         const payload = {
@@ -626,29 +681,34 @@ const createReceipt = async () => {
 
         const response = await axios.post(route("receipts.store"), payload);
 
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: `Receipt ${response.data.receipt.receipt_no} created successfully`,
+            life: 3000,
+        });
+
         dialogVisible.value = false;
         emit("receipt-created", {
             receipt: response.data.receipt,
             shouldReload: true,
         });
-
-        toast.add({
-            severity: "success",
-            summary: "Success",
-            detail: "Receipt created successfully.",
-            life: 3000,
-        });
     } catch (error) {
         console.error("Error:", error);
-        let errorMessage =
-            error.response?.data?.message ||
-            error.message ||
-            "Failed to create receipt";
+
+        let errorDetail = "Failed to create receipt";
+        if (error.response?.status === 422) {
+            errorDetail = Object.values(error.response.data.errors).join(" ");
+        } else if (error.response?.data?.message) {
+            errorDetail = error.response.data.message;
+        } else if (error.message) {
+            errorDetail = error.message;
+        }
 
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: errorMessage,
+            detail: errorDetail,
             life: 5000,
         });
     } finally {

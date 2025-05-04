@@ -2,6 +2,8 @@
     <Head title="Receipts" />
     <GuestLayout>
         <NavbarLayout />
+        <Toast position="top-center" group="tc" />
+        <Toast position="top-right" group="tr" />
         <div class="py-3">
             <Breadcrumb
                 :model="breadcrumbItems"
@@ -18,8 +20,6 @@
                 </template>
             </Breadcrumb>
         </div>
-        <Toast position="top-center" group="tc" />
-        <Toast position="top-right" group="tr" />
         <div class="receipts px-4">
             <!-- Page Header -->
             <div class="flex justify-end items-center mb-3">
@@ -398,27 +398,39 @@ const editReceipt = (receipt) => {
 const handleReceiptCreated = async ({ shouldReload }) => {
     if (shouldReload) {
         await router.reload();
-        toast.add({
-            severity: "success",
-            summary: "Success",
-            detail: "Receipt created successfully",
-            life: 3000,
-        });
+        // toast.add({
+        //     severity: "success",
+        //     summary: "Success",
+        //     detail: "Receipt created successfully",
+        //     life: 3000,
+        // });
     }
 };
 
-const handleReceiptUpdated = async ({ shouldReload }) => {
-    editingReceipt.value = null;
-    if (shouldReload) {
-        await router.reload();
-        toast.add({
-            severity: "success",
-            summary: "Success",
-            detail: "Receipt updated successfully",
-            life: 3000,
-        });
+// const handleReceiptUpdated = async ({ shouldReload }) => {
+//     editingReceipt.value = null;
+//     if (shouldReload) {
+//         await router.reload({ only: ["receipts"] });
+//         // toast.add({
+//         //     severity: "success",
+//         //     summary: "Success",
+//         //     detail: "Receipt updated successfully",
+//         //     life: 3000,
+//         // });
+//     }
+// };
+const handleReceiptUpdated = (updatedReceipt) => {
+    // Find the index of the updated receipt in the receipts array
+    const index = props.receipts.findIndex(
+        (receipt) => receipt.receipt_no === updatedReceipt.receipt_no
+    );
+
+    // If the receipt exists, update it in the array
+    if (index !== -1) {
+        props.receipts[index] = updatedReceipt;
     }
 };
+
 </script>
 
 <style scoped></style>

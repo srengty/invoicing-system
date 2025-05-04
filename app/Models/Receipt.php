@@ -12,6 +12,8 @@ class Receipt extends Model
 {
     use HasFactory;
     protected $primaryKey  = 'receipt_no';
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $fillable = [
         'invoice_no',
         'receipt_no',

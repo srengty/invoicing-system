@@ -72,9 +72,20 @@ class ReceiptController extends Controller
             'payment_method' => 'nullable|string|in:Cash,Bank Transfer,Credit Card',
             'payment_reference_no' => 'nullable|string',
             'purpose' => 'nullable|string',
-            'invoice_no' => 'nullable|regex:/^\d+$/|exists:invoices,invoice_no',
             'paid_amount' => 'nullable|numeric|min:0.01',
+            'invoice_no' => 'nullable|regex:/^\d+$/|exists:invoices,invoice_no',
         ]);
+         // Check if invoice already has a receipt
+        if ($validated['invoice_no']) {
+            $existingReceipt = Receipt::where('invoice_no', $validated['invoice_no'])->first();
+            if ($existingReceipt) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This invoice already has a receipt',
+                ], 422);
+            }
+        }
+
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
         $receiptNo = $this->generateReceiptNumber($lastReceipt);
 
@@ -96,28 +107,17 @@ class ReceiptController extends Controller
         //     }
         // }
 
-        if ($validated['invoice_no']) {
-            // Check if the invoice already has a receipt
-            $existingReceipt = Receipt::where('invoice_no', $validated['invoice_no'])->first();
-            if ($existingReceipt) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This invoice already has a receipt',
-                ], 422);
-            }
-        }
-
         $data = [
-            'invoice_no' => $request->invoice_no,
-            'receipt_no' => $receiptNo,
-            'receipt_date' => $request->receipt_date,
-            'customer_id' => $request->customer_id,
+            'invoice_no' => $validated['invoice_no'] ?? null,
+            'receipt_no' => $validated['receipt_no'],
+            'receipt_date' => $validated['receipt_date'],
+            'customer_id' => $validated['customer_id'],
             'customer_code' => $customer->code,
-            'purpose' => $request->purpose,
-            'paid_amount' => $request->paid_amount,
-            'amount_in_words' => $this->convertToWords($request->paid_amount),
-            'payment_method' => $request->payment_method,
-            'payment_reference_no' => $request->payment_reference_no,
+            'purpose' => $validated['purpose'] ?? null,
+            'paid_amount' => $validated['paid_amount'],
+            'amount_in_words' => $this->convertToWords($validated['paid_amount']),
+            'payment_method' => $validated['payment_method'],
+            'payment_reference_no' => $validated['payment_reference_no'] ?? null,
         ];
 
         $receipt = Receipt::create($data);
@@ -141,7 +141,7 @@ class ReceiptController extends Controller
      */
     public function show($id)
     {
-        $receipt = Receipt::with(['invoice', 'customer'])->findOrFail($id);
+        $receipt = Receipt::with(['invoice', 'customer'])->where('receipt_no', $receipt_no)->firstOrFail();
 
         return Inertia::render('Receipts/Show', [
             'receipt' => $receipt,
@@ -167,45 +167,50 @@ class ReceiptController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $receipt_no)
     {
-        $receipt = Receipt::findOrFail($id);
+        // Find receipt by receipt_no (treated as string)
+        $receipt = Receipt::where('receipt_no', (string)$receipt_no)->first();
 
-        $request->validate([
-            'receipt_no' => 'required',
-            'invoice_no' => 'nullable|exists:invoices,invoice_no',
+        if (!$receipt) {
+            return response()->json([
+                'success' => false,
+                'message' => "Receipt not found",
+            ], 404);
+        }
+
+        // Validate input
+        $validated = $request->validate([
+            'receipt_no' => 'required|string|unique:receipts,receipt_no,'.$receipt_no.',receipt_no',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
             'customer_code' => 'required|string',
-            'paid_amount' => 'required|numeric',
-            'payment_method' => 'required|string',
-            'payment_reference_no' => 'nullable|string',
             'purpose' => 'nullable|string',
+            'paid_amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
+            'payment_reference_no' => 'nullable|string',
+            'invoice_no' => 'nullable|string|exists:invoices,invoice_no',
         ]);
 
-         // Check if invoice is being changed and validate it
-         if ($request->has('invoice_no') && $request->invoice_no !== $receipt->invoice_no) {
-            if ($request->invoice_no) {
-                $existingReceipt = Receipt::where('invoice_no', $request->invoice_no)
-                    ->where('id', '!=', $id)
-                    ->first();
+        // Check for duplicate invoice
+        if ($request->invoice_no && $request->invoice_no !== $receipt->invoice_no) {
+            $existingReceipt = Receipt::where('invoice_no', $request->invoice_no)
+                ->where('receipt_no', '!=', $receipt_no)
+                ->exists();
 
-                if ($existingReceipt) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This invoice already has a receipt',
-                    ], 422);
-                }
+            if ($existingReceipt) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This invoice already has a receipt',
+                ], 422);
             }
-
-            // If removing invoice association, set to null
-            $validated['invoice_no'] = $request->invoice_no ?: null;
         }
 
+        // Update receipt
         $customer = Customer::findOrFail($validated['customer_id']);
 
         $receipt->update([
-            'invoice_no' => $validated['invoice_no'],
+            'invoice_no' => $validated['invoice_no'] ?? null,
             'receipt_no' => $validated['receipt_no'],
             'receipt_date' => $validated['receipt_date'],
             'customer_id' => $validated['customer_id'],
