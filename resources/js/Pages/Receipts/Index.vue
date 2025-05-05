@@ -430,7 +430,6 @@ const handleReceiptUpdated = (updatedReceipt) => {
         props.receipts[index] = updatedReceipt;
     }
 };
-
 </script>
 
 <style scoped></style>

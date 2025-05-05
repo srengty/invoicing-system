@@ -110,6 +110,12 @@ class Invoice extends Model
 
         return response()->json($paymentSchedules);
     }
+
+    // In Invoice.php model
+    public function paymentSchedule()
+    {
+        return $this->belongsTo(PaymentSchedule::class);
+    }
     public function receipts()
     {
         return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
@@ -118,6 +124,16 @@ class Invoice extends Model
     public function agreement()
     {
         return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
+    }
+
+    // In Invoice model
+    public function updatePaidAmount()
+    {
+        $this->paid_amount = $this->receipts()->sum('paid_amount');
+        $this->save();
+
+        // You might also want to update invoice status here
+        $this->updateStatus();
     }
 
 }

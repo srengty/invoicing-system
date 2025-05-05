@@ -6,6 +6,7 @@ use App\Models\Receipt;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\CustomerCategory;
+use App\Models\PaymentSchedule;
 use Illuminate\Http\Request;
 use NumberFormatter;
 use Inertia\Inertia;
@@ -35,8 +36,8 @@ class ReceiptController extends Controller
         $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
         $nextReceiptNo = $this->generateReceiptNumber($lastReceipt);
 
-        $invoices = Invoice::with('customer')
-            ->select('id', 'invoice_no', 'grand_total', 'paid_amount', 'currency', 'customer_id')
+        $invoices = Invoice::with(['customer', 'paymentSchedule'])
+            ->select('id', 'invoice_no', 'grand_total', 'paid_amount', 'currency', 'customer_id','payment_schedule_id')
             ->where('status', 'Approved')
             ->whereNotIn('invoice_no', function($query) {
                 $query->select('invoice_no')
@@ -48,6 +49,7 @@ class ReceiptController extends Controller
                 // $invoice->remaining_amount = $invoice->grand_total - ($invoice->paid_amount ?? 0);
                 $invoice->customer_name = $invoice->customer?->name ?? null;
                 $invoice->customer_code = $invoice->customer?->code ?? null;
+                $invoice->payment_schedule_id = $invoice->paymentSchedule?->id ?? null;
 
                 return $invoice;
             });
@@ -67,16 +69,35 @@ class ReceiptController extends Controller
             'receipt_no' => 'required|string|unique:receipts',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
-            'customer_code' => 'required|string',
+            'customer_code' => 'nullable|string',
             'amount_in_words' => 'nullable|string',
-            'payment_method' => 'nullable|string|in:Cash,Bank Transfer,Credit Card',
+            'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
             'payment_reference_no' => 'nullable|string',
             'purpose' => 'nullable|string',
-            'paid_amount' => 'nullable|numeric|min:0.01',
+            'paid_amount' => [
+                'required',
+                'numeric',
+                'min:0.01',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->payment_schedule_id) {
+                        $schedule = PaymentSchedule::find($request->payment_schedule_id);
+                        if (!$schedule) {
+                            $fail('Invalid payment schedule');
+                            return;
+                        }
+                        $remaining = $schedule->amount - ($schedule->paid_amount ?? 0);
+                        if ($value > $remaining) {
+                            $fail("The paid amount cannot exceed the remaining amount of ".number_format($remaining, 2));
+                        }
+                    }
+                },
+            ],
             'invoice_no' => 'nullable|regex:/^\d+$/|exists:invoices,invoice_no',
+            'payment_schedule_id' => 'nullable|exists:payment_schedules,id',
         ]);
-         // Check if invoice already has a receipt
-        if ($validated['invoice_no']) {
+
+        // Check if invoice already has a receipt (only if invoice_no is provided)
+        if (!empty($validated['invoice_no'])) {
             $existingReceipt = Receipt::where('invoice_no', $validated['invoice_no'])->first();
             if ($existingReceipt) {
                 return response()->json([
@@ -86,26 +107,13 @@ class ReceiptController extends Controller
             }
         }
 
-        $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
-        $receiptNo = $this->generateReceiptNumber($lastReceipt);
-
-        $customer = Customer::findOrFail($request->customer_id);
-
-        // $invoice = null;
-        // if ($validated['invoice_no']) {
-        //     $invoice = Invoice::where('invoice_no', $validated['invoice_no'])->first();
-
-        //     // Update the invoice's paid amount
-        //     if ($invoice) {
-        //         $newPaidAmount = ($invoice->paid_amount ?? 0) + $validated['paid_amount'];
-        //         $invoice->update([
-        //             'paid_amount' => $newPaidAmount,
-        //             'payment_status' => $newPaidAmount >= $invoice->grand_total
-        //                 ? 'Fully Paid'
-        //                 : 'Partially Paid'
-        //         ]);
-        //     }
-        // }
+        $customer = Customer::find($validated['customer_id']);
+        if (!$customer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer not found',
+            ], 404);
+        }
 
         $data = [
             'invoice_no' => $validated['invoice_no'] ?? null,
@@ -118,15 +126,49 @@ class ReceiptController extends Controller
             'amount_in_words' => $this->convertToWords($validated['paid_amount']),
             'payment_method' => $validated['payment_method'],
             'payment_reference_no' => $validated['payment_reference_no'] ?? null,
+            'payment_schedule_id' => $validated['payment_schedule_id'] ?? null, // Add this line
         ];
 
-        $receipt = Receipt::create($data);
+        try {
+            $receipt = Receipt::create($data);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Receipt created successfully',
-            'receipt' => $receipt
-        ]);
+             // Update invoice if provided
+            if (!empty($validated['invoice_no'])) {
+                $invoice = Invoice::where('invoice_no', $validated['invoice_no'])->first();
+                if ($invoice) {
+                    $invoice->increment('paid_amount', $validated['paid_amount']);
+                }
+            }
+
+            // Update payment schedule if provided
+            if (!empty($validated['payment_schedule_id'])) {
+                $paymentSchedule = PaymentSchedule::find($validated['payment_schedule_id']);
+                if ($paymentSchedule) {
+                    // Calculate new paid amount
+                    $newPaidAmount = ($paymentSchedule->paid_amount ?? 0) + $validated['paid_amount'];
+
+                    // Update payment schedule
+                    $paymentSchedule->update([
+                        'paid_amount' => $newPaidAmount,
+                        'status' => $newPaidAmount >= $paymentSchedule->amount ? 'PAID' : 'PARTIALLY_PAID'
+                    ]);
+                }
+            }
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Receipt created successfully',
+                'receipt' => $receipt->load(['customer', 'invoice', 'paymentSchedule'])
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create receipt: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     protected function generateNextReceiptNumber($currentReceiptNo)
@@ -169,7 +211,6 @@ class ReceiptController extends Controller
      */
     public function update(Request $request, $receipt_no)
     {
-        // Find receipt by receipt_no (treated as string)
         $receipt = Receipt::where('receipt_no', (string)$receipt_no)->first();
 
         if (!$receipt) {
@@ -184,12 +225,13 @@ class ReceiptController extends Controller
             'receipt_no' => 'required|string|unique:receipts,receipt_no,'.$receipt_no.',receipt_no',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
-            'customer_code' => 'required|string',
+            'customer_code' => 'nullable|string',
             'purpose' => 'nullable|string',
             'paid_amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
             'payment_reference_no' => 'nullable|string',
             'invoice_no' => 'nullable|string|exists:invoices,invoice_no',
+            'payment_schedule_id' => 'nullable|exists:payment_schedules,id',
         ]);
 
         // Check for duplicate invoice
@@ -220,7 +262,23 @@ class ReceiptController extends Controller
             'amount_in_words' => $this->convertToWords($validated['paid_amount']),
             'payment_method' => $validated['payment_method'],
             'payment_reference_no' => $validated['payment_reference_no'] ?? null,
+            'payment_schedule_id' => $validated['payment_schedule_id'] ?? null,
         ]);
+
+        // Update the corresponding payment schedule
+        // $paymentSchedule = PaymentSchedule::findOrFail($validated['payment_schedule_id']);
+        // $paymentSchedule->paid_amount += $validated['paid_amount']; // Update the paid amount
+        // $paymentSchedule->updateStatus(); // Update the status of the payment schedule
+
+         // Update payment schedule if provided
+        if (!empty($validated['payment_schedule_id'])) {
+            $paymentSchedule = PaymentSchedule::find($validated['payment_schedule_id']);
+            if ($paymentSchedule) {
+                $paymentSchedule->paid_amount = ($paymentSchedule->paid_amount ?? 0) + $validated['paid_amount'];
+                $paymentSchedule->updateStatus();
+                $paymentSchedule->save();
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -243,20 +301,20 @@ class ReceiptController extends Controller
 
     protected function generateReceiptNumber($latestReceipt)
     {
-        $currentYear = date('y'); // Get last 2 digits of the year
-        $baseNumber = (int) ($currentYear . '000001'); // Start from 25000001
+        $currentYear = date('y');
+        $baseNumber = (int) ($currentYear . '000001');
 
         if (!$latestReceipt) {
-            return $baseNumber; // If no receipts exist, start from base
+            return $baseNumber;
         }
 
-        $lastYear = (int) substr($latestReceipt->receipt_no, 0, 2); // Extract year portion from receipt_no
+        $lastYear = (int) substr($latestReceipt->receipt_no, 0, 2);
 
         if ($lastYear != $currentYear) {
-            return $baseNumber; // Reset sequence if the year has changed
+            return $baseNumber;
         }
 
-        return $latestReceipt->receipt_no + 1; // Increment receipt number
+        return $latestReceipt->receipt_no + 1;
     }
 
     /**

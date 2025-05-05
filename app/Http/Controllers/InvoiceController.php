@@ -141,26 +141,6 @@ class InvoiceController extends Controller
 
         $installment_paid = 0;
 
-        if ($paymentSchedule) {
-            // Auto-fill the paid_amount and installment_paid based on the selected payment schedule
-
-            // First, retrieve the current invoice
-            $invoice = Invoice::findOrFail($invoice_no);  // Assuming you have the invoice ID
-
-            // Set the paid_amount and installment_paid from the selected payment schedule
-            $paid_amount = $paymentSchedule->amount;
-
-            // Add the current installment_paid value (if any) from the invoice
-            $installment_paid = $invoice->installment_paid + $paymentSchedule->amount;
-
-            // Update the invoice fields with the new values
-            $invoice->paid_amount = $paid_amount;
-            $invoice->installment_paid = $installment_paid;
-
-            // Save the updated invoice
-            $invoice->save();
-        }
-
 
         // Create the invoice
         $invoice = \App\Models\Invoice::create([

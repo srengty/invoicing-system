@@ -72,6 +72,23 @@
                         />
                     </div>
                 </div>
+                <div
+                    class="col-12 md:col-6"
+                    v-if="
+                        formData.invoice_no &&
+                        selectedInvoice?.payment_schedule_id
+                    "
+                >
+                    <div class="field">
+                        <label>Payment Schedule</label>
+                        <InputText
+                            :value="formattedScheduleId"
+                            class="w-full"
+                            size="small"
+                            readonly
+                        />
+                    </div>
+                </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
                         <label class="required">Customer Code</label>
@@ -86,7 +103,9 @@
                 </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
-                        <label for="customer_id">Customer</label>
+                        <label for="customer_id" class="required"
+                            >Customer</label
+                        >
                         <div class="flex gap-2">
                             <Dropdown
                                 v-model="formData.customer_id"
@@ -286,6 +305,7 @@ const formData = ref({
     paid_amount: null,
     payment_method: null,
     payment_reference_no: null,
+    payment_schedule_id: null,
 });
 
 const customers = ref([]);
@@ -544,6 +564,7 @@ const updateInvoiceDetails = () => {
     formData.value.customer_id = invoice.customer_id;
     formData.value.customer_code = invoice.customer_code;
     formData.value.customer_name = invoice.customer_name;
+    formData.value.payment_schedule_id = invoice.payment_schedule_id;
     updateAmountInWords();
 };
 
@@ -559,8 +580,11 @@ const resetInvoiceFields = () => {
 
 const invoiceLabel = (invoice) => {
     if (!invoice) return "";
-    return `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
-    // return `${invoice.invoice_no}`;
+    let label = `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
+    if (invoice.payment_schedule_id) {
+        label += ` [Schedule: ${invoice.payment_schedule_id}]`;
+    }
+    return label;
 };
 const customerLabel = (customer) => {
     if (!customer) return "";
@@ -601,6 +625,7 @@ const updateReceipt = async () => {
                 .toISOString()
                 .split("T")[0],
             amount_in_words: amountInWords.value,
+            payment_schedule_id: formData.value.payment_schedule_id || null,
         };
 
         const response = await axios.put(
@@ -646,37 +671,18 @@ const createReceipt = async () => {
     isLoading.value = true;
 
     try {
-        // Validate required fields
-        const requiredFields = {
-            customer_id: "Please select a customer",
-            paid_amount: "Please enter a valid amount greater than zero",
-            payment_method: "Please select a payment method",
-        };
-
-        for (const [field, message] of Object.entries(requiredFields)) {
-            if (
-                !formData.value[field] ||
-                (field === "paid_amount" && formData.value[field] <= 0)
-            ) {
-                throw new Error(message);
-            }
-        }
-
         const payload = {
-            invoice_no: formData.value.invoice_no
-                ? String(formData.value.invoice_no)
-                : null,
-            receipt_no: String(formData.value.receipt_no),
+            invoice_no: formData.value.invoice_no,
+            receipt_no: formData.value.receipt_no,
             receipt_date: new Date(formData.value.receipt_date)
                 .toISOString()
                 .split("T")[0],
-            customer_id: Number(formData.value.customer_id),
-            customer_code: String(formData.value.customer_code),
-            purpose: formData.value.purpose || null,
+            customer_id: formData.value.customer_id,
             paid_amount: Number(formData.value.paid_amount),
-            amount_in_words: String(amountInWords.value),
-            payment_method: String(formData.value.payment_method),
+            amount_in_words: amountInWords.value,
+            payment_method: formData.value.payment_method,
             payment_reference_no: formData.value.payment_reference_no || null,
+            payment_schedule_id: formData.value.payment_schedule_id || null,
         };
 
         const response = await axios.post(route("receipts.store"), payload);
@@ -684,7 +690,7 @@ const createReceipt = async () => {
         toast.add({
             severity: "success",
             summary: "Success",
-            detail: `Receipt ${response.data.receipt.receipt_no} created successfully`,
+            detail: `Receipt ${response.data.receipt_no} created successfully`,
             life: 3000,
         });
 
@@ -695,7 +701,6 @@ const createReceipt = async () => {
         });
     } catch (error) {
         console.error("Error:", error);
-
         let errorDetail = "Failed to create receipt";
         if (error.response?.status === 422) {
             errorDetail = Object.values(error.response.data.errors).join(" ");
@@ -715,6 +720,11 @@ const createReceipt = async () => {
         isLoading.value = false;
     }
 };
+const formattedScheduleId = computed(() => {
+    if (!formData.value.payment_schedule_id) return 'No schedule';
+    // Example: PS-000123
+    return `PS-${String(formData.value.payment_schedule_id).padStart(6, '0')}`;
+});
 </script>
 
 <style scoped>

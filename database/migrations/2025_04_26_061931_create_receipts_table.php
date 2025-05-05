@@ -23,6 +23,11 @@ return new class extends Migration
             $table->string('amount_in_words')->nullable();
             $table->string('payment_method');
             $table->string('payment_reference_no')->nullable();
+            // Add this foreign key
+            $table->foreignId('payment_schedule_id')
+                ->nullable()
+                ->constrained('payment_schedules')
+                ->nullOnDelete();
             $table->timestamps();
         });
 

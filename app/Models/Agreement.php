@@ -35,12 +35,12 @@ class Agreement extends Model
     ];
     protected $appends = ['status'];
 
+    // Relationship
     public function customer()
     {
         return $this->belongsTo(Customer::class);
     }
 
-    // In Agreement.php (Agreement Model)
     public function quotation()
     {
         return $this->belongsTo(Quotation::class, 'quotation_no', 'quotation_no');
@@ -48,7 +48,24 @@ class Agreement extends Model
 
     public function receipts()
     {
-        return $this->hasMany(Receipt::class, 'invoice_no', 'invoice_no');
+        return $this->hasManyThrough(
+            Receipt::class,
+            PaymentSchedule::class,
+            'agreement_no',  
+            'payment_schedule_id',
+            'agreement_no',
+            'id'
+        );
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'agreement_no', 'agreement_no');
+    }
+
+    public function paymentSchedules()
+    {
+        return $this->hasMany(PaymentSchedule::class, 'agreement_no', 'agreement_no');
     }
 
     // protected $dateFormat = 'Y-m-d';
@@ -109,14 +126,5 @@ class Agreement extends Model
         return;
     }
 
-    public function invoices()
-    {
-        return $this->hasMany(Invoice::class, 'agreement_no', 'agreement_no');
-    }
-
-    public function paymentSchedules()
-    {
-        return $this->hasMany(PaymentSchedule::class, 'agreement_no', 'agreement_no');
-    }
 
 }

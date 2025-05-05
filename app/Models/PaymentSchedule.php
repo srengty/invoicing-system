@@ -16,6 +16,7 @@ class PaymentSchedule extends Model
     'agreement_no',
     'due_date',
     'amount',
+    'paid_amount',
     'status',
     'percentage',
     'short_description',
@@ -26,23 +27,24 @@ class PaymentSchedule extends Model
     {
         return $this->belongsTo(Agreement::class);
     }
+
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class, 'payment_schedule_id');
+    }
+
     protected $dateFormat = 'Y-m-d';
     protected function casts(){
         return [
             'due_date' => 'date',
         ];
     }
-    protected function dueDate():Attribute
+    protected function dueDate(): Attribute
     {
-        return Attribute::make(get:fn(string $value)=>(new Carbon($value))->format('d/m/Y'),
-            set:fn($value)=>//(new Carbon($value))->format('Y-m-d')
-            (Carbon::createFromFormat('d/m/Y',$value))
-            );
-    }
-
-    public function receipts()
-    {
-        return $this->hasMany(Receipt::class);
+        return Attribute::make(
+            get: fn(string $value) => Carbon::parse($value)->format('d/m/Y'),
+            set: fn($value) => Carbon::createFromFormat('d/m/Y', $value)->format('Y-m-d')
+        );
     }
 
     public function getPaidAmountAttribute()
@@ -53,5 +55,38 @@ class PaymentSchedule extends Model
     public function getIsPaidAttribute()
     {
         return $this->paid_amount >= $this->amount;
+    }
+
+// In PaymentSchedule model
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            if ($model->paid_amount > $model->amount) {
+                throw new \Exception('Paid amount cannot exceed scheduled amount');
+            }
+        });
+    }
+
+    public function updateStatus()
+    {
+        $this->status = $this->determineStatus();
+        return $this;
+    }
+
+    protected function determineStatus()
+    {
+        if ($this->paid_amount >= $this->amount) {
+            return 'PAID';
+        } elseif ($this->paid_amount > 0) {
+            return 'PARTIALLY_PAID';
+        }
+
+        $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $this->due_date);
+        return $dueDate->isPast() ? 'PAST_DUE' : 'UPCOMING';
+    }
+
+    public function getRemainingAmountAttribute()
+    {
+        return $this->amount - $this->paid_amount;
     }
 }
