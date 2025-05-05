@@ -16,71 +16,6 @@ class AgreementController extends Controller
     /**
      * Display a listing of the resource.
      */
-    // public function index()
-    // {
-    //     $agreements = Agreement::with(['customer', 'paymentSchedules', 'invoices.receipts'])
-    //         ->orderBy('created_at', 'desc')
-    //         ->get()
-    //         ->map(function ($agreement) {
-    //             // Calculate total paid amount from payment schedules
-    //             $totalPaid = $agreement->paymentSchedules->sum('paid_amount');
-
-    //             // Calculate payment percentage
-    //             $paymentPercentage = $agreement->amount > 0
-    //                 ? ($totalPaid / $agreement->amount) * 100
-    //                 : 0;
-
-    //             // Format payment schedules with proper status
-    //             $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) {
-    //                 $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
-    //                 $today = now();
-
-    //                 return [
-    //                     ...$schedule->toArray(),
-    //                     'status' => $schedule->status,
-    //                     'paid_amount' => $schedule->paid_amount ?? 0,
-    //                     'remaining_amount' => $schedule->amount - ($schedule->paid_amount ?? 0),
-    //                     'is_past_due' => $dueDate->isPast() && $schedule->status !== 'PAID',
-    //                 ];
-    //             });
-
-    //             // Calculate due payment
-    //             $duePayment = $paymentSchedules->sum(function ($schedule) {
-    //                 if ($schedule['is_past_due'] && $schedule['remaining_amount'] > 0) {
-    //                     return $schedule['remaining_amount'];
-    //                 }
-    //                 return 0;
-    //             });
-
-    //             // Prepare progress payments with invoice numbers
-    //             $progressPayments = $agreement->invoices->flatMap(function ($invoice) {
-    //                 return $invoice->receipts->map(function ($receipt) use ($invoice) {
-    //                     return [
-    //                         'receipt_no' => $receipt->receipt_no,
-    //                         'amount' => $receipt->paid_amount,
-    //                         'date' => $receipt->receipt_date,
-    //                         'payment_schedule_id' => $receipt->payment_schedule_id,
-    //                         'invoice_no' => $invoice->invoice_no, // Add invoice number
-    //                         'invoice_id' => $invoice->id, // Add invoice ID for linking
-    //                     ];
-    //                 });
-    //             })->toArray();
-
-    //             return [
-    //                 ...$agreement->toArray(),
-    //                 'payment_schedules' => $paymentSchedules,
-    //                 'due_payment' => $duePayment,
-    //                 'total_progress_payment' => $totalPaid,
-    //                 'total_progress_payment_percentage' => $paymentPercentage,
-    //                 'progress_payments' => $progressPayments,
-    //             ];
-    //         });
-
-    //     return Inertia::render('Agreements/Index', [
-    //         'agreements' => $agreements
-    //     ]);
-    // }
-
     public function index()
     {
         $agreements = Agreement::with(['customer', 'paymentSchedules', 'invoices.receipts'])
@@ -94,7 +29,7 @@ class AgreementController extends Controller
                     $paidAmount = $schedule->receipts->sum('paid_amount');
                     $totalPaid += $paidAmount;
 
-                    $dueAmount = $schedule->amount - $paidAmount; // Remaining due amount
+                    $dueAmount = $schedule->amount - $paidAmount;
 
                     return [
                         ...$schedule->toArray(),
@@ -252,32 +187,6 @@ class AgreementController extends Controller
         $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
         return response()->json($agreement);
     }
-    // In your AgreementController
-    // public function show($agreementNo)
-    // {
-    //     $agreement = Agreement::with([
-    //         'customer',
-    //         'paymentSchedules' => function($query) {
-    //             $query->with(['receipts'])->orderBy('due_date');
-    //         },
-    //         'invoices.receipts'
-    //     ])->findOrFail($agreementNo);
-
-    //     // Calculate summary values
-    //     $agreement->total_paid = $agreement->invoices->flatMap->receipts->sum('paid_amount');
-    //     $agreement->payment_progress = ($agreement->amount > 0)
-    //         ? ($agreement->total_paid / $agreement->amount) * 100
-    //         : 0;
-
-    //     return Inertia::render('Agreements/Show', [
-    //         'agreement' => $agreement,
-    //         'statusColors' => [
-    //             'UPCOMING' => 'bg-blue-100 text-blue-800',
-    //             'PAST DUE' => 'bg-red-100 text-red-800',
-    //             'PAID' => 'bg-green-100 text-green-800'
-    //         ]
-    //     ]);
-    // }
 
     public function print(int $id)
     {
