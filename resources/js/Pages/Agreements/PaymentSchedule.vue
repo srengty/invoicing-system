@@ -97,10 +97,10 @@
                     <Tag
                         :value="getPaymentStatus(slotProps.data)"
                         :severity="getStatusSeverity(slotProps.data)"
+                        class="text-transform: uppercase"
                     />
                 </template>
             </Column>
-
             <Column
                 header="Action"
                 :exportable="false"
@@ -237,7 +237,16 @@ const editingRows = ref([]);
 const exchange_rate = ref(4100);
 const onRowEditSave = (event) => {
     let { newData, index } = event;
+
+    // Calculate the status before saving the updated schedule
+    newData.status = getPaymentStatus(newData); // Make sure this is correctly set to "PAST DUE" or "PAID"
+
+    // Update the local items array with the new data
     items.value[index] = newData;
+
+    // Now send the updated data to the backend
+    updatePaymentSchedule(newData);
+
     toast.add({
         severity: "success",
         summary: "Success",
@@ -245,6 +254,23 @@ const onRowEditSave = (event) => {
         life: 3000,
     });
 };
+
+const updatePaymentSchedule = async (schedule) => {
+    try {
+        const response = await axios.put(`/payment-schedules/${schedule.id}`, {
+            due_date: schedule.due_date,
+            short_description: schedule.short_description,
+            amount: schedule.amount,
+            status: schedule.status, // Send updated status
+            percentage: schedule.percentage,
+        });
+
+        console.log("Payment schedule updated", response.data);
+    } catch (error) {
+        console.error("Error updating payment schedule", error);
+    }
+};
+
 const minDate = computed(() => {
     return props.startDate ? new Date(props.startDate) : new Date();
 });
@@ -342,12 +368,28 @@ const isPastDue = (date) => {
 };
 
 const getPaymentStatus = (schedule) => {
-    if (schedule.status === "PAID" || schedule.paid_amount > 0) {
+    // First check if fully paid
+    if (schedule.status === "PAID" || schedule.paid_amount >= schedule.amount) {
         return "PAID";
     }
-    if (isPastDue(schedule.due_date)) {
+
+    // Then check if partially paid
+    if (schedule.paid_amount > 0) {
+        return "PARTIALLY_PAID";
+    }
+
+    // Then check if past due
+    const today = moment();
+    const dueDate = moment(
+        schedule.due_date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
         return "PAST DUE";
     }
+
+    // Default to upcoming
     return "UPCOMING";
 };
 
@@ -356,6 +398,8 @@ const getStatusSeverity = (schedule) => {
     switch (status) {
         case "PAID":
             return "success";
+        case "PARTIALLY_PAID":
+            return "warning";
         case "PAST DUE":
             return "danger";
         case "UPCOMING":
@@ -370,6 +414,8 @@ const paymentRowClass = (data) => {
     return {
         "bg-green-50": status === "PAID",
         "border-l-4 border-green-500": status === "PAID",
+        "bg-yellow-50": status === "PARTIALLY_PAID",
+        "border-l-4 border-yellow-500": status === "PARTIALLY_PAID",
         "bg-red-50": status === "PAST DUE",
         "border-l-4 border-red-500": status === "PAST DUE",
         "bg-blue-50": status === "UPCOMING",

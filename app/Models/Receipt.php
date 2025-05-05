@@ -12,6 +12,8 @@ class Receipt extends Model
 {
     use HasFactory;
     protected $primaryKey  = 'receipt_no';
+    public $incrementing = false;
+    protected $keyType = 'string';
     protected $fillable = [
         'invoice_no',
         'receipt_no',
@@ -23,6 +25,7 @@ class Receipt extends Model
         'amount_in_words',
         'payment_method',
         'payment_reference_no',
+        'payment_schedule_id',
     ];
 
     public function invoice()
@@ -34,4 +37,15 @@ class Receipt extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function agreement():BelongsTo
+    {
+        return $this->belongsTo(Agreement::class);
+    }
+
+    public function paymentSchedule()
+    {
+        return $this->belongsTo(PaymentSchedule::class);
+    }
+
 }

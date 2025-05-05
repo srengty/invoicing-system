@@ -1,4 +1,5 @@
 <template>
+    <Toast position="top-center" />
     <Dialog
         v-model:visible="dialogVisible"
         :header="isEditMode ? 'Edit Receipt' : 'Create New Receipt'"
@@ -71,6 +72,23 @@
                         />
                     </div>
                 </div>
+                <div
+                    class="col-12 md:col-6"
+                    v-if="
+                        formData.invoice_no &&
+                        selectedInvoice?.payment_schedule_id
+                    "
+                >
+                    <div class="field">
+                        <label>Payment Schedule</label>
+                        <InputText
+                            :value="formattedScheduleId"
+                            class="w-full"
+                            size="small"
+                            readonly
+                        />
+                    </div>
+                </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
                         <label class="required">Customer Code</label>
@@ -85,7 +103,9 @@
                 </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
-                        <label for="customer_id">Customer</label>
+                        <label for="customer_id" class="required"
+                            >Customer</label
+                        >
                         <div class="flex gap-2">
                             <Dropdown
                                 v-model="formData.customer_id"
@@ -236,6 +256,8 @@
 import Customers from "@/Components/Customers.vue";
 import { convertCurrencyToWords } from "@/utils/currencyWords";
 import { ref, computed, onMounted, defineExpose, watch } from "vue";
+import { router } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
 import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import axios from "axios";
@@ -283,6 +305,7 @@ const formData = ref({
     paid_amount: null,
     payment_method: null,
     payment_reference_no: null,
+    payment_schedule_id: null,
 });
 
 const customers = ref([]);
@@ -293,7 +316,16 @@ const paymentMethods = ref([
     { label: "Bank Transfer", value: "Bank Transfer" },
     { label: "Credit Card", value: "Credit Card" },
 ]);
+const showSuccessToast = () => {
+    toast.add({
+        severity: "success",
+        summary: "Test Toast",
+        detail: "This is a test",
+        life: 3000,
+    });
+};
 
+showSuccessToast();
 const resetForm = () => {
     formData.value = {
         invoice_no: null,
@@ -410,26 +442,6 @@ watch(
     { immediate: true, deep: true }
 );
 
-const updateReceipt = async () => {
-    try {
-        const response = await axios.put(
-            route("receipts.update", formData.value.receipt_no),
-            formData.value
-        );
-        emit("receipt-updated", response.data);
-        toast.add({
-            severity: "success",
-            summary: "Success",
-            detail: "Receipt updated successfully.",
-        });
-    } catch (error) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to update receipt.",
-        });
-    }
-};
 watch(
     () => props.receipt,
     (newReceipt) => {
@@ -474,13 +486,15 @@ const show = async () => {
     await loadInvoices();
     await loadCustomerCategories();
 
-    try {
-        const receiptNoResponse = await axios.get(route("receipts.create"));
-        formData.value.receipt_no = String(
-            receiptNoResponse.data.nextReceiptNo
-        ).padStart(8, "0");
-    } catch (error) {
-        console.error("Error getting receipt number", error);
+    if (!isEditMode.value) {
+        try {
+            const receiptNoResponse = await axios.get(route("receipts.create"));
+            formData.value.receipt_no = String(
+                receiptNoResponse.data.nextReceiptNo
+            ).padStart(8, "0");
+        } catch (error) {
+            console.error("Error getting receipt number", error);
+        }
     }
 
     dialogVisible.value = true;
@@ -550,6 +564,7 @@ const updateInvoiceDetails = () => {
     formData.value.customer_id = invoice.customer_id;
     formData.value.customer_code = invoice.customer_code;
     formData.value.customer_name = invoice.customer_name;
+    formData.value.payment_schedule_id = invoice.payment_schedule_id;
     updateAmountInWords();
 };
 
@@ -565,8 +580,11 @@ const resetInvoiceFields = () => {
 
 const invoiceLabel = (invoice) => {
     if (!invoice) return "";
-    return `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
-    // return `${invoice.invoice_no}`;
+    let label = `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
+    if (invoice.payment_schedule_id) {
+        label += ` [Schedule: ${invoice.payment_schedule_id}]`;
+    }
+    return label;
 };
 const customerLabel = (customer) => {
     if (!customer) return "";
@@ -592,69 +610,121 @@ const handleCustomerCreated = (newCustomer) => {
 };
 
 const isLoading = ref(false);
-const createReceipt = async () => {
+
+const updateReceipt = async () => {
     isLoading.value = true;
 
     try {
-        // Validate required fields
-        if (!formData.value.customer_id) {
-            throw new Error("Please select a customer.");
-        }
-        if (!formData.value.paid_amount || formData.value.paid_amount <= 0) {
-            throw new Error("Please enter a valid amount greater than zero.");
-        }
-        if (!formData.value.payment_method) {
-            throw new Error("Please select a payment method.");
-        }
-
         const payload = {
+            ...formData.value,
+            receipt_no: String(formData.value.receipt_no),
             invoice_no: formData.value.invoice_no
                 ? String(formData.value.invoice_no)
                 : null,
-            receipt_no: String(formData.value.receipt_no),
-            receipt_date: new Date(formData.value.receipt_date)
+            receipt_date: formData.value.receipt_date
                 .toISOString()
                 .split("T")[0],
-            customer_id: Number(formData.value.customer_id),
-            customer_code: String(formData.value.customer_code),
-            purpose: formData.value.purpose || null,
-            paid_amount: Number(formData.value.paid_amount),
-            amount_in_words: String(amountInWords.value),
-            payment_method: String(formData.value.payment_method),
-            payment_reference_no: formData.value.payment_reference_no || null,
+            amount_in_words: amountInWords.value,
+            payment_schedule_id: formData.value.payment_schedule_id || null,
         };
 
-        const response = await axios.post(route("receipts.store"), payload);
-
-        dialogVisible.value = false;
-        emit("receipt-created", {
-            receipt: response.data.receipt,
-            shouldReload: true,
-        });
+        const response = await axios.put(
+            route("receipts.update", { receipt_no: formData.value.receipt_no }),
+            payload
+        );
 
         toast.add({
             severity: "success",
             summary: "Success",
-            detail: "Receipt created successfully.",
+            detail: `Receipt ${formData.value.receipt_no} updated successfully`,
             life: 3000,
         });
+        // router.replace(route("receipts.index"));
+        Inertia.visit(route("receipts.index"), {
+            method: "get",
+            preserveState: true,
+        });
+        closeDialog();
     } catch (error) {
-        console.error("Error:", error);
-        let errorMessage =
-            error.response?.data?.message ||
-            error.message ||
-            "Failed to create receipt";
+        console.error("Update error:", error.response);
+        let errorDetail = "Failed to update receipt";
+        if (error.response?.status === 422) {
+            errorDetail = Object.values(error.response.data.errors).join(" ");
+        } else if (error.response?.data?.message) {
+            errorDetail = error.response.data.message;
+        } else if (error.message) {
+            errorDetail = error.message;
+        }
 
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: errorMessage,
+            detail: errorDetail,
             life: 5000,
         });
     } finally {
         isLoading.value = false;
     }
 };
+
+const createReceipt = async () => {
+    isLoading.value = true;
+
+    try {
+        const payload = {
+            invoice_no: formData.value.invoice_no,
+            receipt_no: formData.value.receipt_no,
+            receipt_date: new Date(formData.value.receipt_date)
+                .toISOString()
+                .split("T")[0],
+            customer_id: formData.value.customer_id,
+            paid_amount: Number(formData.value.paid_amount),
+            amount_in_words: amountInWords.value,
+            payment_method: formData.value.payment_method,
+            payment_reference_no: formData.value.payment_reference_no || null,
+            payment_schedule_id: formData.value.payment_schedule_id || null,
+        };
+
+        const response = await axios.post(route("receipts.store"), payload);
+
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: `Receipt ${response.data.receipt_no} created successfully`,
+            life: 3000,
+        });
+
+        dialogVisible.value = false;
+        emit("receipt-created", {
+            receipt: response.data.receipt,
+            shouldReload: true,
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        let errorDetail = "Failed to create receipt";
+        if (error.response?.status === 422) {
+            errorDetail = Object.values(error.response.data.errors).join(" ");
+        } else if (error.response?.data?.message) {
+            errorDetail = error.response.data.message;
+        } else if (error.message) {
+            errorDetail = error.message;
+        }
+
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorDetail,
+            life: 5000,
+        });
+    } finally {
+        isLoading.value = false;
+    }
+};
+const formattedScheduleId = computed(() => {
+    if (!formData.value.payment_schedule_id) return 'No schedule';
+    // Example: PS-000123
+    return `PS-${String(formData.value.payment_schedule_id).padStart(6, '0')}`;
+});
 </script>
 
 <style scoped>

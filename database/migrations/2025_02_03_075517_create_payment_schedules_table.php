@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -18,8 +19,9 @@ return new class extends Migration
             $table->string('short_description');
             $table->decimal('percentage', 10, 2);
             $table->decimal('amount', 10, 2);
+            $table->decimal('paid_amount', 15, 2)->default(0);
             $table->string('currency')->default('KHR');
-            $table->enum('status', ['UPCOMING', 'PAST DUE', 'PAID'])->default('UPCOMING');
+            $table->enum('status', ['UPCOMING', 'PAST_DUE', 'PAID'])->default('UPCOMING');
             $table->timestamps();
         });
     }

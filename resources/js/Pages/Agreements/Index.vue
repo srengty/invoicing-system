@@ -1078,12 +1078,15 @@ const getStatusLabel = (status) => {
 };
 
 const getPaymentStatus = (schedule) => {
-    if (schedule.status === "PAID" || schedule.paid_amount > 0) {
+    if ((schedule.paid_amount ?? 0) >= schedule.amount) {
         return "PAID";
     }
-    if (isPastDue(schedule.due_date)) {
+
+    const dueDate = moment(schedule.due_date, ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601]);
+    if (dueDate.isValid() && dueDate.isBefore(moment(), 'day')) {
         return "PAST DUE";
     }
+
     return "UPCOMING";
 };
 const getStatusSeverityPayment = (schedule) => {
