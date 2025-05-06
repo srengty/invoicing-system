@@ -258,7 +258,8 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
-                                :min-date="minDate"
+                                :readonly="true"
+                                :disabled="true"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">
@@ -611,6 +612,16 @@ watch(
         return () => clearTimeout(timer);
     }
 );
+watch(
+    () => form.start_date,
+    (newStartDate) => {
+        if (newStartDate) {
+            form.end_date = moment(newStartDate).add(14, "days").toDate();
+        }
+    },
+    { immediate: true }
+);
+
 const schedule = ref({
     agreement_amount: form.agreement_amount,
     due_date: new Date(),

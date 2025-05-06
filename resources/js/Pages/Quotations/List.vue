@@ -144,7 +144,7 @@
                             <div class="flex items-center">
                                 <span
                                     @click="handleStatusClick(slotProps.data)"
-                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
+                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                     :class="{
                                         'bg-blue-100 text-blue-800 border-blue-400':
                                             slotProps.data.customer_status ===
@@ -488,7 +488,7 @@
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import html2pdf from "html2pdf.js";
 import { ref, computed } from "vue";
 import { Head, Link, usePage, router, useForm } from "@inertiajs/vue3";

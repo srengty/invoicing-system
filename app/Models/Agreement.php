@@ -51,7 +51,7 @@ class Agreement extends Model
         return $this->hasManyThrough(
             Receipt::class,
             PaymentSchedule::class,
-            'agreement_no',  
+            'agreement_no',
             'payment_schedule_id',
             'agreement_no',
             'id'
@@ -126,5 +126,21 @@ class Agreement extends Model
         return;
     }
 
+    public function updateStatus(): string
+    {
+        $endDate = Carbon::createFromFormat('d/m/Y', $this->end_date);
+        $graceEnd = $endDate->copy()->addDays(14);
+
+        $total = $this->paymentSchedules->count();
+        $completed = $this->paymentSchedules->filter(function ($s) {
+            return $s->receipts->sum('paid_amount') >= $s->amount;
+        })->count();
+
+        if (now()->gt($graceEnd)) {
+            return $completed === $total ? 'Closed' : 'Abnormal Closed';
+        }
+
+        return 'Open';
+    }
 
 }

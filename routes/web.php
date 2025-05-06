@@ -28,7 +28,7 @@ Route::get('/', function () {
 });
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
-Route::get('/agreements/show/{id}', [AgreementController::class, 'show'])->name('agreements.show');
+Route::get('/agreements/{agreement_no}', [AgreementController::class, 'show'])->name('agreements.show');
 Route::post('/agreements/store', [AgreementController::class, 'store'])->name('agreements.store');
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');

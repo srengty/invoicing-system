@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
                  ->dailyAt('00:01')
                  ->timezone('Asia/Phnom_Penh') // Adjust to your timezone
                  ->description('Update payment schedules to PAST DUE when overdue');
+        $schedule->command('agreements:update-statuses')->daily();
 
         // You can add other scheduled commands here
     }

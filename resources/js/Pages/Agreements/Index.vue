@@ -70,6 +70,8 @@ list agreement
             </div>
             <DataTable
                 :value="filteredAgreements"
+                scrollable
+                scrollHeight="flex"
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -324,12 +326,19 @@ list agreement
                         v-if="col.field === 'actions'"
                         :field="col.field"
                         :header="col.header"
-                        style="width: 5%; font-size: 14px"
+                        frozen
+                        alignFrozen="right"
+                        style="width: 8rem; font-size: 14px; z-index: 2"
                     >
                         <template #body="slotProps">
                             <Button
                                 severity="info"
                                 size="small"
+                                icon="pi pi-pencil"
+                                outlined
+                                class="mr-2"
+                                :disabled="slotProps.data.status === 'Closed'"
+                                v-tooltip="'Cannot edit closed agreement'"
                                 @click="
                                     router.get(
                                         route('agreements.edit', {
@@ -338,21 +347,18 @@ list agreement
                                         })
                                     )
                                 "
-                                icon="pi pi-pencil"
-                                aria-label="Edit"
-                                class="mr-2"
-                                outlined
                             />
                             <Button
                                 severity=""
                                 size="small"
-                                @click="viewAgreementDetails(slotProps.data)"
                                 icon="pi pi-eye"
-                                aria-label="View"
                                 outlined
                                 class="mr-2"
+                                :disabled="slotProps.data.status === 'Closed'"
+                                v-tooltip="'Cannot view closed agreement'"
+                                @click="viewAgreementDetails(slotProps.data)"
                             />
-                            <Button
+                            <!-- <Button
                                 severity=""
                                 size="small"
                                 @click="
@@ -366,7 +372,7 @@ list agreement
                                 aria-label="print"
                                 outlined
                                 class="mr-2"
-                            />
+                            /> -->
                         </template>
                     </Column>
                 </template>
@@ -636,6 +642,69 @@ list agreement
                                     />
                                 </div>
                             </div>
+                            <!-- Agreement Documents -->
+                            <div class="col-12">
+                                <div class="field">
+                                    <label class="font-semibold block mb-1"
+                                        >Agreement Documents:</label
+                                    >
+                                    <ul class="ml-1 space-y-1">
+                                        <li
+                                            v-for="(
+                                                doc, index
+                                            ) in selectedAgreementDetails?.agreement_doc"
+                                            :key="'doc-' + index"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <i
+                                                class="pi pi-file-pdf text-red-500"
+                                            ></i>
+                                            <a
+                                                :href="doc.path"
+                                                target="_blank"
+                                                class="text-blue-600 hover:underline"
+                                            >
+                                                {{
+                                                    doc.name ||
+                                                    `Document ${index + 1}`
+                                                }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Attachments -->
+                            <div class="col-12">
+                                <div class="field">
+                                    <label class="font-semibold block mb-1"
+                                        >Attachments:</label
+                                    >
+                                    <ul class="ml-1 space-y-1">
+                                        <li
+                                            v-for="(
+                                                file, index
+                                            ) in selectedAgreementDetails?.attachments"
+                                            :key="'attach-' + index"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <i
+                                                class="pi pi-file-pdf text-red-500"
+                                            ></i>
+                                            <a
+                                                :href="file.path"
+                                                target="_blank"
+                                                class="text-blue-600 hover:underline"
+                                            >
+                                                {{
+                                                    file.name ||
+                                                    `Attachment ${index + 1}`
+                                                }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         <Divider class="my-4" />
                         <!-- Payment Schedule Section -->
@@ -804,7 +873,7 @@ const columns = [
     { field: "short_description", header: "Short description" },
     {
         field: "actions",
-        header: "Print/View/Edit",
+        header: "Edit/View/Print",
     },
 ];
 const defaultColumns = columns.filter(
@@ -905,9 +974,8 @@ const processedAgreements = computed(() => {
             0
         );
 
-        const totalPercentage = agreement.amount > 0
-            ? (totalPaid / agreement.amount) * 100
-            : 0;
+        const totalPercentage =
+            agreement.amount > 0 ? (totalPaid / agreement.amount) * 100 : 0;
 
         return {
             ...agreement,
@@ -917,7 +985,6 @@ const processedAgreements = computed(() => {
         };
     });
 });
-
 
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
@@ -992,12 +1059,13 @@ const selectedAgreementDetails = ref(null);
 const viewAgreementDetails = async (agreement) => {
     try {
         const response = await axios.get(
-            route("agreements.show", { id: agreement.agreement_no })
+            route("agreements.show", { agreement_no: agreement.agreement_no })
         );
 
         const formattedData = {
             ...response.data,
-            ...agreement,
+            agreement_doc: response.data.agreement_doc ?? [],
+            attachments: response.data.attachments ?? [],
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
@@ -1114,4 +1182,11 @@ const getStatusSeverityPayment = (schedule) => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.text-primary {
+    color: var(--primary-color);
+}
+.text-primary:hover {
+    text-decoration: underline;
+}
+</style>
