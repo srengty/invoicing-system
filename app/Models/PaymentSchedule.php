@@ -89,4 +89,10 @@ class PaymentSchedule extends Model
     {
         return $this->amount - $this->paid_amount;
     }
+
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_payment_schedule');
+    }
+
 }

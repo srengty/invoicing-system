@@ -49,7 +49,6 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
-        // Validate the request data
         $validated = Validator::make($request->all(), [
             'invoice_no' => 'nullable|unique:invoices,invoice_no',
             'status' => 'required|string|in:Pending,Approved,Revise',
@@ -61,7 +60,7 @@ class InvoiceController extends Controller
             'terms' => 'nullable|string|max:255',
             'total_usd' => 'nullable|numeric',
             'exchange_rate' => 'nullable|numeric|min:0',
-            'payment_schedules' => 'nullable|array', // Changed from payment_schedule_id
+            'payment_schedules' => 'nullable|array',
             'payment_schedules.*.id' => 'required|integer|exists:payment_schedules,id',
             'currency' => 'nullable|string|in:KHR,USD',
             'start_date' => 'nullable|string',
@@ -86,7 +85,7 @@ class InvoiceController extends Controller
 
         $data = $validated->validated();
 
-        // Format the start and end dates
+        // Format dates
         $startDate = now()->format('Y-m-d');
         if (!empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])) {
             $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
@@ -97,7 +96,7 @@ class InvoiceController extends Controller
             $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
         }
 
-        // Calculate grand total from products
+        // Calculate grand total
         $grand_total = 0;
         if (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
@@ -108,59 +107,55 @@ class InvoiceController extends Controller
             }
         }
 
-        // USD conversion if applicable
+        // Handle currency and conversion
         $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
             ? $grand_total / $data['exchange_rate']
-            : $data['total_usd'] ?? null;
+            : ($data['total_usd'] ?? null);
 
-        // Set default currency as 'KHR' if not provided
         $currency = $data['currency'] ?? 'KHR';
 
-        // Generate invoice number if status is 'Approved'
+        // Generate invoice number
         $invoice_no = null;
         if ($data['status'] === 'Approved') {
             $currentYear = date('Y');
             $baseInvoiceNo = ($currentYear - 2025) * 1000000 + 25000001;
-            $lastInvoice = \App\Models\Invoice::where('invoice_no', '>=', $baseInvoiceNo)
-                            ->orderBy('invoice_no', 'desc')
-                            ->first();
+            $lastInvoice = Invoice::where('invoice_no', '>=', $baseInvoiceNo)
+                ->orderBy('invoice_no', 'desc')
+                ->first();
             $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
         }
 
-        // Set invoice date only if status is Approved
+        // Set invoice date
         $invoiceDate = null;
         if ($data['status'] === 'Approved') {
             $invoiceDate = now()->format('Y-m-d H:i:s');
-        } elseif ($data['status'] !== 'Pending' && !empty($request->invoice_date) && strtotime($request->invoice_date)) {
+        } elseif (!empty($request->invoice_date) && strtotime($request->invoice_date)) {
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
         }
-    
-        $paid_amount = $data['paid_amount'] ?? 0;
-        $installment_paid = $data['installment_paid'] ?? 0;
-        
-        // Create the invoice
-        $invoice = \App\Models\Invoice::create([
-            'invoice_no'     => $invoice_no,
-            'quotation_no'   => $data['quotation_no'] ?? null,
-            'agreement_no'   => $data['agreement_no'] ?? null,
-            'customer_id'    => $data['customer_id'],
-            'address'        => $data['address'] ?? null,
-            'phone'          => $data['phone'] ?? null,
-            'terms'          => $data['terms'] ?? null,
-            'start_date'     => $startDate,
-            'end_date'       => $endDate,
-            'grand_total'    => $grand_total,
-            'total_usd'      => $total_usd,
-            'exchange_rate'  => $data['exchange_rate'] ?? null,
-            'currency'       => $currency,
-            'invoice_date'   => $invoiceDate,
-            'status'         => $data['status'],
-            'paid_amount'    => $paid_amount,
-            'installment_paid' => $installment_paid,
-            'receipt_no'     => $data['receipt_no'] ?? null,
+
+        // Create invoice
+        $invoice = Invoice::create([
+            'invoice_no'        => $invoice_no,
+            'quotation_no'      => $data['quotation_no'] ?? null,
+            'agreement_no'      => $data['agreement_no'] ?? null,
+            'customer_id'       => $data['customer_id'],
+            'address'           => $data['address'] ?? null,
+            'phone'             => $data['phone'] ?? null,
+            'terms'             => $data['terms'] ?? null,
+            'start_date'        => $startDate,
+            'end_date'          => $endDate,
+            'grand_total'       => $grand_total,
+            'total_usd'         => $total_usd,
+            'exchange_rate'     => $data['exchange_rate'] ?? null,
+            'currency'          => $currency,
+            'invoice_date'      => $invoiceDate,
+            'status'            => $data['status'],
+            'paid_amount'       => $data['paid_amount'] ?? 0,
+            'installment_paid'  => $data['installment_paid'] ?? 0,
+            'receipt_no'        => $data['receipt_no'] ?? null,
         ]);
 
-        // Attach products to the pivot table using invoice_id
+        // Attach products
         if (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
                 $productData = Product::find($product['id']);
@@ -170,24 +165,19 @@ class InvoiceController extends Controller
                         'price' => $product['price'],
                         'include_catalog' => $product['include_catalog'],
                         'pdf_url' => $product['pdf_url'] ?? null,
-                        'invoice_id' => $invoice->id,
                     ]);
                 }
             }
         }
-    
-        // Attach multiple payment schedules
+
+        // Attach payment schedules
         if (!empty($data['payment_schedules'])) {
             $scheduleIds = collect($data['payment_schedules'])->pluck('id')->toArray();
             $invoice->paymentSchedules()->attach($scheduleIds);
         }
-        
-        // Eager load payment schedules with the invoice and return the response
-        $invoice = $invoice->load('paymentSchedules');
 
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
-
 
     public function updateStatus(Request $request, Invoice $invoice)
     {   

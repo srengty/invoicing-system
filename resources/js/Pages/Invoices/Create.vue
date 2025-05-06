@@ -83,7 +83,7 @@
                             >Payment Schedule</label
                         >
                         <MultiSelect
-                            v-model="form.payment_schedule_id"
+                            v-model="form.payment_schedules"
                             :options="formattedPaymentSchedules"
                             optionLabel="label"
                             optionValue="id"
@@ -555,7 +555,7 @@ const form = useForm({
     phone: "",
     terms: "",
     amount: 0,
-    payment_schedule_id: "",
+    payment_schedules: [],
     start_date: "",
     end_date: "",
     grand_total: "",
@@ -1009,7 +1009,7 @@ watch(
             console.log("Agreement Deselected - Keeping existing data");
 
             // Reset payment schedule when agreement is deselected
-            form.payment_schedule_id = ""; // Reset the payment schedule field
+            form.payment_schedules = ""; // Reset the payment schedule field
             filteredPaymentSchedules.value = []; // Reset available payment schedules
 
             // Reset other fields if necessary
@@ -1104,6 +1104,7 @@ const submitInvoice = async () => {
     form.paid_amount = form.paid_amount || 0;
     form.installment_paid = Number(form.installment_paid) || 0;
     form.receipt_no = form.receipt_no || "";
+    form.payment_schedules = form.payment_schedules.map(id => ({ id }));
 
     // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
@@ -1182,7 +1183,7 @@ const submitInvoice = async () => {
 
 const updatePaymentDetails = () => {
     const selectedPaymentSchedule = paymentSchedules.find(
-        (ps) => ps.id === form.payment_schedule_id
+        (ps) => ps.id === form.payment_schedules
     );
     if (selectedPaymentSchedule) {
         form.installment_paid = selectedPaymentSchedule.amount;
@@ -1257,7 +1258,7 @@ watch(
 );
 
 watch(
-    () => form.payment_schedule_id,
+    () => form.payment_schedules,
     (selectedIds) => {
         if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
             form.installment_paid = 0;
