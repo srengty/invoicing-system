@@ -366,23 +366,24 @@ class AgreementController extends Controller
 
     public function searchQuotation(Request $request)
     {
-        $quotationNo = $request->input('quotation_no');
-        $quotation = Quotation::where('quotation_no', $quotationNo)
+        $request->validate([
+            'quotation_no' => 'required|numeric'
+        ]);
+
+        $quotation = Quotation::where('quotation_no', $request->quotation_no)
+                              ->where('active', true) // Only search active quotations
+                              ->whereDoesntHave('agreement') // Ensure no agreement exists
                               ->with('customer')
                               ->first();
 
-        if ($quotation) {
-            return response()->json([
-                'customer_name' => $quotation->customer->name,
-                'address' => $quotation->customer->address,
-                'customer_id' => $quotation->customer->id,
-                'agreement_amount' => $quotation->total,
-                'currency' => $quotation->currency,
-                'exchange_rate' => $quotation->exchange_rate,
-            ]);
-        }
-
-        return response()->json(['error' => 'Quotation not found'], 404);
+        return response()->json([
+            'customer_name' => $quotation->customer->name,
+            'address' => $quotation->customer->address,
+            'customer_id' => $quotation->customer->id,
+            'agreement_amount' => $quotation->total,
+            'currency' => $quotation->currency,
+            'exchange_rate' => $quotation->exchange_rate,
+        ]);
     }
 
     public function checkDuplicateReference(Request $request)
