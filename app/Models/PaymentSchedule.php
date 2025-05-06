@@ -30,7 +30,7 @@ class PaymentSchedule extends Model
 
     public function receipts()
     {
-        return $this->hasMany(Receipt::class, 'payment_schedule_id');
+        return $this->hasMany(Receipt::class, 'payment_schedule_id', 'id');
     }
 
     protected $dateFormat = 'Y-m-d';
