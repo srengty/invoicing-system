@@ -206,10 +206,10 @@
 
                 <!-- Email Checkbox -->
                 <div class="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="emailCheckbox"
+                    <Checkbox
                         v-model="sendForm.emailChecked"
+                        inputId="emailCheckbox"
+                        :binary="true"
                         class="mr-2"
                     />
                     <label for="emailCheckbox" class="font-bold"
@@ -219,15 +219,30 @@
 
                 <!-- Telegram Checkbox -->
                 <div class="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="telegramCheckbox"
+                    <Checkbox
                         v-model="sendForm.telegramChecked"
+                        inputId="telegramCheckbox"
+                        :binary="true"
                         class="mr-2"
                     />
                     <label for="telegramCheckbox" class="font-bold"
                         >Telegram: {{ quotation.phone_number || "N/A" }}</label
                     >
+                </div>
+
+                <!-- Telegram Channel Input (shown only if Telegram is checked) -->
+                <div
+                    v-if="sendForm.telegramChecked"
+                    class="flex flex-col gap-2"
+                >
+                    <label for="telegramChannel" class="font-bold"
+                        >Telegram Channel (optional)</label
+                    >
+                    <InputText
+                        id="telegramChannel"
+                        v-model="sendForm.telegramChannel"
+                        placeholder="@your_channel"
+                    />
                 </div>
             </div>
 
@@ -252,19 +267,21 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { usePage, router } from "@inertiajs/vue3";
-import Button from "primevue/button";
-import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";
-import ToggleSwitch from "primevue/toggleswitch";
-import { useToast } from "primevue/usetoast";
-import Dialog from "primevue/dialog";
 import { Head } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
+import html2pdf from "html2pdf.js";
+import Button from "primevue/button";
+import Checkbox from "primevue/checkbox";
+import ToggleSwitch from "primevue/toggleswitch";
+import Dialog from "primevue/dialog";
 
 const toast = useToast();
 
 const sendForm = ref({
     emailChecked: false,
     telegramChecked: false,
+    telegramChannel: "@your_default_channel", // Set your default channel here
 });
 
 // Other reactive state variables
@@ -306,6 +323,11 @@ const sendQuotationRequest = async (quotation, formData) => {
 const { props } = usePage();
 const quotation = ref({
     ...props.quotation,
+    email: props.quotation?.email || props.quotation?.customer?.email || "N/A",
+    phone_number:
+        props.quotation?.phone_number ||
+        props.quotation?.customer?.phone_number ||
+        "N/A",
     total: props.quotation?.total || 0,
     total_usd: props.quotation?.total_usd || 0,
     exchange_rate: props.quotation?.exchange_rate || 4100,
@@ -410,26 +432,102 @@ const generateAndDownloadPDF = async () => {
 };
 
 // Function to handle sending the PDF via email
+// const generateAndSendPDF = async () => {
+//     try {
+//         if (!printArea.value) {
+//             console.error("Print area is not available");
+//             return;
+//         }
+
+//         const quotationPDF = await generatePDF(printArea.value);
+//         const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
+//         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
+
+//         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
+//         sendPDFViaEmail(mergedPDF, filename);
+//         isSendDialogVisible.value = false;
+//         window.location.href = route("quotations.list");
+//     } catch (error) {
+//         console.error("Error generating PDFs:", error);
+//     }
+// };
+
+// In your Vue component's methods
 const generateAndSendPDF = async () => {
+    isSending.value = true;
+
     try {
         if (!printArea.value) {
-            console.error("Print area is not available");
-            return;
+            throw new Error("Print area not available");
         }
 
+        // Generate PDF
         const quotationPDF = await generatePDF(printArea.value);
         const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
-
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
-        sendPDFViaEmail(mergedPDF, filename);
+
+        // Create FormData
+        const formData = new FormData();
+        const pdfBlob = new Blob([mergedPDF], { type: "application/pdf" });
+
+        formData.append("quotation_id", quotation.value.id);
+        formData.append("pdf_file", pdfBlob, filename);
+        formData.append("send_email", sendForm.value.emailChecked ? "1" : "0");
+        formData.append(
+            "send_telegram",
+            sendForm.value.telegramChecked ? "1" : "0"
+        );
+
+        // Get CSRF token
+        const csrfToken = document.querySelector(
+            'meta[name="csrf-token"]'
+        )?.content;
+        if (!csrfToken) {
+            throw new Error("CSRF token not found");
+        }
+
+        // Send request
+        const response = await fetch("/quotations/send", {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": csrfToken,
+                Accept: "application/json",
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || "Failed to send quotation");
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.message || "Failed to send quotation");
+        }
+
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: "Quotation sent successfully",
+            life: 3000,
+        });
+
         isSendDialogVisible.value = false;
-        window.location.href = route("quotations.list");
     } catch (error) {
-        console.error("Error generating PDFs:", error);
+        console.error("Error sending quotation:", error);
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: error.message || "Failed to send quotation",
+            life: 5000,
+        });
+    } finally {
+        isSending.value = false;
     }
 };
-
 // Function to generate catalog PDFs (if available)
 const generateCatalogPDFs = async (products) => {
     const catalogPDFs = await Promise.all(
@@ -485,9 +583,15 @@ const sendPDFViaEmail = (pdfBytes, filename) => {
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const formData = new FormData();
     formData.append("quotation_id", quotation.value.id);
-    formData.append("send_email", "send bro");
     formData.append("pdf_file", blob, filename);
     formData.append("update_status", "Pending");
+
+    // Add Telegram sending flags
+    formData.append("send_email", sendForm.value.emailChecked ? "1" : "0");
+    formData.append(
+        "send_telegram",
+        sendForm.value.telegramChecked ? "1" : "0"
+    );
 
     fetch("/quotations/send", {
         method: "POST",
@@ -501,13 +605,29 @@ const sendPDFViaEmail = (pdfBytes, filename) => {
         .then((response) => response.json())
         .then((data) => {
             if (data.success) {
-                console.log("PDF sent via email successfully!");
+                toast.add({
+                    severity: "success",
+                    summary: "Success",
+                    detail: data.message,
+                    life: 3000,
+                });
             } else {
-                console.error("Error sending PDF via email.");
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: data.message || "Error sending quotation",
+                    life: 3000,
+                });
             }
         })
         .catch((error) => {
             console.error("Error sending PDF to server:", error);
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: "Failed to send quotation",
+                life: 3000,
+            });
         });
 };
 </script>

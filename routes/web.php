@@ -10,6 +10,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductCommentController;
@@ -102,8 +103,12 @@ Route::get('/settings/customer-categories', [CustomerCategoryController::class, 
 Route::get('/settings/product-categories', [ProductCategoryController::class, 'index'])->name('productCategory.index');
 
 // routes/api.php
-Route::post('/quotations/send',[QuotationController::class, 'sendQuotation'])->name('quotations.send');
+Route::post('/quotations/send', [QuotationController::class, 'send'])->name('quotations.send');
 Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
+Route::post('/telegram/webhook', function () {
+    \Log::info('Telegram webhook received', request()->all());
+    return response()->json(['status' => 'ok']);
+})->name('telegram.webhook');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

@@ -20,12 +20,16 @@ class QuotationEmail extends Mailable
 
     public $quotation;
     public $pdfPath;
+    public $filename;
 
-    public function __construct(Quotation $quotation, UploadedFile $pdfPath)
+    public function __construct($quotation, $pdfContent, $filename)
     {
         $this->quotation = $quotation;
-        $this->pdfPath = $pdfPath;
+        $this->pdfContent = $pdfContent;
+        $this->filename = $filename;
     }
+
+
     // public function build()
     // {
     //     return $this->subject('Here is your PDF')
@@ -42,7 +46,7 @@ class QuotationEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'ITC Finance - Quotation Details',
+            subject: 'ITC Finance - Quotation #'.$this->quotation->quotation_no,
             from: new Address('itcfinance168@gmail.com', 'ITC Finance'),
         );
     }
@@ -50,7 +54,7 @@ class QuotationEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'test-mail', // Ensure this matches your Blade template
+            view: 'emails.quotation',
             with: [
                 'quotation' => $this->quotation,
             ],
@@ -59,10 +63,41 @@ class QuotationEmail extends Mailable
 
     public function attachments(): array
     {
+        if ($this->pdfContent instanceof UploadedFile) {
+            return [
+                Attachment::fromPath($this->pdfContent->getRealPath())
+                    ->as($this->filename)
+                    ->withMime('application/pdf'),
+            ];
+        }
+
+        // Handle when pdfContent is a string path or raw content
         return [
-            Attachment::fromPath($this->pdfPath->getRealPath())
-                      ->as($this->pdfPath->getClientOriginalName())
-                      ->withMime($this->pdfPath->getMimeType()),
+            Attachment::fromData(fn () => $this->pdfContent, $this->filename)
+                ->withMime('application/pdf'),
         ];
     }
+
+    // public function build()
+    // {
+    //     return $this->subject("Quotation #{$this->quotation->quotation_no}")
+    //                 ->view('emails.quotation')
+    //                 ->attach($this->pdfPath, [
+    //                     'as' => 'quotation_'.$this->quotation->quotation_no.'.pdf',
+    //                     'mime' => 'application/pdf',
+    //                 ]);
+    // }
+
+    public function build()
+    {
+        return $this->view('emails.quotation')
+            ->subject('Quotation PDF Attached')
+            ->attachData($this->pdfContent, $this->filename, [
+                'mime' => 'application/pdf',
+            ])
+            ->with([
+                'quotation' => $this->quotation
+            ]);
+    }
+
 }
