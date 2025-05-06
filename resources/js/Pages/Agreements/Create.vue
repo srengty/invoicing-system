@@ -34,30 +34,28 @@
                                 >Record Agreement</span
                             >
                             <!-- Quotation No Input with Search -->
-                            <span
-                                v-tooltip="
-                                    'must be approved and no agreement attached'
-                                "
-                                class="text-sm"
-                            >
+                            <span class="text-sm">
                                 Quotation No.
+                                <i
+                                    class="pi pi-info-circle ml-1"
+                                    v-tooltip="
+                                        'Must be an active quotation with no existing agreement'
+                                    "
+                                >
+                                </i>
                             </span>
                             <InputText
                                 v-model="form.quotation_no"
                                 placeholder="Enter Quotation No."
                                 class="w-full"
                                 size="small"
+                                @blur="searchQuotation"
                             >
                                 <template #suffix>
                                     <i
                                         v-if="form.quotation_no"
                                         class="pi pi-times cursor-pointer text-gray-500 hover:text-gray-700"
-                                        @click="
-                                            form.quotation_no = '';
-                                            form.customer_id = null;
-                                            form.address = '';
-                                            customerName.value = '';
-                                        "
+                                        @click="resetQuotationFields"
                                     />
                                     <i
                                         v-else
@@ -65,6 +63,9 @@
                                     />
                                 </template>
                             </InputText>
+                            <small v-if="quotationError" class="p-error block">
+                                {{ quotationError }}
+                            </small>
                             <!-- <span class="text-sm required"
                                 >Agreement No. {{ agreement_max }}</span
                             > -->
@@ -452,7 +453,7 @@ import { reactive, onMounted, ref, computed, watch } from "vue";
 import { currencies } from "@/constants";
 import { usePage } from "@inertiajs/vue3";
 import moment from "moment";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import {
     Button,
     DatePicker,
@@ -533,45 +534,71 @@ const form = reactive({
 
 const customerName = ref("");
 const address = ref("");
+const quotationError = ref("");
+const isSearching = ref(false);
 const searchQuotation = async () => {
-    if (form.quotation_no) {
-        // console.log("Searching for quotation no:", form.quotation_no);
-        try {
-            const response = await axios.get("/search-quotation", {
-                params: { quotation_no: form.quotation_no },
-            });
+    if (!form.quotation_no) {
+        resetQuotationFields();
+        return;
+    }
 
-            if (response.data) {
-                customerName.value = response.data.customer_name;
-                form.address = response.data.address;
-                form.customer_id = response.data.customer_id;
-                form.agreement_amount = response.data.agreement_amount;
-                schedule.value.agreement_amount =
-                    response.data.agreement_amount;
-                if (response.data.currency === "USD") {
-                    schedule.value.exchange_rate =
-                        response.data.exchange_rate || 4100;
-                    riels.value = false;
-                } else {
-                    schedule.value.exchange_rate = 1;
-                    riels.value = true;
-                }
-            } else {
-                customerName.value = "";
-                form.address = "";
-                form.customer_id = null;
-                form.agreement_amount = 0;
-                schedule.value.agreement_amount = 0;
-                schedule.value.exchange_rate = 1;
-            }
-        } catch (error) {
+    isSearching.value = true;
+    quotationError.value = "";
+
+    try {
+        const response = await axios.get("/search-quotation", {
+            params: { quotation_no: form.quotation_no },
+        });
+
+        if (response.data.error) {
+            quotationError.value = response.data.error;
+            resetQuotationFields();
+            return;
+        }
+
+        // Update form fields with quotation data
+        customerName.value = response.data.customer_name;
+        form.address = response.data.address;
+        form.customer_id = response.data.customer_id;
+        form.agreement_amount = response.data.agreement_amount;
+        schedule.value.agreement_amount = response.data.agreement_amount;
+
+        // Set currency based on quotation
+        form.currency = response.data.currency;
+        riels.value = response.data.currency === "KHR";
+        schedule.value.exchange_rate = riels.value ? 4100 : 1;
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            quotationError.value = error.response.data.error;
+        } else {
+            quotationError.value = "";
             console.error("Error fetching quotation", error);
         }
+        resetQuotationFields();
+    } finally {
+        isSearching.value = false;
     }
+};
+
+const resetQuotationFields = () => {
+    customerName.value = "";
+    form.address = "";
+    form.customer_id = null;
+    form.agreement_amount = 0;
+    schedule.value.agreement_amount = 0;
+    form.currency = "KHR";
+    riels.value = true;
+    schedule.value.exchange_rate = 4100;
 };
 watch(
     () => form.quotation_no,
     (newVal) => {
+        if (!newVal) {
+            resetQuotationFields();
+            return;
+        }
+
+        // Debounce the search to avoid too many requests
         const timer = setTimeout(() => {
             searchQuotation();
         }, 500);
