@@ -18,7 +18,7 @@ class AgreementController extends Controller
      */
     public function index()
     {
-        $agreements = Agreement::with(['customer', 'paymentSchedules', 'invoices.receipts'])
+        $agreements = Agreement::with(['customer', 'paymentSchedules.receipts', 'invoices.receipts'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($agreement) {
@@ -71,6 +71,7 @@ class AgreementController extends Controller
                     'total_progress_payment' => $totalPaid,
                     'total_progress_payment_percentage' => $paymentPercentage,
                     'progress_payments' => $progressPayments,
+
                 ];
             });
 
@@ -126,6 +127,7 @@ class AgreementController extends Controller
             'agreement_ref_no' => 'nullable|unique:agreements,agreement_ref_no',
             'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
+            'payment_schedule' => 'required|array|min:1',
             'start_date' => 'required|date_format:d/m/Y',
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',

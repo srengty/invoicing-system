@@ -245,10 +245,7 @@ list agreement
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
-                            <div
-                                class="progress-bar-wrapper"
-                                style="display: flex; align-items: center"
-                            >
+                            <div class="progress-bar-wrapper flex items-center">
                                 <ProgressBar
                                     :value="
                                         slotProps.data
@@ -265,10 +262,7 @@ list agreement
                                     "
                                     style="flex-grow: 1"
                                 />
-                                <span
-                                    class="progress-bar-text"
-                                    style="margin-left: 10px"
-                                >
+                                <span class="progress-bar-text ml-2">
                                     {{
                                         (
                                             slotProps.data
@@ -906,12 +900,24 @@ const calculateDuePayment = (agreement) => {
 // Process your agreements data to include due_payment
 const processedAgreements = computed(() => {
     return props.agreements.map((agreement) => {
+        const totalPaid = (agreement.progress_payments || []).reduce(
+            (sum, receipt) => sum + (parseFloat(receipt.amount) || 0),
+            0
+        );
+
+        const totalPercentage = agreement.amount > 0
+            ? (totalPaid / agreement.amount) * 100
+            : 0;
+
         return {
             ...agreement,
             due_payment: calculateDuePayment(agreement),
+            total_progress_payment: totalPaid,
+            total_progress_payment_percentage: totalPercentage,
         };
     });
 });
+
 
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
@@ -1082,8 +1088,12 @@ const getPaymentStatus = (schedule) => {
         return "PAID";
     }
 
-    const dueDate = moment(schedule.due_date, ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601]);
-    if (dueDate.isValid() && dueDate.isBefore(moment(), 'day')) {
+    const dueDate = moment(schedule.due_date, [
+        "YYYY-MM-DD",
+        "DD/MM/YYYY",
+        moment.ISO_8601,
+    ]);
+    if (dueDate.isValid() && dueDate.isBefore(moment(), "day")) {
         return "PAST DUE";
     }
 
