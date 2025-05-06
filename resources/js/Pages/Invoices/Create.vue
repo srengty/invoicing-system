@@ -69,7 +69,7 @@
             </div>
             <div>
               <label for="payment_schedule" class="block font-medium">Payment Schedule</label>
-              <Select
+              <MultiSelect
                 v-model="form.payment_schedule_id" 
                 :options="formattedPaymentSchedules" 
                 optionLabel="label"
@@ -210,28 +210,31 @@
           </DataTable>
   
           <div class="pl-2 pr-6">
-            <div v-if="form.installment_paid !== undefined" class="total-container mt-4 flex justify-between items-center">
-              <p class="font-bold">Installment Paid: </p>
-              <p class="font-bold"> ៛{{ form.installment_paid }}</p>
-            </div>
-            <div class="total-container mt-4 flex justify-between">
-              <p class="font-bold">Total KHR</p>
-              <p class="font-bold">
-                ៛{{ formatCurrency(calculateTotalKHR) }}
-              </p>
+            <!-- Installment Paid (calculated from selected payment schedules) -->
+            <div v-if="form.installment_paid > 0" class="total-container mt-4 flex justify-between items-center">
+              <p class="font-bold">Installment Paid:</p>
+              <p class="font-bold text-right">៛{{ formatCurrency(form.installment_paid) }}</p>
             </div>
 
+            <!-- Total KHR from all products -->
+            <div class="total-container mt-4 flex justify-between items-center">
+              <p class="font-bold">Total KHR:</p>
+              <p class="font-bold text-right">៛{{  (calculateTotalKHR) }}</p>
+            </div>
+
+            <!-- Final Total KHR (editable) -->
             <div class="total-container mt-4 flex justify-between items-center">
               <p class="font-bold">Final Total KHR:</p>
               <input
-                  type="number"
-                  v-model.number="form.paid_amount"
-                  placeholder="Enter Amount"
-                  step="0.01"
-                  class="h-9 text-sm border border-gray-300 rounded px-2"
+                type="number"
+                v-model.number="form.paid_amount"
+                placeholder="Enter Amount"
+                step="0.01"
+                class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
               />
             </div>
 
+            <!-- Final Total USD (editable) -->
             <div class="total-container mt-4 flex justify-between items-center">
               <p class="font-bold">Final Total USD:</p>
               <input
@@ -239,32 +242,34 @@
                 v-model.number="form.total_usd"
                 placeholder="Enter USD"
                 step="0.01"
-                class="h-9 text-sm border border-gray-300 rounded px-2"
+                class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
               />
             </div>
 
+            <!-- Exchange Rate -->
             <div class="grand-total-container flex justify-between mt-4">
-              <p class="font-bold">Exchange rate</p>
-              <p class="font-bold">
-                {{ calculateExchangeRate }}
-              </p>
+              <p class="font-bold">Exchange Rate:</p>
+              <p class="font-bold text-right">{{ calculateExchangeRate }}</p>
             </div>
 
+            <!-- Placeholder Bank Info -->
             <div class="grand-total-container flex justify-between mt-4">
               <p class="font-bold">Bank Name:</p>
-              
+              <p class="text-right text-gray-400 italic">Not set</p>
             </div>
 
             <div class="grand-total-container flex justify-between mt-4">
-              <p class="font-bold">Bank account name:</p>
-              
+              <p class="font-bold">Bank Account Name:</p>
+              <p class="text-right text-gray-400 italic">Not set</p>
             </div>
 
             <div class="grand-total-container flex justify-between mt-4">
-              <p class="font-bold">Bank account number:</p>
-              
+              <p class="font-bold">Bank Account Number:</p>
+              <p class="text-right text-gray-400 italic">Not set</p>
             </div>
           </div>
+
+
           <!-- <div class="terms mt-4">
             <h3 class="text-lg">Terms and Conditions</h3>
             <p>Full payment is required upon quote acceptance.</p>
@@ -403,7 +408,7 @@
   <script setup>
   import { ref, computed, watch, onMounted } from 'vue';
   import { useForm } from '@inertiajs/vue3';
-  import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select, Checkbox, Dropdown, AutoComplete, InputNumber } from 'primevue';
+  import { Button, InputText, DataTable, Column, Dialog, DatePicker, Select, MultiSelect, Checkbox, Dropdown, AutoComplete, InputNumber } from 'primevue';
   import { usePage } from '@inertiajs/vue3';
   import GuestLayout from '@/Layouts/GuestLayout.vue';
   import { Head } from '@inertiajs/vue3';
@@ -447,6 +452,7 @@ const form = useForm({
   paid_amount: 0,
   products: [],
   receipt_no: '',
+  userModifiedPaidAmount: false,
 });
 
   
@@ -833,7 +839,7 @@ watch(() => form.agreement_no, async (newAgreementNo) => {
     console.log("Agreement Deselected - Keeping existing data");
 
     // Reset payment schedule when agreement is deselected
-    form.payment_schedules = '';  // Reset the payment schedule field
+    form.payment_schedule_id = '';  // Reset the payment schedule field
     filteredPaymentSchedules.value = [];  // Reset available payment schedules
 
     // Reset other fields if necessary
@@ -921,7 +927,7 @@ const submitInvoice = async () => {
     form.total = calculateTotalKHR.value;
     form.exchange_rate = calculateExchangeRate.value;
     form.paid_amount = form.paid_amount || 0;
-    form.installment_paid = form.installment_paid || 0;
+    form.installment_paid = Number(form.installment_paid) || 0;
     form.receipt_no = form.receipt_no || '';
 
     // If USD total wasn't set, set it based on exchange rate if available
@@ -1065,22 +1071,36 @@ watch(() => form.start_date, (newStartDate) => {
 };
 });
 
-watch(() => form.payment_schedule_id, (newPaymentScheduleId) => {
-  if (newPaymentScheduleId) {
-    // Find the selected payment schedule
-    const selectedPaymentSchedule = props.paymentSchedules.find(
-      (ps) => ps.id === newPaymentScheduleId
-    );
-
-    if (selectedPaymentSchedule) {
-      form.paid_amount = selectedPaymentSchedule.amount || 0;
-      form.installment_paid = selectedPaymentSchedule.amount || 0;
-      
-      // Disable the first payment if it's already created
-      if (selectedPaymentSchedule.is_created) {
-        form.payment_schedule_id = null; // Reset the payment schedule selection
-      }
+watch(() => form.payment_schedule_id, (selectedIds) => {
+  if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
+    form.installment_paid = 0;
+    if (!form.userModifiedPaidAmount) {
+      form.paid_amount = 0;
     }
+    return;
+  }
+
+  // Use reactive filtered list (filteredPaymentSchedules)
+  const selectedSchedules = filteredPaymentSchedules.value.filter(schedule =>
+    selectedIds.includes(schedule.id)
+  );
+
+  const totalPaid = selectedSchedules.reduce((sum, schedule) => {
+    return sum + (Number(schedule.amount) || 0);
+  }, 0);
+
+  form.installment_paid = totalPaid;
+
+  if (!form.userModifiedPaidAmount) {
+    form.paid_amount = totalPaid;
+  }
+}, { deep: true });
+
+
+// Track if user modifies paid_amount manually to prevent auto-overriding it
+watch(() => form.paid_amount, (newVal) => {
+  if (newVal !== form.installment_paid) {
+    form.userModifiedPaidAmount = true;
   }
 });
 
