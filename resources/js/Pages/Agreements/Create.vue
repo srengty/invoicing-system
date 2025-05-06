@@ -550,23 +550,28 @@ const searchQuotation = async () => {
             params: { quotation_no: form.quotation_no },
         });
 
-        if (response.data.error) {
-            quotationError.value = response.data.error;
-            resetQuotationFields();
-            return;
+        if (response.data) {
+            customerName.value = response.data.customer_name;
+            form.address = response.data.address;
+            form.customer_id = response.data.customer_id;
+            form.agreement_amount = response.data.agreement_amount;
+            schedule.value.agreement_amount = response.data.agreement_amount;
+            if (response.data.currency === "USD") {
+                schedule.value.exchange_rate =
+                    response.data.exchange_rate || 4100;
+                riels.value = false;
+            } else {
+                schedule.value.exchange_rate = 1;
+                riels.value = true;
+            }
+        } else {
+            customerName.value = "";
+            form.address = "";
+            form.customer_id = null;
+            form.agreement_amount = 0;
+            schedule.value.agreement_amount = 0;
+            schedule.value.exchange_rate = 1;
         }
-
-        // Update form fields with quotation data
-        customerName.value = response.data.customer_name;
-        form.address = response.data.address;
-        form.customer_id = response.data.customer_id;
-        form.agreement_amount = response.data.agreement_amount;
-        schedule.value.agreement_amount = response.data.agreement_amount;
-
-        // Set currency based on quotation
-        form.currency = response.data.currency;
-        riels.value = response.data.currency === "KHR";
-        schedule.value.exchange_rate = riels.value ? 4100 : 1;
     } catch (error) {
         if (error.response && error.response.status === 404) {
             quotationError.value = error.response.data.error;
