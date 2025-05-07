@@ -72,9 +72,9 @@
                         {{ quotation.quotation_date }}
                     </p>
                     <!-- <p v-if="exchangeRate">
-                        <strong>Exchange Rate:</strong>
-                        1 USD = {{ exchangeRate }} KHR
-                    </p> -->
+                            <strong>Exchange Rate:</strong>
+                            1 USD = {{ exchangeRate }} KHR
+                        </p> -->
                 </div>
             </div>
         </div>
@@ -142,13 +142,13 @@
                         {{ formatNumber(totalAmount) }}
                     </p>
                     <!-- <p class="text-sm text-gray-600">
-                        Equivalent {{ isUSD ? "KHR" : "USD" }}:
-                        {{ formatNumber(alternateTotal) }}
-                    </p> -->
+                            Equivalent {{ isUSD ? "KHR" : "USD" }}:
+                            {{ formatNumber(alternateTotal) }}
+                        </p> -->
                 </div>
                 <!-- <div class="text-sm">
-                    <p>Exchange Rate: 1 USD = {{ exchangeRate }} KHR</p>
-                </div> -->
+                        <p>Exchange Rate: 1 USD = {{ exchangeRate }} KHR</p>
+                    </div> -->
             </div>
 
             <!-- Terms and Conditions -->
@@ -401,11 +401,38 @@ const generateAndDownloadPDF = async () => {
         const quotationPDF = await generatePDF(printArea.value);
         const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
-        const filename = `quotation_${quotation.value.quotation_no}.pdf`;
+        const filename = `Quotation_${quotation.value.customer_name}_${quotation.value.quotation_no}.pdf`;
         downloadPDF(mergedPDF, filename);
-        window.location.href = route("quotations.list");
+
+        const response = await fetch(
+            `/quotations/${quotation.value.id}/mark-printed`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                },
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Failed to update printed_at timestamp");
+        }
+
+        const result = await response.json();
+        console.log("Print timestamp updated:", result.printed_at);
+
+        router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
         console.error("Error generating PDFs:", error);
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to update print timestamp",
+            life: 3000,
+        });
     }
 };
 
@@ -421,7 +448,7 @@ const generateAndSendPDF = async () => {
         const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
 
-        const filename = `quotation_${quotation.value.quotation_no}.pdf`;
+        const filename = `Quotation_${quotation.value.customer_name}_${quotation.value.quotation_no}.pdf`;
         sendPDFViaEmail(mergedPDF, filename);
         isSendDialogVisible.value = false;
         window.location.href = route("quotations.list");

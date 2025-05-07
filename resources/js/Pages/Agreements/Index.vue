@@ -83,7 +83,6 @@ list agreement
                 :rowClass="rowClass"
             >
                 <template v-for="col of showColumns" :key="col.field">
-                    <!-- column for all other columns -->
                     <Column
                         v-if="
                             ![
@@ -179,6 +178,7 @@ list agreement
                         :field="col.field"
                         :header="col.header"
                         sortable
+                        style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
                             <span>
@@ -195,7 +195,6 @@ list agreement
                             </span>
                         </template>
                     </Column>
-
                     <!-- Update the total_progress_payment column to show the sum of all receipts -->
                     <Column
                         v-if="col.field === 'total_progress_payment'"
@@ -237,7 +236,6 @@ list agreement
                             </div>
                         </template>
                     </Column>
-
                     <!-- Update the total_progress_payment_percentage column to show the percentage -->
                     <Column
                         v-if="col.field === 'total_progress_payment_percentage'"
@@ -328,7 +326,7 @@ list agreement
                         :header="col.header"
                         frozen
                         alignFrozen="right"
-                        style="width: 8rem; font-size: 14px; z-index: 2"
+                        style="width: 5%; font-size: 14px; z-index: 2"
                     >
                         <template #body="slotProps">
                             <Button
@@ -353,7 +351,7 @@ list agreement
                                 size="small"
                                 icon="pi pi-eye"
                                 outlined
-                                class="mr-2"
+                                class="ml-2"
                                 :disabled="slotProps.data.status === 'Closed'"
                                 v-tooltip="'Cannot view closed agreement'"
                                 @click="viewAgreementDetails(slotProps.data)"
@@ -377,7 +375,7 @@ list agreement
                     </Column>
                 </template>
             </DataTable>
-            <!-- Total Progress Payment Dialog -->
+            <!-- Total Progress Payment Dialog (View) -->
             <Dialog
                 v-model:visible="progressPaymentsDialog"
                 :style="{ width: '45vw' }"
@@ -732,14 +730,7 @@ list agreement
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    <span
-                                        :class="{
-                                            'text-red-500 font-semibold':
-                                                isPastDue(
-                                                    slotProps.data.due_date
-                                                ),
-                                        }"
-                                    >
+                                    <span>
                                         {{
                                             formatDate(slotProps.data.due_date)
                                         }}
@@ -873,7 +864,7 @@ const columns = [
     { field: "short_description", header: "Short description" },
     {
         field: "actions",
-        header: "Edit/View/Print",
+        header: "Edit / View",
     },
 ];
 const defaultColumns = columns.filter(
@@ -933,14 +924,12 @@ const getFieldValue = (obj, path) => {
 };
 const startDateFilter = ref(null);
 const endDateFilter = ref(null);
-// function to calculate due payment
 const rowClass = (data) => {
     return {
         "bg-red-50": data.due_payment > 0,
         "border-l-4 border-red-500": data.due_payment > 0,
     };
 };
-// In your list agreement component
 const calculateDuePayment = (agreement) => {
     if (
         !agreement.payment_schedules ||
@@ -959,14 +948,12 @@ const calculateDuePayment = (agreement) => {
             moment.ISO_8601,
         ]);
         if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
-            // Add the amount if the payment is past due
             duePayment += parseFloat(schedule.amount) || 0;
         }
     });
 
     return duePayment;
 };
-// Process your agreements data to include due_payment
 const processedAgreements = computed(() => {
     return props.agreements.map((agreement) => {
         const totalPaid = (agreement.progress_payments || []).reduce(
@@ -985,7 +972,6 @@ const processedAgreements = computed(() => {
         };
     });
 });
-
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
     return processedAgreements.value.filter((agreement) => {
@@ -1171,13 +1157,13 @@ const getStatusSeverityPayment = (schedule) => {
     const status = getPaymentStatus(schedule);
     switch (status) {
         case "PAID":
-            return "success"; // Green for PAID
+            return "success";
         case "PAST DUE":
-            return "danger"; // Red for PAST DUE
+            return "danger";
         case "UPCOMING":
-            return "info"; // Blue for UPCOMING
+            return "info";
         default:
-            return "warning"; // Default severity for undefined statuses
+            return "warning";
     }
 };
 </script>

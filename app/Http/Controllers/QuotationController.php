@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator; // Import Validator facade
-use Carbon\Carbon; // Import Carbon for date manipulation
-use App\Models\Quotation; // Import Quotation model
-use App\Models\Product; // Import Product model
-use App\Models\Customer; // Import Customer model
-use App\Models\Agreement; // Import Customer model
-use App\Models\CustomerCategory; // Import Customer model
+use Carbon\Carbon;
+use Exception;
+use Inertia\Inertia;
+use App\Models\Quotation;
+use App\Models\Product;
+use App\Models\Customer;
+use App\Models\Agreement;
+use App\Models\CustomerCategory;
 use App\Models\ProductQuotation;
 use App\Models\Division;
 use App\Models\Category;
-use Inertia\Inertia;
+use App\Mail\QuotationEmail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\QuotationEmail;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Mail\Mailer;
 use Illuminate\Support\Facades\Http;
-use Exception;
 
 class QuotationController extends Controller
 {
@@ -31,7 +31,7 @@ class QuotationController extends Controller
         $products = Product::all();
 
         Log::info($quotations);
-        return Inertia::render('Quotations/List', [ // Render the index page using Inertia
+        return Inertia::render('Quotations/List', [
             'quotations' => $quotations,
             'agreements' => $agreements,
             'customers' => $customers,
@@ -59,7 +59,6 @@ class QuotationController extends Controller
                     'active' => $customer->active
                 ];
             }),
-            // 'products' => $products,
             'products' => Product::where('status', 'approved')->get(),
             'customerCategories' => CustomerCategory::all(),
             'productCategories' => Category::all(),
@@ -254,7 +253,6 @@ class QuotationController extends Controller
         $quotation = Quotation::with(['customer', 'products'])
         ->where('id', $quotation_no)
         ->firstOrFail();
-        Log::info("message");
         // return Inertia::render('Quotations/Print', [
             //     'quotation' => $quotation,
             //     'products' => $quotation->products,
@@ -289,6 +287,18 @@ class QuotationController extends Controller
                 'exchange_rate' => $quotation->exchange_rate,
                 'status' => $quotation->status,
             ],
+        ]);
+    }
+
+    public function markPrinted($id)
+    {
+        $quotation = Quotation::findOrFail($id);
+        $quotation->printed_at = now();
+        $quotation->save();
+
+        return response()->json([
+            'success' => true,
+            'printed_at' => $quotation->printed_at->toDateTimeString(),
         ]);
     }
 

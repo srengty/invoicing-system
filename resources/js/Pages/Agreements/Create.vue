@@ -603,8 +603,6 @@ watch(
             resetQuotationFields();
             return;
         }
-
-        // Debounce the search to avoid too many requests
         const timer = setTimeout(() => {
             searchQuotation();
         }, 500);
@@ -634,7 +632,7 @@ const schedule = ref({
     exchange_rate: 4200,
 });
 // Form data
-const totalAgreement = ref(10000); // Set your default total amount
+const totalAgreement = ref(10000);
 const shortDescription = ref("");
 const percentage = ref();
 const amount = ref();
