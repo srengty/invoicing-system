@@ -10,6 +10,7 @@ use App\Models\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class AgreementController extends Controller
 {
@@ -22,6 +23,8 @@ class AgreementController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($agreement) {
+                $agreement->status = $agreement->updateStatus();
+                $agreement->save();
                 // Calculate total paid amount from payment schedules (based on receipts)
                 $totalPaid = 0;
                 $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) use ($agreement, &$totalPaid) {
@@ -71,6 +74,7 @@ class AgreementController extends Controller
                     'total_progress_payment' => $totalPaid,
                     'total_progress_payment_percentage' => $paymentPercentage,
                     'progress_payments' => $progressPayments,
+                    'status' => $agreement->status,
 
                 ];
             });
@@ -129,7 +133,7 @@ class AgreementController extends Controller
             'agreement_date' => 'required|date_format:d/m/Y',
             'payment_schedule' => 'required|array|min:1',
             'start_date' => 'required|date_format:d/m/Y',
-            'end_date' => 'required|date_format:d/m/Y',
+            // 'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
         ]);
@@ -137,7 +141,11 @@ class AgreementController extends Controller
         $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
         $exchangeRate = $quotation?->exchange_rate ?? 4100;
 
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->start_date);
+        $endDate = $startDate->copy()->addDays(14);
         $data = $request->except('payment_schedule')+[
+            'start_date' => $startDate->format('d/m/Y'),
+            'end_date' => $endDate->format('d/m/Y'),
             'amount' => $request->agreement_amount,
             'agreement_ref_no' => $request->agreement_ref_no
         ];
@@ -177,17 +185,27 @@ class AgreementController extends Controller
             $schedule->save();
             // $value['agreement_no'] = $request->agreement_no;
         }
+        $agreement->status = $agreement->updateStatus();
+        $agreement->save();
+
         return to_route('agreements.index');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(int $id)
+    public function show(int $agreement_no)
     {
+        $agreement = Agreement::with(['customer', 'paymentSchedules'])
+            ->where('agreement_no', $agreement_no)
+            ->firstOrFail();
 
-        $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
-        return response()->json($agreement);
+        return response()->json([
+            ...$agreement->toArray(),
+            'agreement_doc' => json_decode($agreement->agreement_doc ?? '[]', true),
+            'attachments' => json_decode($agreement->attachments ?? '[]', true),
+            'payment_schedules' => $agreement->paymentSchedules->toArray(),
+        ]);
     }
 
     public function print(int $id)
@@ -230,7 +248,7 @@ class AgreementController extends Controller
             'agreement_doc' => 'required',
             'agreement_date' => 'required|date_format:d/m/Y',
             'start_date' => 'required|date_format:d/m/Y',
-            'end_date' => 'required|date_format:d/m/Y',
+            // 'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
             'agreement_ref_no' => 'nullable|string|unique:agreements,agreement_ref_no,'.$agreement_no.',agreement_no',
@@ -260,6 +278,16 @@ class AgreementController extends Controller
             'currency'
         ]);
 
+        $startDate = Carbon::createFromFormat('d/m/Y', $request->start_date);
+        $endDate = $startDate->copy()->addDays(14);
+
+        $data = $request->except('payment_schedule') + [
+            'start_date' => $startDate->format('d/m/Y'),
+            'end_date' => $endDate->format('d/m/Y'),
+            'amount' => $request->agreement_amount,
+            'agreement_ref_no' => $request->agreement_ref_no,
+        ];
+
         $data['amount'] = $request->agreement_amount;
         // $data['agreement_doc'] = json_encode($request->agreement_doc);
         $data['agreement_doc'] = $request->agreement_doc;
@@ -285,6 +313,9 @@ class AgreementController extends Controller
                 'exchange_rate' => $schedule['exchange_rate'] ?? ($schedule['currency'] === 'KHR' ? 4100 : 1),
             ]);
         }
+
+        $agreement->status = $agreement->updateStatus();
+        $agreement->save();
 
         return redirect()->route('agreements.index')
             ->with('success', 'Agreement updated successfully');
@@ -385,6 +416,9 @@ class AgreementController extends Controller
             'agreement_amount' => $quotation->total,
             'currency' => $quotation->currency,
             'exchange_rate' => $quotation->exchange_rate,
+            'agreement_doc' => json_decode($agreement->agreement_doc ?? '[]', true),
+            'attachments' => json_decode($agreement->attachments ?? '[]', true),
+
         ]);
     }
 

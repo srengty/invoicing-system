@@ -70,6 +70,8 @@ list agreement
             </div>
             <DataTable
                 :value="filteredAgreements"
+                scrollable
+                scrollHeight="flex"
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -81,7 +83,6 @@ list agreement
                 :rowClass="rowClass"
             >
                 <template v-for="col of showColumns" :key="col.field">
-                    <!-- column for all other columns -->
                     <Column
                         v-if="
                             ![
@@ -177,6 +178,7 @@ list agreement
                         :field="col.field"
                         :header="col.header"
                         sortable
+                        style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
                             <span>
@@ -193,7 +195,6 @@ list agreement
                             </span>
                         </template>
                     </Column>
-
                     <!-- Update the total_progress_payment column to show the sum of all receipts -->
                     <Column
                         v-if="col.field === 'total_progress_payment'"
@@ -235,7 +236,6 @@ list agreement
                             </div>
                         </template>
                     </Column>
-
                     <!-- Update the total_progress_payment_percentage column to show the percentage -->
                     <Column
                         v-if="col.field === 'total_progress_payment_percentage'"
@@ -324,12 +324,19 @@ list agreement
                         v-if="col.field === 'actions'"
                         :field="col.field"
                         :header="col.header"
-                        style="width: 5%; font-size: 14px"
+                        frozen
+                        alignFrozen="right"
+                        style="width: 5%; font-size: 14px; z-index: 2"
                     >
                         <template #body="slotProps">
                             <Button
                                 severity="info"
                                 size="small"
+                                icon="pi pi-pencil"
+                                outlined
+                                class="mr-2"
+                                :disabled="slotProps.data.status === 'Closed'"
+                                v-tooltip="'Cannot edit closed agreement'"
                                 @click="
                                     router.get(
                                         route('agreements.edit', {
@@ -338,21 +345,18 @@ list agreement
                                         })
                                     )
                                 "
-                                icon="pi pi-pencil"
-                                aria-label="Edit"
-                                class="mr-2"
-                                outlined
                             />
                             <Button
                                 severity=""
                                 size="small"
-                                @click="viewAgreementDetails(slotProps.data)"
                                 icon="pi pi-eye"
-                                aria-label="View"
                                 outlined
-                                class="mr-2"
+                                class="ml-2"
+                                :disabled="slotProps.data.status === 'Closed'"
+                                v-tooltip="'Cannot view closed agreement'"
+                                @click="viewAgreementDetails(slotProps.data)"
                             />
-                            <Button
+                            <!-- <Button
                                 severity=""
                                 size="small"
                                 @click="
@@ -366,12 +370,12 @@ list agreement
                                 aria-label="print"
                                 outlined
                                 class="mr-2"
-                            />
+                            /> -->
                         </template>
                     </Column>
                 </template>
             </DataTable>
-            <!-- Total Progress Payment Dialog -->
+            <!-- Total Progress Payment Dialog (View) -->
             <Dialog
                 v-model:visible="progressPaymentsDialog"
                 :style="{ width: '45vw' }"
@@ -636,6 +640,69 @@ list agreement
                                     />
                                 </div>
                             </div>
+                            <!-- Agreement Documents -->
+                            <div class="col-12">
+                                <div class="field">
+                                    <label class="font-semibold block mb-1"
+                                        >Agreement Documents:</label
+                                    >
+                                    <ul class="ml-1 space-y-1">
+                                        <li
+                                            v-for="(
+                                                doc, index
+                                            ) in selectedAgreementDetails?.agreement_doc"
+                                            :key="'doc-' + index"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <i
+                                                class="pi pi-file-pdf text-red-500"
+                                            ></i>
+                                            <a
+                                                :href="doc.path"
+                                                target="_blank"
+                                                class="text-blue-600 hover:underline"
+                                            >
+                                                {{
+                                                    doc.name ||
+                                                    `Document ${index + 1}`
+                                                }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Attachments -->
+                            <div class="col-12">
+                                <div class="field">
+                                    <label class="font-semibold block mb-1"
+                                        >Attachments:</label
+                                    >
+                                    <ul class="ml-1 space-y-1">
+                                        <li
+                                            v-for="(
+                                                file, index
+                                            ) in selectedAgreementDetails?.attachments"
+                                            :key="'attach-' + index"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <i
+                                                class="pi pi-file-pdf text-red-500"
+                                            ></i>
+                                            <a
+                                                :href="file.path"
+                                                target="_blank"
+                                                class="text-blue-600 hover:underline"
+                                            >
+                                                {{
+                                                    file.name ||
+                                                    `Attachment ${index + 1}`
+                                                }}
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                         <Divider class="my-4" />
                         <!-- Payment Schedule Section -->
@@ -663,14 +730,7 @@ list agreement
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    <span
-                                        :class="{
-                                            'text-red-500 font-semibold':
-                                                isPastDue(
-                                                    slotProps.data.due_date
-                                                ),
-                                        }"
-                                    >
+                                    <span>
                                         {{
                                             formatDate(slotProps.data.due_date)
                                         }}
@@ -804,7 +864,7 @@ const columns = [
     { field: "short_description", header: "Short description" },
     {
         field: "actions",
-        header: "Print/View/Edit",
+        header: "Edit / View",
     },
 ];
 const defaultColumns = columns.filter(
@@ -864,14 +924,12 @@ const getFieldValue = (obj, path) => {
 };
 const startDateFilter = ref(null);
 const endDateFilter = ref(null);
-// function to calculate due payment
 const rowClass = (data) => {
     return {
         "bg-red-50": data.due_payment > 0,
         "border-l-4 border-red-500": data.due_payment > 0,
     };
 };
-// In your list agreement component
 const calculateDuePayment = (agreement) => {
     if (
         !agreement.payment_schedules ||
@@ -890,14 +948,12 @@ const calculateDuePayment = (agreement) => {
             moment.ISO_8601,
         ]);
         if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
-            // Add the amount if the payment is past due
             duePayment += parseFloat(schedule.amount) || 0;
         }
     });
 
     return duePayment;
 };
-// Process your agreements data to include due_payment
 const processedAgreements = computed(() => {
     return props.agreements.map((agreement) => {
         const totalPaid = (agreement.progress_payments || []).reduce(
@@ -905,9 +961,8 @@ const processedAgreements = computed(() => {
             0
         );
 
-        const totalPercentage = agreement.amount > 0
-            ? (totalPaid / agreement.amount) * 100
-            : 0;
+        const totalPercentage =
+            agreement.amount > 0 ? (totalPaid / agreement.amount) * 100 : 0;
 
         return {
             ...agreement,
@@ -917,8 +972,6 @@ const processedAgreements = computed(() => {
         };
     });
 });
-
-
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
     return processedAgreements.value.filter((agreement) => {
@@ -992,12 +1045,13 @@ const selectedAgreementDetails = ref(null);
 const viewAgreementDetails = async (agreement) => {
     try {
         const response = await axios.get(
-            route("agreements.show", { id: agreement.agreement_no })
+            route("agreements.show", { agreement_no: agreement.agreement_no })
         );
 
         const formattedData = {
             ...response.data,
-            ...agreement,
+            agreement_doc: response.data.agreement_doc ?? [],
+            attachments: response.data.attachments ?? [],
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
@@ -1103,15 +1157,22 @@ const getStatusSeverityPayment = (schedule) => {
     const status = getPaymentStatus(schedule);
     switch (status) {
         case "PAID":
-            return "success"; // Green for PAID
+            return "success";
         case "PAST DUE":
-            return "danger"; // Red for PAST DUE
+            return "danger";
         case "UPCOMING":
-            return "info"; // Blue for UPCOMING
+            return "info";
         default:
-            return "warning"; // Default severity for undefined statuses
+            return "warning";
     }
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.text-primary {
+    color: var(--primary-color);
+}
+.text-primary:hover {
+    text-decoration: underline;
+}
+</style>

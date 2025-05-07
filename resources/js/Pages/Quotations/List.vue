@@ -74,6 +74,15 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
+                    <Column header="Select" style="width: 5%">
+                        <template #body="slotProps">
+                            <Checkbox
+                                label="Select All Active"
+                                :value="slotProps.data.id"
+                                :disabled="!slotProps.data.active"
+                            />
+                        </template>
+                    </Column>
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
@@ -144,7 +153,7 @@
                             <div class="flex items-center">
                                 <span
                                     @click="handleStatusClick(slotProps.data)"
-                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
+                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                     :class="{
                                         'bg-blue-100 text-blue-800 border-blue-400':
                                             slotProps.data.customer_status ===
@@ -197,7 +206,7 @@
                         </template>
                     </Column>
                     <!-- Action Column -->
-                    <Column header="View / Print-out" style="width: 8%">
+                    <Column header="View / Print" style="width: 8%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
                                 <Button
@@ -213,14 +222,24 @@
                                 <div>
                                     <Button
                                         icon="pi pi-print"
-                                        aria-label="Print out"
-                                        class="custom-button"
-                                        @click="
-                                            printQuotation(slotProps.data.id, 1)
+                                        :label="
+                                            slotProps.data.printed_at
+                                                ? formatDate(
+                                                      slotProps.data.printed_at
+                                                  )
+                                                : 'Print'
                                         "
+                                        class="custom-button"
                                         size="small"
-                                        outlined
-                                        :disabled="!slotProps.data.active"
+                                        @click="
+                                            printQuotation(slotProps.data.id)
+                                        "
+                                        :disabled="!slotProps.data.quotation_no"
+                                        :severity="
+                                            slotProps.data.printed_at
+                                                ? 'success'
+                                                : 'primary'
+                                        "
                                     />
                                 </div>
                             </div>
@@ -458,7 +477,6 @@
                         </div>
                     </div>
                 </Dialog>
-
                 <!-- Confirm Dialog for comment -->
                 <Dialog
                     v-model:visible="isCommentDialogVisible"
@@ -488,9 +506,9 @@
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import html2pdf from "html2pdf.js";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { Head, Link, usePage, router, useForm } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import { useToast } from "primevue/usetoast";
@@ -505,6 +523,7 @@ import {
     Dropdown,
     Toast,
     Breadcrumb,
+    Checkbox,
 } from "primevue";
 
 const toast = useToast();
@@ -537,29 +556,6 @@ const items = computed(() => [
     },
     { label: page.props.title || "Quotations", to: route("quotations.list") },
 ]);
-
-const filteredQuotations = computed(() => {
-    if (!searchTerm.value || !searchType.value) {
-        return props.quotations;
-    }
-
-    return props.quotations.filter((quotation) => {
-        const fieldValue = getFieldValue(quotation, searchType.value);
-        if (typeof fieldValue === "number") {
-            return fieldValue
-                .toString()
-                .includes(searchTerm.value.toLowerCase());
-        }
-        return fieldValue
-            .toLowerCase()
-            .includes(searchTerm.value.toLowerCase());
-    });
-});
-
-const getFieldValue = (obj, path) => {
-    return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
-};
-
 const showToast = (
     type = "success",
     title = "Success",
@@ -593,6 +589,34 @@ const form = useForm({
     tax: 0,
     products: [],
 });
+onMounted(() => {
+    props.quotations.forEach((q) => {
+        if (q.printed_at) {
+            printedDates.value[q.id] = formatDate(q.printed_at);
+        }
+    });
+});
+const filteredQuotations = computed(() => {
+    if (!searchTerm.value || !searchType.value) {
+        return props.quotations;
+    }
+
+    return props.quotations.filter((quotation) => {
+        const fieldValue = getFieldValue(quotation, searchType.value);
+        if (typeof fieldValue === "number") {
+            return fieldValue
+                .toString()
+                .includes(searchTerm.value.toLowerCase());
+        }
+        return fieldValue
+            .toLowerCase()
+            .includes(searchTerm.value.toLowerCase());
+    });
+});
+
+const getFieldValue = (obj, path) => {
+    return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
+};
 
 const isFormVisible = ref(false);
 const editQuotation = () => {
@@ -630,10 +654,43 @@ const viewQuotation = (quotation) => {
     }
     isViewDialogVisible.value = true;
 };
-const printQuotation = (quotation_no, include_catelog = 0) => {
-    const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
-    // Inertia.visit(quotUrl);
-    const printWindow = window.open(quotUrl, "_self");
+const printedDates = ref({});
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+    });
+};
+const printQuotation = async (quotationId) => {
+    try {
+        // Open print view in new tab
+        window.open(`/quotations/${quotationId}?include_catelog=0`, "_self");
+
+        // Mark as printed
+        const response = await fetch(
+            `/quotations/${quotationId}/mark-printed`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                },
+            }
+        );
+
+        if (response.ok) {
+            router.reload({ only: ["quotations"] });
+        } else {
+            console.error("Failed to mark as printed");
+        }
+    } catch (error) {
+        console.error("Error printing quotation:", error);
+    }
 };
 
 const updateQuotationStatus = (quotation, message) => {
@@ -1041,5 +1098,17 @@ const viewCommentCustomer = (customerStatusData) => {
 .custom-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+/* Add this to your styles */
+:deep(.p-checkbox) {
+    margin-right: 0.5rem;
+}
+
+.print-selected-btn {
+    margin-left: auto;
+}
+.custom-button .p-button-label {
+    margin-left: 0.25rem;
+    font-size: 11px;
 }
 </style>
