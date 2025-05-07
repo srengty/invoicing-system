@@ -72,23 +72,31 @@
                         />
                     </div>
                 </div>
-                <div
-                    class="col-12 md:col-6"
-                    v-if="
-                        formData.invoice_no &&
-                        selectedInvoice?.payment_schedule_id
-                    "
-                >
-                    <div class="field">
-                        <label>Payment Schedule</label>
-                        <InputText
-                            :value="formattedScheduleId"
-                            class="w-full"
+            <div class="col-12 md:col-6" v-if="formData.invoice_no && selectedInvoice?.payment_schedules?.length">
+                <div class="field">
+                    <label>Payment Schedules</label>
+                    <div class="p-inputgroup">
+                        <InputText 
+                            :value="formattedScheduleId" 
+                            class="w-full" 
+                            readonly 
                             size="small"
-                            readonly
                         />
                     </div>
+                    <!-- Optional: Show detailed list -->
+                    <ul class="pl-2 mt-2">
+                        <li
+                            v-for="ps in selectedInvoice.payment_schedules"
+                            :key="ps.id"
+                            class="text-sm"
+                        >
+                            PS-{{ String(ps.id).padStart(6, "0") }} - 
+                            {{ ps.status }} - 
+                            Paid: {{ ps.paid_amount }} / {{ ps.amount }}
+                        </li>
+                    </ul>
                 </div>
+            </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
                         <label class="required">Customer Code</label>
@@ -305,7 +313,7 @@ const formData = ref({
     paid_amount: null,
     payment_method: null,
     payment_reference_no: null,
-    payment_schedule_id: null,
+    payment_schedule_ids: [],
 });
 
 const customers = ref([]);
@@ -338,6 +346,7 @@ const resetForm = () => {
         paid_amount: null,
         payment_method: null,
         payment_reference_no: null,
+        payment_schedule_ids: []
     };
     amountInWords.value = "";
 };
@@ -514,6 +523,7 @@ const closeDialog = () => {
         paid_amount: null,
         payment_method: null,
         payment_reference_no: null,
+        payment_schedule_ids: []
     };
 };
 
@@ -564,7 +574,10 @@ const updateInvoiceDetails = () => {
     formData.value.customer_id = invoice.customer_id;
     formData.value.customer_code = invoice.customer_code;
     formData.value.customer_name = invoice.customer_name;
-    formData.value.payment_schedule_id = invoice.payment_schedule_id;
+    
+    // Update payment schedule IDs - map through the payment_schedules array
+    formData.value.payment_schedule_ids = (invoice.payment_schedules || []).map(ps => ps.id);
+    
     updateAmountInWords();
 };
 
@@ -581,8 +594,8 @@ const resetInvoiceFields = () => {
 const invoiceLabel = (invoice) => {
     if (!invoice) return "";
     let label = `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
-    if (invoice.payment_schedule_id) {
-        label += ` [Schedule: ${invoice.payment_schedule_id}]`;
+    if (invoice.payment_schedule_ids) {
+        label += ` [Schedule: ${invoice.payment_schedule_ids}]`;
     }
     return label;
 };
@@ -625,7 +638,7 @@ const updateReceipt = async () => {
                 .toISOString()
                 .split("T")[0],
             amount_in_words: amountInWords.value,
-            payment_schedule_id: formData.value.payment_schedule_id || null,
+            payment_schedule_ids: formData.value.payment_schedule_ids || [], // Include payment schedule IDs
         };
 
         const response = await axios.put(
@@ -639,7 +652,7 @@ const updateReceipt = async () => {
             detail: `Receipt ${formData.value.receipt_no} updated successfully`,
             life: 3000,
         });
-        // router.replace(route("receipts.index"));
+        
         Inertia.visit(route("receipts.index"), {
             method: "get",
             preserveState: true,
@@ -682,7 +695,7 @@ const createReceipt = async () => {
             amount_in_words: amountInWords.value,
             payment_method: formData.value.payment_method,
             payment_reference_no: formData.value.payment_reference_no || null,
-            payment_schedule_id: formData.value.payment_schedule_id || null,
+            payment_schedule_ids: formData.value.payment_schedule_ids || [], // Include payment schedule IDs
         };
 
         const response = await axios.post(route("receipts.store"), payload);
@@ -720,11 +733,14 @@ const createReceipt = async () => {
         isLoading.value = false;
     }
 };
+
 const formattedScheduleId = computed(() => {
-    if (!formData.value.payment_schedule_id) return 'No schedule';
-    // Example: PS-000123
-    return `PS-${String(formData.value.payment_schedule_id).padStart(6, '0')}`;
+    if (!formData.value.payment_schedule_ids?.length) return 'No schedules';
+    return formData.value.payment_schedule_ids
+        .map(id => `PS-${String(id).padStart(6, '0')}`)
+        .join(', ');
 });
+
 </script>
 
 <style scoped>

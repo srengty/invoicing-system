@@ -47,5 +47,6 @@ class Receipt extends Model
     {
         return $this->belongsTo(PaymentSchedule::class);
     }
+    
 
 }
