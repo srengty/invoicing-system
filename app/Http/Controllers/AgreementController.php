@@ -1,4 +1,3 @@
-aggCon
 <?php
 
 namespace App\Http\Controllers;
@@ -188,9 +187,14 @@ class AgreementController extends Controller
     {
 
         $agreement = Agreement::with(['customer', 
-        'paymentSchedules:id,agreement_no,amount,due_date,status'
+        'paymentSchedules:id,agreement_no,amount,due_date,status,percentage,short_description,currency'
         ])->findOrFail($id);
-        return response()->json($agreement);
+        return response()->json([
+            ...$agreement->toArray(),
+            'agreement_doc' => json_decode($agreement->agreement_doc ?? '[]', true),
+            'attachments' => json_decode($agreement->attachments ?? '[]', true),
+            'payment_schedules' => $agreement->paymentSchedules->toArray(),
+        ]);
     }
 
     public function print(int $id)
@@ -208,7 +212,7 @@ class AgreementController extends Controller
         $agreement = Agreement::with([
             'customer',
             'quotation',
-            'paymentSchedules:id,agreement_no,amount,due_date,status' // include fields you want
+            'paymentSchedules:id,agreement_no,amount,due_date,status,percentage,short_description,currency' // include fields you want
         ])->findOrFail($agreement_no);        
 
         $customers = Customer::where('active', true)

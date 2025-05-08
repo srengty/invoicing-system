@@ -1050,8 +1050,8 @@ const viewAgreementDetails = async (agreement) => {
 
         const formattedData = {
             ...response.data,
-            agreement_doc: response.data.agreement_doc ?? [],
-            attachments: response.data.attachments ?? [],
+            agreement_doc: response.data.agreement_doc,
+            attachments: response.data.attachments,
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
@@ -1076,6 +1076,7 @@ const viewAgreementDetails = async (agreement) => {
         });
     }
 };
+
 // Add this method in your script setup
 const isPastDue = (date) => {
     if (!date) return false;

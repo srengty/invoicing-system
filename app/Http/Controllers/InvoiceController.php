@@ -354,7 +354,7 @@ class InvoiceController extends Controller
         }
 
         // Apply pagination after all filters
-        $invoices = $query->paginate();  // Apply pagination after the filters are added
+        $invoices = $query->orderBy('created_at', 'desc')->paginate(); 
 
         // Get the filters for passing them to the view
         $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
