@@ -19,7 +19,7 @@
                 fluid
                 date-format="yy/mm/dd"
             />
-            <label for="due_date" class="required">Due date</label>
+            <label for="due_date" class="">Due date</label>
         </FloatLabel>
         <FloatLabel variant="on">
             <Textarea
@@ -27,9 +27,7 @@
                 v-model="model.short_description"
                 fluid
             ></Textarea>
-            <label for="short_description" class="required"
-                >Short description</label
-            >
+            <label for="short_description" class="">Short description</label>
         </FloatLabel>
         <FloatLabel variant="on">
             <InputGroup id="percentage">
@@ -43,7 +41,7 @@
                 />
                 <InputGroupAddon append>%</InputGroupAddon>
             </InputGroup>
-            <label for="percentage" class="required z-10">Percentage</label>
+            <label for="percentage" class="z-10">Percentage</label>
         </FloatLabel>
         <FloatLabel variant="on">
             <InputGroup id="amount">
@@ -57,10 +55,10 @@
                     :maxFractionDigits="2"
                 />
             </InputGroup>
-            <label for="amount" class="required z-10">Amount</label>
+            <label for="amount" class="z-10">Amount</label>
         </FloatLabel>
         <FloatLabel variant="on">
-            <Dropdown
+            <!-- <Dropdown
                 id="currency"
                 v-model="model.currency"
                 :options="currencies"
@@ -68,10 +66,22 @@
                 optionValue="value"
                 class="w-full"
                 @change="doCurrencyChange"
+            /> -->
+            <InputText
+                id="currency"
+                v-model="model.currency"
+                :options="currencies"
+                optionLabel="name"
+                optionValue="value"
+                class="w-full"
+                @change="doCurrencyChange"
+                fluid
+                readonly
             />
-            <label for="currency" class="required">Currency</label>
+            <label for="currency" class="">Currency</label>
         </FloatLabel>
-        <!-- <div class="flex items-center gap-2" v-if="props.multiCurrencies">
+
+        <div class="flex items-center gap-2" v-if="props.multiCurrencies">
             <label for="currency" class="required">Currency</label>
             <RadioButtonGroup
                 id="currency"
@@ -103,7 +113,8 @@
                 id="exchange_rate"
             />
             <label for="exchange_rate" class="required z-10">Rate</label>
-        </FloatLabel> -->
+        </FloatLabel>
+
         <div class="flex justify-end gap-2">
             <Button label="Save" class="grow" @click="doSave"></Button>
             <Button

@@ -258,7 +258,8 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
-                                :min-date="minDate"
+                                :readonly="true"
+                                :disabled="true"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">
@@ -602,8 +603,6 @@ watch(
             resetQuotationFields();
             return;
         }
-
-        // Debounce the search to avoid too many requests
         const timer = setTimeout(() => {
             searchQuotation();
         }, 500);
@@ -611,6 +610,16 @@ watch(
         return () => clearTimeout(timer);
     }
 );
+watch(
+    () => form.start_date,
+    (newStartDate) => {
+        if (newStartDate) {
+            form.end_date = moment(newStartDate).add(14, "days").toDate();
+        }
+    },
+    { immediate: true }
+);
+
 const schedule = ref({
     agreement_amount: form.agreement_amount,
     due_date: new Date(),
@@ -623,7 +632,7 @@ const schedule = ref({
     exchange_rate: 4200,
 });
 // Form data
-const totalAgreement = ref(10000); // Set your default total amount
+const totalAgreement = ref(10000);
 const shortDescription = ref("");
 const percentage = ref();
 const amount = ref();

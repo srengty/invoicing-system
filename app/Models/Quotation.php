@@ -13,6 +13,7 @@ class Quotation extends Model
     protected $primaryKey = 'id'; // Explicitly set the primary key
     protected $keyType = 'int'; // Ensure it's an integer
     protected $fillable = [
+        'printed_at',
         'quotation_no',
         'quotation_date',
         'customer_id',
@@ -28,6 +29,7 @@ class Quotation extends Model
 
     protected $casts = [
         'quotation_date' => 'datetime',
+        'printed_at' => 'datetime:Y-m-d H:i:s',
         'total' => 'double',
         'exchange_rate' => 'double',
         'quotation_date' => 'datetime:Y-m-d',
