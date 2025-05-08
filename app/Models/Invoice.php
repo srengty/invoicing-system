@@ -128,14 +128,14 @@ class Invoice extends Model
     }
 
     // In Invoice model
-    public function updatePaidAmount()
-    {
-        $this->paid_amount = $this->receipts()->sum('paid_amount');
-        $this->save();
+    // public function updatePaidAmount()
+    // {
+    //     $this->paid_amount = $this->receipts()->sum('paid_amount');
+    //     $this->save();
 
-        // You might also want to update invoice status here
-        $this->updateStatus();
-    }
+    //     // You might also want to update invoice status here
+    //     $this->updateStatus();
+    // }
 
 }
 

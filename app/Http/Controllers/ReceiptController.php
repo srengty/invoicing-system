@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use NumberFormatter;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class ReceiptController extends Controller
 {
@@ -73,35 +75,29 @@ class ReceiptController extends Controller
                 'numeric',
                 'min:0.01',
                 function ($attribute, $value, $fail) use ($request) {
-                    if ($request->payment_schedule_ids) {
-                        foreach ($request->payment_schedule_ids as $scheduleId) {
-                            $schedule = PaymentSchedule::find($scheduleId);
-                            if (!$schedule) {
-                                $fail('Invalid payment schedule ID');
-                                return;
+                    if (!empty($request->invoice_no)) {
+                        $invoice = \App\Models\Invoice::where('invoice_no', $request->invoice_no)->first();
+                        if ($invoice) {
+                            $expectedAmount = $invoice->paid_amount;
+                            if ($value != $expectedAmount) {
+                                $fail("The paid amount must exactly equal the invoice's current paid amount of " . number_format($expectedAmount, 2));
                             }
-                            $remaining = $schedule->amount - ($schedule->paid_amount ?? 0);
-                            // if ($value > $remaining) {
-                            //     $fail("The paid amount cannot exceed the remaining amount of ".number_format($remaining, 2));
-                            // }
                         }
                     }
-                },
+                }
             ],
             'invoice_no' => 'nullable|regex:/^\d+$/|exists:invoices,invoice_no',
             'payment_schedule_ids' => 'nullable|array',
             'payment_schedule_ids.*' => 'exists:payment_schedules,id',
         ]);
+        
     
         $customer = Customer::find($validated['customer_id']);
         if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Customer not found',
-            ], 404);
+            return redirect()->back()->with('error', 'Customer not found.');
         }
     
-        $data = [
+        $receipt = Receipt::create([
             'invoice_no' => $validated['invoice_no'] ?? null,
             'receipt_no' => $validated['receipt_no'],
             'receipt_date' => $validated['receipt_date'],
@@ -110,59 +106,26 @@ class ReceiptController extends Controller
             'paid_amount' => $validated['paid_amount'],
             'amount_in_words' => $this->convertToWords($validated['paid_amount']),
             'payment_method' => $validated['payment_method'],
-            'payment_schedule_ids' => $validated['payment_schedule_ids'] ?? [],
-        ];
+        ]);
+        
     
-        try {
-            DB::beginTransaction();
+        // Sync payment schedules if provided
+        if (!empty($validated['payment_schedule_ids'])) {
+            $receipt->paymentSchedules()->sync($validated['payment_schedule_ids']);
     
-            // Create the receipt
-            $receipt = Receipt::create($data);
+            foreach ($receipt->paymentSchedules as $schedule) {
+                $totalPaid = $schedule->receipts()->sum('paid_amount');
     
-            // If invoice is provided, update its paid amount
-            if (!empty($validated['invoice_no'])) {
-                $invoice = Invoice::where('invoice_no', $validated['invoice_no'])->first();
-                // if ($invoice) {
-                //     $invoice->increment('paid_amount', $validated['paid_amount']);
-                // }
-            }
-    
-            // Update payment schedules if provided
-            if ($request->has('payment_schedule_ids')) {
-                $validScheduleIds = $request->payment_schedule_ids;
-    
-                // Update the payment schedule statuses
-                $paymentSchedules = PaymentSchedule::whereIn('id', $validScheduleIds)->get();
-    
-                foreach ($paymentSchedules as $schedule) {
-                    // Update the paid amount
-                    $schedule->paid_amount += $validated['paid_amount'];
-                    
-                    $schedule->status = ($schedule->paid_amount >= $schedule->amount) ? 'PAID' : 'PAST_DUE';
-                    
-                    $schedule->save();
-                    
-                    // If you have a many-to-many relationship, attach the receipt to the payment schedule
-                    $receipt->paymentSchedules()->attach($schedule->id);
+                if ($totalPaid >= $schedule->amount) {
+                    $schedule->update(['status' => 'PAID']);
+                } elseif ($totalPaid > 0) {
+                    $schedule->update(['status' => 'PARTIALLY_PAID']);
                 }
             }
-    
-            DB::commit();
-    
-            return response()->json([
-                'success' => true,
-                'message' => 'Receipt created successfully',
-                'receipt' => $receipt->load(['customer', 'invoice', 'paymentSchedules'])
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create receipt: ' . $e->getMessage(),
-            ], 500);
         }
-    }
     
+        return redirect()->route('receipts.index')->with('success', 'Receipt created successfully!');
+    }
     
     public function update(Request $request, $receipt_no)
     {

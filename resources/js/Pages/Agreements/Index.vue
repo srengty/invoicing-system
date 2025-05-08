@@ -1097,7 +1097,7 @@ const getPaymentStatus = (schedule) => {
         return "PAST DUE";
     }
 
-    return "UPCOMING";
+    return schedule.status;
 };
 const getStatusSeverityPayment = (schedule) => {
     const status = getPaymentStatus(schedule);

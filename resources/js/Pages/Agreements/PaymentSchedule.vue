@@ -390,7 +390,7 @@ const getPaymentStatus = (schedule) => {
     }
 
     // Default to upcoming
-    return "UPCOMING";
+    return schedule.status;
 };
 
 const getStatusSeverity = (schedule) => {

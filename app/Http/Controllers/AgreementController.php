@@ -186,7 +186,9 @@ class AgreementController extends Controller
     public function show(int $id)
     {
 
-        $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
+        $agreement = Agreement::with(['customer', 
+        'paymentSchedules:id,agreement_no,amount,due_date,status'
+        ])->findOrFail($id);
         return response()->json($agreement);
     }
 
@@ -202,8 +204,11 @@ class AgreementController extends Controller
      */
     public function edit(int $agreement_no)
     {
-        $agreement = Agreement::with(['customer', 'paymentSchedules', 'quotation'])
-            ->findOrFail($agreement_no);
+        $agreement = Agreement::with([
+            'customer',
+            'quotation',
+            'paymentSchedules:id,agreement_no,amount,due_date,status' // include fields you want
+        ])->findOrFail($agreement_no);        
 
         $customers = Customer::where('active', true)
             ->orWhere('id', $agreement->customer_id)
@@ -277,7 +282,7 @@ class AgreementController extends Controller
                 'agreement_no' => $agreement->agreement_no,
                 'due_date' => $schedule['due_date'],
                 'amount' => $schedule['amount'],
-                'status' => $schedule['status'] ?? 'UPCOMING',
+                'status' => $schedule['status'],
                 'percentage' => $schedule['percentage'],
                 'short_description' => $schedule['short_description'],
                 'remark' => $schedule['remark'] ?? null,
