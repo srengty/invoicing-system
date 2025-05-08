@@ -629,20 +629,28 @@
     }
     
     const formattedPaymentSchedules = computed(() => {
-        return filteredPaymentSchedules.value.map((ps, index) => {
-            const rankID = index + 1; // Starting from 1
-            const suffix = getOrdinalSuffix(rankID); // Get the correct ordinal suffix
-    
-            // Disable the first payment schedule if it's already created
-            const isDisabled = index === 0 && ps.is_created;
-    
+    const fullList = filteredPaymentSchedules.value;
+
+    return fullList
+        .filter(ps => ps.status !== "PAID") // Only show unpaid
+        .map((ps) => {
+            // Find this schedule's position in the full list of the same agreement
+            const sameAgreementSchedules = fullList.filter(
+                s => s.agreement_no === ps.agreement_no
+            );
+
+            const rankIndex = sameAgreementSchedules.findIndex(s => s.id === ps.id);
+            const rankID = rankIndex + 1;
+            const suffix = getOrdinalSuffix(rankID);
+            const isDisabled = rankID === 1 && ps.is_created;
+
             return {
-                id: ps.id, // The original ID
-                label: `${ps.agreement_no} (${rankID}${suffix} Payment)`, // Use rankID with ordinal suffix
-                disabled: isDisabled, // Disable if it's the first payment and is already created
+                id: ps.id,
+                label: `${ps.agreement_no} (${rankID}${suffix} Payment)`,
+                disabled: isDisabled,
             };
         });
-    });
+});
     
     const calculateTotalKHR = computed(() => {
         return productsList.value.reduce(
@@ -1123,66 +1131,6 @@
             );
         }
 
-        // Check if we are editing or creating
-        // if (form.id) {
-        //     // PUT request for updating existing quotation
-        //     try {
-        //         await form.put(route("quotations.update", { id: form.id }), {
-        //             onSuccess: () => {
-        //                 showToast(
-        //                     "success",
-        //                     "Updated",
-        //                     "Quotation updated successfully!"
-        //                 );
-        //                 router.get(route("quotations.list"));
-        //             },
-        //             onError: (errors) => {
-        //                 console.error("Update Error:", errors);
-        //                 showToast(
-        //                     "error",
-        //                     "Update Failed",
-        //                     "Could not update quotation."
-        //                 );
-        //             },
-        //         });
-        //     } catch (error) {
-        //         console.error("Unexpected Error in Update:", error);
-        //         showToast(
-        //             "error",
-        //             "Unexpected Error",
-        //             "Could not update quotation."
-        //         );
-        //     }
-        // } else {
-        //     // POST request for creating new quotation
-        //     try {
-        //         await form.post(route("quotations.store"), {
-        //             onSuccess: () => {
-        //                 showToast(
-        //                     "success",
-        //                     "Created",
-        //                     "Quotation created successfully!"
-        //                 );
-        //                 router.get(route("quotations.list"));
-        //             },
-        //             onError: (errors) => {
-        //                 console.error("Creation Error:", errors);
-        //                 showToast(
-        //                     "error",
-        //                     "Creation Failed",
-        //                     "Could not create quotation."
-        //                 );
-        //             },
-        //         });
-        //     } catch (error) {
-        //         console.error("Unexpected Error in Create:", error);
-        //         showToast(
-        //             "error",
-        //             "Unexpected Error",
-        //             "Could not create quotation."
-        //         );
-        //     }
-        // }
         console.log(form.installment_paid)
         try {
             form.post("/invoices");

@@ -28,11 +28,6 @@ class PaymentSchedule extends Model
         return $this->belongsTo(Agreement::class);
     }
 
-    public function receipts()
-    {
-        return $this->hasMany(Receipt::class, 'payment_schedule_id', 'id');
-    }
-
     protected $dateFormat = 'Y-m-d';
     protected function casts(){
         return [
@@ -94,5 +89,11 @@ class PaymentSchedule extends Model
     {
         return $this->belongsToMany(Invoice::class, 'invoice_payment_schedule');
     }
+
+    public function receipts()
+    {
+        return $this->belongsToMany(Receipt::class, 'payment_schedule_receipt', 'payment_schedule_id', 'receipt_receipt_no', 'id', 'receipt_no');
+    }
+
 
 }

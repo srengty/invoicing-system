@@ -38,14 +38,14 @@ class Receipt extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function agreement():BelongsTo
+    public function agreement()
     {
         return $this->belongsTo(Agreement::class);
     }
 
-    public function paymentSchedule()
+    public function paymentSchedules()
     {
-        return $this->belongsTo(PaymentSchedule::class);
+        return $this->belongsToMany(PaymentSchedule::class, 'payment_schedule_receipt', 'receipt_receipt_no', 'payment_schedule_id', 'receipt_no', 'id');
     }
     
 
