@@ -1,14 +1,11 @@
 <template>
     <Head title="Quotations Printing" />
-
     <div class="flex justify-start items-center gap-4 ml-10">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
             <p class="text-sm font-semibold">{{ toggleLabel }}</p>
             <ToggleSwitch
                 v-model="isKhmer"
-                onLabel="KH/៛"
-                offLabel="EN/$"
                 class="w-20"
                 @change="handleToggleChange"
             />
@@ -250,24 +247,31 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import { usePage, router } from "@inertiajs/vue3";
-import Button from "primevue/button";
-import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";
-import ToggleSwitch from "primevue/toggleswitch";
 import { useToast } from "primevue/usetoast";
-import Dialog from "primevue/dialog";
 import { Head } from "@inertiajs/vue3";
+import html2pdf from "html2pdf.js";
+import ToggleSwitch from "primevue/toggleswitch";
+import Dialog from "primevue/dialog";
+import Button from "primevue/button";
 
 const toast = useToast();
-
 const sendForm = ref({
     emailChecked: false,
     telegramChecked: false,
 });
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDownload = urlParams.get("download") === "1";
 
-// Other reactive state variables
+    if (isDownload) {
+        setTimeout(() => {
+            generateAndDownloadPDF();
+        }, 1000);
+    }
+});
 const isSendDialogVisible = ref(false);
 const selectedQuotation = ref(null);
 const isSending = ref(false);
@@ -293,15 +297,6 @@ const showConfirmationDialog = () => {
     isSendDialogVisible.value = true;
 };
 
-// Example function to simulate the sending process (replace with your actual send function)
-const sendQuotationRequest = async (quotation, formData) => {
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            resolve();
-        }, 2000);
-    });
-};
-
 // Refs and Data Setup
 const { props } = usePage();
 const quotation = ref({
@@ -310,11 +305,14 @@ const quotation = ref({
     total_usd: props.quotation?.total_usd || 0,
     exchange_rate: props.quotation?.exchange_rate || 4100,
 });
+defineProps({
+    quotation: {
+        type: Object,
+        required: true,
+    },
+});
 
-// Create reference for print area (ensure it's properly linked to the DOM)
 const printArea = ref(null);
-
-// State for toggling between currencies
 const isUSD = ref(false);
 const isKhmer = ref(true);
 const toggleLabel = computed(() =>
@@ -391,48 +389,27 @@ const generatePDF = (element) => {
         html2pdf().from(element).toPdf().outputPdf("blob").then(resolve);
     });
 };
+const includeCatalog = ref(props.includeCatalog);
 const generateAndDownloadPDF = async () => {
     try {
-        if (!printArea.value) {
-            console.error("Print area is not available");
-            return;
-        }
-
-        const quotationPDF = await generatePDF(printArea.value);
-        const catalogPDFs = await generateCatalogPDFs(formattedProducts.value);
-        const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
-        const filename = `Quotation_${quotation.value.customer_name}_${quotation.value.quotation_no}.pdf`;
-        downloadPDF(mergedPDF, filename);
-
-        const response = await fetch(
-            `/quotations/${quotation.value.id}/mark-printed`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]'
-                    ).content,
-                },
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("Failed to update printed_at timestamp");
-        }
-
-        const result = await response.json();
-        console.log("Print timestamp updated:", result.printed_at);
-
-        router.get(route("quotations.list"), {}, { preserveScroll: true });
+        await nextTick();
+        setTimeout(async () => {
+            const element = printArea.value;
+            const quotationPDF = await generatePDF(element);
+            const catalogPDFs = await generateCatalogPDFs(
+                formattedProducts.value
+            );
+            const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
+            const filename = `Quotation_${
+                quotation.value.customer_name ||
+                quotation.value.customer?.name ||
+                "Customer"
+            }_${quotation.value.quotation_no}.pdf`;
+            downloadPDF(mergedPDF, filename);
+            router.get(route("quotations.list"), {}, { preserveScroll: true });
+        }, 1000);
     } catch (error) {
-        console.error("Error generating PDFs:", error);
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to update print timestamp",
-            life: 3000,
-        });
+        console.error("Error generating PDF:", error);
     }
 };
 
