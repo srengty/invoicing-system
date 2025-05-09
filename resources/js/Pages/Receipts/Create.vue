@@ -84,7 +84,7 @@
                         />
                     </div>
                     <!-- Optional: Show detailed list -->
-                    <ul class="pl-2 mt-2">
+                    <!-- <ul class="pl-2 mt-2">
                         <li
                             v-for="ps in selectedInvoice.payment_schedules"
                             :key="ps.id"
@@ -94,7 +94,7 @@
                             {{ ps.status }} - 
                             Paid: {{ ps.paid_amount }} / {{ ps.amount }}
                         </li>
-                    </ul>
+                    </ul> -->
                 </div>
             </div>
                 <div class="col-12 md:col-6">

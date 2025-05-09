@@ -143,4 +143,10 @@ class Agreement extends Model
         return 'Open';
     }
 
+    public function progressPayments()
+    {
+        return $this->hasMany(Agreement::class);
+    }
+
+
 }

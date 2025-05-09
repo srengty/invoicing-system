@@ -127,6 +127,11 @@ class Invoice extends Model
         return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
     }
 
+    public function progressPayments()
+    {
+        return $this->hasMany(Agreement::class);
+    }
+
     // In Invoice model
     // public function updatePaidAmount()
     // {

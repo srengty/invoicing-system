@@ -61,7 +61,7 @@ class InvoiceController extends Controller
             'terms' => 'nullable|string|max:255',
             'total_usd' => 'nullable|numeric',
             'exchange_rate' => 'nullable|numeric|min:0',
-            'payment_schedules' => 'nullable|array', // Changed from payment_schedule_id
+            'payment_schedules' => 'nullable|array',
             'payment_schedules.*.id' => 'nullable|integer|exists:payment_schedules,id',
             'currency' => 'nullable|string|in:KHR,USD',
             'start_date' => 'nullable|string',
@@ -79,24 +79,43 @@ class InvoiceController extends Controller
             'receipt_no' => 'nullable|integer|exists:receipts,receipt_no',
             'installment_paid' => 'nullable|numeric|min:0',
         ]);
-
+    
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
-
+    
         $data = $validated->validated();
-
+    
+        // Get the last invoice for the same agreement_no that has status 'PAID'
+        $lastInvoice = \App\Models\Invoice::where('agreement_no', $data['agreement_no'])
+            ->orderBy('invoice_no', 'desc')
+            ->first();
+    
+        // Get the last payment_schedule for the same agreement_no that has status 'PAID'
+        $lastPaymentSchedule = \App\Models\PaymentSchedule::where('agreement_no', $data['agreement_no'])
+            ->where('status', 'PAID')
+            ->orderBy('due_date', 'desc')
+            ->first();
+    
+        // Determine the installment_paid logic based on whether it's the first or subsequent payment
+        $installmentPaid = $data['paid_amount'] ?? 0;
+    
+        if ($lastInvoice && $lastPaymentSchedule) {
+            // If this is a subsequent payment, sum the last installment_paid with the current paid_amount
+            $installmentPaid += $lastInvoice->installment_paid;  // Add the last invoice's installment_paid
+        }
+    
         // Format the start and end dates
         $startDate = now()->format('Y-m-d');
         if (!empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])) {
             $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
         }
-
+    
         $endDate = now()->addDays(14)->format('Y-m-d');
-        if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['end_date'])) {
+        if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/d{4}$/', $data['end_date'])) {
             $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
         }
-
+    
         // Calculate grand total from products
         $grand_total = 0;
         if (!empty($data['products'])) {
@@ -107,15 +126,15 @@ class InvoiceController extends Controller
                 }
             }
         }
-
+    
         // USD conversion if applicable
         $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
             ? $grand_total / $data['exchange_rate']
             : $data['total_usd'] ?? null;
-
+    
         // Set default currency as 'KHR' if not provided
         $currency = $data['currency'] ?? 'KHR';
-
+    
         // Generate invoice number if status is 'Approved'
         $invoice_no = null;
         if ($data['status'] === 'Approved') {
@@ -126,7 +145,7 @@ class InvoiceController extends Controller
                             ->first();
             $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
         }
-
+    
         // Set invoice date only if status is Approved
         $invoiceDate = null;
         if ($data['status'] === 'Approved') {
@@ -134,7 +153,7 @@ class InvoiceController extends Controller
         } elseif ($data['status'] !== 'Pending' && !empty($request->invoice_date) && strtotime($request->invoice_date)) {
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
         }
-        
+    
         // Create the invoice
         $invoice = \App\Models\Invoice::create([
             'invoice_no'     => $invoice_no,
@@ -153,10 +172,10 @@ class InvoiceController extends Controller
             'invoice_date'   => $invoiceDate,
             'status'         => $data['status'],
             'paid_amount'    => $data['paid_amount'] ?? 0,
-            'installment_paid' => $data['installment_paid'] ?? 0,
+            'installment_paid' => $installmentPaid,
             'receipt_no'     => $data['receipt_no'] ?? null,
         ]);
-
+    
         // Attach products to the pivot table using invoice_id
         if (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
@@ -178,14 +197,13 @@ class InvoiceController extends Controller
             $scheduleIds = collect($data['payment_schedules'])->pluck('id')->toArray();
             $invoice->paymentSchedules()->attach($scheduleIds);
         }
-        
+    
         // Eager load payment schedules with the invoice and return the response
         $invoice = $invoice->load('paymentSchedules');
-        
-        
-
+    
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
+    
 
 
     public function updateStatus(Request $request, Invoice $invoice)
