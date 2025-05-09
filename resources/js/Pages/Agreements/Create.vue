@@ -36,13 +36,6 @@
                             <!-- Quotation No Input with Search -->
                             <span class="text-sm">
                                 Quotation No.
-                                <i
-                                    class="pi pi-info-circle ml-1"
-                                    v-tooltip="
-                                        'Must be an active quotation with no existing agreement'
-                                    "
-                                >
-                                </i>
                             </span>
                             <InputText
                                 v-model="form.quotation_no"
@@ -258,8 +251,6 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
-                                :readonly="true"
-                                :disabled="true"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">

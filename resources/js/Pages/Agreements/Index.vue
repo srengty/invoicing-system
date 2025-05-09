@@ -1139,19 +1139,28 @@ const getStatusLabel = (status) => {
 };
 
 const getPaymentStatus = (schedule) => {
-    if ((schedule.paid_amount ?? 0) >= schedule.amount) {
+    // First check if fully paid
+    if (schedule.status === "PAID" || schedule.paid_amount >= schedule.amount) {
         return "PAID";
     }
 
-    const dueDate = moment(schedule.due_date, [
-        "YYYY-MM-DD",
-        "DD/MM/YYYY",
-        moment.ISO_8601,
-    ]);
-    if (dueDate.isValid() && dueDate.isBefore(moment(), "day")) {
+    // Then check if partially paid
+    if (schedule.paid_amount > 0) {
+        return "PARTIALLY_PAID";
+    }
+
+    // Then check if past due
+    const today = moment();
+    const dueDate = moment(
+        schedule.due_date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
         return "PAST DUE";
     }
 
+    // Default to upcoming
     return schedule.status;
 };
 const getStatusSeverityPayment = (schedule) => {

@@ -72,31 +72,37 @@
                         />
                     </div>
                 </div>
-            <div class="col-12 md:col-6" v-if="formData.invoice_no && selectedInvoice?.payment_schedules?.length">
-                <div class="field">
-                    <label>Payment Schedules</label>
-                    <div class="p-inputgroup">
-                        <InputText 
-                            :value="formattedScheduleId" 
-                            class="w-full" 
-                            readonly 
-                            size="small"
-                        />
+                <div
+                    class="col-12 md:col-6"
+                    v-if="
+                        formData.invoice_no &&
+                        selectedInvoice?.payment_schedules?.length
+                    "
+                >
+                    <div class="field">
+                        <label>Payment Schedules</label>
+                        <div class="p-inputgroup">
+                            <InputText
+                                :value="formattedScheduleId"
+                                class="w-full"
+                                readonly
+                                size="small"
+                            />
+                        </div>
+                        <!-- Optional: Show detailed list -->
+                        <ul class="pl-2 mt-2">
+                            <li
+                                v-for="ps in selectedInvoice.payment_schedules"
+                                :key="ps.id"
+                                class="text-sm"
+                            >
+                                PS-{{ String(ps.id).padStart(6, "0") }} -
+                                {{ ps.status }} - Paid: {{ ps.paid_amount }} /
+                                {{ ps.amount }}
+                            </li>
+                        </ul>
                     </div>
-                    <!-- Optional: Show detailed list -->
-                    <ul class="pl-2 mt-2">
-                        <li
-                            v-for="ps in selectedInvoice.payment_schedules"
-                            :key="ps.id"
-                            class="text-sm"
-                        >
-                            PS-{{ String(ps.id).padStart(6, "0") }} - 
-                            {{ ps.status }} - 
-                            Paid: {{ ps.paid_amount }} / {{ ps.amount }}
-                        </li>
-                    </ul>
                 </div>
-            </div>
                 <div class="col-12 md:col-6">
                     <div class="field">
                         <label class="required">Customer Code</label>
@@ -296,6 +302,7 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    visible: { type: Boolean, required: true },
 });
 onMounted(async () => {
     await loadCustomers();
@@ -346,7 +353,7 @@ const resetForm = () => {
         paid_amount: null,
         payment_method: null,
         payment_reference_no: null,
-        payment_schedule_ids: []
+        payment_schedule_ids: [],
     };
     amountInWords.value = "";
 };
@@ -523,7 +530,7 @@ const closeDialog = () => {
         paid_amount: null,
         payment_method: null,
         payment_reference_no: null,
-        payment_schedule_ids: []
+        payment_schedule_ids: [],
     };
 };
 
@@ -574,10 +581,12 @@ const updateInvoiceDetails = () => {
     formData.value.customer_id = invoice.customer_id;
     formData.value.customer_code = invoice.customer_code;
     formData.value.customer_name = invoice.customer_name;
-    
+
     // Update payment schedule IDs - map through the payment_schedules array
-    formData.value.payment_schedule_ids = (invoice.payment_schedules || []).map(ps => ps.id);
-    
+    formData.value.payment_schedule_ids = (invoice.payment_schedules || []).map(
+        (ps) => ps.id
+    );
+
     updateAmountInWords();
 };
 
@@ -652,7 +661,7 @@ const updateReceipt = async () => {
             detail: `Receipt ${formData.value.receipt_no} updated successfully`,
             life: 3000,
         });
-        
+
         Inertia.visit(route("receipts.index"), {
             method: "get",
             preserveState: true,
@@ -735,12 +744,11 @@ const createReceipt = async () => {
 };
 
 const formattedScheduleId = computed(() => {
-    if (!formData.value.payment_schedule_ids?.length) return 'No schedules';
+    if (!formData.value.payment_schedule_ids?.length) return "No schedules";
     return formData.value.payment_schedule_ids
-        .map(id => `PS-${String(id).padStart(6, '0')}`)
-        .join(', ');
+        .map((id) => `PS-${String(id).padStart(6, "0")}`)
+        .join(", ");
 });
-
 </script>
 
 <style scoped>
