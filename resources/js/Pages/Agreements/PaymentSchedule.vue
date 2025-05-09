@@ -18,13 +18,7 @@
             </Column>
             <Column field="due_date" header="Due Date" sortable>
                 <template #body="slotProps">
-                    <span
-                        :class="{
-                            'text-red-500 font-semibold': isPastDue(
-                                slotProps.data.due_date
-                            ),
-                        }"
-                    >
+                    <span>
                         {{ formatDate(slotProps.data.due_date) }}
                     </span>
                 </template>

@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Mail\Mailer;
 use Illuminate\Support\Facades\Http;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuotationController extends Controller
 {
@@ -288,6 +289,27 @@ class QuotationController extends Controller
                 'status' => $quotation->status,
             ],
         ]);
+    }
+
+    public function print(Quotation $quotation)
+    {
+        return view('quotations.print', [
+            'quotation' => $quotation,
+            'customer' => $quotation->customer,
+            'products' => $quotation->products
+        ]);
+    }
+
+    public function generatePDF(Quotation $quotation)
+    {
+        $quotation->load('customer', 'products');
+
+        $pdf = Pdf::loadView('quotations.pdf', [
+            'quotation' => $quotation,
+            'isUSD' => request()->query('currency', 'KHR') === 'USD'
+        ]);
+
+        return $pdf->stream("quotation_{$quotation->quotation_no}.pdf");
     }
 
     public function markPrinted($id)

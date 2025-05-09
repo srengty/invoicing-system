@@ -51,6 +51,11 @@ Route::post('/quotations/{quotationId}/comments', [QuotationController::class, '
 Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
 Route::put('/quotations/{id}/toggle-active', [QuotationController::class, 'toggleActive']);
 Route::put('/quotations/{id}/mark-printed', [QuotationController::class, 'markPrinted']);
+Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
+Route::get('/quotations/{quotation}/print', [QuotationController::class, 'print'])
+    ->name('quotations.print')
+    ->middleware('auth');
+Route::get('/quotations/{quotation_no}/pdf', [QuotationController::class, 'generatePDF'])->name('quotations.pdf');
 
 // Invoices
 Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
