@@ -352,6 +352,17 @@
                     :end-date="form.end_date"
                     :show-status="true"
                 />
+                <Message
+                    v-if="
+                        form.payment_schedule.length > 0 &&
+                        !isPaymentScheduleValid
+                    "
+                    severity="error"
+                    class="mt-2"
+                >
+                    Payment schedule must total exactly 100% (Current:
+                    {{ totalPercentage }}%) and match agreement amount
+                </Message>
                 <!-- Save Button -->
                 <div class="flex justify-end gap-2 mt-10">
                     <Button
@@ -359,7 +370,7 @@
                         type="submit"
                         raised
                         class="w-full md:w-40"
-                        :disabled="processing"
+                        :disabled="processing || !isPaymentScheduleValid"
                         icon="pi pi-check"
                     ></Button>
                     <Button
@@ -479,10 +490,11 @@ const form = useForm({
             id: item.id,
             due_date: safeDate(item.due_date),
             short_description: item.short_description,
-            percentage: item.percentage,
+            // force these to be numbers
+            percentage: parseFloat(item.percentage) || 0,
+            amount: parseFloat(item.amount) || 0,
             currency: item.currency,
             remark: item.remark,
-            amount: item.amount,
             status: item.status || "UPCOMING",
             agreement_currency: props.agreement.currency,
             exchange_rate:
@@ -533,7 +545,7 @@ const remainingAmount = computed(() => {
 const remainingPercentage = computed(() => {
     return (
         100 -
-        form.payment_schedule.reduce((acc, item) => acc + item.percentage, 0)
+        form.payment_schedule.reduce((sum, item) => sum + item.percentage, 0)
     );
 });
 
@@ -622,19 +634,43 @@ const removeAttachment = (index) => {
 };
 
 const doSave = (e) => {
-    schedule.value.currency = e.currency;
-    form.payment_schedule.push({
-        id: form.payment_schedule.length + 1,
-        due_date: e.due_date,
-        short_description: e.short_description,
-        percentage: e.percentage,
-        currency: e.currency,
-        remark: e.remark,
-        amount: e.amount,
-        status: e.status ?? "UPCOMING",
-        agreement_currency: form.currency,
-        exchange_rate: e.currency === "KHR" ? 4100 : 1,
-    });
+    const newTotalPercentage =
+        totalPercentage.value - (e.originalPercentage || 0) + e.percentage;
+
+    if (newTotalPercentage > 100) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: `Cannot add payment - would exceed 100% (current: ${totalPercentage.value}%)`,
+            life: 3000,
+        });
+        return;
+    }
+
+    if (e.id) {
+        // Update existing payment
+        const index = form.payment_schedule.findIndex((p) => p.id === e.id);
+        if (index !== -1) {
+            form.payment_schedule[index] = {
+                ...form.payment_schedule[index],
+                ...e,
+            };
+        }
+    } else {
+        // Add new payment
+        form.payment_schedule.push({
+            id: form.payment_schedule.length + 1,
+            due_date: e.due_date,
+            short_description: e.short_description,
+            percentage: e.percentage,
+            currency: e.currency,
+            remark: e.remark,
+            amount: e.amount,
+            status: e.status ?? "UPCOMING",
+            agreement_currency: form.currency,
+            exchange_rate: e.currency === "KHR" ? 4100 : 1,
+        });
+    }
 };
 
 const beforeUpdate = (e) => {
@@ -665,10 +701,54 @@ const isPastDue = (date) => {
     if (!date) return false;
     const today = moment();
     const dueDate = moment(date);
-    return dueDate.isValid() && dueDate.isBefore(today, 'day');
+    return dueDate.isValid() && dueDate.isBefore(today, "day");
 };
+// sum up the percentages as numbers
+const totalPercentage = computed(() => {
+    return form.payment_schedule.reduce(
+        (sum, item) => sum + (Number(item.percentage) || 0),
+        0
+    );
+});
+
+// sum up amounts (converted to the agreement currency)
+const totalAmount = computed(() => {
+    return form.payment_schedule.reduce((sum, item) => {
+        const amt = Number(item.amount) || 0;
+        // convert amt to agreement-currency if needed
+        const converted =
+            item.currency === form.currency
+                ? amt
+                : item.currency === "KHR"
+                ? amt / (item.exchange_rate || 4100)
+                : amt * (item.exchange_rate || 4100);
+        return sum + converted;
+    }, 0);
+});
+
+const isPaymentScheduleValid = computed(() => {
+    // Round to 2 decimal places to avoid floating point precision issues
+    const roundedPercentage = Math.round(totalPercentage.value * 100) / 100;
+    const roundedAmount = Math.round(totalAmount.value * 100) / 100;
+    const roundedAgreementAmount =
+        Math.round(schedule.value.agreement_amount * 100) / 100;
+
+    return (
+        roundedPercentage === 100 && roundedAmount === roundedAgreementAmount
+    );
+});
 const submitForm = () => {
     processing.value = true;
+    if (!isPaymentScheduleValid.value) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Payment schedule must total exactly 100% and match agreement amount",
+            life: 3000,
+        });
+        return;
+    }
+
     // Helper function to format dates consistently
     const formatDate = (date) => {
         if (!date) return null;

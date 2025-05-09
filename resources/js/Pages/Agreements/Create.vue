@@ -34,9 +34,7 @@
                                 >Record Agreement</span
                             >
                             <!-- Quotation No Input with Search -->
-                            <span class="text-sm">
-                                Quotation No.
-                            </span>
+                            <span class="text-sm"> Quotation No. </span>
                             <InputText
                                 v-model="form.quotation_no"
                                 placeholder="Enter Quotation No."
@@ -388,13 +386,13 @@
                 <Message
                     v-if="
                         form.payment_schedule.length > 0 &&
-                        !isPaymentScheduleComplete
+                        !isPaymentScheduleValid
                     "
                     severity="error"
                     class="mt-2"
                 >
                     Payment schedule must total exactly 100% (Current:
-                    {{ totalPercentage }}%)
+                    {{ totalPercentage }}%) and match agreement amount
                 </Message>
                 <!-- <div
                     class="flex justify-end items-center gap-2 my-2 px-24"
@@ -416,7 +414,7 @@
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
-                        :disabled="!isPaymentScheduleComplete"
+                        :disabled="!isPaymentScheduleValid || !isFormValid"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -816,6 +814,29 @@ const totalPercentage = computed(() => {
         0
     );
 });
+const totalAmount = computed(() => {
+    return form.payment_schedule.reduce((sum, item) => {
+        // Convert all amounts to agreement currency for accurate sum
+        const amount =
+            item.currency === form.currency
+                ? item.amount
+                : item.currency === "KHR"
+                ? item.amount / item.exchange_rate
+                : item.amount * item.exchange_rate;
+        return sum + amount;
+    }, 0);
+});
+const isPaymentScheduleValid = computed(() => {
+    // Round to 2 decimal places to avoid floating point precision issues
+    const roundedPercentage = Math.round(totalPercentage.value * 100) / 100;
+    const roundedAmount = Math.round(totalAmount.value * 100) / 100;
+    const roundedAgreementAmount =
+        Math.round(schedule.value.agreement_amount * 100) / 100;
+
+    return (
+        roundedPercentage === 100 && roundedAmount === roundedAgreementAmount
+    );
+});
 
 const isPaymentScheduleComplete = computed(() => {
     return Math.round(totalPercentage.value * 100) / 100 === 100;
@@ -948,6 +969,29 @@ const beforeUploadAttachment = (e) => {
 const src = ref(null);
 const attachments = ref([]);
 const doSave = (e) => {
+    const newTotalPercentage = totalPercentage.value + e.percentage;
+    const newTotalAmount = totalAmount.value + e.amount;
+
+    if (newTotalPercentage > 100) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: `Cannot add payment - would exceed 100% (current: ${totalPercentage.value}%)`,
+            life: 3000,
+        });
+        return;
+    }
+
+    if (newTotalAmount > schedule.value.agreement_amount) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: `Cannot add payment - would exceed agreement amount`,
+            life: 3000,
+        });
+        return;
+    }
+
     schedule.value.currency = e.currency;
     form.payment_schedule.push({
         id: form.payment_schedule.length + 1,
@@ -958,11 +1002,22 @@ const doSave = (e) => {
         remark: e.remark,
         amount: e.amount,
         status: e.status ?? "UPCOMING",
+        agreement_currency: form.currency,
+        exchange_rate: e.currency === "KHR" ? 4100 : 1,
     });
 };
 const beforeUpdate = (e) => {
     schedule.value.amount = remainingAmount.value;
     schedule.value.percentage = remainingPercentage.value;
+
+    // Ensure we don't exceed 100% or agreement amount
+    if (schedule.value.percentage > remainingPercentage.value) {
+        schedule.value.percentage = remainingPercentage.value;
+    }
+
+    if (schedule.value.amount > remainingAmount.value) {
+        schedule.value.amount = remainingAmount.value;
+    }
 };
 // const resolver = zodResolver(z.object({
 //     agreement_no: z.number(),
