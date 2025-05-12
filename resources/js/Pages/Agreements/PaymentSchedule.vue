@@ -173,6 +173,7 @@ import { ref, defineModel, computed, onMounted } from "vue";
 import { currencies } from "@/constants";
 import { useToast } from "primevue/usetoast";
 import moment from "moment";
+import { router } from '@inertiajs/vue3';
 import {
     DataTable,
     Column,
@@ -317,41 +318,17 @@ const editingSchedule = ref({
     status: "UPCOMING",
 });
 const generatingInvoice = ref(false);
-const generateInvoice = async (paymentItem) => {
-    generatingInvoice.value = true;
-
-    try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        toast.add({
-            severity: "success",
-            summary: "Invoice Generated",
-            detail: `Invoice for ${paymentItem.short_description} has been downloaded`,
-            life: 3000,
-        });
-
-        // In a real app, this would be the actual API call:
-        // const response = await axios.post('/api/generate-invoice', {
-        //     payment: paymentItem,
-        //     agreement: {
-        //         amount: props.agreement_amount,
-        //         currency: props.currency
-        //     }
-        // });
-
-        // Simulate PDF download
-        console.log("Would generate invoice for:", paymentItem);
-    } catch (error) {
-        toast.add({
-            severity: "error",
-            summary: "Generation Failed",
-            detail: "Failed to generate invoice. Please try again.",
-            life: 3000,
-        });
-    } finally {
-        generatingInvoice.value = false;
-    }
+const generateInvoice = (paymentItem) => {
+    // Navigate to the invoice create page with the agreement and payment schedule data
+    router.visit(route("invoices.create"), {
+        data: {
+            agreement_no: paymentItem.agreement_no,
+            payment_schedule_id: paymentItem.id,
+            amount: paymentItem.amount,
+            due_date: paymentItem.due_date,
+            // Include any other relevant data
+        },
+    });
 };
 
 const isPastDue = (date) => {
