@@ -120,13 +120,13 @@
                                 doDeletePaymentSchedule({ ...slotProps.data })
                             "
                         />
-                        <!-- <Button
+                        <Button
                             icon="pi pi-file-pdf"
                             class="p-button-success p-button-outlined"
                             label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
-                        /> -->
+                        />
                     </div>
                 </template>
             </Column>
