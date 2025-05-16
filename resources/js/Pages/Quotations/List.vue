@@ -24,6 +24,16 @@
 
         <div class="quotations text-sm p-4">
             <div class="flex justify-end p-4 gap-4">
+                <!-- <div>
+                    <Button
+                        label="Download Print"
+                        icon="pi pi-download"
+                        :loading="isDownloading"
+                        :disabled="selectedIds.length < 2 || isDownloading"
+                        @click="downloadPrintWithCatalog"
+                        size="small"
+                    />
+                </div> -->
                 <div>
                     <Dropdown
                         v-model="searchType"
@@ -74,6 +84,18 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
+                    <!-- <Column headerStyle="width: 5%" header="Select">
+                        <template #body="slotProps">
+                            <Checkbox
+                                :value="slotProps.data.id"
+                                v-model="selectedIds"
+                                :disabled="
+                                    !slotProps.data.active ||
+                                    !slotProps.data.quotation_no
+                                "
+                            />
+                        </template>
+                    </Column> -->
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
@@ -144,7 +166,7 @@
                             <div class="flex items-center">
                                 <span
                                     @click="handleStatusClick(slotProps.data)"
-                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center cursor-pointer"
+                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center"
                                     :class="{
                                         'bg-blue-100 text-blue-800 border-blue-400':
                                             slotProps.data.customer_status ===
@@ -197,7 +219,7 @@
                         </template>
                     </Column>
                     <!-- Action Column -->
-                    <Column header="View / Print-out" style="width: 8%">
+                    <Column header="View / Print" style="width: 10%">
                         <template #body="slotProps">
                             <div class="flex gap-4">
                                 <Button
@@ -213,14 +235,25 @@
                                 <div>
                                     <Button
                                         icon="pi pi-print"
-                                        aria-label="Print out"
-                                        class="custom-button"
-                                        @click="
-                                            printQuotation(slotProps.data.id, 1)
+                                        :label="
+                                            slotProps.data.printed_at
+                                                ? formatDate(
+                                                      slotProps.data.printed_at
+                                                  )
+                                                : 'Print-out'
                                         "
+                                        class="custom-button"
                                         size="small"
-                                        outlined
-                                        :disabled="!slotProps.data.active"
+                                        @click="
+                                            printQuotation(slotProps.data.id)
+                                        "
+                                        :disabled="
+                                            !slotProps.data.quotation_no ||
+                                            !slotProps.data.active
+                                        "
+                                        :severity="
+                                            slotProps.data.printed_at ? '' : ''
+                                        "
                                     />
                                 </div>
                             </div>
@@ -458,7 +491,6 @@
                         </div>
                     </div>
                 </Dialog>
-
                 <!-- Confirm Dialog for comment -->
                 <Dialog
                     v-model:visible="isCommentDialogVisible"
@@ -488,13 +520,14 @@
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import html2pdf from "html2pdf.js";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, reactive, nextTick } from "vue";
 import { Head, Link, usePage, router, useForm } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
+import { PDFDocument } from "pdf-lib";
 import {
     InputText,
     DataTable,
@@ -505,6 +538,7 @@ import {
     Dropdown,
     Toast,
     Breadcrumb,
+    Checkbox,
 } from "primevue";
 
 const toast = useToast();
@@ -537,29 +571,6 @@ const items = computed(() => [
     },
     { label: page.props.title || "Quotations", to: route("quotations.list") },
 ]);
-
-const filteredQuotations = computed(() => {
-    if (!searchTerm.value || !searchType.value) {
-        return props.quotations;
-    }
-
-    return props.quotations.filter((quotation) => {
-        const fieldValue = getFieldValue(quotation, searchType.value);
-        if (typeof fieldValue === "number") {
-            return fieldValue
-                .toString()
-                .includes(searchTerm.value.toLowerCase());
-        }
-        return fieldValue
-            .toLowerCase()
-            .includes(searchTerm.value.toLowerCase());
-    });
-});
-
-const getFieldValue = (obj, path) => {
-    return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
-};
-
 const showToast = (
     type = "success",
     title = "Success",
@@ -593,8 +604,44 @@ const form = useForm({
     tax: 0,
     products: [],
 });
+const downloading = ref(false);
 
-const isFormVisible = ref(false);
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDownload = urlParams.get("download") === "1";
+
+    if (isDownload) {
+        downloading.value = true;
+        setTimeout(() => {
+            generateAndDownloadPDF().finally(() => {
+                downloading.value = false;
+            });
+        }, 1000);
+    }
+});
+
+const filteredQuotations = computed(() => {
+    if (!searchTerm.value || !searchType.value) {
+        return props.quotations;
+    }
+
+    return props.quotations.filter((quotation) => {
+        const fieldValue = getFieldValue(quotation, searchType.value);
+        if (typeof fieldValue === "number") {
+            return fieldValue
+                .toString()
+                .includes(searchTerm.value.toLowerCase());
+        }
+        return fieldValue
+            .toLowerCase()
+            .includes(searchTerm.value.toLowerCase());
+    });
+});
+
+const getFieldValue = (obj, path) => {
+    return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
+};
+
 const editQuotation = () => {
     if (selectedQuotation.value.status !== "Approved") {
         console.log(selectedQuotation.value);
@@ -630,10 +677,40 @@ const viewQuotation = (quotation) => {
     }
     isViewDialogVisible.value = true;
 };
-const printQuotation = (quotation_no, include_catelog = 0) => {
-    const quotUrl = `/quotations/${quotation_no}?include_catelog=${include_catelog}`;
-    // Inertia.visit(quotUrl);
-    const printWindow = window.open(quotUrl, "_self");
+
+const formatDate = (dateString) => {
+    if (!dateString) return "Print";
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const printQuotation = async (quotationId) => {
+    try {
+        window.open(`/quotations/${quotationId}?include_catelog=0`, "_self");
+        // Mark as printed
+        const response = await fetch(
+            `/quotations/${quotationId}/mark-printed`,
+            {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                },
+            }
+        );
+        if (response.ok) {
+            router.reload({ only: ["quotations"] });
+        } else {
+            console.error("Failed to mark as printed");
+        }
+    } catch (error) {
+        console.error("Error printing quotation:", error);
+    }
 };
 
 const updateQuotationStatus = (quotation, message) => {
@@ -804,107 +881,6 @@ const handleStatusClick = (quotation) => {
     }
 };
 
-const sendQuotationToCustomer = async () => {
-    // Ensure the email option is selected
-    if (!sendForm.value.emailChecked && !sendForm.value.telegramChecked) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "Please select at least one option (Email or Telegram).",
-            life: 3000,
-        });
-        return;
-    }
-
-    isSending.value = true;
-
-    try {
-        // Generate the PDF for the quotation
-        generatePDF(selectedQuotation.value);
-
-        // Prepare the form data for sending
-        const formData = new FormData();
-        formData.append("quotation_id", selectedQuotation.value.id);
-        formData.append("send_email", sendForm.value.emailChecked);
-        formData.append("send_telegram", sendForm.value.telegramChecked);
-
-        // Add the generated PDF to the form data
-        const pdfBlob = await html2pdf()
-            .from(document.createElement("div"))
-            .outputPdf("blob");
-        formData.append(
-            "pdf_file",
-            pdfBlob,
-            `quotation_${selectedQuotation.value.quotation_no}.pdf`
-        );
-
-        // Get CSRF token from the meta tag
-        const csrfToken = document
-            .querySelector('meta[name="csrf_token"]')
-            .getAttribute("content");
-
-        // Send the request to the backend to save/send the quotation
-        const response = await fetch("/quotations/send", {
-            method: "POST",
-            body: formData, // Send the FormData directly
-            headers: {
-                "X-CSRF-TOKEN": csrfToken, // CSRF token for security
-            },
-        });
-
-        // Parse the JSON response from the server
-        const responseData = await response.json();
-
-        if (responseData.success) {
-            // If the quotation was approved, change the status to "Pending"
-            if (selectedQuotation.value.status === "Approved") {
-                await router.put(
-                    `/quotations/${selectedQuotation.value.id}/update-status`,
-                    {
-                        status: "Approved", // Change the status to Pending
-                    }
-                );
-
-                showToast(
-                    "success",
-                    "Success",
-                    "Quotation sent and status updated to 'Pending'!",
-                    3000
-                );
-            } else {
-                showToast(
-                    "success",
-                    "Success",
-                    "Quotation sent successfully!",
-                    3000
-                );
-            }
-
-            // Close the send dialog
-            isSendDialogVisible.value = false;
-        } else {
-            // Handle case where sending the quotation fails
-            showToast(
-                "error",
-                "Error",
-                "Failed to send the quotation. Please try again.",
-                3000
-            );
-        }
-    } catch (error) {
-        // Catch any errors and show the error message
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail:
-                error.message || "Failed to send quotation. Please try again.",
-            life: 3000,
-        });
-    } finally {
-        // Reset the sending state
-        isSending.value = false;
-    }
-};
 const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 2,
@@ -957,7 +933,6 @@ const toggleActive = (quotation) => {
 };
 const selectedComment = ref("");
 const isCommentDialogVisible = ref(false);
-
 const viewComment = (comments) => {
     const latestComment = comments[comments.length - 1].comment;
     selectedComment.value = latestComment;
@@ -975,6 +950,146 @@ const viewCommentCustomer = (customerStatusData) => {
         selectedComment.value = "No comment available for this status.";
         isCommentDialogVisible.value = true;
     }
+};
+const selectedIds = ref([]);
+const selectedQuotations = ref([]);
+
+const isDownloading = ref(false);
+const downloadPrintWithCatalog = async () => {
+    if (selectedIds.value.length < 2) {
+        showToast(
+            "warn",
+            "Selection Required",
+            "Please select at least 2 quotations to download.",
+            3000
+        );
+        return;
+    }
+
+    const isDownloading = ref(true);
+    try {
+        // Get the selected quotations
+        selectedQuotations.value = props.quotations.filter((quotation) =>
+            selectedIds.value.includes(quotation.id)
+        );
+
+        // Generate PDF for each selected quotation
+        const pdfBlobs = await Promise.all(
+            selectedQuotations.value.map(async (quotation) => {
+                try {
+                    // Use the correct endpoint with Ziggy
+                    const url = route("quotations.print", {
+                        quotation: quotation.id,
+                        include_catalog: 0,
+                    });
+
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(
+                            `Failed to fetch quotation ${quotation.id}`
+                        );
+                    }
+                    const html = await response.text();
+
+                    // Create a temporary element to render the HTML
+                    const tempDiv = document.createElement("div");
+                    tempDiv.innerHTML = html;
+                    document.body.appendChild(tempDiv);
+
+                    // Generate PDF from the HTML
+                    const pdfBlob = await html2pdf()
+                        .from(tempDiv)
+                        .set({
+                            margin: 10,
+                            filename: `quotation_${quotation.quotation_no}.pdf`,
+                            image: { type: "jpeg", quality: 0.98 },
+                            html2canvas: { scale: 2 },
+                            jsPDF: {
+                                unit: "mm",
+                                format: "a4",
+                                orientation: "portrait",
+                            },
+                        })
+                        .outputPdf("blob");
+
+                    // Clean up
+                    document.body.removeChild(tempDiv);
+                    return pdfBlob;
+                } catch (error) {
+                    console.error(
+                        `Error generating PDF for quotation ${quotation.id}:`,
+                        error
+                    );
+                    return null;
+                }
+            })
+        );
+
+        // Filter out any failed PDF generations
+        const validPdfBlobs = pdfBlobs.filter((blob) => blob !== null);
+
+        if (validPdfBlobs.length === 0) {
+            throw new Error("No valid PDFs were generated");
+        }
+
+        // Merge all PDFs
+        const mergedPdf = await mergePDFs(validPdfBlobs);
+
+        // Download the merged PDF
+        const blob = new Blob([mergedPdf], { type: "application/pdf" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `quotations_${new Date()
+            .toISOString()
+            .slice(0, 10)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast(
+            "success",
+            "Download Complete",
+            `Successfully downloaded ${validPdfBlobs.length} of ${selectedIds.value.length} quotations.`,
+            3000
+        );
+    } catch (error) {
+        console.error("Error in downloadPrintWithCatalog:", error);
+        showToast(
+            "error",
+            "Download Failed",
+            error.message || "Failed to download selected quotations.",
+            3000
+        );
+    } finally {
+        isDownloading.value = false;
+    }
+};
+const generateCatalogPDFs = async (products) => {
+    const pdfs = await Promise.all(
+        products
+            .filter((p) => p.pivot?.include_catalog)
+            .map(async (p) => {
+                try {
+                    const res = await fetch(p.pdf_url);
+                    return await res.blob();
+                } catch {
+                    return null;
+                }
+            })
+    );
+    return pdfs.filter((b) => b);
+};
+
+const mergePDFs = async (pdfBlobs) => {
+    const mergedDoc = await PDFDocument.create();
+    for (const blob of pdfBlobs) {
+        const src = await PDFDocument.load(
+            blob instanceof Blob ? await blob.arrayBuffer() : blob
+        );
+        const [...pages] = await mergedDoc.copyPages(src, src.getPageIndices());
+        pages.forEach((page) => mergedDoc.addPage(page));
+    }
+    return mergedDoc.save();
 };
 </script>
 
@@ -1041,5 +1156,17 @@ const viewCommentCustomer = (customerStatusData) => {
 .custom-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+/* Add this to your styles */
+:deep(.p-checkbox) {
+    margin-right: 0.5rem;
+}
+
+.print-selected-btn {
+    margin-left: auto;
+}
+.custom-button .p-button-label {
+    margin-left: 0.25rem;
+    font-size: 11px;
 }
 </style>

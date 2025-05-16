@@ -191,19 +191,31 @@
 
                 <Column header="Amount Due">
                     <template #body="{ data }">
-                        <span :class="{ 'text-red-500': data.due_date && moment(data.due_date).isBefore(moment(), 'day') && computeAmountDue(data) > 0 }">
+                        <span :class="{'text-red-500': computeAmountDue(data) > 0}">
+                            <!-- Display amount due or fully paid status -->
                             {{ computeAmountDue(data) }}
+                        </span>
+                    </template>
+                </Column>
+
+                <Column header="Amount Progress %">
+                    <template #body="{ data }">
+                        <span :class="{'text-red-500': data.invoice_end_date && moment(data.invoice_end_date).isBefore(moment(), 'day') && computeAmountDue(data) > 0}">
+                            <!-- Calculate and display the progress percentage -->
+                            {{ computeAmountProgressPercentage(data) }}%
                         </span>
                     </template>
                 </Column>
 
                 <Column header="Overdue">
                     <template #body="{ data }">
-                        <span :class="{'text-red-500': over_due(data).includes('days ago') && over_due(data) !== 'Not Past Due'}">
-                            {{ over_due(data) }}
+                        <span :class="over_due(data).class">
+                            <!-- Display overdue status or fully paid message -->
+                            {{ over_due(data).text }}
                         </span>
                     </template>
                 </Column>
+
 
                 <Column field="payment_status" header="Payment Status">
                     <template #body="{ data }">
@@ -386,8 +398,10 @@ const columns = [
     { field: "invoice_no", header: "Invoice No" },
     { field: "invoice_date", header: "Date" },
     { field: "invoice_end_date", header: "Due Date" },
+    { field: "agreement_no", header: "Agreement No" },
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
+    { field: "installment_paid", header: "Amount Progress" },
     { field: "paid_amount", header: "Amount Paid" },
 ];
 
@@ -436,15 +450,27 @@ const deleteInvoice = (id) => {
 };
 
 const over_due = (rowData) => {
-    if (!rowData.end_date) return "-"; // If there's no end date, return "-"
+    const amountDue = computeAmountDue(rowData);
 
-    const dueDate = moment(rowData.end_date);
+    if (amountDue <= 0) {
+        // If the amount due is 0, it's fully paid
+        return { text: "Fully Paid", class: "text-green-500" };  // Green color for fully paid
+    }
+
+    if (!rowData.end_date) return { text: "-", class: "" }; // If there's no end date, return "-"
+
+    const dueDate = moment(rowData.invoice_end_date);
     const currentDate = moment();
     const overdue = currentDate.diff(dueDate, "days");
 
     // If overdue is 0, return "Not Past Due", otherwise return the number of overdue days
-    return overdue > 0 ? `${overdue} days ago` : "Not Past Due";
+    if (overdue > 0) {
+        return { text: `${overdue} days ago`, class: "text-red-500" }; // Red color for overdue
+    } else {
+        return { text: "Not Past Due", class: "text-yellow-500" }; // Yellow color for not past due
+    }
 };
+
 
 const statusIcon = (invoice) => {
     const status = paymentStatus(invoice);
@@ -465,7 +491,7 @@ const statusClass = (status) => {
 
 const paymentStatus = (invoice) => {
     const grandTotal = Number(invoice.grand_total || 0);
-    const amountPaid = Number(invoice.paid_amount || 0);
+    const amountPaid = Number(invoice.installment_paid || 0);
     const amountDue = grandTotal - amountPaid;
 
     if (amountDue <= 0) return "Fully Paid";
@@ -509,6 +535,12 @@ const searchInvoices = () => {
     Inertia.get("/invoices", invoiceFilters);
 };
 
+const computeAmountProgressPercentage = (invoice) => {
+    const grandTotal = invoice.grand_total || 0;
+    const installmentPaid = invoice.installment_paid || 0;
+    // If grandTotal is 0, return 0 to avoid division by zero
+    return grandTotal > 0 ? ((installmentPaid / grandTotal) * 100).toFixed(2) : 0;
+};
 
 
 const clearFilters = () => {
@@ -527,9 +559,17 @@ const clearFilters = () => {
 
 const computeAmountDue = (invoice) => {
     const grandTotal = invoice.grand_total || 0;
-    const amountPaid = invoice.paid_amount || 0;  // Ensure you are using the correct field
-    return (grandTotal - amountPaid).toFixed(2);  // Return as a fixed decimal number
+    const installmentPaid = invoice.installment_paid || 0;
+    const amountDue = grandTotal - installmentPaid;
+
+    // If the amount due is 0, it's fully paid
+    if (amountDue <= 0) {
+        return 0;  // Return 0 if fully paid
+    }
+
+    return amountDue.toFixed(2);  // Return the amount due as a fixed decimal number
 };
+
 
 </script>
 

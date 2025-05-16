@@ -34,37 +34,40 @@
                                 >Record Agreement</span
                             >
                             <!-- Quotation No Input with Search -->
-                            <span
-                                v-tooltip="
-                                    'must be approved and no agreement attached'
-                                "
-                                class="text-sm"
+                            <span class="text-sm">Quotation No. </span>
+                            <div class="flex gap-2">
+                                <InputText
+                                    v-model="form.quotation_no"
+                                    placeholder="Enter Quotation No."
+                                    class="w-full"
+                                    size="small"
+                                    @blur="searchQuotation"
+                                >
+                                    <template #suffix>
+                                        <i
+                                            v-if="form.quotation_no"
+                                            class="pi pi-times cursor-pointer text-gray-500 hover:text-gray-700"
+                                            @click="resetQuotationFields"
+                                        />
+                                        <i
+                                            v-else
+                                            class="pi pi-search text-gray-400"
+                                        />
+                                    </template>
+                                </InputText>
+                                <Button
+                                    icon="pi pi-search"
+                                    @click="searchQuotation"
+                                    severity="secondary"
+                                    size="small"
+                                />
+                            </div>
+                            <small
+                                v-if="quotationError"
+                                class="p-error block col-span-2"
                             >
-                                Quotation No.
-                            </span>
-                            <InputText
-                                v-model="form.quotation_no"
-                                placeholder="Enter Quotation No."
-                                class="w-full"
-                                size="small"
-                            >
-                                <template #suffix>
-                                    <i
-                                        v-if="form.quotation_no"
-                                        class="pi pi-times cursor-pointer text-gray-500 hover:text-gray-700"
-                                        @click="
-                                            form.quotation_no = '';
-                                            form.customer_id = null;
-                                            form.address = '';
-                                            customerName.value = '';
-                                        "
-                                    />
-                                    <i
-                                        v-else
-                                        class="pi pi-search text-gray-400"
-                                    />
-                                </template>
-                            </InputText>
+                                {{ quotationError }}
+                            </small>
                             <!-- <span class="text-sm required"
                                 >Agreement No. {{ agreement_max }}</span
                             > -->
@@ -129,17 +132,21 @@
                                 size="small"
                                 >{{ errors.agreement_date }}</Message
                             >
-                            <span class="text-sm required">Customer name</span>
-                            <InputText
-                                name="customer_name"
-                                v-model="customerName"
+                            <span class="text-sm required">Customer</span>
+                            <Dropdown
+                                v-model="form.customer_id"
+                                :options="customers"
+                                optionLabel="name"
+                                optionValue="id"
+                                placeholder="Select Customer"
+                                class="w-full"
                                 size="small"
-                                readonly
+                                @change="updateCustomerDetails"
                             />
                             <span class="text-sm">Address</span>
-                            <InputText
-                                name="address"
+                            <Textarea
                                 v-model="form.address"
+                                rows="2"
                                 size="small"
                                 readonly
                             />
@@ -257,7 +264,6 @@
                                 v-model="form.end_date"
                                 showIcon
                                 size="small"
-                                :min-date="minDate"
                             />
                             <!-- Agreement Amount -->
                             <span class="text-sm">
@@ -395,13 +401,13 @@
                 <Message
                     v-if="
                         form.payment_schedule.length > 0 &&
-                        !isPaymentScheduleComplete
+                        !isPaymentScheduleValid
                     "
                     severity="error"
                     class="mt-2"
                 >
                     Payment schedule must total exactly 100% (Current:
-                    {{ totalPercentage }}%)
+                    {{ totalPercentage }}%) and match agreement amount
                 </Message>
                 <!-- <div
                     class="flex justify-end items-center gap-2 my-2 px-24"
@@ -423,7 +429,7 @@
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
-                        :disabled="!isPaymentScheduleComplete"
+                        :disabled="!isPaymentScheduleValid || !isFormValid"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -452,7 +458,7 @@ import { reactive, onMounted, ref, computed, watch } from "vue";
 import { currencies } from "@/constants";
 import { usePage } from "@inertiajs/vue3";
 import moment from "moment";
-import { route } from 'ziggy-js';
+import { route } from "ziggy-js";
 import {
     Button,
     DatePicker,
@@ -470,11 +476,11 @@ import {
     Dropdown,
     Textarea,
     Breadcrumb,
+    ToggleButton,
 } from "primevue";
 
 const minDate = new Date();
 const toast = useToast();
-const isEditing = computed(() => !!form.id);
 // The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
@@ -518,6 +524,7 @@ const form = reactive({
         : Math.max(props.agreement_max, 25000001),
     agreement_date: new Date(),
     customer_id: null,
+    customer_name: "",
     address: "",
     agreement_doc: [],
     progress: null,
@@ -530,55 +537,108 @@ const form = reactive({
     attachments: null,
     currency: "KHR", // Default to USD
 });
-
-const customerName = ref("");
+const withQuotation = ref(true);
 const address = ref("");
-const searchQuotation = async () => {
-    if (form.quotation_no) {
-        // console.log("Searching for quotation no:", form.quotation_no);
-        try {
-            const response = await axios.get("/search-quotation", {
-                params: { quotation_no: form.quotation_no },
-            });
+const quotationError = ref("");
+const isSearching = ref(false);
 
-            if (response.data) {
-                customerName.value = response.data.customer_name;
-                form.address = response.data.address;
-                form.customer_id = response.data.customer_id;
-                form.agreement_amount = response.data.agreement_amount;
-                schedule.value.agreement_amount =
-                    response.data.agreement_amount;
-                if (response.data.currency === "USD") {
-                    schedule.value.exchange_rate =
-                        response.data.exchange_rate || 4100;
-                    riels.value = false;
-                } else {
-                    schedule.value.exchange_rate = 1;
-                    riels.value = true;
-                }
+const updateCustomerDetails = () => {
+    const selectedCustomer = props.customers.find(
+        (c) => c.id === form.customer_id
+    );
+    if (selectedCustomer) {
+        form.customer_name = selectedCustomer.name;
+        form.address = selectedCustomer.address;
+    }
+};
+
+const searchQuotation = async () => {
+    if (!form.quotation_no) {
+        resetQuotationFields();
+        return;
+    }
+
+    isSearching.value = true;
+    quotationError.value = "";
+
+    try {
+        const response = await axios.get("/search-quotation", {
+            params: { quotation_no: form.quotation_no },
+        });
+
+        if (response.data) {
+            form.customer_name = response.data.customer_name; // Update form directly
+            form.address = response.data.address;
+            form.customer_id = response.data.customer_id;
+            form.agreement_amount = response.data.agreement_amount;
+            schedule.value.agreement_amount = response.data.agreement_amount;
+
+            // Set currency based on quotation
+            if (response.data.currency === "USD") {
+                schedule.value.exchange_rate =
+                    response.data.exchange_rate || 4100;
+                riels.value = false;
             } else {
-                customerName.value = "";
-                form.address = "";
-                form.customer_id = null;
-                form.agreement_amount = 0;
-                schedule.value.agreement_amount = 0;
                 schedule.value.exchange_rate = 1;
+                riels.value = true;
             }
-        } catch (error) {
+        } else {
+            quotationError.value = "Quotation not found";
+            resetQuotationFields();
+        }
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            quotationError.value =
+                error.response.data.error || "Quotation not found";
+        } else {
+            quotationError.value = "Error fetching quotation";
             console.error("Error fetching quotation", error);
         }
+        resetQuotationFields();
+    } finally {
+        isSearching.value = false;
     }
+};
+
+const resetQuotationFields = () => {
+    if (!withQuotation.value) return;
+
+    form.quotation_no = null;
+    form.customer_name = "";
+    form.address = "";
+    form.customer_id = null;
+    form.agreement_amount = 0;
+    schedule.value.agreement_amount = 0;
+    form.currency = "KHR";
+    riels.value = true;
+    schedule.value.exchange_rate = 4100;
+    quotationError.value = "";
 };
 watch(
     () => form.quotation_no,
     (newVal) => {
+        if (!newVal) {
+            resetQuotationFields();
+            return;
+        }
         const timer = setTimeout(() => {
             searchQuotation();
-        }, 500);
+        }, 5000);
 
         return () => clearTimeout(timer);
     }
 );
+
+watch(
+    () => form.start_date,
+    (newStartDate) => {
+        if (newStartDate) {
+            form.end_date = moment(newStartDate).add(14, "days").toDate();
+        }
+    },
+    { immediate: true }
+);
+
 const schedule = ref({
     agreement_amount: form.agreement_amount,
     due_date: new Date(),
@@ -591,7 +651,7 @@ const schedule = ref({
     exchange_rate: 4200,
 });
 // Form data
-const totalAgreement = ref(10000); // Set your default total amount
+const totalAgreement = ref(10000);
 const shortDescription = ref("");
 const percentage = ref();
 const amount = ref();
@@ -784,6 +844,27 @@ const totalPercentage = computed(() => {
         0
     );
 });
+const totalAmount = computed(() => {
+    return form.payment_schedule.reduce((sum, item) => {
+        const amount =
+            item.currency === form.currency
+                ? item.amount
+                : item.currency === "KHR"
+                ? item.amount / item.exchange_rate
+                : item.amount * item.exchange_rate;
+        return sum + amount;
+    }, 0);
+});
+const isPaymentScheduleValid = computed(() => {
+    const roundedPercentage = Math.round(totalPercentage.value * 100) / 100;
+    const roundedAmount = Math.round(totalAmount.value * 100) / 100;
+    const roundedAgreementAmount =
+        Math.round(schedule.value.agreement_amount * 100) / 100;
+
+    return (
+        roundedPercentage === 100 && roundedAmount === roundedAgreementAmount
+    );
+});
 
 const isPaymentScheduleComplete = computed(() => {
     return Math.round(totalPercentage.value * 100) / 100 === 100;
@@ -791,13 +872,14 @@ const isPaymentScheduleComplete = computed(() => {
 
 const isFormValid = computed(() => {
     return (
-        isPaymentScheduleComplete.value &&
-        form.quotation_no &&
         form.agreement_no &&
-        form.customer_id &&
-        form.agreement_date
+        form.customer_id && // Customer is always required
+        form.agreement_date &&
+        form.agreement_doc?.length > 0 &&
+        isPaymentScheduleComplete.value
     );
 });
+
 const cancel = () => {
     toast.add({
         severity: "secondary",
@@ -826,7 +908,6 @@ const onUpload = (e) => {
             });
         });
 
-        // Update UI
         agreementDocs.value = form.agreement_doc;
 
         toast.add({
@@ -916,6 +997,29 @@ const beforeUploadAttachment = (e) => {
 const src = ref(null);
 const attachments = ref([]);
 const doSave = (e) => {
+    const newTotalPercentage = totalPercentage.value + e.percentage;
+    const newTotalAmount = totalAmount.value + e.amount;
+
+    if (newTotalPercentage > 100) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: `Cannot add payment - would exceed 100% (current: ${totalPercentage.value}%)`,
+            life: 3000,
+        });
+        return;
+    }
+
+    if (newTotalAmount > schedule.value.agreement_amount) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: `Cannot add payment - would exceed agreement amount`,
+            life: 3000,
+        });
+        return;
+    }
+
     schedule.value.currency = e.currency;
     form.payment_schedule.push({
         id: form.payment_schedule.length + 1,
@@ -926,11 +1030,22 @@ const doSave = (e) => {
         remark: e.remark,
         amount: e.amount,
         status: e.status ?? "UPCOMING",
+        agreement_currency: form.currency,
+        exchange_rate: e.currency === "KHR" ? 4100 : 1,
     });
 };
 const beforeUpdate = (e) => {
     schedule.value.amount = remainingAmount.value;
     schedule.value.percentage = remainingPercentage.value;
+
+    // Ensure we don't exceed 100% or agreement amount
+    if (schedule.value.percentage > remainingPercentage.value) {
+        schedule.value.percentage = remainingPercentage.value;
+    }
+
+    if (schedule.value.amount > remainingAmount.value) {
+        schedule.value.amount = remainingAmount.value;
+    }
 };
 // const resolver = zodResolver(z.object({
 //     agreement_no: z.number(),
@@ -979,17 +1094,13 @@ const checkDuplicateReference = async () => {
         errors.agreement_ref_no = "";
     }
 };
-
-const isValid = computed(() => {
-    return (
-        model.value.percentage > 0 &&
-        model.value.percentage <= 100 &&
-        model.value.amount > 0
-    );
-});
 </script>
 
 <style>
+.required:after {
+    content: " *";
+    color: red;
+}
 span.p-invalid input {
     border-color: var(--p-inputtext-invalid-border-color);
 }

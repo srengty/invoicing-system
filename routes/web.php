@@ -10,13 +10,12 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TelegramController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\QuotationEmailController;
-use App\Mail\TestMail;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Foundation\Application;
+use App\Mail\TestMail;
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -27,9 +26,10 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+// Agreements
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
 Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
-Route::get('/agreements/show/{id}', [AgreementController::class, 'show'])->name('agreements.show');
+Route::get('/agreements/{agreement_no}', [AgreementController::class, 'show'])->name('agreements.show');
 Route::post('/agreements/store', [AgreementController::class, 'store'])->name('agreements.store');
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
@@ -40,6 +40,7 @@ Route::post('/api/invoices/filter', [InvoiceController::class, 'filter']);
 Route::get('/search-quotation', [AgreementController::class, 'searchQuotation']);
 Route::get('/check-agreement-reference', [AgreementController::class, 'checkDuplicateReference']);
 
+// Quotations
 Route::resource('quotations', QuotationController::class);
 Route::get('/quotations', [QuotationController::class, 'list']);
 Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
@@ -49,7 +50,14 @@ Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updat
 Route::post('/quotations/{quotationId}/comments', [QuotationController::class, 'storeComment']);
 Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
 Route::put('/quotations/{id}/toggle-active', [QuotationController::class, 'toggleActive']);
+Route::put('/quotations/{id}/mark-printed', [QuotationController::class, 'markPrinted']);
+Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');
+Route::get('/quotations/{quotation}/print', [QuotationController::class, 'print'])
+    ->name('quotations.print')
+    ->middleware('auth');
+Route::get('/quotations/{quotation_no}/pdf', [QuotationController::class, 'generatePDF'])->name('quotations.pdf');
 
+// Invoices
 Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
 Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
@@ -59,16 +67,19 @@ Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'upda
     ->name('invoices.updateStatus');
 Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
 
+// Receipts
 Route::resource('receipts', ReceiptController::class);
 // Route::put('/receipts/{receipt_no}', [ReceiptController::class, 'update'])
 //     ->where('receipt_no', '[0-9]+')
 //     ->name('receipts.update');
 Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
 
+// PaymentSchedule
 Route::post('/payment-schedules/{id}/receipt', [PaymentScheduleController::class, 'createReceipt'])->name('payment-schedules.createReceipt');
 Route::put('/payment-schedules/{id}', [PaymentScheduleController::class, 'update'])->name('payment-schedules.update');
 Route::put('/payment-schedules/{invoice_no}/update-status', [PaymentScheduleController::class, 'updateStatus']);
 
+// Customers
 Route::get('/settings/customers', [CustomerController::class, 'index'])->name('customers.index'); // List all customers
 Route::get('/api/customers', [CustomerController::class, 'apiIndex']);
 Route::get('/settings/customers/create', [CustomerController::class, 'create'])->name('customers.create'); // Show form to create a new customer
@@ -79,7 +90,6 @@ Route::get('/settings/customers/{customer}/edit', [CustomerController::class, 'e
 Route::delete('/settings/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); // Delete a customer
 Route::put('/settings/customers/{customer}/toggle-active', [CustomerController::class, 'toggleActive'])
     ->name('customers.toggleActive');
-// routes/web.php
 Route::get('/activate-all-customers', function() {
     \App\Models\Customer::query()->update(['active' => true]);
     return 'All customers activated';

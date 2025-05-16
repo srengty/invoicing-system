@@ -16,7 +16,6 @@
                 </template>
             </Breadcrumb>
         </div>
-
         <div class="create-invoice text-sm">
             <!-- Header Section with Buttons -->
             <div class="flex justify-end items-center p-3 mr-4">
@@ -24,18 +23,14 @@
                     <Button
                         label="Add Product"
                         icon="pi pi-plus"
-                        class="p-button-success"
                         type="button"
                         @click="openAddItemDialog"
                         size="small"
                     />
                     <Button
-                        label="Save Invoice"
-                        icon="pi pi-check"
-                        class="p-button-success"
-                        type="button"
-                        @click="submitInvoice"
-                        size="small"
+                        label="Add Receipts"
+                        icon="pi pi-plus"
+                        @click="openCreate"
                     />
                 </div>
             </div>
@@ -82,8 +77,8 @@
                         <label for="payment_schedule" class="block font-medium"
                             >Payment Schedule</label
                         >
-                        <Select
-                            v-model="form.payment_schedule_id"
+                        <MultiSelect
+                            v-model="form.payment_schedules"
                             :options="formattedPaymentSchedules"
                             optionLabel="label"
                             optionValue="id"
@@ -106,11 +101,6 @@
                                     placeholder="Select Receipt"
                                     class="w-full"
                                 />
-                                <Button
-                                    class="text-sm p-button-info w-1/3"
-                                    size="small"
-                                    >Receipt</Button
-                                >
                             </div>
                         </div>
                     </div>
@@ -266,19 +256,30 @@
                 </DataTable>
 
                 <div class="pl-2 pr-6">
+                    <!-- Installment Paid (calculated from selected payment schedules) -->
+
                     <div
-                        v-if="form.installment_paid !== undefined"
+                        v-if="form.installment_paid > 0"
                         class="total-container mt-4 flex justify-between items-center"
                     >
                         <p class="font-bold">Installment Paid:</p>
-                        <p class="font-bold">៛{{ form.installment_paid }}</p>
-                    </div>
-                    <div class="total-container mt-4 flex justify-between">
-                        <p class="font-bold">Total KHR</p>
-                        <p class="font-bold">
-                            ៛{{ formatCurrency(calculateTotalKHR) }}
+                        <p class="font-bold text-right">
+                            ៛{{ formatCurrency(form.installment_paid) }}
                         </p>
                     </div>
+
+                    <!-- Total KHR from all products -->
+
+                    <div
+                        class="total-container mt-4 flex justify-between items-center"
+                    >
+                        <p class="font-bold">Total KHR:</p>
+                        <p class="font-bold text-right">
+                            ៛{{ calculateTotalKHR }}
+                        </p>
+                    </div>
+
+                    <!-- Final Total KHR (editable) -->
 
                     <div
                         class="total-container mt-4 flex justify-between items-center"
@@ -289,9 +290,11 @@
                             v-model.number="form.paid_amount"
                             placeholder="Enter Amount"
                             step="0.01"
-                            class="h-9 text-sm border border-gray-300 rounded px-2"
+                            class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
                         />
                     </div>
+
+                    <!-- Final Total USD (editable) -->
 
                     <div
                         class="total-container mt-4 flex justify-between items-center"
@@ -302,48 +305,77 @@
                             v-model.number="form.total_usd"
                             placeholder="Enter USD"
                             step="0.01"
-                            class="h-9 text-sm border border-gray-300 rounded px-2"
+                            class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
                         />
                     </div>
+
+                    <!-- Exchange Rate -->
 
                     <div
                         class="grand-total-container flex justify-between mt-4"
                     >
-                        <p class="font-bold">Exchange rate</p>
-                        <p class="font-bold">
+                        <p class="font-bold">Exchange Rate:</p>
+                        <p class="font-bold text-right">
                             {{ calculateExchangeRate }}
                         </p>
                     </div>
+
+                    <!-- Placeholder Bank Info -->
 
                     <div
                         class="grand-total-container flex justify-between mt-4"
                     >
                         <p class="font-bold">Bank Name:</p>
+                        <p class="text-right text-gray-400 italic">Not set</p>
                     </div>
 
                     <div
                         class="grand-total-container flex justify-between mt-4"
                     >
-                        <p class="font-bold">Bank account name:</p>
+                        <p class="font-bold">Bank Account Name:</p>
+                        <p class="text-right text-gray-400 italic">Not set</p>
                     </div>
 
                     <div
                         class="grand-total-container flex justify-between mt-4"
                     >
-                        <p class="font-bold">Bank account number:</p>
+                        <p class="font-bold">Bank Account Number:</p>
+                        <p class="text-right text-gray-400 italic">Not set</p>
                     </div>
                 </div>
-                <!-- <div class="terms mt-4">
-            <h3 class="text-lg">Terms and Conditions</h3>
-            <p>Full payment is required upon quote acceptance.</p>
-            <p>This quote is negotiable for one (1) week from the date stated above.</p>
-          </div>
-          <div class="buttons mt-4 flex justify-end">
-            <Button label="Submit request for approval" icon="pi pi-check" class="p-button-success" @click="submitInvoice" />
-            <Button label="Cancel" class="p-button-secondary ml-2" @click="cancel" />
-          </div> -->
-            </div>
 
+                <!-- <div class="terms mt-4">
+          <h3 class="text-lg">Terms and Conditions</h3>
+          <p>Full payment is required upon quote acceptance.</p>
+          <p>This quote is negotiable for one (1) week from the date stated above.</p>
+        </div>
+        <div class="buttons mt-4 flex justify-end">
+          <Button label="Submit request for approval" icon="pi pi-check" class="p-button-success" @click="submitInvoice" />
+          <Button label="Cancel" class="p-button-secondary ml-2" @click="cancel" />
+        </div> -->
+            </div>
+            <div class="flex justify-end items-center p-3 mr-4">
+                <div class="flex gap-4">
+                    <Button
+                        label="Save"
+                        type="submit"
+                        raised
+                        class="w-full md:w-28"
+                        icon="pi pi-check"
+                        size="small"
+                        @click="submitInvoice"
+                    />
+                    <Button
+                        label="Cancel"
+                        severity="secondary"
+                        raised
+                        class="w-full md:w-28"
+                        @click="cancel"
+                        icon="pi pi-times"
+                        size="small"
+                    ></Button>
+                </div>
+            </div>
             <!-- Modal to Select Product -->
             <Dialog
                 v-model:visible="isAddItemDialogVisible"
@@ -475,6 +507,12 @@
                     />
                 </template>
             </Dialog>
+
+            <CreateReceiptDialog
+                v-model:visible="isReceiptDialogVisible"
+                :customer-id="form.customer_id"
+                @receipt-created="handleReceiptCreated"
+            />
         </div>
     </GuestLayout>
 </template>
@@ -490,6 +528,7 @@ import {
     Dialog,
     DatePicker,
     Select,
+    MultiSelect,
     Checkbox,
     Dropdown,
     AutoComplete,
@@ -501,6 +540,7 @@ import { Head } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import Breadcrumb from "primevue/breadcrumb";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
 import { getDepartment } from "../../data";
 
 const {
@@ -533,7 +573,7 @@ const form = useForm({
     phone: "",
     terms: "",
     amount: 0,
-    payment_schedule_id: "",
+    payment_schedules: [],
     start_date: "",
     end_date: "",
     grand_total: "",
@@ -545,6 +585,7 @@ const form = useForm({
     paid_amount: 0,
     products: [],
     receipt_no: "",
+    userModifiedPaidAmount: false,
 });
 
 const page = usePage();
@@ -588,9 +629,43 @@ const selectedProduct = ref({
     pdf_url: null,
     unit: "",
 });
+const customerCategories = ref([]);
+const isReceiptDialogVisible = ref(false);
+const openCreate = () => {
+    isReceiptDialogVisible.value = true;
+};
+const handleReceiptCreated = async ({ receipt, shouldReload }) => {
+    if (receipt) {
+        // Add the new receipt to the receipts list
+        receipts.value = [...receipts.value, receipt];
+
+        // Optionally auto-select the new receipt
+        form.receipt_no = receipt.receipt_no;
+
+        toast.add({
+            severity: "success",
+            summary: "Success",
+            detail: `Receipt ${receipt.receipt_no} created successfully`,
+            life: 3000,
+        });
+    }
+
+    if (shouldReload) {
+        // Only reload if absolutely necessary
+        await Inertia.reload({ only: ["receipts"] });
+    }
+
+    isReceiptDialogVisible.value = false;
+};
+const availableReceipts = computed(() => {
+    return receipts.value.filter(
+        (receipt) =>
+            !receipt.invoice_no && // Only receipts not linked to an invoice
+            receipt.customer_id === form.customer_id // For the current customer
+    );
+});
 
 const divisionOptions = ref([]);
-
 const formatCurrency = (value) => {
     if (isNaN(value)) return "0.00";
     return new Intl.NumberFormat("en-US", {
@@ -611,19 +686,29 @@ function getOrdinalSuffix(number) {
 }
 
 const formattedPaymentSchedules = computed(() => {
-    return filteredPaymentSchedules.value.map((ps, index) => {
-        const rankID = index + 1; // Starting from 1
-        const suffix = getOrdinalSuffix(rankID); // Get the correct ordinal suffix
+    const fullList = filteredPaymentSchedules.value;
 
-        // Disable the first payment schedule if it's already created
-        const isDisabled = index === 0 && ps.is_created;
+    return fullList
+        .filter((ps) => ps.status !== "PAID") // Only show unpaid
+        .map((ps) => {
+            // Find this schedule's position in the full list of the same agreement
+            const sameAgreementSchedules = fullList.filter(
+                (s) => s.agreement_no === ps.agreement_no
+            );
 
-        return {
-            id: ps.id, // The original ID
-            label: `${ps.agreement_no} (${rankID}${suffix} Payment)`, // Use rankID with ordinal suffix
-            disabled: isDisabled, // Disable if it's the first payment and is already created
-        };
-    });
+            const rankIndex = sameAgreementSchedules.findIndex(
+                (s) => s.id === ps.id
+            );
+            const rankID = rankIndex + 1;
+            const suffix = getOrdinalSuffix(rankID);
+            const isDisabled = rankID === 1 && ps.is_created;
+
+            return {
+                id: ps.id,
+                label: `${ps.agreement_no} (${rankID}${suffix} Payment)`,
+                disabled: isDisabled,
+            };
+        });
 });
 
 const calculateTotalKHR = computed(() => {
@@ -986,7 +1071,7 @@ watch(
             console.log("Agreement Deselected - Keeping existing data");
 
             // Reset payment schedule when agreement is deselected
-            form.payment_schedules = ""; // Reset the payment schedule field
+            form.payment_schedules = []; // Reset the payment schedule field
             filteredPaymentSchedules.value = []; // Reset available payment schedules
 
             // Reset other fields if necessary
@@ -1019,8 +1104,8 @@ const calculateGrandTotal = computed(() => {
 const actionTemplate = (data) => {
     return {
         template: `
-        <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />
-      `,
+              <Button label="Remove" icon="pi pi-times" class="p-button-text p-button-danger" @click="removeProduct(${data.id})" />
+            `,
     };
 };
 
@@ -1034,10 +1119,10 @@ const updateProductSubtotal = (product) => {
     product.subTotal = product.qty * product.unitPrice;
 };
 
-const cancel = () => {
-    form.reset();
-    productsList.value = [];
-};
+// const cancel = () => {
+//     form.reset();
+//     productsList.value = [];
+// };
 
 const submitInvoice = async () => {
     if (productsList.value.length === 0) {
@@ -1073,14 +1158,30 @@ const submitInvoice = async () => {
         pdf_url: prod.pdf_url ?? null,
     }));
 
+    form.payment_schedules = form.payment_schedules.map((id) => {
+        const schedule = paymentSchedules.find((ps) => ps.id === id);
+        return {
+            id: id,
+            amount: schedule?.amount || 0,
+        };
+    });
+
+    // Ensure numeric values
+    form.installment_paid = Number(form.installment_paid) || 0;
+    form.paid_amount = Number(form.paid_amount) || 0;
+
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
     form.total_usd = form.total_usd || 0;
     form.total = calculateTotalKHR.value;
     form.exchange_rate = calculateExchangeRate.value;
-    form.paid_amount = form.paid_amount || 0;
-    form.installment_paid = form.installment_paid || 0;
     form.receipt_no = form.receipt_no || "";
+    console.log(form.installment_paid);
+    // if (Array.isArray(form.payment_schedules)) {
+    //     form.payment_schedules = form.payment_schedules.map(id => ({ id: parseInt(id) }));
+    // } else {
+    //     form.payment_schedules = [];
+    // }
 
     // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
@@ -1088,67 +1189,8 @@ const submitInvoice = async () => {
             2
         );
     }
-    // Check if we are editing or creating
-    if (form.id) {
-        // PUT request for updating existing quotation
-        try {
-            await form.put(route("quotations.update", { id: form.id }), {
-                onSuccess: () => {
-                    showToast(
-                        "success",
-                        "Updated",
-                        "Quotation updated successfully!"
-                    );
-                    router.get(route("quotations.list"));
-                },
-                onError: (errors) => {
-                    console.error("Update Error:", errors);
-                    showToast(
-                        "error",
-                        "Update Failed",
-                        "Could not update quotation."
-                    );
-                },
-            });
-        } catch (error) {
-            console.error("Unexpected Error in Update:", error);
-            showToast(
-                "error",
-                "Unexpected Error",
-                "Could not update quotation."
-            );
-        }
-    } else {
-        // POST request for creating new quotation
-        try {
-            await form.post(route("quotations.store"), {
-                onSuccess: () => {
-                    showToast(
-                        "success",
-                        "Created",
-                        "Quotation created successfully!"
-                    );
-                    router.get(route("quotations.list"));
-                },
-                onError: (errors) => {
-                    console.error("Creation Error:", errors);
-                    showToast(
-                        "error",
-                        "Creation Failed",
-                        "Could not create quotation."
-                    );
-                },
-            });
-        } catch (error) {
-            console.error("Unexpected Error in Create:", error);
-            showToast(
-                "error",
-                "Unexpected Error",
-                "Could not create quotation."
-            );
-        }
-    }
 
+    console.log(form.installment_paid);
     try {
         form.post("/invoices");
     } catch (error) {
@@ -1156,10 +1198,20 @@ const submitInvoice = async () => {
         alert("An error occurred while submitting the invoice.");
     }
 };
-
+const cancel = () => {
+    toast.add({
+        severity: "secondary",
+        summary: "Cancelled",
+        detail: "Agreement creation cancelled",
+        life: 3000,
+    });
+    setTimeout(() => {
+        router.visit(route("invoices.list"));
+    }, 500);
+};
 const updatePaymentDetails = () => {
     const selectedPaymentSchedule = paymentSchedules.find(
-        (ps) => ps.id === form.payment_schedule_id
+        (ps) => ps.id === form.payment_schedules
     );
     if (selectedPaymentSchedule) {
         form.installment_paid = selectedPaymentSchedule.amount;
@@ -1234,23 +1286,40 @@ watch(
 );
 
 watch(
-    () => form.payment_schedule_id,
-    (newPaymentScheduleId) => {
-        if (newPaymentScheduleId) {
-            // Find the selected payment schedule
-            const selectedPaymentSchedule = props.paymentSchedules.find(
-                (ps) => ps.id === newPaymentScheduleId
-            );
-
-            if (selectedPaymentSchedule) {
-                form.paid_amount = selectedPaymentSchedule.amount || 0;
-                form.installment_paid = selectedPaymentSchedule.amount || 0;
-
-                // Disable the first payment if it's already created
-                if (selectedPaymentSchedule.is_created) {
-                    form.payment_schedule_id = null; // Reset the payment schedule selection
-                }
+    () => form.payment_schedules,
+    (selectedIds) => {
+        if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
+            form.installment_paid = 0;
+            if (!form.userModifiedPaidAmount) {
+                form.paid_amount = 0;
             }
+            return;
+        }
+
+        // Use reactive filtered list (filteredPaymentSchedules)
+        const selectedSchedules = filteredPaymentSchedules.value.filter(
+            (schedule) => selectedIds.includes(schedule.id)
+        );
+
+        const totalPaid = selectedSchedules.reduce((sum, schedule) => {
+            return sum + (Number(schedule.amount) || 0);
+        }, 0);
+
+        form.installment_paid = totalPaid;
+
+        if (!form.userModifiedPaidAmount) {
+            form.paid_amount = totalPaid;
+        }
+    },
+    { deep: true }
+);
+
+// Track if user modifies paid_amount manually to prevent auto-overriding it
+watch(
+    () => form.paid_amount,
+    (newVal) => {
+        if (newVal !== form.installment_paid) {
+            form.userModifiedPaidAmount = true;
         }
     }
 );

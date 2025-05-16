@@ -99,8 +99,9 @@ class Invoice extends Model
 
     public function paymentSchedules()
     {
-        return $this->belongsToMany(PaymentSchedule::class, 'invoices', 'invoice_no', 'payment_schedule_id');
+        return $this->belongsToMany(PaymentSchedule::class, 'invoice_payment_schedule');
     }
+
 
     public function getPaymentSchedules()
     {
@@ -126,15 +127,20 @@ class Invoice extends Model
         return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
     }
 
-    // In Invoice model
-    public function updatePaidAmount()
+    public function progressPayments()
     {
-        $this->paid_amount = $this->receipts()->sum('paid_amount');
-        $this->save();
-
-        // You might also want to update invoice status here
-        $this->updateStatus();
+        return $this->hasMany(Agreement::class);
     }
+
+    // In Invoice model
+    // public function updatePaidAmount()
+    // {
+    //     $this->paid_amount = $this->receipts()->sum('paid_amount');
+    //     $this->save();
+
+    //     // You might also want to update invoice status here
+    //     $this->updateStatus();
+    // }
 
 }
 

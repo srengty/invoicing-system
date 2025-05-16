@@ -59,6 +59,7 @@ return new class extends Migration
             $table->decimal('exchange_rate', 10, 4)->nullable();
             $table->string('status', 20)->default('Pending');
             $table->string('customer_status')->nullable();
+            $table->date('printed_at')->nullable();
             $table->timestamps();
         });
         Schema::create('agreements', function (Blueprint $table) {

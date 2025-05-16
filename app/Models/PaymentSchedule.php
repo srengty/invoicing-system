@@ -10,35 +10,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PaymentSchedule extends Model
 {
-    /** @use HasFactory<\Database\Factories\PaymentScheduleFactory> */
     use HasFactory;
-   protected $fillable = [
-    'agreement_no',
-    'due_date',
-    'amount',
-    'paid_amount',
-    'status',
-    'percentage',
-    'short_description',
-    'currency',
-    'paid_amount',
-];
-    public function agreement():BelongsTo
-    {
-        return $this->belongsTo(Agreement::class);
-    }
 
-    public function receipts()
-    {
-        return $this->hasMany(Receipt::class, 'payment_schedule_id');
-    }
+    protected $fillable = [
+        'agreement_no',
+        'due_date',
+        'amount',
+        'paid_amount',
+        'status',
+        'percentage',
+        'short_description',
+        'currency',
+    ];
 
     protected $dateFormat = 'Y-m-d';
-    protected function casts(){
+
+    protected function casts()
+    {
         return [
             'due_date' => 'date',
         ];
     }
+
     protected function dueDate(): Attribute
     {
         return Attribute::make(
@@ -47,25 +40,42 @@ class PaymentSchedule extends Model
         );
     }
 
-    public function getPaidAmountAttribute()
+    public function agreement(): BelongsTo
+    {
+        return $this->belongsTo(Agreement::class);
+    }
+
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_payment_schedule');
+    }
+
+    public function receipts()
+    {
+        return $this->belongsToMany(
+            Receipt::class,
+            'payment_schedule_receipt',
+            'payment_schedule_id',
+            'receipt_receipt_no',
+            'id',
+            'receipt_no'
+        );
+    }
+
+    public function getTotalPaidAmountAttribute()
     {
         return $this->receipts->sum('paid_amount');
     }
 
     public function getIsPaidAttribute()
     {
-        return $this->paid_amount >= $this->amount;
+        return $this->total_paid_amount >= $this->amount;
     }
 
-// In PaymentSchedule model
-    protected static function booted()
-    {
-        static::saving(function ($model) {
-            if ($model->paid_amount > $model->amount) {
-                throw new \Exception('Paid amount cannot exceed scheduled amount');
-            }
-        });
-    }
+    // public function getRemainingAmountAttribute()
+    // {
+    //     return max(0, $this->amount - $this->total_paid_amount);
+    // }
 
     public function updateStatus()
     {
@@ -75,18 +85,22 @@ class PaymentSchedule extends Model
 
     protected function determineStatus()
     {
-        if ($this->paid_amount >= $this->amount) {
+        if ($this->total_paid_amount >= $this->amount) {
             return 'PAID';
-        } elseif ($this->paid_amount > 0) {
+        } elseif ($this->total_paid_amount > 0) {
             return 'PARTIALLY_PAID';
         }
 
-        $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $this->due_date);
+        $dueDate = Carbon::createFromFormat('d/m/Y', $this->due_date);
         return $dueDate->isPast() ? 'PAST_DUE' : 'UPCOMING';
     }
 
-    public function getRemainingAmountAttribute()
-    {
-        return $this->amount - $this->paid_amount;
-    }
+    // protected static function booted()
+    // {
+    //     static::saving(function ($model) {
+    //         if ($model->paid_amount > $model->amount) {
+    //             throw new \Exception('Paid amount cannot exceed scheduled amount');
+    //         }
+    //     });
+    // }
 }

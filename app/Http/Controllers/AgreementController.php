@@ -16,74 +16,9 @@ class AgreementController extends Controller
     /**
      * Display a listing of the resource.
      */
-    // public function index()
-    // {
-    //     $agreements = Agreement::with(['customer', 'paymentSchedules', 'invoices.receipts'])
-    //         ->orderBy('created_at', 'desc')
-    //         ->get()
-    //         ->map(function ($agreement) {
-    //             // Calculate total paid amount from payment schedules
-    //             $totalPaid = $agreement->paymentSchedules->sum('paid_amount');
-
-    //             // Calculate payment percentage
-    //             $paymentPercentage = $agreement->amount > 0
-    //                 ? ($totalPaid / $agreement->amount) * 100
-    //                 : 0;
-
-    //             // Format payment schedules with proper status
-    //             $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) {
-    //                 $dueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
-    //                 $today = now();
-
-    //                 return [
-    //                     ...$schedule->toArray(),
-    //                     'status' => $schedule->status,
-    //                     'paid_amount' => $schedule->paid_amount ?? 0,
-    //                     'remaining_amount' => $schedule->amount - ($schedule->paid_amount ?? 0),
-    //                     'is_past_due' => $dueDate->isPast() && $schedule->status !== 'PAID',
-    //                 ];
-    //             });
-
-    //             // Calculate due payment
-    //             $duePayment = $paymentSchedules->sum(function ($schedule) {
-    //                 if ($schedule['is_past_due'] && $schedule['remaining_amount'] > 0) {
-    //                     return $schedule['remaining_amount'];
-    //                 }
-    //                 return 0;
-    //             });
-
-    //             // Prepare progress payments with invoice numbers
-    //             $progressPayments = $agreement->invoices->flatMap(function ($invoice) {
-    //                 return $invoice->receipts->map(function ($receipt) use ($invoice) {
-    //                     return [
-    //                         'receipt_no' => $receipt->receipt_no,
-    //                         'amount' => $receipt->paid_amount,
-    //                         'date' => $receipt->receipt_date,
-    //                         'payment_schedule_id' => $receipt->payment_schedule_id,
-    //                         'invoice_no' => $invoice->invoice_no, // Add invoice number
-    //                         'invoice_id' => $invoice->id, // Add invoice ID for linking
-    //                     ];
-    //                 });
-    //             })->toArray();
-
-    //             return [
-    //                 ...$agreement->toArray(),
-    //                 'payment_schedules' => $paymentSchedules,
-    //                 'due_payment' => $duePayment,
-    //                 'total_progress_payment' => $totalPaid,
-    //                 'total_progress_payment_percentage' => $paymentPercentage,
-    //                 'progress_payments' => $progressPayments,
-    //             ];
-    //         });
-
-    //     return Inertia::render('Agreements/Index', [
-    //         'agreements' => $agreements
-    //     ]);
-    // }
-
     public function index()
     {
-        $agreements = Agreement::with(['customer', 'paymentSchedules', 'invoices.receipts'])
+        $agreements = Agreement::with(['customer', 'paymentSchedules.receipts', 'invoices.receipts'])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($agreement) {
@@ -94,7 +29,7 @@ class AgreementController extends Controller
                     $paidAmount = $schedule->receipts->sum('paid_amount');
                     $totalPaid += $paidAmount;
 
-                    $dueAmount = $schedule->amount - $paidAmount; // Remaining due amount
+                    $dueAmount = $schedule->amount - $paidAmount;
 
                     return [
                         ...$schedule->toArray(),
@@ -136,6 +71,7 @@ class AgreementController extends Controller
                     'total_progress_payment' => $totalPaid,
                     'total_progress_payment_percentage' => $paymentPercentage,
                     'progress_payments' => $progressPayments,
+
                 ];
             });
 
@@ -191,14 +127,20 @@ class AgreementController extends Controller
             'agreement_ref_no' => 'nullable|unique:agreements,agreement_ref_no',
             'agreement_doc' => 'required|array|min:1',
             'agreement_date' => 'required|date_format:d/m/Y',
+            'payment_schedule' => 'required|array|min:1',
             'start_date' => 'required|date_format:d/m/Y',
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
+            'quotation_no' => 'nullable',
         ]);
         // catch exchange_rate from quotations
         $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
-        $exchangeRate = $quotation?->exchange_rate ?? 4100;
+        $exchangeRate = 4100; // default
+        if ($request->quotation_no) {
+            $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
+            $exchangeRate = $quotation?->exchange_rate ?? 4100;
+        }
 
         $data = $request->except('payment_schedule')+[
             'amount' => $request->agreement_amount,
@@ -249,35 +191,16 @@ class AgreementController extends Controller
     public function show(int $id)
     {
 
-        $agreement = Agreement::with(['customer', 'paymentSchedules'])->findOrFail($id);
-        return response()->json($agreement);
+        $agreement = Agreement::with(['customer',
+        'paymentSchedules:id,agreement_no,amount,due_date,status,percentage,short_description,currency'
+        ])->findOrFail($id);
+        return response()->json([
+            ...$agreement->toArray(),
+            'agreement_doc' => json_decode($agreement->agreement_doc ?? '[]', true),
+            'attachments' => json_decode($agreement->attachments ?? '[]', true),
+            'payment_schedules' => $agreement->paymentSchedules->toArray(),
+        ]);
     }
-    // In your AgreementController
-    // public function show($agreementNo)
-    // {
-    //     $agreement = Agreement::with([
-    //         'customer',
-    //         'paymentSchedules' => function($query) {
-    //             $query->with(['receipts'])->orderBy('due_date');
-    //         },
-    //         'invoices.receipts'
-    //     ])->findOrFail($agreementNo);
-
-    //     // Calculate summary values
-    //     $agreement->total_paid = $agreement->invoices->flatMap->receipts->sum('paid_amount');
-    //     $agreement->payment_progress = ($agreement->amount > 0)
-    //         ? ($agreement->total_paid / $agreement->amount) * 100
-    //         : 0;
-
-    //     return Inertia::render('Agreements/Show', [
-    //         'agreement' => $agreement,
-    //         'statusColors' => [
-    //             'UPCOMING' => 'bg-blue-100 text-blue-800',
-    //             'PAST DUE' => 'bg-red-100 text-red-800',
-    //             'PAID' => 'bg-green-100 text-green-800'
-    //         ]
-    //     ]);
-    // }
 
     public function print(int $id)
     {
@@ -291,8 +214,11 @@ class AgreementController extends Controller
      */
     public function edit(int $agreement_no)
     {
-        $agreement = Agreement::with(['customer', 'paymentSchedules', 'quotation'])
-            ->findOrFail($agreement_no);
+        $agreement = Agreement::with([
+            'customer',
+            'quotation',
+            'paymentSchedules:id,agreement_no,amount,due_date,status,percentage,short_description,currency' // include fields you want
+        ])->findOrFail($agreement_no);
 
         $customers = Customer::where('active', true)
             ->orWhere('id', $agreement->customer_id)
@@ -366,7 +292,7 @@ class AgreementController extends Controller
                 'agreement_no' => $agreement->agreement_no,
                 'due_date' => $schedule['due_date'],
                 'amount' => $schedule['amount'],
-                'status' => $schedule['status'] ?? 'UPCOMING',
+                'status' => $schedule['status'],
                 'percentage' => $schedule['percentage'],
                 'short_description' => $schedule['short_description'],
                 'remark' => $schedule['remark'] ?? null,
@@ -449,31 +375,32 @@ class AgreementController extends Controller
 
         // Check if agreement exists
         if ($quotation && $quotation->agreement) {
-            return response()->json($quotation->agreement); // Return the agreement data
+            return response()->json($quotation->agreement);
         }
 
-        return response()->json(null); // Return null if no agreement found
+        return response()->json(null);
     }
 
     public function searchQuotation(Request $request)
     {
-        $quotationNo = $request->input('quotation_no');
-        $quotation = Quotation::where('quotation_no', $quotationNo)
+        $request->validate([
+            'quotation_no' => 'required|numeric'
+        ]);
+
+        $quotation = Quotation::where('quotation_no', $request->quotation_no)
+                              ->where('active', true)
+                              ->whereDoesntHave('agreement')
                               ->with('customer')
                               ->first();
 
-        if ($quotation) {
-            return response()->json([
-                'customer_name' => $quotation->customer->name,
-                'address' => $quotation->customer->address,
-                'customer_id' => $quotation->customer->id,
-                'agreement_amount' => $quotation->total,
-                'currency' => $quotation->currency,
-                'exchange_rate' => $quotation->exchange_rate,
-            ]);
-        }
-
-        return response()->json(['error' => 'Quotation not found'], 404);
+        return response()->json([
+            'customer_name' => $quotation->customer->name,
+            'address' => $quotation->customer->address,
+            'customer_id' => $quotation->customer->id,
+            'agreement_amount' => $quotation->total,
+            'currency' => $quotation->currency,
+            'exchange_rate' => $quotation->exchange_rate,
+        ]);
     }
 
     public function checkDuplicateReference(Request $request)
