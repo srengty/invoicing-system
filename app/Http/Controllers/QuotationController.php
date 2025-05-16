@@ -139,7 +139,6 @@ class QuotationController extends Controller
         }
     }
 
-
     public function store(Request $request)
     {
 
@@ -243,8 +242,8 @@ class QuotationController extends Controller
                 }
             }
         }
-    // Redirect with a success message
-    return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
+        // Redirect with a success message
+        return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
     }
 
     /**
@@ -487,77 +486,78 @@ class QuotationController extends Controller
 
     public function sendQuotation(Request $request)
     {
-        $quotation = Quotation::with('customer')->find($request->input('quotation_id'));
+        $data = $request->validate([
+            'quotation_id'     => 'required|exists:quotations,id',
+            'pdf_file'         => 'required|file|mimes:pdf|max:10240',
+            'send_email'       => 'required|boolean',
+            'send_telegram'    => 'required|boolean',
+            'telegram_channel' => 'nullable|string',           // e.g. "@my_channel"
+            // phone comes from quotation->phone_number
+        ]);
 
-        if (!$quotation) {
-            return response()->json(['error' => 'Quotation not found'], 404);
-        }
+        $quotation = Quotation::with('customer')->findOrFail($data['quotation_id']);
+        $pdfContent = file_get_contents($request->file('pdf_file')->getRealPath());
+        $filename   = "quotation_{$quotation->quotation_no}.pdf";
 
         try {
-            $telegramService = app(TelegramService::class);
-            $sendEmail = $request->input('send_email');
-            $sendTelegram = $request->input('send_telegram');
-            $channelName = $request->input('telegram_channel');
+            // 1) Send by Email
+            if ($data['send_email']) {
+                if (! $quotation->customer->email) {
+                    throw new Exception('Customer has no email address.');
+                }
+                Mail::to($quotation->customer->email)
+                    ->send(new QuotationEmail($quotation, $pdfContent, $filename));
+            }
 
-            // PDF handling
-            if ($request->hasFile('pdf_file')) {
-                $pdfContent = file_get_contents($request->file('pdf_file')->getRealPath());
-                $filename = 'quotation_' . $quotation->id . '.pdf';
+            // 2) Send to Customer’s Telegram Phone Number
+            if ($data['send_telegram']) {
+            // 2a) Send to customer’s phone
+                if ($quotation->phone_number) {
+                    app(TelegramService::class)
+                        ->sendPdfToPhoneNumber(
+                            $quotation->phone_number,
+                            $pdfContent,
+                            $filename,
+                            "Your quotation #{$quotation->quotation_no}"
+                        );
+                }
+                // 2b) Send to channel
+                if (! empty($data['telegram_channel'])) {
+                    app(TelegramService::class)
+                        ->sendPdfToChannel(
+                            $data['telegram_channel'],
+                            $pdfContent,
+                            $filename,
+                            "Quotation #{$quotation->quotation_no}"
+                        );
+                }
+            }
 
-                // Send to Telegram if selected
-                if ($sendTelegram && $quotation->phone_number) {
-                    $telegramService->sendPdfToPhoneNumber(
-                        $quotation->phone_number,
+            // 3) Send to the Specified Telegram Channel
+            if (! empty($data['telegram_channel'])) {
+                app(TelegramService::class)
+                    ->sendPdfToChannel(
+                        $data['telegram_channel'],   // e.g. "@finances_itc"
                         $pdfContent,
                         $filename
                     );
-                }
-
-                // Send to Telegram channel if provided
-                if ($channelName) {
-                    $telegramService->sendPdfToChannel(
-                        $channelName,
-                        $pdfContent,
-                        $filename
-                    );
-                }
-
-                // Save PDF to storage
-                $pdfPath = $request->file('pdf_file')->store('quotations', 'public');
-            } else {
-                throw new Exception('PDF file not found.');
             }
 
-            // Email sending
-            if ($sendEmail) {
-                $customerEmail = $quotation->customer->email;
-                if (!$customerEmail) {
-                    throw new Exception('Customer email not found.');
-                }
-
-                Mail::to($customerEmail)->send(new QuotationEmail($quotation, $request->file('pdf_file')));
-            }
-
-            // Update statuses
-            $statusUpdates = ['customer_status' => 'Pending'];
-            if ($sendEmail || $sendTelegram) {
-                $statusUpdates['status'] = 'Sent';
-            }
-
-            $quotation->update($statusUpdates);
+            // 4) Update statuses
+            $quotation->update([
+                'customer_status' => 'Pending',
+                'status'          => ($data['send_email']||$data['send_telegram']) ? 'Sent' : $quotation->status,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Quotation sent successfully',
-                'sent_email' => $sendEmail,
-                'sent_telegram' => $sendTelegram,
-                'pdf_path' => $pdfPath ?? null,
+                'message' => 'Quotation dispatched successfully.',
             ]);
         } catch (Exception $e) {
-            Log::error('Failed to send quotation: ' . $e->getMessage());
+            Log::error('sendQuotation error: '.$e->getMessage(), ['id'=>$quotation->id]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send quotation: ' . $e->getMessage()
+                'message' => 'Dispatch failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -644,6 +644,46 @@ class QuotationController extends Controller
         }
 
         return $results;
+    }
+
+    public function sendViaTelegram(Request $request, $id)
+    {
+        $quotation = Quotation::with('customer')->findOrFail($id);
+
+        // render the same PDF you already use
+        $pdfBytes = Pdf::loadView('quotations.send-telegram', [
+            'quotation' => $quotation
+        ])->output();
+
+        $filename = "quotation_{$quotation->quotation_no}.pdf";
+
+        try {
+            /** @var TelegramService $tg */
+            $tg = app(TelegramService::class);
+
+            if ($request->input('target') === 'channel') {
+                // your public channel username
+                $tg->sendPdfToChannel(
+                    '@finances_itc',
+                    $pdfBytes,
+                    $filename,
+                    "📄 Quotation #{$quotation->quotation_no}"
+                );
+            } elseif ($request->input('target') === 'phone') {
+                // customer's phone number
+                $tg->sendPdfToPhoneNumber(
+                    $quotation->customer->phone_number,
+                    $pdfBytes,
+                    $filename,
+                    "Your quotation #{$quotation->quotation_no}"
+                );
+            }
+
+            return back()->with('success', 'PDF sent successfully!');
+        } catch (Exception $e) {
+            \Log::error('Telegram sendViaTelegram error: '.$e->getMessage());
+            return back()->with('error', 'Failed to send: '.$e->getMessage());
+        }
     }
 
     public function toggleActive($id, Request $request)

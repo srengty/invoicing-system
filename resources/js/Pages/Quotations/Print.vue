@@ -238,7 +238,7 @@
                     <InputText
                         id="telegramChannel"
                         v-model="sendForm.telegramChannel"
-                        placeholder="@your_channel"
+                        placeholder="t.me/itc_finances"
                     />
                 </div>
             </div>
@@ -277,7 +277,7 @@ const toast = useToast();
 const sendForm = ref({
     emailChecked: false,
     telegramChecked: false,
-    telegramChannel: "@your_default_channel", // Set your default channel here
+    telegramChannel: "@finances_itc",
 });
 onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -308,7 +308,6 @@ const showConfirmationDialog = () => {
             detail: "Only approved quotations can be sent.",
             life: 3000,
         });
-        router.get(route("quotations.list"), {}, { preserveScroll: true });
         return;
     }
     selectedQuotation.value = quotation;
@@ -473,8 +472,8 @@ const generateAndSendPDF = async () => {
         const filename = `quotation_${quotation.value.quotation_no}.pdf`;
 
         // Create FormData
-        const formData = new FormData();
         const pdfBlob = new Blob([mergedPDF], { type: "application/pdf" });
+        const formData = new FormData();
 
         formData.append("quotation_id", quotation.value.id);
         formData.append("pdf_file", pdfBlob, filename);
@@ -483,6 +482,10 @@ const generateAndSendPDF = async () => {
             "send_telegram",
             sendForm.value.telegramChecked ? "1" : "0"
         );
+        let channel = sendForm.value.telegramChannel
+            .replace(/^https?:\/\/t\.me\//, "@")
+            .trim();
+        formData.append("telegram_channel", channel);
 
         // Get CSRF token
         const csrfToken = document.querySelector(
@@ -520,6 +523,7 @@ const generateAndSendPDF = async () => {
             life: 3000,
         });
         isSendDialogVisible.value = false;
+        router.get(route("quotations.list"), {}, { preserveScroll: true });
     } catch (error) {
         console.error("Error sending quotation:", error);
         toast.add({
@@ -590,12 +594,14 @@ const sendPDFViaEmail = (pdfBytes, filename) => {
     formData.append("pdf_file", blob, filename);
     formData.append("update_status", "Pending");
 
-    // Add Telegram sending flags
+    // Add Email sending flags
     formData.append("send_email", sendForm.value.emailChecked ? "1" : "0");
+    // Add Telegram sending flags
     formData.append(
         "send_telegram",
         sendForm.value.telegramChecked ? "1" : "0"
     );
+    formData.append("telegram_channel", sendForm.value.telegramChannel);
 
     fetch("/quotations/send", {
         method: "POST",

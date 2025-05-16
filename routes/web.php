@@ -119,6 +119,10 @@ Route::post('/telegram/webhook', function () {
     \Log::info('Telegram webhook received', request()->all());
     return response()->json(['status' => 'ok']);
 })->name('telegram.webhook');
+Route::post(
+    'quotations/{id}/send-telegram',
+    [QuotationController::class, 'sendViaTelegram']
+)->name('quotations.sendTelegram');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
