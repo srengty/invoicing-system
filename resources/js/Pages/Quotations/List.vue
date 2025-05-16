@@ -24,7 +24,7 @@
 
         <div class="quotations text-sm p-4">
             <div class="flex justify-end p-4 gap-4">
-                <div>
+                <!-- <div>
                     <Button
                         label="Download Print"
                         icon="pi pi-download"
@@ -33,7 +33,7 @@
                         @click="downloadPrintWithCatalog"
                         size="small"
                     />
-                </div>
+                </div> -->
                 <div>
                     <Dropdown
                         v-model="searchType"
@@ -84,7 +84,7 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     tableStyle="min-width: 50rem"
                 >
-                    <Column headerStyle="width: 5%" header="Select">
+                    <!-- <Column headerStyle="width: 5%" header="Select">
                         <template #body="slotProps">
                             <Checkbox
                                 :value="slotProps.data.id"
@@ -95,7 +95,7 @@
                                 "
                             />
                         </template>
-                    </Column>
+                    </Column> -->
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
