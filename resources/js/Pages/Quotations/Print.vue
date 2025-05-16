@@ -308,6 +308,7 @@ const showConfirmationDialog = () => {
             detail: "Only approved quotations can be sent.",
             life: 3000,
         });
+        router.get(route("quotations.list"), {}, { preserveScroll: true });
         return;
     }
     selectedQuotation.value = quotation;
