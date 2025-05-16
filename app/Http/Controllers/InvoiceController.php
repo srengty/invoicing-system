@@ -49,7 +49,6 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
-        // Validate the request data
         $validated = Validator::make($request->all(), [
             'invoice_no' => 'nullable|unique:invoices,invoice_no',
             'status' => 'required|string|in:Pending,Approved,Revise',
@@ -77,7 +76,6 @@ class InvoiceController extends Controller
             'products.*.include_catalog' => 'required|boolean',
             'products.*.pdf_url' => 'nullable|string',
             'receipt_no' => 'nullable|integer|exists:receipts,receipt_no',
-            'installment_paid' => 'nullable|numeric|min:0',
         ]);
 
         if ($validated->fails()) {
@@ -86,120 +84,267 @@ class InvoiceController extends Controller
 
         $data = $validated->validated();
 
-        // Get the last invoice for the same agreement_no that has status 'PAID'
-        $lastInvoice = \App\Models\Invoice::where('agreement_no', $data['agreement_no'])
-            ->orderBy('invoice_no', 'desc')
-            ->first();
+        // Format dates
+        $startDate = !empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])
+            ? Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d')
+            : now()->format('Y-m-d');
 
-        // Get the last payment_schedule for the same agreement_no that has status 'PAID'
-        $lastPaymentSchedule = \App\Models\PaymentSchedule::where('agreement_no', $data['agreement_no'])
-            ->where('status', 'PAID')
-            ->orderBy('due_date', 'desc')
-            ->first();
+        $endDate = !empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['end_date'])
+            ? Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d')
+            : now()->addDays(14)->format('Y-m-d');
 
-        // Determine the installment_paid logic based on whether it's the first or subsequent payment
-        $installmentPaid = $data['paid_amount'] ?? 0;
-
-        if ($lastInvoice && $lastPaymentSchedule) {
-            // If this is a subsequent payment, sum the last installment_paid with the current paid_amount
-            $installmentPaid += $lastInvoice->installment_paid;  // Add the last invoice's installment_paid
-        }
-
-        // Format the start and end dates
-        $startDate = now()->format('Y-m-d');
-        if (!empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])) {
-            $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
-        }
-
-        $endDate = now()->addDays(14)->format('Y-m-d');
-        if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/d{4}$/', $data['end_date'])) {
-            $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
-        }
-
-        // Calculate grand total from products
-        $grand_total = 0;
-        if (!empty($data['products'])) {
+        // Calculate grand_total from products
+        $grand_total = $data['grand_total'] ?? 0;
+        if (!empty($data['quotation_no']) && empty($data['agreement_no'])) {
+            $quotation = \App\Models\Quotation::find($data['quotation_no']);
+            $grand_total = $quotation ? $quotation->total : 0;
+        } elseif (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
-                $productData = Product::find($product['id']);
+                $productData = \App\Models\Product::find($product['id']);
                 if ($productData && $productData->status === 'approved') {
                     $grand_total += $product['price'] * $product['quantity'];
                 }
             }
         }
 
-        // USD conversion if applicable
-        $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
-            ? $grand_total / $data['exchange_rate']
-            : $data['total_usd'] ?? null;
+        // Receipt logic
+        $paid_amount = $data['paid_amount'] ?? 0;
+        $installment_paid = 0;
 
-        // Set default currency as 'KHR' if not provided
-        $currency = $data['currency'] ?? 'KHR';
+        $receipt = null;
 
-        // Generate invoice number if status is 'Approved'
-        $invoice_no = null;
-        if ($data['status'] === 'Approved') {
-            $currentYear = date('Y');
-            $baseInvoiceNo = ($currentYear - 2025) * 1000000 + 25000001;
-            $lastInvoice = \App\Models\Invoice::where('invoice_no', '>=', $baseInvoiceNo)
-                            ->orderBy('invoice_no', 'desc')
-                            ->first();
-            $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
+       if (!empty($data['quotation_no'])) {
+            $quotation = \App\Models\Quotation::where('quotation_no', $data['quotation_no'])->first();
+            if ($quotation && $quotation->total !== null) {
+                $grand_total = $quotation->total;
+            } else {
+                // fallback to the value from payload
+                $grand_total = $data['grand_total'] ?? 0;
+            }
+        } else {
+            // No quotation, use frontend value or recalculate
+            $grand_total = $data['grand_total'] ?? 0;
         }
 
-        // Set invoice date only if status is Approved
-        $invoiceDate = null;
-        if ($data['status'] === 'Approved') {
-            $invoiceDate = now()->format('Y-m-d H:i:s');
-        } elseif ($data['status'] !== 'Pending' && !empty($request->invoice_date) && strtotime($request->invoice_date)) {
-            $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
-        }
 
-        // Create the invoice
-        $invoice = \App\Models\Invoice::create([
-            'invoice_no'     => $invoice_no,
-            'quotation_no'   => $data['quotation_no'] ?? null,
-            'agreement_no'   => $data['agreement_no'] ?? null,
-            'customer_id'    => $data['customer_id'],
-            'address'        => $data['address'] ?? null,
-            'phone'          => $data['phone'] ?? null,
-            'terms'          => $data['terms'] ?? null,
-            'start_date'     => $startDate,
-            'end_date'       => $endDate,
-            'grand_total'    => $grand_total,
-            'total_usd'      => $total_usd,
-            'exchange_rate'  => $data['exchange_rate'] ?? null,
-            'currency'       => $currency,
-            'invoice_date'   => $invoiceDate,
-            'status'         => $data['status'],
-            'paid_amount'    => $data['paid_amount'] ?? 0,
-            'installment_paid' => $installmentPaid,
-            'receipt_no'     => $data['receipt_no'] ?? null,
-        ]);
+        // Check if the receipt is already used in another invoice
+        if (!empty($data['receipt_no'])) {
+            $existingInvoice = \App\Models\Invoice::where('receipt_no', $data['receipt_no'])->first();
 
-        // Attach products to the pivot table using invoice_id
-        if (!empty($data['products'])) {
-            foreach ($data['products'] as $product) {
-                $productData = Product::find($product['id']);
-                if ($productData && $productData->status === 'approved') {
-                    $invoice->products()->attach($product['id'], [
-                        'quantity' => $product['quantity'],
-                        'price' => $product['price'],
-                        'include_catalog' => $product['include_catalog'],
-                        'pdf_url' => $product['pdf_url'] ?? null,
-                        'invoice_id' => $invoice->id,
-                    ]);
+            $receipt = \App\Models\Receipt::where('receipt_no', $data['receipt_no'])->first();
+
+            if ($receipt) {
+                $paid_amount = $receipt->paid_amount;
+
+
+
+                // Condition 1: Receipt with Quotation
+                if (!empty($data['quotation_no'])) {
+                    $quotation = \App\Models\Quotation::find($data['quotation_no']);
+                    if ($quotation) {
+                        $grand_total = $quotation->total;
+                    }
+                }
+                // Condition 2: Receipt with Items (Products)
+                elseif (!empty($data['products'])) {
+                    $grand_total = 0;
+                    foreach ($data['products'] as $product) {
+                        $productData = \App\Models\Product::find($product['id']);
+                        if ($productData && $productData->status === 'approved') {
+                            $grand_total += $product['price'] * $product['quantity'];
+                        }
+                    }
+                }
+
+                // Handle overpayment from receipt
+                if ($paid_amount > $grand_total) {
+                    $installment_paid = $paid_amount - $grand_total;
+                    $paid_amount = $grand_total;
+
+                    $receipt->installment_paid = $installment_paid;
+                    $receipt->save();
+                } else {
+                    $installment_paid = 0;
                 }
             }
         }
 
-        // Attach multiple payment schedules
-        if (!empty($data['payment_schedules'])) {
-            $scheduleIds = collect($data['payment_schedules'])->pluck('id')->toArray();
-            $invoice->paymentSchedules()->attach($scheduleIds);
+        // If no receipt provided but paid_amount exists
+        if (empty($data['receipt_no']) && isset($data['paid_amount'])) {
+            $paid_amount = $data['paid_amount'];
+
+            // Recalculate grand_total if no quotation and products exist
+            if (!empty($data['quotation_no']) && empty($data['agreement_no'])) {
+                $quotation = \App\Models\Quotation::find($data['quotation_no']);
+                if ($quotation) {
+                    $grand_total = $quotation->total;
+                }
+            } elseif (!empty($data['products'])) {
+                $grand_total = 0;
+                foreach ($data['products'] as $product) {
+                    $productData = \App\Models\Product::find($product['id']);
+                    if ($productData && $productData->status === 'approved') {
+                        $grand_total += $product['price'] * $product['quantity'];
+                    }
+                }
+            }
+
+            if (!empty($data['quotation_no'])) {
+                $quotation = \App\Models\Quotation::with('products')->find($data['quotation_no']);
+                if ($quotation) {
+                    $grand_total = $quotation->total ?? 0;
+
+                    // Only fill products if user didn't send them manually
+                    if (empty($data['products'])) {
+                        $data['products'] = [];
+                        foreach ($quotation->products as $product) {
+                            $data['products'][] = [
+                                'id' => $product->id,
+                                'quantity' => $product->pivot->quantity,
+                                'price' => $product->pivot->price,
+                                'include_catalog' => true,
+                                'pdf_url' => null,
+                            ];
+                        }
+                    }
+                }
+            }
+
+
+            if ($paid_amount > $grand_total) {
+                $installment_paid = $paid_amount - $grand_total;
+                $paid_amount = $grand_total;
+            } else {
+                $installment_paid = 0;
+            }
         }
 
-        // Eager load payment schedules with the invoice and return the response
-        $invoice = $invoice->load('paymentSchedules');
+
+        // Handle overpayment
+        if ($paid_amount > $grand_total) {
+            $installment_paid = $paid_amount - $grand_total;
+            $paid_amount = $grand_total;
+
+            if ($receipt) {
+                $receipt->installment_paid = $installment_paid;
+                $receipt->save();
+            }
+        }
+
+        // Fallback if no receipt
+        $paid_amount = $paid_amount ?: ($data['paid_amount'] ?? 0);
+        $currency = $data['currency'] ?? 'KHR';
+
+
+        $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
+            ? $grand_total / $data['exchange_rate']
+            : $data['total_usd'] ?? null;
+
+        // Invoice number
+        $invoice_no = null;
+        if ($data['status'] === 'Approved') {
+            $base = (date('Y') - 2025) * 1000000 + 25000001;
+            $last = \App\Models\Invoice::where('invoice_no', '>=', $base)->orderBy('invoice_no', 'desc')->first();
+            $invoice_no = $last ? $last->invoice_no + 1 : $base;
+        }
+
+        $invoiceDate = $data['status'] === 'Approved'
+            ? now()->format('Y-m-d H:i:s')
+            : (!empty($request->invoice_date) ? Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s') : null);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_no' => $invoice_no,
+            'quotation_no' => $data['quotation_no'] ?? null,
+            'agreement_no' => $data['agreement_no'] ?? null,
+            'customer_id' => $data['customer_id'],
+            'address' => $data['address'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'terms' => $data['terms'] ?? null,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'grand_total' => $grand_total,
+            'total_usd' => $total_usd,
+            'exchange_rate' => $data['exchange_rate'] ?? null,
+            'currency' => $currency,
+            'invoice_date' => $invoiceDate,
+            'status' => $data['status'],
+            'paid_amount' => $paid_amount,
+            'installment_paid' => $installment_paid,
+            'receipt_no' => $data['receipt_no'] ?? null,
+        ]);
+
+        if (!empty($data['products'])) {
+            foreach ($data['products'] as $product) {
+                $invoice->products()->attach($product['id'], [
+                    'quantity' => $product['quantity'],
+                    'price' => $product['price'],
+                    'include_catalog' => $product['include_catalog'],
+                    'pdf_url' => $product['pdf_url'] ?? null,
+                    'invoice_id' => $invoice->id,
+                ]);
+            }
+        }
+
+        if (!empty($data['payment_schedules'])) {
+            $ids = collect($data['payment_schedules'])->pluck('id')->toArray();
+            $invoice->paymentSchedules()->attach($ids);
+        }
+
+        if (!empty($data['receipt_no']) && $invoice->invoice_no) {
+            $receipt = \App\Models\Receipt::where('receipt_no', $data['receipt_no'])->first();
+            dd("i got u");
+
+            if ($receipt) {
+                if ($receipt->installment_paid > 0) {
+                    // If receipt has remaining installment
+                    if ($grand_total == $receipt->installment_paid) {
+                        // Use all installment to pay
+                        $paid_amount = $receipt->installment_paid;
+                        $installment_paid = 0;
+
+                        Receipt::where('receipt_no', $data['receipt_no'])->update([
+                            'invoice_no' => $invoice->invoice_no,
+                            'installment_paid' => 0,
+                        ]);
+
+
+
+                    } else {
+                        // Use part of the installment
+                        $paid_amount = $receipt->installment_paid >= $grand_total ? $grand_total : $receipt->installment_paid;
+                        $installment_paid = $receipt->installment_paid - $paid_amount;
+
+                        Receipt::where('receipt_no', $data['receipt_no'])->update([
+                            'invoice_no' => $invoice->invoice_no,
+                            'installment_paid' => max($installment_paid, 0),
+                        ]);
+                    }
+                } else {
+                    // Receipt was not reused, use paid_amount
+                    $paid_amount = $receipt->paid_amount >= $grand_total ? $grand_total : $receipt->paid_amount;
+
+
+                    if ($receipt->paid_amount > $grand_total) {
+                        $installment_paid = $receipt->paid_amount - $grand_total;
+                    } else {
+                        $installment_paid = 0;
+                    }
+
+                    Receipt::where('receipt_no', $data['receipt_no'])->update([
+                        'invoice_no' => $invoice->invoice_no,
+                        'installment_paid' => $installment_paid,
+                    ]);
+                }
+
+                // Update invoice fields
+                $invoice->update([
+                    'paid_amount' => $paid_amount,
+                    'installment_paid' => $installment_paid,
+                ]);
+            }
+        }
+
+
 
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
@@ -209,9 +354,17 @@ class InvoiceController extends Controller
         $agreements = Agreement::all();
         $quotations = Quotation::with('agreement')->where('status','Approved')->get();
         $customers = Customer::all();
-        $products = Product::all();
-        $paymentSchedules = PaymentSchedule::with('agreement')->get();
+        $paymentSchedules = PaymentSchedule::all();
         $receipts = Receipt::all();
+
+        // NEW: get full selected schedule details
+        $selectedSchedule = PaymentSchedule::with([
+            'agreement' => function($query) {
+                $query->with('customer'); // Make sure customer relationship is loaded
+            },
+            'invoices',
+            'receipts'
+        ])->find($id);
 
         $prefill = [
             'payment_schedule_id' => $id,
@@ -220,26 +373,25 @@ class InvoiceController extends Controller
             'agreement_no' => null,
         ];
 
-        $selectedSchedule = PaymentSchedule::find($id);
         if ($selectedSchedule) {
             $prefill['amount'] = $selectedSchedule->amount;
             $prefill['due_date'] = $selectedSchedule->due_date;
-            $agreement = Agreement::find($selectedSchedule->agreement_id);
-            if ($agreement) {
-                $prefill['agreement_no'] = $agreement->agreement_no;
-                $prefill['customer_id'] = $agreement->customer_id;
-                $prefill['quotation_no'] = $agreement->quotation_no;
-            }
+            $prefill['agreement_no'] = $selectedSchedule->agreement->agreement_no ?? null;
+            $prefill['customer_id'] = $selectedSchedule->agreement->customer_id ?? null;
+            $prefill['quotation_no'] = $selectedSchedule->agreement->quotation_no ?? null;
+            $prefill['phone'] = $selectedSchedule->agreement->customer->phone_number ?? null;
+
         }
 
-        return Inertia::render('Invoices/Create', [
+        // NEW: Pass the full schedule as `selectedPaymentSchedule`
+        return Inertia::render('Invoices/Generate', [
             'agreements' => $agreements,
             'quotations' => $quotations,
             'customers' => $customers,
-            'products' => $products,
             'paymentSchedules' => $paymentSchedules,
             'receipts' => $receipts,
             'prefill' => $prefill,
+            'selectedPaymentSchedule' => $selectedSchedule,
         ]);
     }
 
@@ -616,65 +768,65 @@ class InvoiceController extends Controller
     }
 
     public function sendInvoice(Request $request)
-{
-    // Find the invoice by its ID
-    $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
+    {
+        // Find the invoice by its ID
+        $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
 
-    if (!$invoice) {
-        return response()->json(['error' => 'Invoice not found'], 404);
+        if (!$invoice) {
+            return response()->json(['error' => 'Invoice not found'], 404);
+        }
+
+        try {
+            // Email validation (only if sending email)
+            if ($request->input('send_email')) {
+                $customerEmail = $invoice->customer->email;
+                if (!$customerEmail) {
+                    throw new Exception('Customer email not found.');
+                }
+            }
+
+            // PDF handling
+            if ($request->hasFile('pdf_file')) {
+                // Save the PDF file in the public storage
+                $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
+                Log::info('Invoice PDF saved to: ' . $pdfPath);
+            } else {
+                throw new Exception('Invoice PDF file not found.');
+            }
+
+            // Email sending
+            if ($request->input('send_email')) {
+                Log::info('Sending email to: ' . $customerEmail);
+                Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
+
+                // Automatically update statuses when sending email
+                $invoice->customer_status = 'Pending'; // Change the invoice status to 'Sent'
+                $invoice->customer->update(['customer_status' => 'Pending']); // Update customer status to Pending
+            }
+
+            // Save the invoice (status remains unless changed elsewhere)
+            $invoice->save();
+
+            return  redirect()->route('invoices.list')->with('success', 'Invoice email sent successfully!');
+        } catch (Exception $e) {
+            Log::error('Failed to send invoice: ' . $e->getMessage());
+            return;
+        }
     }
 
-    try {
-        // Email validation (only if sending email)
-        if ($request->input('send_email')) {
-            $customerEmail = $invoice->customer->email;
-            if (!$customerEmail) {
-                throw new Exception('Customer email not found.');
-            }
-        }
+    public function updatePaymentStatus($invoiceId, Request $request)
+    {
+        $invoice = Invoice::findOrFail($invoiceId);
 
-        // PDF handling
-        if ($request->hasFile('pdf_file')) {
-            // Save the PDF file in the public storage
-            $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
-            Log::info('Invoice PDF saved to: ' . $pdfPath);
-        } else {
-            throw new Exception('Invoice PDF file not found.');
-        }
+        $validated = $request->validate([
+            'payment_status' => 'required|in:Fully Paid,Partially Paid,Pending,Overdue,Cancelled',
+        ]);
 
-        // Email sending
-        if ($request->input('send_email')) {
-            Log::info('Sending email to: ' . $customerEmail);
-            Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
-
-            // Automatically update statuses when sending email
-            $invoice->customer_status = 'Pending'; // Change the invoice status to 'Sent'
-            $invoice->customer->update(['customer_status' => 'Pending']); // Update customer status to Pending
-        }
-
-        // Save the invoice (status remains unless changed elsewhere)
+        $invoice->payment_status = $validated['payment_status'];
         $invoice->save();
 
-        return  redirect()->route('invoices.list')->with('success', 'Invoice email sent successfully!');
-    } catch (Exception $e) {
-        Log::error('Failed to send invoice: ' . $e->getMessage());
-        return;
+        return response()->json($invoice);
     }
-}
-
-public function updatePaymentStatus($invoiceId, Request $request)
-{
-    $invoice = Invoice::findOrFail($invoiceId);
-
-    $validated = $request->validate([
-        'payment_status' => 'required|in:Fully Paid,Partially Paid,Pending,Overdue,Cancelled',
-    ]);
-
-    $invoice->payment_status = $validated['payment_status'];
-    $invoice->save();
-
-    return response()->json($invoice);
-}
 
 
 }

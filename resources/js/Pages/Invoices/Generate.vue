@@ -17,24 +17,6 @@
             </Breadcrumb>
         </div>
         <div class="create-invoice text-sm">
-            <!-- Header Section with Buttons -->
-            <div class="flex justify-end items-center p-3 mr-4">
-                <div class="flex gap-4">
-                    <Button
-                        label="Add Product"
-                        icon="pi pi-plus"
-                        type="button"
-                        @click="openAddItemDialog"
-                        size="small"
-                    />
-                    <Button
-                        label="Add Receipts"
-                        icon="pi pi-plus"
-                        @click="openCreate"
-                    />
-                </div>
-            </div>
-
             <!-- Invoice Form Section -->
             <form @submit.prevent="submitInvoice">
                 <div
@@ -60,13 +42,7 @@
                         >
                         <Select
                             v-model="form.agreement_no"
-                            :options="
-                                form.agreement_no || !form.quotation_no
-                                    ? agreements
-                                    : agreements.filter(
-                                          (a) => a.status === 'Open'
-                                      )
-                            "
+                            :options="agreements"
                             optionLabel="agreement_no"
                             optionValue="agreement_no"
                             placeholder="Select Agreement"
@@ -77,6 +53,15 @@
                         <label for="payment_schedule" class="block font-medium"
                             >Payment Schedule</label
                         >
+                        <!-- <MultiSelect
+                            v-model="form.payment_schedules"
+                            :options="formattedPaymentSchedules"
+                            optionLabel="label"
+                            optionValue="id"
+                            placeholder="Select Payment Schedule"
+                            class="w-full"
+                            :disabled="!!selectedPaymentSchedule"
+                        /> -->
                         <MultiSelect
                             v-model="form.payment_schedules"
                             :options="formattedPaymentSchedules"
@@ -88,7 +73,6 @@
                     </div>
                     <div class="">
                         <div class="">
-                            <!-- Display label as 'Receipt No' but bind the id to the model -->
                             <label for="receipt_no" class="block font-medium"
                                 >Receipt No (for deposit)</label
                             >
@@ -146,7 +130,7 @@
                     </div>
                     <div>
                         <label for="phone" class="block font-medium"
-                            >Phone</label
+                            >Phone Number</label
                         >
                         <InputText
                             id="phone"
@@ -186,174 +170,27 @@
                 </div>
             </form>
 
-            <!-- Product Table Section -->
-            <div class="m-6">
+            <!-- Payment Schedules Table -->
+            <div class="mb-6 p-6">
                 <DataTable
-                    :value="productsList"
-                    class="p-datatable-striped"
+                    v-if="selectedScheduleArray.length"
+                    :value="selectedScheduleArray"
+                    class="mb-6 p-datatable-sm p-datatable-gridlines"
                     responsiveLayout="scroll"
                 >
-                    <Column header="No.">
-                        <template #body="slotProps">
-                            {{ slotProps.index + 1 }}
+                    <Column field="id" header="ID" />
+                    <Column field="due_date" header="Due Date" />
+                    <Column field="amount" header="Amount">
+                        <template #body="{ data }">
+                            ៛{{ formatCurrency(data.amount) }}
                         </template>
                     </Column>
-                    <Column field="product" header="Product"></Column>
-                    <Column field="qty" header="Qty">
-                        <template #body="slotProps">
-                            <InputText
-                                v-model="slotProps.data.qty"
-                                @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
-                            />
-                        </template>
-                    </Column>
-                    <Column field="unit" header="Unit"></Column>
-                    <Column field="unitPrice" header="Unit Price">
-                        <template #body="slotProps">
-                            <InputText
-                                v-model="slotProps.data.unitPrice"
-                                @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
-                            />
-                        </template>
-                    </Column>
-                    <Column field="subTotal" header="Sub Total"></Column>
-                    <Column header="Action">
-                        <template #body="slotProps">
-                            <Button
-                                label="Remove"
-                                icon="pi pi-times"
-                                class="p-button-text p-button-danger"
-                                @click="removeProduct(slotProps.data.id)"
-                            />
-                        </template>
-                    </Column>
-                    <Column header="Catalog">
-                        <template #body="slotProps">
-                            <div class="flex items-center gap-2">
-                                <Checkbox
-                                    v-model="slotProps.data.include_catalog"
-                                    :binary="true"
-                                    @change="
-                                        () => {
-                                            checkCatalogAvailability(
-                                                slotProps.data
-                                            );
-                                        }
-                                    "
-                                />
-                                <span>
-                                    {{
-                                        slotProps.data.include_catalog
-                                            ? "Included"
-                                            : "Include"
-                                    }}
-                                </span>
-                            </div>
-                        </template>
-                    </Column>
+                    <Column field="percentage" header="%" />
+                    <Column field="short_description" header="Description" />
+                    <Column field="status" header="Status" />
                 </DataTable>
-
-                <div class="pl-2 pr-6">
-                    <!-- Installment Paid (calculated from selected payment schedules) -->
-
-                    <div
-                        v-if="form.installment_paid > 0"
-                        class="total-container mt-4 flex justify-between items-center"
-                    >
-                        <p class="font-bold">Installment Paid:</p>
-                        <p class="font-bold text-right">
-                            ៛{{ formatCurrency(form.installment_paid) }}
-                        </p>
-                    </div>
-
-                    <!-- Total KHR from all products -->
-
-                    <div
-                        class="total-container mt-4 flex justify-between items-center"
-                    >
-                        <p class="font-bold">Total KHR:</p>
-                        <p class="font-bold text-right">
-                            ៛{{ calculateTotalKHR }}
-                        </p>
-                    </div>
-
-                    <!-- Final Total KHR (editable) -->
-
-                    <div
-                        class="total-container mt-4 flex justify-between items-center"
-                    >
-                        <p class="font-bold">Final Total KHR:</p>
-                        <input
-                            type="number"
-                            v-model.number="form.paid_amount"
-                            placeholder="Enter Amount"
-                            step="0.01"
-                            class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
-                        />
-                    </div>
-
-                    <!-- Final Total USD (editable) -->
-
-                    <div
-                        class="total-container mt-4 flex justify-between items-center"
-                    >
-                        <p class="font-bold">Final Total USD:</p>
-                        <input
-                            type="number"
-                            v-model.number="form.total_usd"
-                            placeholder="Enter USD"
-                            step="0.01"
-                            class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
-                        />
-                    </div>
-
-                    <!-- Exchange Rate -->
-
-                    <div
-                        class="grand-total-container flex justify-between mt-4"
-                    >
-                        <p class="font-bold">Exchange Rate:</p>
-                        <p class="font-bold text-right">
-                            {{ calculateExchangeRate }}
-                        </p>
-                    </div>
-
-                    <!-- Placeholder Bank Info -->
-
-                    <div
-                        class="grand-total-container flex justify-between mt-4"
-                    >
-                        <p class="font-bold">Bank Name:</p>
-                        <p class="text-right text-gray-400 italic">Not set</p>
-                    </div>
-
-                    <div
-                        class="grand-total-container flex justify-between mt-4"
-                    >
-                        <p class="font-bold">Bank Account Name:</p>
-                        <p class="text-right text-gray-400 italic">Not set</p>
-                    </div>
-
-                    <div
-                        class="grand-total-container flex justify-between mt-4"
-                    >
-                        <p class="font-bold">Bank Account Number:</p>
-                        <p class="text-right text-gray-400 italic">Not set</p>
-                    </div>
-                </div>
-
-                <!-- <div class="terms mt-4">
-          <h3 class="text-lg">Terms and Conditions</h3>
-          <p>Full payment is required upon quote acceptance.</p>
-          <p>This quote is negotiable for one (1) week from the date stated above.</p>
-        </div>
-        <div class="buttons mt-4 flex justify-end">
-          <Button label="Submit request for approval" icon="pi pi-check" class="p-button-success" @click="submitInvoice" />
-          <Button label="Cancel" class="p-button-secondary ml-2" @click="cancel" />
-        </div> -->
             </div>
+
             <div class="flex justify-end items-center p-3 mr-4">
                 <div class="flex gap-4">
                     <Button
@@ -376,6 +213,7 @@
                     ></Button>
                 </div>
             </div>
+
             <!-- Modal to Select Product -->
             <Dialog
                 v-model:visible="isAddItemDialogVisible"
@@ -520,6 +358,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
 import {
     Button,
     InputText,
@@ -542,7 +381,26 @@ import Breadcrumb from "primevue/breadcrumb";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
 import { getDepartment } from "../../data";
+const toast = useToast();
 
+const selectedPaymentSchedule = computed(
+    () => page.props.selectedPaymentSchedule
+);
+const selectedAgreement = computed(
+    () => selectedPaymentSchedule.value?.agreement || null
+);
+const selectedScheduleArray = computed(() => {
+    if (selectedPaymentSchedule.value) {
+        return [selectedPaymentSchedule.value];
+    }
+    if (form.payment_schedules && form.payment_schedules.length > 0) {
+        return paymentSchedules.filter((ps) =>
+            form.payment_schedules.includes(ps.id)
+        );
+    }
+    return [];
+});
+const page = usePage();
 const {
     products,
     agreements,
@@ -562,33 +420,35 @@ const props = defineProps({
     productCategories: Array,
     paymentSchedules: Array,
     receipts: Array,
+    selectedPaymentSchedule: Object,
 });
 
 const form = useForm({
-    invoice_no: "", // Optional: generated if blank
-    quotation_no: "",
-    agreement_no: "",
-    customer_id: "",
-    address: "",
-    phone: "",
+    invoice_no: "",
+    quotation_no: selectedPaymentSchedule.value?.agreement?.quotation_no || "",
+    agreement_no: selectedPaymentSchedule.value?.agreement?.agreement_no || "",
+    customer_id: selectedPaymentSchedule.value?.agreement?.customer_id || "",
+    address: selectedPaymentSchedule.value?.agreement?.address || "",
+    phone: selectedPaymentSchedule.value?.agreement?.customer?.phone_number || "",
     terms: "",
-    amount: 0,
-    payment_schedules: [],
-    start_date: "",
-    end_date: "",
+    amount: selectedPaymentSchedule.value?.amount || 0,
+    payment_schedules: selectedPaymentSchedule.value
+        ? [selectedPaymentSchedule.value.id]
+        : [],
+    start_date: selectedPaymentSchedule.value?.agreement?.start_date || "",
+    end_date: selectedPaymentSchedule.value?.due_date || "",
     grand_total: "",
     total_usd: "",
     exchange_rate: "",
-    invoice_date: new Date().toISOString(), // Send in ISO format
+    invoice_date: new Date().toISOString(),
     status: "Pending",
     installment_paid: 0,
-    paid_amount: 0,
+    paid_amount: selectedPaymentSchedule.value?.amount || 0,
     products: [],
     receipt_no: "",
     userModifiedPaidAmount: false,
 });
 
-const page = usePage();
 const items = computed(() => [
     {
         label: "",
@@ -631,9 +491,6 @@ const selectedProduct = ref({
 });
 const customerCategories = ref([]);
 const isReceiptDialogVisible = ref(false);
-const openCreate = () => {
-    isReceiptDialogVisible.value = true;
-};
 const handleReceiptCreated = async ({ receipt, shouldReload }) => {
     if (receipt) {
         // Add the new receipt to the receipts list
@@ -679,23 +536,34 @@ const filteredPaymentSchedules = ref([]);
 function getOrdinalSuffix(number) {
     const suffixes = ["th", "st", "nd", "rd"];
     const remainder = number % 100;
-
     return (
         suffixes[(remainder - 20) % 10] || suffixes[remainder] || suffixes[0]
     );
 }
 
-const formattedPaymentSchedules = computed(() => {
-    const fullList = filteredPaymentSchedules.value;
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB"); // Formats as dd/mm/yyyy
+};
 
-    return fullList
-        .filter((ps) => ps.status !== "PAID") // Only show unpaid
+const formattedPaymentSchedules = computed(() => {
+    if (selectedPaymentSchedule.value) {
+        return [
+            {
+                id: selectedPaymentSchedule.value.id,
+                label: `Payment for ${selectedPaymentSchedule.value.agreement_no}`,
+                disabled: false,
+            },
+        ];
+    }
+
+    return paymentSchedules
+        .filter((ps) => ps.status !== "PAID")
         .map((ps) => {
-            // Find this schedule's position in the full list of the same agreement
-            const sameAgreementSchedules = fullList.filter(
+            const sameAgreementSchedules = paymentSchedules.filter(
                 (s) => s.agreement_no === ps.agreement_no
             );
-
             const rankIndex = sameAgreementSchedules.findIndex(
                 (s) => s.id === ps.id
             );
@@ -723,56 +591,35 @@ const calculateExchangeRate = computed(() => {
         return 0;
     return (form.paid_amount / form.total_usd).toFixed(2);
 });
+onMounted(() => {
+    if (selectedPaymentSchedule.value) {
+        form.amount = selectedPaymentSchedule.value.amount;
+        form.paid_amount = selectedPaymentSchedule.value.amount;
+        form.end_date = selectedPaymentSchedule.value.due_date;
 
-onMounted(async () => {
-    const response = await getDepartment();
-    const data = response.data;
-
-    // Filter departments with status === "service"
-    const serviceDepartments = data.filter((dept) => dept.status === "service");
-
-    if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
-        divisionOptions.value = serviceDepartments.map((dept) => ({
-            name: dept.name,
-            id: dept.id,
-            code: dept.code,
-            displayName: `${dept.code} - ${dept.name}`,
-        }));
-    } else {
-        console.warn("No service departments found.");
-        divisionOptions.value = [];
-    }
-    if (props.prefill) {
-        if (props.prefill.agreement_no) {
-            form.agreement_no = props.prefill.agreement_no;
-        }
-        if (props.prefill.customer_id) {
-            form.customer_id = props.prefill.customer_id;
-        }
-        if (props.prefill.quotation_no) {
-            form.quotation_no = props.prefill.quotation_no;
-        }
-        if (props.prefill.payment_schedule_id) {
-            form.payment_schedules = [props.prefill.payment_schedule_id];
-        }
-        if (props.prefill.amount) {
-            form.paid_amount = props.prefill.amount;
-        }
-        if (props.prefill.due_date) {
-            form.end_date = props.prefill.due_date;
+        // If agreement has products, add them to the products list
+        if (selectedPaymentSchedule.value.agreement?.products) {
+            productsList.value =
+                selectedPaymentSchedule.value.agreement.products.map(
+                    (product) => ({
+                        id: product.id,
+                        product: product.name,
+                        qty: product.pivot.quantity || 1,
+                        unit: product.unit,
+                        unitPrice: product.pivot.price || product.price,
+                        subTotal:
+                            (product.pivot.quantity || 1) *
+                            (product.pivot.price || product.price),
+                        remark: product.pivot.remark || "",
+                        category_id: product.category_id,
+                        acc_code: product.acc_code,
+                        include_catalog: false,
+                        pdf_url: product.pdf_url,
+                    })
+                );
         }
     }
 });
-
-const openAddItemDialog = () => {
-    isAddItemDialogVisible.value = true;
-
-    if (editingProduct.value) {
-        selectedDivision.value = editingProduct.value.division_id;
-    }
-
-    filterProductsByDivision();
-};
 
 const closeAddItemDialog = () => {
     isAddItemDialogVisible.value = false;
@@ -935,10 +782,7 @@ watch(
 
             if (selectedCustomer) {
                 form.address = selectedCustomer.address || "";
-                form.phone =
-                    selectedCustomer.phone ||
-                    selectedCustomer.phone_number ||
-                    "";
+                form.phone = selectedCustomer.phone_number || selectedCustomer.phone || "";
             }
         } else {
             form.address = "";
@@ -962,7 +806,7 @@ watch(
                 // Auto-fill customer details
                 form.customer_id = selectedQuotation.customer_id || "";
                 form.address = selectedQuotation.address || "";
-                form.phone = selectedQuotation.phone_number || "";
+                form.phone = selectedQuotation.phone || "";
 
                 if (selectedQuotation.agreement) {
                     console.log("working on agreement");
@@ -1145,39 +989,9 @@ const updateProductSubtotal = (product) => {
 // };
 
 const submitInvoice = async () => {
-    if (productsList.value.length === 0) {
-        alert("Please add at least one product.");
-        return;
-    }
-
     form.invoice_no = form.invoice_no || "";
-
-    for (let product of selectedProductsData.value) {
-        if (product.include_catalog && !product.pdf_url) {
-            showToast(
-                "error",
-                "Error",
-                "Catalog PDF is missing for an included product.",
-                3000
-            );
-            return;
-        }
-    }
     form.start_date = form.start_date || "";
     form.end_date = form.end_date || "";
-
-    // Prepare the payload
-    form.products = productsList.value.map((prod) => ({
-        id: prod.id,
-        quantity: prod.qty ?? 1,
-        price: prod.unitPrice ?? 0,
-        acc_code: prod.acc_code ?? "",
-        category_id: prod.category_id ?? null,
-        remark: prod.remark ?? "",
-        include_catalog: Boolean(prod.include_catalog),
-        pdf_url: prod.pdf_url ?? null,
-    }));
-
     form.payment_schedules = form.payment_schedules.map((id) => {
         const schedule = paymentSchedules.find((ps) => ps.id === id);
         return {
@@ -1197,13 +1011,6 @@ const submitInvoice = async () => {
     form.exchange_rate = calculateExchangeRate.value;
     form.receipt_no = form.receipt_no || "";
     console.log(form.installment_paid);
-    // if (Array.isArray(form.payment_schedules)) {
-    //     form.payment_schedules = form.payment_schedules.map(id => ({ id: parseInt(id) }));
-    // } else {
-    //     form.payment_schedules = [];
-    // }
-
-    // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
         form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
             2
