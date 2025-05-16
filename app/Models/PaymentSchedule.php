@@ -40,9 +40,9 @@ class PaymentSchedule extends Model
         );
     }
 
-    public function agreement(): BelongsTo
+    public function agreement()
     {
-        return $this->belongsTo(Agreement::class);
+        return $this->belongsTo(Agreement::class, 'agreement_no', 'agreement_no');
     }
 
     public function invoices()

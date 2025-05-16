@@ -79,43 +79,43 @@ class InvoiceController extends Controller
             'receipt_no' => 'nullable|integer|exists:receipts,receipt_no',
             'installment_paid' => 'nullable|numeric|min:0',
         ]);
-    
+
         if ($validated->fails()) {
             return response()->json(['message' => $validated->errors()], 422);
         }
-    
+
         $data = $validated->validated();
-    
+
         // Get the last invoice for the same agreement_no that has status 'PAID'
         $lastInvoice = \App\Models\Invoice::where('agreement_no', $data['agreement_no'])
             ->orderBy('invoice_no', 'desc')
             ->first();
-    
+
         // Get the last payment_schedule for the same agreement_no that has status 'PAID'
         $lastPaymentSchedule = \App\Models\PaymentSchedule::where('agreement_no', $data['agreement_no'])
             ->where('status', 'PAID')
             ->orderBy('due_date', 'desc')
             ->first();
-    
+
         // Determine the installment_paid logic based on whether it's the first or subsequent payment
         $installmentPaid = $data['paid_amount'] ?? 0;
-    
+
         if ($lastInvoice && $lastPaymentSchedule) {
             // If this is a subsequent payment, sum the last installment_paid with the current paid_amount
             $installmentPaid += $lastInvoice->installment_paid;  // Add the last invoice's installment_paid
         }
-    
+
         // Format the start and end dates
         $startDate = now()->format('Y-m-d');
         if (!empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])) {
             $startDate = Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d');
         }
-    
+
         $endDate = now()->addDays(14)->format('Y-m-d');
         if (!empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/d{4}$/', $data['end_date'])) {
             $endDate = Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d');
         }
-    
+
         // Calculate grand total from products
         $grand_total = 0;
         if (!empty($data['products'])) {
@@ -126,15 +126,15 @@ class InvoiceController extends Controller
                 }
             }
         }
-    
+
         // USD conversion if applicable
         $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
             ? $grand_total / $data['exchange_rate']
             : $data['total_usd'] ?? null;
-    
+
         // Set default currency as 'KHR' if not provided
         $currency = $data['currency'] ?? 'KHR';
-    
+
         // Generate invoice number if status is 'Approved'
         $invoice_no = null;
         if ($data['status'] === 'Approved') {
@@ -145,7 +145,7 @@ class InvoiceController extends Controller
                             ->first();
             $invoice_no = $lastInvoice ? $lastInvoice->invoice_no + 1 : $baseInvoiceNo;
         }
-    
+
         // Set invoice date only if status is Approved
         $invoiceDate = null;
         if ($data['status'] === 'Approved') {
@@ -153,7 +153,7 @@ class InvoiceController extends Controller
         } elseif ($data['status'] !== 'Pending' && !empty($request->invoice_date) && strtotime($request->invoice_date)) {
             $invoiceDate = Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s');
         }
-    
+
         // Create the invoice
         $invoice = \App\Models\Invoice::create([
             'invoice_no'     => $invoice_no,
@@ -175,7 +175,7 @@ class InvoiceController extends Controller
             'installment_paid' => $installmentPaid,
             'receipt_no'     => $data['receipt_no'] ?? null,
         ]);
-    
+
         // Attach products to the pivot table using invoice_id
         if (!empty($data['products'])) {
             foreach ($data['products'] as $product) {
@@ -191,23 +191,60 @@ class InvoiceController extends Controller
                 }
             }
         }
-    
+
         // Attach multiple payment schedules
         if (!empty($data['payment_schedules'])) {
             $scheduleIds = collect($data['payment_schedules'])->pluck('id')->toArray();
             $invoice->paymentSchedules()->attach($scheduleIds);
         }
-    
+
         // Eager load payment schedules with the invoice and return the response
         $invoice = $invoice->load('paymentSchedules');
-    
+
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
-    
 
+    public function generate($id, Request $request)
+    {
+        $agreements = Agreement::all();
+        $quotations = Quotation::with('agreement')->where('status','Approved')->get();
+        $customers = Customer::all();
+        $products = Product::all();
+        $paymentSchedules = PaymentSchedule::with('agreement')->get();
+        $receipts = Receipt::all();
+
+        $prefill = [
+            'payment_schedule_id' => $id,
+            'amount' => null,
+            'due_date' => null,
+            'agreement_no' => null,
+        ];
+
+        $selectedSchedule = PaymentSchedule::find($id);
+        if ($selectedSchedule) {
+            $prefill['amount'] = $selectedSchedule->amount;
+            $prefill['due_date'] = $selectedSchedule->due_date;
+            $agreement = Agreement::find($selectedSchedule->agreement_id);
+            if ($agreement) {
+                $prefill['agreement_no'] = $agreement->agreement_no;
+                $prefill['customer_id'] = $agreement->customer_id;
+                $prefill['quotation_no'] = $agreement->quotation_no;
+            }
+        }
+
+        return Inertia::render('Invoices/Create', [
+            'agreements' => $agreements,
+            'quotations' => $quotations,
+            'customers' => $customers,
+            'products' => $products,
+            'paymentSchedules' => $paymentSchedules,
+            'receipts' => $receipts,
+            'prefill' => $prefill,
+        ]);
+    }
 
     public function updateStatus(Request $request, Invoice $invoice)
-    {   
+    {
         // Validate the incoming request
         $validated = $request->validate([
             'status' => 'required|string|in:approved,revise,pending',
@@ -232,12 +269,12 @@ class InvoiceController extends Controller
 
             // Set the invoice date to the current date
             $invoice->invoice_date = now();
-            
+
             // Automatically set the invoice_end_date to 14 days after the invoice_date
             $invoice->invoice_end_date = Carbon::parse($invoice->invoice_date)->addDays(14)->format('Y-m-d'); // 14 days after invoice_date
 
             // Set the customer status to 'Sent'
-            $invoice->customer_status = 'Sent'; 
+            $invoice->customer_status = 'Sent';
         }
 
         // Save the updated invoice to the database
@@ -372,7 +409,7 @@ class InvoiceController extends Controller
         }
 
         // Apply pagination after all filters
-        $invoices = $query->orderBy('created_at', 'desc')->paginate(); 
+        $invoices = $query->orderBy('created_at', 'desc')->paginate();
 
         // Get the filters for passing them to the view
         $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
@@ -393,7 +430,7 @@ class InvoiceController extends Controller
             abort(403, 'This invoice has been paid and can no longer be modified.');
         }
 
-        $products = $invoice->products()->get(); 
+        $products = $invoice->products()->get();
 
         // Get products manually via invoice_product
         $products = DB::table('invoice_product')
@@ -404,8 +441,8 @@ class InvoiceController extends Controller
             'products.name as product_name',
             'products.name_kh as product_name_kh',
             'products.code as product_code',
-            'products.desc',      
-            'products.desc_kh',   
+            'products.desc',
+            'products.desc_kh',
             'invoice_product.quantity',
             'invoice_product.price',
             'invoice_product.include_catalog'

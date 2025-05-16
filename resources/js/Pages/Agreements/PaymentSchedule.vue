@@ -173,7 +173,8 @@ import { ref, defineModel, computed, onMounted } from "vue";
 import { currencies } from "@/constants";
 import { useToast } from "primevue/usetoast";
 import moment from "moment";
-import { router } from '@inertiajs/vue3';
+import { router } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
 import {
     DataTable,
     Column,
@@ -319,16 +320,17 @@ const editingSchedule = ref({
 });
 const generatingInvoice = ref(false);
 const generateInvoice = (paymentItem) => {
-    // Navigate to the invoice create page with the agreement and payment schedule data
-    router.visit(route("invoices.create"), {
-        data: {
-            agreement_no: paymentItem.agreement_no,
-            payment_schedule_id: paymentItem.id,
-            amount: paymentItem.amount,
-            due_date: paymentItem.due_date,
-            // Include any other relevant data
-        },
-    });
+    const paymentScheduleId = paymentItem.id;
+    if (!paymentScheduleId) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Cannot generate invoice - payment schedule id is missing",
+            life: 3000,
+        });
+        return;
+    }
+    router.visit(route("invoices.generate", { id: paymentScheduleId }));
 };
 
 const isPastDue = (date) => {

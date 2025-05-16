@@ -34,6 +34,7 @@ Route::post('/agreements/store', [AgreementController::class, 'store'])->name('a
 Route::post('/agreements/upload', [AgreementController::class, 'upload'])->name('agreements.upload');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/agreements/{agreement_no}/edit', [AgreementController::class, 'edit'])->name('agreements.edit');
+Route::get('/invoices/generate/{id}', [InvoiceController::class, 'generate'])->name('invoices.generate');
 Route::put('/agreements/{agreement_no}', [AgreementController::class, 'update'])->name('agreements.update');
 Route::get('/quotations/{quotationId}/agreement', [QuotationController::class, 'getAgreementForQuotation']);
 Route::post('/api/invoices/filter', [InvoiceController::class, 'filter']);
