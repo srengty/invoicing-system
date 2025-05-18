@@ -132,10 +132,15 @@ class AgreementController extends Controller
             'end_date' => 'required|date_format:d/m/Y',
             'customer_id' => 'required',
             'currency' => 'required',
+            'quotation_no' => 'nullable',
         ]);
         // catch exchange_rate from quotations
         $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
-        $exchangeRate = $quotation?->exchange_rate ?? 4100;
+        $exchangeRate = 4100; // default
+        if ($request->quotation_no) {
+            $quotation = Quotation::where('quotation_no', $request->quotation_no)->first();
+            $exchangeRate = $quotation?->exchange_rate ?? 4100;
+        }
 
         $data = $request->except('payment_schedule')+[
             'amount' => $request->agreement_amount,
@@ -186,7 +191,7 @@ class AgreementController extends Controller
     public function show(int $id)
     {
 
-        $agreement = Agreement::with(['customer', 
+        $agreement = Agreement::with(['customer',
         'paymentSchedules:id,agreement_no,amount,due_date,status,percentage,short_description,currency'
         ])->findOrFail($id);
         return response()->json([
@@ -213,7 +218,7 @@ class AgreementController extends Controller
             'customer',
             'quotation',
             'paymentSchedules:id,agreement_no,amount,due_date,status,percentage,short_description,currency' // include fields you want
-        ])->findOrFail($agreement_no);        
+        ])->findOrFail($agreement_no);
 
         $customers = Customer::where('active', true)
             ->orWhere('id', $agreement->customer_id)
@@ -370,10 +375,10 @@ class AgreementController extends Controller
 
         // Check if agreement exists
         if ($quotation && $quotation->agreement) {
-            return response()->json($quotation->agreement); // Return the agreement data
+            return response()->json($quotation->agreement);
         }
 
-        return response()->json(null); // Return null if no agreement found
+        return response()->json(null);
     }
 
     public function searchQuotation(Request $request)
@@ -383,8 +388,8 @@ class AgreementController extends Controller
         ]);
 
         $quotation = Quotation::where('quotation_no', $request->quotation_no)
-                              ->where('active', true) // Only search active quotations
-                              ->whereDoesntHave('agreement') // Ensure no agreement exists
+                              ->where('active', true)
+                              ->whereDoesntHave('agreement')
                               ->with('customer')
                               ->first();
 

@@ -120,13 +120,13 @@
                                 doDeletePaymentSchedule({ ...slotProps.data })
                             "
                         />
-                        <!-- <Button
+                        <Button
                             icon="pi pi-file-pdf"
                             class="p-button-success p-button-outlined"
                             label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
-                        /> -->
+                        />
                     </div>
                 </template>
             </Column>
@@ -173,6 +173,8 @@ import { ref, defineModel, computed, onMounted } from "vue";
 import { currencies } from "@/constants";
 import { useToast } from "primevue/usetoast";
 import moment from "moment";
+import { router } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
 import {
     DataTable,
     Column,
@@ -317,41 +319,18 @@ const editingSchedule = ref({
     status: "UPCOMING",
 });
 const generatingInvoice = ref(false);
-const generateInvoice = async (paymentItem) => {
-    generatingInvoice.value = true;
-
-    try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        toast.add({
-            severity: "success",
-            summary: "Invoice Generated",
-            detail: `Invoice for ${paymentItem.short_description} has been downloaded`,
-            life: 3000,
-        });
-
-        // In a real app, this would be the actual API call:
-        // const response = await axios.post('/api/generate-invoice', {
-        //     payment: paymentItem,
-        //     agreement: {
-        //         amount: props.agreement_amount,
-        //         currency: props.currency
-        //     }
-        // });
-
-        // Simulate PDF download
-        console.log("Would generate invoice for:", paymentItem);
-    } catch (error) {
+const generateInvoice = (paymentItem) => {
+    const paymentScheduleId = paymentItem.id;
+    if (!paymentScheduleId) {
         toast.add({
             severity: "error",
-            summary: "Generation Failed",
-            detail: "Failed to generate invoice. Please try again.",
+            summary: "Error",
+            detail: "Cannot generate invoice - payment schedule id is missing",
             life: 3000,
         });
-    } finally {
-        generatingInvoice.value = false;
+        return;
     }
+    router.visit(route("invoices.generate", { id: paymentScheduleId }));
 };
 
 const isPastDue = (date) => {

@@ -344,7 +344,7 @@ class InvoiceController extends Controller
 
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
-    
+
     public function updateStatus(Request $request, Invoice $invoice)
     {   
         // Validate the incoming request
@@ -516,7 +516,7 @@ class InvoiceController extends Controller
         }
 
         // Apply pagination after all filters
-        $invoices = $query->orderBy('created_at', 'desc')->paginate(); 
+        $invoices = $query->orderBy('created_at', 'desc')->paginate();
 
         // Get the filters for passing them to the view
         $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
@@ -537,7 +537,7 @@ class InvoiceController extends Controller
             abort(403, 'This invoice has been paid and can no longer be modified.');
         }
 
-        $products = $invoice->products()->get(); 
+        $products = $invoice->products()->get();
 
         // Get products manually via invoice_product
         $products = DB::table('invoice_product')
@@ -548,8 +548,8 @@ class InvoiceController extends Controller
             'products.name as product_name',
             'products.name_kh as product_name_kh',
             'products.code as product_code',
-            'products.desc',      
-            'products.desc_kh',   
+            'products.desc',
+            'products.desc_kh',
             'invoice_product.quantity',
             'invoice_product.price',
             'invoice_product.include_catalog'
@@ -723,65 +723,65 @@ class InvoiceController extends Controller
     }
 
     public function sendInvoice(Request $request)
-{
-    // Find the invoice by its ID
-    $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
+    {
+        // Find the invoice by its ID
+        $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
 
-    if (!$invoice) {
-        return response()->json(['error' => 'Invoice not found'], 404);
+        if (!$invoice) {
+            return response()->json(['error' => 'Invoice not found'], 404);
+        }
+
+        try {
+            // Email validation (only if sending email)
+            if ($request->input('send_email')) {
+                $customerEmail = $invoice->customer->email;
+                if (!$customerEmail) {
+                    throw new Exception('Customer email not found.');
+                }
+            }
+
+            // PDF handling
+            if ($request->hasFile('pdf_file')) {
+                // Save the PDF file in the public storage
+                $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
+                Log::info('Invoice PDF saved to: ' . $pdfPath);
+            } else {
+                throw new Exception('Invoice PDF file not found.');
+            }
+
+            // Email sending
+            if ($request->input('send_email')) {
+                Log::info('Sending email to: ' . $customerEmail);
+                Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
+
+                // Automatically update statuses when sending email
+                $invoice->customer_status = 'Pending'; // Change the invoice status to 'Sent'
+                $invoice->customer->update(['customer_status' => 'Pending']); // Update customer status to Pending
+            }
+
+            // Save the invoice (status remains unless changed elsewhere)
+            $invoice->save();
+
+            return  redirect()->route('invoices.list')->with('success', 'Invoice email sent successfully!');
+        } catch (Exception $e) {
+            Log::error('Failed to send invoice: ' . $e->getMessage());
+            return;
+        }
     }
 
-    try {
-        // Email validation (only if sending email)
-        if ($request->input('send_email')) {
-            $customerEmail = $invoice->customer->email;
-            if (!$customerEmail) {
-                throw new Exception('Customer email not found.');
-            }
-        }
+    public function updatePaymentStatus($invoiceId, Request $request)
+    {
+        $invoice = Invoice::findOrFail($invoiceId);
 
-        // PDF handling
-        if ($request->hasFile('pdf_file')) {
-            // Save the PDF file in the public storage
-            $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
-            Log::info('Invoice PDF saved to: ' . $pdfPath);
-        } else {
-            throw new Exception('Invoice PDF file not found.');
-        }
+        $validated = $request->validate([
+            'payment_status' => 'required|in:Fully Paid,Partially Paid,Pending,Overdue,Cancelled',
+        ]);
 
-        // Email sending
-        if ($request->input('send_email')) {
-            Log::info('Sending email to: ' . $customerEmail);
-            Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
-
-            // Automatically update statuses when sending email
-            $invoice->customer_status = 'Pending'; // Change the invoice status to 'Sent'
-            $invoice->customer->update(['customer_status' => 'Pending']); // Update customer status to Pending
-        }
-
-        // Save the invoice (status remains unless changed elsewhere)
+        $invoice->payment_status = $validated['payment_status'];
         $invoice->save();
 
-        return  redirect()->route('invoices.list')->with('success', 'Invoice email sent successfully!');
-    } catch (Exception $e) {
-        Log::error('Failed to send invoice: ' . $e->getMessage());
-        return;
+        return response()->json($invoice);
     }
-}
-
-public function updatePaymentStatus($invoiceId, Request $request)
-{
-    $invoice = Invoice::findOrFail($invoiceId);
-
-    $validated = $request->validate([
-        'payment_status' => 'required|in:Fully Paid,Partially Paid,Pending,Overdue,Cancelled',
-    ]);
-
-    $invoice->payment_status = $validated['payment_status'];
-    $invoice->save();
-
-    return response()->json($invoice);
-}
 
 
 }

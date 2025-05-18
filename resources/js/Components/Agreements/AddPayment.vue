@@ -18,6 +18,8 @@
                 v-model="model.due_date"
                 fluid
                 date-format="yy/mm/dd"
+                :min-date="minDate"
+                :max-date="maxDate"
             />
             <label for="due_date" class="">Due date</label>
         </FloatLabel>
@@ -53,6 +55,8 @@
                     fluid
                     @input="doAmountChange"
                     :maxFractionDigits="2"
+                    :min="0"
+                    :max="maxAmount"
                 />
             </InputGroup>
             <label for="amount" class="z-10">Amount</label>
@@ -81,7 +85,7 @@
             <label for="currency" class="">Currency</label>
         </FloatLabel>
 
-        <div class="flex items-center gap-2" v-if="props.multiCurrencies">
+        <!-- <div class="flex items-center gap-2" v-if="props.multiCurrencies">
             <label for="currency" class="required">Currency</label>
             <RadioButtonGroup
                 id="currency"
@@ -113,14 +117,19 @@
                 id="exchange_rate"
             />
             <label for="exchange_rate" class="required z-10">Rate</label>
-        </FloatLabel>
+        </FloatLabel> -->
 
         <div class="flex justify-end gap-2">
-            <Button label="Save" class="grow" @click="doSave"></Button>
+            <Button
+                label="Save"
+                class="grow"
+                @click="doSave"
+                :disabled="!isValid"
+            ></Button>
             <Button
                 label="Cancel"
                 severity="secondary"
-                @click="emit('cancel')"
+                @click="doCancel"
             ></Button>
         </div>
     </div>
@@ -146,7 +155,36 @@ import {
 } from "primevue";
 
 const toast = useToast();
-const maxPercentage = ref(100);
+const maxPercentage = computed(() => {
+    return (
+        100 - (model.value.totalPercentage || 0) + (model.value.percentage || 0)
+    );
+});
+const maxAmount = computed(() => {
+    return (
+        model.value.agreement_amount -
+        (model.value.totalAmount || 0) +
+        (model.value.amount || 0)
+    );
+});
+const isValid = computed(() => {
+    return (
+        amountPercentage.value.percentage > 0 &&
+        amountPercentage.value.amount > 0 &&
+        amountPercentage.value.percentage <= maxPercentage.value &&
+        amountPercentage.value.amount <= maxAmount.value
+    );
+});
+
+const exchangeRate = computed(() => {
+    if (model.value.currency === model.value.agreement_currency) {
+        return 1;
+    }
+    return model.value.currency === "KHR"
+        ? model.value.exchange_rate || 4100
+        : 1 / (model.value.exchange_rate || 4100);
+});
+
 const emit = defineEmits(["cancel", "save"]);
 const model = defineModel({
     type: Object,
@@ -178,6 +216,10 @@ const rates = {
     USDKHR: 4100,
 };
 onMounted(() => {
+    amountPercentage.value = {
+        percentage: model.value.percentage || 0,
+        amount: model.value.amount || 0,
+    };
     amountPercentage.value.percentage = model?.value.percentage ?? 0;
     amountPercentage.value.currency = model?.value.currency ?? "USD";
     rates["USDKHR"] = model.value.exchange_rate ?? 4100;
@@ -192,25 +234,29 @@ onMounted(() => {
     }
 });
 const doAmountChange = (e) => {
-    const amount =
-        model.value.agreement_amount *
-        rates[`${model.value.agreement_currency}${model.value.currency}`];
-    amountPercentage.value.percentage =
-        Math.round(
-            ((e.value ? e.value : model.value.amount) / amount) * 10000
-        ) / 100;
+    const newAmount = e.value || 0;
+    const totalAgreementInSelectedCurrency =
+        model.value.agreement_amount * exchangeRate.value;
+
+    amountPercentage.value.percentage = parseFloat(
+        ((newAmount / totalAgreementInSelectedCurrency) * 100).toFixed(2)
+    );
+    amountPercentage.value.amount = newAmount;
 };
+
 const doPercentageChange = (e) => {
-    const amount =
-        model.value.agreement_amount *
-        rates[`${model.value.agreement_currency}${model.value.currency}`];
-    amountPercentage.value.amount =
-        Math.round(
-            ((e.value ? e.value : model.value.percentage) / 100) * amount * 100
-        ) / 100;
+    const newPercentage = e.value || 0;
+    const totalAgreementInSelectedCurrency =
+        model.value.agreement_amount * exchangeRate.value;
+
+    amountPercentage.value.amount = parseFloat(
+        ((totalAgreementInSelectedCurrency * newPercentage) / 100).toFixed(2)
+    );
+    amountPercentage.value.percentage = newPercentage;
 };
 const doCurrencyChange = (e) => {
     console.log(`${model.value.agreement_currency}${model.value.currency}`);
+    doPercentageChange({ value: amountPercentage.value.percentage });
     if (model.value.currency != model.value.agreement_currency) {
         model.value.exchange_rate =
             rates[`${model.value.agreement_currency}${model.value.currency}`];
@@ -228,6 +274,16 @@ const doCurrencyChange = (e) => {
             100;
 };
 const doSave = () => {
+    if (!isValid.value) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Please enter valid percentage and amount values",
+            life: 3000,
+        });
+        return;
+    }
+
     model.value.amount = amountPercentage.value.amount;
     model.value.percentage = amountPercentage.value.percentage;
     emit("save");

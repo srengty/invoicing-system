@@ -13,7 +13,7 @@ class CreateQuotationProductTable extends Migration
             $table->unsignedBigInteger('quotation_no')->unique()->nullable();
             $table->unsignedBigInteger('product_id'); // Assuming products have an ID
             $table->integer('quantity');
-            $table->json('product_unit_prices')->nullable();
+            // $table->json('product_unit_prices')->nullable();
             $table->decimal('price', 10, 2);
             $table->timestamps();
             // Foreign keys
@@ -22,13 +22,13 @@ class CreateQuotationProductTable extends Migration
 
         });
 
-        Schema::create('price_sales', function (Blueprint $table) {
-            $table->id();
-            $table->decimal('price');
-            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->foreignId('product_quotation_id')->constrained('product_quotation')->onDelete('cascade');
-            $table->timestamps();
-        });
+        // Schema::create('price_sales', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->decimal('price');
+        //     $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+        //     $table->foreignId('product_quotation_id')->constrained('product_quotation')->onDelete('cascade');
+        //     $table->timestamps();
+        // });
 
 
 
@@ -36,7 +36,7 @@ class CreateQuotationProductTable extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('price_sales');
+        // Schema::dropIfExists('price_sales');
         Schema::dropIfExists('product_quotation');
     }
 }

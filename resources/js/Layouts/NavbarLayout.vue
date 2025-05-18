@@ -77,7 +77,7 @@ const pageTitle = computed(() => {
         "/agreements/create": "Create Agreement",
         "/invoices": "Invoices",
         "/invoices/create": "Create Invoice",
-        "/receipts": " Receipts",
+        "/receipts": "Receipts",
         "/settings": "Settings",
         "/settings/customers": "Customers",
         "/settings/products": "Items",
@@ -85,14 +85,16 @@ const pageTitle = computed(() => {
         "/settings/customer-categories": "Customer Categories",
     };
 
-    // Check if it's the Edit Agreement page (dynamic route)
-    if (routePath.includes("/agreements/") && routePath.includes("/edit")) {
-        const agreementNo = routePath.split("/")[2]; // Assuming agreement_no is part of the URL
-        return `Edit Agreement`;
+    // Dynamic checks (Edit Agreement, Edit Quotation, Generate Invoice)
+    if (routePath.match(/^\/agreements\/\d+\/edit$/)) {
+        return "Edit Agreement";
     }
-    if (routePath.includes("/quotations/") && routePath.includes("/update")) {
-        const quotationNo = routePath.split("/")[2]; // Assuming quotation_no is part of the URL
+    if (routePath.match(/^\/quotations\/\d+\/update$/)) {
+        const quotationNo = routePath.split("/")[2];
         return `Edit Quotation - ${quotationNo}`;
+    }
+    if (routePath.match(/^\/invoices\/generate\/\d+$/)) {
+        return "Generate Invoice";
     }
 
     return routeTitles[routePath] || "Edit Quotation";
