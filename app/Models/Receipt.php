@@ -26,6 +26,7 @@ class Receipt extends Model
         'payment_method',
         'payment_reference_no',
         'payment_schedule_id',
+        'installment_paid',
     ];
 
     public function invoice()

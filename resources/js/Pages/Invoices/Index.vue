@@ -198,15 +198,6 @@
                     </template>
                 </Column>
 
-                <Column header="Amount Progress %">
-                    <template #body="{ data }">
-                        <span :class="{'text-red-500': data.invoice_end_date && moment(data.invoice_end_date).isBefore(moment(), 'day') && computeAmountDue(data) > 0}">
-                            <!-- Calculate and display the progress percentage -->
-                            {{ computeAmountProgressPercentage(data) }}%
-                        </span>
-                    </template>
-                </Column>
-
                 <Column header="Overdue">
                     <template #body="{ data }">
                         <span :class="over_due(data).class">
@@ -401,7 +392,6 @@ const columns = [
     { field: "agreement_no", header: "Agreement No" },
     { field: "customer.name", header: "Customer" },
     { field: "grand_total", header: "Amount" },
-    { field: "installment_paid", header: "Amount Progress" },
     { field: "paid_amount", header: "Amount Paid" },
 ];
 
@@ -491,10 +481,11 @@ const statusClass = (status) => {
 
 const paymentStatus = (invoice) => {
     const grandTotal = Number(invoice.grand_total || 0);
-    const amountPaid = Number(invoice.installment_paid || 0);
+    const amountPaid = Number(invoice.paid_amount || 0);
     const amountDue = grandTotal - amountPaid;
 
     if (amountDue <= 0) return "Fully Paid";
+    if (amountPaid == 0) return "Not Paid";
     if (amountDue < grandTotal) return "Partially Paid";
     if (over_due(invoice) !== "Not Past Due") return "Overdue";
     return "Pending";
@@ -559,7 +550,7 @@ const clearFilters = () => {
 
 const computeAmountDue = (invoice) => {
     const grandTotal = invoice.grand_total || 0;
-    const installmentPaid = invoice.installment_paid || 0;
+    const installmentPaid = invoice.paid_amount || 0;
     const amountDue = grandTotal - installmentPaid;
 
     // If the amount due is 0, it's fully paid

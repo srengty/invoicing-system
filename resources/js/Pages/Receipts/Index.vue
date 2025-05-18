@@ -151,10 +151,10 @@
             @hide="closeDialog"
         >
             <div
-                class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
+                class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 m-4 mt-0"
             >
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="invoice_no">Invoice No</label>
                         <input
                             v-model="selectedReceipt.invoice_no"
@@ -163,8 +163,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="receipt_no">Receipt No</label>
                         <input
                             v-model="selectedReceipt.receipt_no"
@@ -173,8 +173,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="receipt_date">Date</label>
                         <!-- Format date using a computed property or method, but bind to the raw value -->
                         <input
@@ -184,8 +184,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="customer_code">Customer Code</label>
                         <input
                             v-model="selectedReceipt.customer.code"
@@ -194,8 +194,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="customer_name">Customer Name</label>
                         <input
                             v-model="selectedReceipt.customer.name"
@@ -204,8 +204,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="purpose">Purpose</label>
                         <input
                             v-model="selectedReceipt.purpose"
@@ -214,8 +214,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="paid_amount">Amount Paid</label>
                         <input
                             :value="formatCurrency(selectedReceipt.paid_amount)"
@@ -224,8 +224,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="amount_in_words">Amount in Words</label>
                         <input
                             v-model="selectedReceipt.amount_in_words"
@@ -234,8 +234,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="payment_method">Payment Method</label>
                         <input
                             v-model="selectedReceipt.payment_method"
@@ -244,8 +244,8 @@
                         />
                     </div>
                 </div>
-                <div class="col-6">
-                    <div class="field">
+                <div class="">
+                    <div class="grid">
                         <label for="payment_reference_no"
                             >Payment Reference No</label
                         >

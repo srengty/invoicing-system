@@ -169,7 +169,6 @@
                             mode="currency"
                             :currency="selectedInvoice?.currency || 'USD'"
                             locale="en-US"
-                            readonly
                             size="small"
                             @input="updateAmountInWords"
                         />
@@ -379,11 +378,11 @@ const loadInvoices = async () => {
     try {
         const response = await axios.get(route("receipts.create"));
         invoices.value = (response.data.invoices || [])
-            .filter((invoice) => !invoice.has_receipt) // Exclude invoices with receipts
-            .map((invoice) => ({
-                ...invoice,
-                label: `${invoice.invoice_no} - ${invoice.customer_name}`,
-            }));
+        .filter((invoice) => Number(invoice.grand_total) > Number(invoice.paid_amount))
+        .map((invoice) => ({
+            ...invoice,
+            label: `${invoice.invoice_no} - ${invoice.customer_name}`,
+        }));
     } catch (error) {
         console.error("Error loading invoices", error);
         toast.add({
@@ -394,6 +393,7 @@ const loadInvoices = async () => {
         });
     }
 };
+
 
 const loadCustomerCategories = async () => {
     try {
@@ -544,13 +544,15 @@ const openInvoiceDialog = () => {
 
 const selectedInvoice = ref(null);
 const updateInvoiceDetails = () => {
-    if (!formData.value.invoice_no) {
+    const selectedNo = formData.value.invoice_no;
+
+    if (!selectedNo) {
         resetInvoiceFields();
         return;
     }
 
     const invoice = invoices.value.find(
-        (inv) => inv.invoice_no === formData.value.invoice_no
+        (inv) => inv.invoice_no === selectedNo
     );
 
     if (!invoice) {
@@ -564,25 +566,21 @@ const updateInvoiceDetails = () => {
         return;
     }
 
-    // Check if invoice already has a receipt
-    if (invoice.has_receipt) {
+    const remaining = Number(invoice.grand_total) - Number(invoice.paid_amount);
+    if (remaining <= 0) {
         toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "This invoice already has a receipt",
-            life: 3000,
+            severity: "warn",
+            summary: "Invoice Fully Paid",
+            detail: "This invoice is already fully paid.",
+            life: 4000,
         });
-        resetInvoiceFields();
-        return;
     }
 
     selectedInvoice.value = invoice;
-    formData.value.paid_amount = invoice.paid_amount;
+    formData.value.paid_amount = remaining;
     formData.value.customer_id = invoice.customer_id;
-    formData.value.customer_code = invoice.customer_code;
-    formData.value.customer_name = invoice.customer_name;
-
-    // Update payment schedule IDs - map through the payment_schedules array
+    formData.value.customer_code = invoice.customer_code || "";
+    formData.value.customer_name = invoice.customer_name || "";
     formData.value.payment_schedule_ids = (invoice.payment_schedules || []).map(
         (ps) => ps.id
     );

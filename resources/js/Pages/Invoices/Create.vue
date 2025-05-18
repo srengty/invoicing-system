@@ -94,12 +94,12 @@
                             >
                             <div class="flex w-full gap-3">
                                 <Select
-                                    v-model="form.receipt_no"
-                                    :options="receipts"
-                                    optionLabel="receipt_no"
-                                    optionValue="receipt_no"
-                                    placeholder="Select Receipt"
-                                    class="w-full"
+                                v-model="form.receipt_no"
+                                :options="availableReceipts"
+                                optionLabel="receipt_no"
+                                optionValue="receipt_no"
+                                placeholder="Select Receipt"
+                                class="w-full"
                                 />
                             </div>
                         </div>
@@ -657,13 +657,13 @@ const handleReceiptCreated = async ({ receipt, shouldReload }) => {
 
     isReceiptDialogVisible.value = false;
 };
-const availableReceipts = computed(() => {
-    return receipts.value.filter(
-        (receipt) =>
-            !receipt.invoice_no && // Only receipts not linked to an invoice
-            receipt.customer_id === form.customer_id // For the current customer
-    );
-});
+
+const availableReceipts = computed(() =>
+  receipts.filter(receipt =>
+    (!receipt.invoice_no || receipt.invoice_no === "") || receipt.installment_paid > 0
+  )
+);
+
 
 const divisionOptions = ref([]);
 const formatCurrency = (value) => {
@@ -719,9 +719,9 @@ const calculateTotalKHR = computed(() => {
 });
 
 const calculateExchangeRate = computed(() => {
-    if (!form.total_usd || form.total_usd <= 0 || form.paid_amount <= 0)
+    if (!form.total_usd || form.total_usd <= 0 || form.grand_total <= 0)
         return 0;
-    return (form.paid_amount / form.total_usd).toFixed(2);
+    return (form.grand_total / form.total_usd).toFixed(2);
 });
 
 onMounted(async () => {
@@ -833,6 +833,19 @@ const searchProducts = (event) => {
 };
 
 watch(
+    () => form.receipt_no,
+    async (newReceiptNo) => {
+        if (newReceiptNo) {
+            const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
+            if (receipt) {
+                form.paid_amount = receipt.paid_amount; // Update paid_amount based on receipt
+                form.installment_paid = receipt.paid_amount; // Set installment_paid the same as paid_amount
+            }
+        }
+    }
+);
+
+watch(
     productsList,
     () => {
         // Refresh the filtered list when productsList changes
@@ -939,64 +952,57 @@ watch(
             if (selectedQuotation) {
                 console.log("Selected Quotation:", selectedQuotation);
 
-                // Auto-fill customer details
+                // Auto-fill customer
                 form.customer_id = selectedQuotation.customer_id || "";
                 form.address = selectedQuotation.address || "";
                 form.phone = selectedQuotation.phone_number || "";
 
+                // Agreement handling
                 if (selectedQuotation.agreement) {
-                    console.log("working on agreement");
-                    // If quotation has an agreement, set and disable agreement selection
-                    form.agreement_no =
-                        selectedQuotation.agreement.agreement_no;
+                    form.agreement_no = selectedQuotation.agreement.agreement_no;
                     filteredAgreements.value = [selectedQuotation.agreement];
                 } else {
-                    console.log("working on not agreement");
-                    // If no agreement, list only agreements that are not linked to any quotation
-                    form.agreement_no = ""; // Reset agreement selection
+                    form.agreement_no = "";
                     filteredAgreements.value = agreements.filter(
                         (a) => a.quotation == null && a.status === "Open"
                     );
                 }
 
-                // Auto-fill products based on quotation
+                // Products
                 if (
                     Array.isArray(selectedQuotation.product_quotations) &&
                     selectedQuotation.product_quotations.length > 0
                 ) {
-                    productsList.value =
-                        selectedQuotation.product_quotations.map(
-                            (pq, index) => ({
-                                id: pq.product.id,
-                                product: pq.product.name || "Unknown Product",
-                                qty: pq.quantity || 1,
-                                unit: pq.product.unit || "Unit",
-                                unitPrice: pq.price || 0,
-                                subTotal: (pq.quantity || 1) * (pq.price || 0),
-                                remark: pq.remark || "",
-                                category_id: pq.product.category_id || null,
-                                acc_code: pq.product.acc_code || "",
-                                include_catalog: false, // default when loaded from quotation
-                                pdf_url: pq.product.pdf_url || null,
-                            })
-                        );
+                    productsList.value = selectedQuotation.product_quotations.map((pq) => ({
+                        id: pq.product.id,
+                        product: pq.product.name || "Unknown Product",
+                        qty: pq.quantity || 1,
+                        unit: pq.product.unit || "Unit",
+                        unitPrice: pq.price || 0,
+                        subTotal: (pq.quantity || 1) * (pq.price || 0),
+                        remark: pq.remark || "",
+                        category_id: pq.product.category_id || null,
+                        acc_code: pq.product.acc_code || "",
+                        include_catalog: false,
+                        pdf_url: pq.product.pdf_url || null,
+                    }));
                 } else {
                     productsList.value = [];
                 }
 
-                // Recalculate Grand Total
-                form.grand_total = calculateTotal.value - form.installment_paid;
+                // Always use quotation total if available
+                const total = selectedQuotation.total ??
+                    selectedQuotation.product_quotations?.reduce((sum, pq) => {
+                        return sum + (pq.quantity || 1) * (pq.price || 0);
+                    }, 0) ?? 0;
 
-                console.log(
-                    "Updated Form Data after Quotation Selection:",
-                    form
-                );
+                form.grand_total = total;
+
+                console.log("Auto-filled grand_total & paid_amount from quotation:", total);
             }
         } else {
-            // If no quotation is selected, reset agreements list
-            filteredAgreements.value = agreements.filter(
-                (a) => a.status === "Open"
-            );
+            // Reset if no quotation
+            filteredAgreements.value = agreements.filter((a) => a.status === "Open");
             form.agreement_no = "";
             form.customer_id = "";
             form.address = "";
@@ -1006,6 +1012,7 @@ watch(
             form.installment_paid = 0;
             form.paid_amount = "";
             productsList.value = [];
+            form.grand_total = 0;
         }
     },
     { deep: true }
@@ -1098,7 +1105,7 @@ const calculateTotal = computed(() => {
 });
 
 const calculateGrandTotal = computed(() => {
-    return calculateTotal.value - form.installment_paid;
+    return calculateTotal.value;
 });
 
 const actionTemplate = (data) => {
@@ -1166,22 +1173,16 @@ const submitInvoice = async () => {
         };
     });
 
-    // Ensure numeric values
-    form.installment_paid = Number(form.installment_paid) || 0;
-    form.paid_amount = Number(form.paid_amount) || 0;
+    if (form.quotation_no) {
+        const selectedQuotation = quotations.find((q) => q.quotation_no === form.quotation_no);
+        if (selectedQuotation) {
+            form.grand_total = selectedQuotation.total;
+        }
+    } else {
+        // Only set these if not from quotation
+        form.grand_total = Number(form.grand_total);
+    }
 
-    form.total = calculateTotal.value;
-    form.grand_total = calculateGrandTotal.value;
-    form.total_usd = form.total_usd || 0;
-    form.total = calculateTotalKHR.value;
-    form.exchange_rate = calculateExchangeRate.value;
-    form.receipt_no = form.receipt_no || "";
-    console.log(form.installment_paid);
-    // if (Array.isArray(form.payment_schedules)) {
-    //     form.payment_schedules = form.payment_schedules.map(id => ({ id: parseInt(id) }));
-    // } else {
-    //     form.payment_schedules = [];
-    // }
 
     // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
@@ -1189,6 +1190,18 @@ const submitInvoice = async () => {
             2
         );
     }
+
+    // Ensure numeric values
+    form.installment_paid = Number(form.installment_paid) || 0;
+    form.paid_amount = Number(form.paid_amount) || 0;
+
+    form.total = calculateTotal.value;
+    form.grand_total = Number(form.grand_total) || calculateGrandTotal.value;
+    form.total_usd = form.total_usd || 0;
+    form.total = calculateTotalKHR.value;
+    form.exchange_rate = calculateExchangeRate.value;
+    form.receipt_no = form.receipt_no || "";
+    console.log(form.installment_paid);
 
     console.log(form.installment_paid);
     try {
@@ -1285,49 +1298,108 @@ watch(
     }
 );
 
+// Core logic to process receipt selection in Create Invoice
 watch(
-    () => form.payment_schedules,
-    (selectedIds) => {
-        if (!Array.isArray(selectedIds) || selectedIds.length === 0) {
-            form.installment_paid = 0;
-            if (!form.userModifiedPaidAmount) {
-                form.paid_amount = 0;
-            }
-            return;
+  () => form.receipt_no,
+  async (newReceiptNo) => {
+    if (newReceiptNo) {
+      const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
+      if (!receipt) return;
+
+      // Check if this receipt was used in a previous invoice
+      const usedInInvoice = receipt.invoice_no;
+
+      if (usedInInvoice && receipt.installment_paid > 0) {
+        // 🔁 Reuse receipt with remaining installment
+        form.customer_id = receipt.customer_id;
+
+        const customer = customers.find((c) => c.id === receipt.customer_id);
+        form.address = customer?.address || "";
+        form.phone = customer?.phone || customer?.phone_number || "";
+
+        const availableInstallment = receipt.installment_paid;
+
+        // ✅ Use installment_paid instead of paid_amount
+        form.paid_amount = availableInstallment;
+        form.installment_paid = 0;
+
+        // Optional: Update grand total if quotation is selected
+        let totalPrice = calculateTotalKHR.value;
+        if (form.quotation_no) {
+          const selectedQuotation = quotations.find(
+            (q) => q.quotation_no === form.quotation_no
+          );
+          if (selectedQuotation) {
+            totalPrice = selectedQuotation.total || 0;
+          }
         }
 
-        // Use reactive filtered list (filteredPaymentSchedules)
-        const selectedSchedules = filteredPaymentSchedules.value.filter(
-            (schedule) => selectedIds.includes(schedule.id)
-        );
+        form.grand_total = totalPrice;
 
-        const totalPaid = selectedSchedules.reduce((sum, schedule) => {
-            return sum + (Number(schedule.amount) || 0);
-        }, 0);
+        toast.add({
+          severity: "info",
+          summary: "Installment Applied",
+          detail: `Used ${formatCurrency(availableInstallment)} from previous receipt installment`,
+          life: 3000,
+        });
+      } else if (usedInInvoice && receipt.installment_paid === 0) {
+        // ❌ Fully consumed receipt
+        toast.add({
+          severity: "warn",
+          summary: "Receipt Already Used",
+          detail: `Receipt ${receipt.receipt_no} has no remaining balance`,
+          life: 3000,
+        });
+        form.receipt_no = "";
+        return;
+      } else {
+        // 🆕 Fresh receipt
+        form.customer_id = receipt.customer_id;
 
-        form.installment_paid = totalPaid;
+        const customer = customers.find((c) => c.id === receipt.customer_id);
+        form.address = customer?.address || "";
+        form.phone = customer?.phone || customer?.phone_number || "";
 
-        if (!form.userModifiedPaidAmount) {
-            form.paid_amount = totalPaid;
+        let totalPrice = calculateTotalKHR.value;
+        if (form.quotation_no) {
+          const selectedQuotation = quotations.find(
+            (q) => q.quotation_no === form.quotation_no
+          );
+          if (selectedQuotation) {
+            totalPrice = selectedQuotation.total || 0;
+          }
         }
-    },
-    { deep: true }
-);
 
-// Track if user modifies paid_amount manually to prevent auto-overriding it
-watch(
-    () => form.paid_amount,
-    (newVal) => {
-        if (newVal !== form.installment_paid) {
-            form.userModifiedPaidAmount = true;
+        form.grand_total = totalPrice;
+        form.paid_amount = receipt.paid_amount;
+
+        if (receipt.paid_amount > totalPrice) {
+          form.installment_paid = receipt.paid_amount - totalPrice;
+          form.paid_amount = totalPrice;
+        } else {
+          form.installment_paid = 0;
         }
+
+        if (receipt.payment_schedule_ids) {
+          form.payment_schedules = receipt.payment_schedule_ids;
+        }
+
+        toast.add({
+          severity: "info",
+          summary: "Receipt Selected",
+          detail: `Auto-filled info from receipt ${receipt.receipt_no}`,
+          life: 2500,
+        });
+      }
+    } else {
+      form.installment_paid = 0;
+      form.paid_amount = 0;
+      form.payment_schedules = [];
     }
+  },
+  { immediate: true }
 );
 
-watch(
-    () => form.receipt_no,
-    (newValue) => {
-        console.log("Selected Receipt ID:", newValue);
-    }
-);
+
+
 </script>

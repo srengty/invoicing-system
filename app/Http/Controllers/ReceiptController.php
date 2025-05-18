@@ -41,11 +41,7 @@ class ReceiptController extends Controller
         $invoices = Invoice::with(['customer', 'paymentSchedules'])  // Make sure to load the paymentSchedules relation
             ->select('id', 'invoice_no', 'grand_total', 'paid_amount', 'currency', 'customer_id')
             ->where('status', 'Approved')
-            ->whereNotIn('invoice_no', function($query) {
-                $query->select('invoice_no')
-                    ->from('receipts')
-                    ->whereNotNull('invoice_no');
-            })
+            ->whereRaw('grand_total > paid_amount')
             ->get()
             ->map(function ($invoice) {
                 $invoice->customer_name = $invoice->customer?->name ?? null;
@@ -78,25 +74,25 @@ class ReceiptController extends Controller
                     if (!empty($request->invoice_no)) {
                         $invoice = \App\Models\Invoice::where('invoice_no', $request->invoice_no)->first();
                         if ($invoice) {
-                            $expectedAmount = $invoice->paid_amount;
-                            if ($value != $expectedAmount) {
-                                $fail("The paid amount must exactly equal the invoice's current paid amount of " . number_format($expectedAmount, 2));
+                            $remaining = $invoice->grand_total - $invoice->paid_amount;
+                            if ($value > $remaining) {
+                                $fail("The paid amount cannot exceed the remaining invoice balance of " . number_format($remaining, 2));
                             }
                         }
                     }
-                }
+                },
             ],
-            'invoice_no' => 'nullable|regex:/^\d+$/|exists:invoices,invoice_no',
+            'invoice_no' => 'nullable|regex:/^\d+$/',
             'payment_schedule_ids' => 'nullable|array',
             'payment_schedule_ids.*' => 'exists:payment_schedules,id',
         ]);
-        
-    
+
         $customer = Customer::find($validated['customer_id']);
         if (!$customer) {
             return redirect()->back()->with('error', 'Customer not found.');
         }
-    
+
+        // Create the receipt
         $receipt = Receipt::create([
             'invoice_no' => $validated['invoice_no'] ?? null,
             'receipt_no' => $validated['receipt_no'],
@@ -106,27 +102,48 @@ class ReceiptController extends Controller
             'paid_amount' => $validated['paid_amount'],
             'amount_in_words' => $this->convertToWords($validated['paid_amount']),
             'payment_method' => $validated['payment_method'],
+            'payment_reference_no' => $request->input('payment_reference_no'),
+            'installment_paid' => 0,
         ]);
-        
-    
-        // Sync payment schedules if provided
+
+        // Update invoice paid_amount if applicable
+        if (!empty($validated['invoice_no'])) {
+            $invoice = \App\Models\Invoice::where('invoice_no', $validated['invoice_no'])->first();
+            if ($invoice) {
+                $invoice->paid_amount += $validated['paid_amount'];
+                $invoice->save();
+            }
+        }
+
+        if (!empty($validated['invoice_no'])) {
+            $invoice = Invoice::where('invoice_no', $validated['invoice_no'])->first();
+            if ($invoice) {
+                $remaining = $invoice->grand_total - $invoice->paid_amount;
+                $overpaid = $validated['paid_amount'] - $remaining;
+                $installmentPaid = $overpaid > 0 ? $overpaid : 0;
+            }
+        }
+
+        // Sync payment schedules
         if (!empty($validated['payment_schedule_ids'])) {
             $receipt->paymentSchedules()->sync($validated['payment_schedule_ids']);
-    
+
             foreach ($receipt->paymentSchedules as $schedule) {
                 $totalPaid = $schedule->receipts()->sum('paid_amount');
-    
+
                 if ($totalPaid >= $schedule->amount) {
                     $schedule->update(['status' => 'PAID']);
                 } elseif ($totalPaid > 0) {
                     $schedule->update(['status' => 'PARTIALLY_PAID']);
+                } else {
+                    $schedule->update(['status' => 'UNPAID']);
                 }
             }
         }
-    
+
         return redirect()->route('receipts.index')->with('success', 'Receipt created successfully!');
     }
-    
+
     public function update(Request $request, $receipt_no)
     {
         $receipt = Receipt::where('receipt_no', (string)$receipt_no)->first();
@@ -267,4 +284,17 @@ class ReceiptController extends Controller
             'receipt' => $receipt,
         ]);
     }
+
+    public function availableReceipts()
+    {
+        $receipts = Receipt::where(function ($q) {
+            $q->whereNull('invoice_no')
+            ->orWhere('installment_paid', '>', 0);
+        })->get();
+
+        return Inertia::render('Invoices/Create', [
+            'availableReceipts' => $receipts
+        ]);
+    }
+
 }

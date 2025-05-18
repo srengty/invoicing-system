@@ -1,6 +1,6 @@
 <template>
     <Head title="Invoice Printing" />
-    <div class="flex justify-start items-center gap-4 ml-10">
+    <div class="flex justify-start items-center gap-4 ml-10 print:ml-0 print:gap-2">
         <!-- Toggle Currency -->
         <div class="flex items-center gap-3 mt-6">
             <p class="text-sm font-semibold">{{ toggleLabel }}</p>
@@ -64,7 +64,7 @@
                 <p><strong>Phone Number:</strong> {{ invoice.phone_number }}</p>
             </div>
             <div class=" flex flex-col w-1/2 items-end gap-4">
-                <div class="right grid gap-4 mr-10">
+                <div class="right grid gap-4">
                     <p>
                         <strong>Quotation No:</strong>
                         {{ invoice.quotation_no || "N/A" }}
@@ -408,7 +408,7 @@ const generatePDF = (element) => {
     const opt = {
         margin: 10,
         filename: `invoice_${invoice.value.invoice_no}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg", quality: 1 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     };
@@ -591,7 +591,8 @@ onMounted(() => {
 
 .print-area {
     width: 210mm;
-    padding: 10mm;
+    padding: 5mm;
+    padding-right: 25mm;
     margin: 0 auto;
     background: white;
     page-break-inside: avoid;
@@ -616,16 +617,16 @@ onMounted(() => {
         display: none !important;
     }
 
-
-
     .print-area {
-        margin: 0;
-        padding: 5mm;
-        width: 100%;
-        height: auto;
-        box-shadow: none;
-        page-break-after: avoid;
-    }
+    width: 210mm !important;
+    padding: 10mm !important;
+    margin: 0 auto !important;
+  }
+
+  .print-area * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 
     .table-container {
         page-break-before: auto;
