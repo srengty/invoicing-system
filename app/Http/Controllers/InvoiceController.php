@@ -345,6 +345,52 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
 
+    public function generate($id, Request $request)
+    {
+        $agreements = Agreement::all();
+        $quotations = Quotation::with('agreement')->where('status','Approved')->get();
+        $customers = Customer::all();
+        $paymentSchedules = PaymentSchedule::all();
+        $receipts = Receipt::all();
+
+        // NEW: get full selected schedule details
+        $selectedSchedule = PaymentSchedule::with([
+            'agreement' => function($query) {
+                $query->with('customer'); // Make sure customer relationship is loaded
+            },
+            'invoices',
+            'receipts'
+        ])->find($id);
+
+        $prefill = [
+            'payment_schedule_id' => $id,
+            'amount' => null,
+            'due_date' => null,
+            'agreement_no' => null,
+        ];
+
+        if ($selectedSchedule) {
+            $prefill['amount'] = $selectedSchedule->amount;
+            $prefill['due_date'] = $selectedSchedule->due_date;
+            $prefill['agreement_no'] = $selectedSchedule->agreement->agreement_no ?? null;
+            $prefill['customer_id'] = $selectedSchedule->agreement->customer_id ?? null;
+            $prefill['quotation_no'] = $selectedSchedule->agreement->quotation_no ?? null;
+            $prefill['phone'] = $selectedSchedule->agreement->customer->phone_number ?? null;
+
+        }
+
+        // NEW: Pass the full schedule as `selectedPaymentSchedule`
+        return Inertia::render('Invoices/Generate', [
+            'agreements' => $agreements,
+            'quotations' => $quotations,
+            'customers' => $customers,
+            'paymentSchedules' => $paymentSchedules,
+            'receipts' => $receipts,
+            'prefill' => $prefill,
+            'selectedPaymentSchedule' => $selectedSchedule,
+        ]);
+    }
+
     public function updateStatus(Request $request, Invoice $invoice)
     {   
         // Validate the incoming request
