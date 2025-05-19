@@ -226,6 +226,10 @@
                                 <InputNumber
                                     v-model="schedule.agreement_amount"
                                     :value="schedule.agreement_amount"
+                                    :minFractionDigits="2"
+                                    :maxFractionDigits="2"
+                                    fluid
+                                    min="0"
                                 />
                             </InputGroup>
                             <!-- Short Description -->

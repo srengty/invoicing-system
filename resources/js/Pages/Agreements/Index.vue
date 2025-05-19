@@ -755,7 +755,7 @@ list agreement
                                 sortable
                             >
                                 <template #body="slotProps">
-                                    {{ slotProps.data.percentage }}%
+                                    {{ Math.trunc(slotProps.data.percentage) }}%
                                 </template>
                             </Column>
                             <Column field="amount" header="Amount" sortable>
