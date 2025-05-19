@@ -236,6 +236,7 @@ class InvoiceController extends Controller
             ]);
         }
 
+
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
 

@@ -279,6 +279,10 @@
                                     v-model="schedule.agreement_amount"
                                     :value="schedule.agreement_amount"
                                     :suffix="riels ? '៛' : '$'"
+                                    :minFractionDigits="2"
+                                    :maxFractionDigits="2"
+                                    fluid
+                                    min="0"
                                 />
                             </InputGroup>
                             <span class="text-sm">Short description</span>

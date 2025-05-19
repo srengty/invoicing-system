@@ -55,7 +55,14 @@
                 </template>
                 <template #editor="{ data, field }">
                     <InputGroup>
-                        <InputNumber v-model="data[field]" fluid />
+                        <InputNumber
+                            v-model="data[field]"
+                            mode="decimal"
+                            locale="en-US"
+                            :minFractionDigits="2"
+                            :maxFractionDigits="2"
+                            fluid
+                        />
                         <InputGroupAddon append>%</InputGroupAddon>
                     </InputGroup>
                 </template>
@@ -74,14 +81,17 @@
                 </template>
                 <template #editor="{ data, field }">
                     <InputGroup>
-                        <InputGroupAddon append>
-                            {{ props.currency ?? "$" }}
-                        </InputGroupAddon>
+                        <InputGroupAddon append>{{
+                            props.currency ?? "$"
+                        }}</InputGroupAddon>
                         <InputNumber
                             v-model="data[field]"
+                            mode="decimal"
+                            locale="en-US"
+                            :minFractionDigits="2"
+                            :maxFractionDigits="2"
                             fluid
                             min="0"
-                            step="0.01"
                         />
                     </InputGroup>
                 </template>
@@ -140,7 +150,7 @@
                         style="text-align: right"
                     ></Column>
                     <Column
-                        :footer="`${currencySign} ${totalAmount.toLocaleString()}`"
+                        :footer="`${currencySign} ${formattedTotal}`"
                         style="text-align: right"
                     ></Column>
                     <Column
@@ -305,6 +315,12 @@ const totalAmount = computed(() =>
             acc + calculateRate(props.currency, item.currency) * item.amount,
         0
     )
+);
+const formattedTotal = computed(() =>
+    totalAmount.value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })
 );
 const isShowing = ref(false);
 const editingSchedule = ref({

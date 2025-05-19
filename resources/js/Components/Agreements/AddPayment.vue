@@ -1,15 +1,18 @@
 <template>
     <div class="flex flex-col gap-5 py-2">
         <FloatLabel variant="on">
-            <InputText
-                id="total-agreement-amount"
+            <InputNumber
                 v-model="model.agreement_amount"
-                fluid
+                mode="decimal"
+                locale="en-US"
+                :minFractionDigits="2"
+                :maxFractionDigits="2"
                 readonly
+                fluid
             />
-            <label for="total-agreement-amount" class="required"
-                >Total agreement amount</label
-            >
+            <label for="total-agreement-amount" class="required">
+                Total agreement amount
+            </label>
         </FloatLabel>
         <FloatLabel variant="on">
             <DatePicker
@@ -47,16 +50,19 @@
         </FloatLabel>
         <FloatLabel variant="on">
             <InputGroup id="amount">
-                <InputGroupAddon>{{
-                    model.currency == "USD" ? "$" : "៛"
-                }}</InputGroupAddon>
+                <InputGroupAddon append>
+                    {{ model.currency === "USD" ? "$" : "៛" }}
+                </InputGroupAddon>
                 <InputNumber
                     v-model="amountPercentage.amount"
-                    fluid
-                    @input="doAmountChange"
+                    mode="decimal"
+                    locale="en-US"
+                    :minFractionDigits="2"
                     :maxFractionDigits="2"
                     :min="0"
                     :max="maxAmount"
+                    fluid
+                    @input="doAmountChange"
                 />
             </InputGroup>
             <label for="amount" class="z-10">Amount</label>
