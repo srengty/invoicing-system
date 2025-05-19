@@ -1,568 +1,422 @@
 <template>
-    <Head title="Invoices" />
-    <GuestLayout>
-        <NavbarLayout />
-        <!-- PrimeVue Breadcrumb -->
-        <div class="py-3">
-            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
-                <template #item="{ item }">
-                    <Link
-                        :href="item.to"
-                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
-                    >
-                        <i v-if="item.icon" :class="item.icon"></i>
-                        {{ item.label }}
-                    </Link>
-                </template>
-            </Breadcrumb>
-        </div>
-        <div class="invoices">
-            <div class="flex justify-end items-center">
-                <div class="flex gap-2">
-                    <Button
-                        icon="pi pi-plus"
-                        label="Create Invoice"
-                        size="small"
-                        @click="navigateToCreate"
-                    />
-                    <ChooseColumns
-                        :columns="columns"
-                        v-model="selectedColumns"
-                        @apply="updateColumns"
-                        size="small"
-                    />
-                    <Button
-                            label="Search"
-                            icon="pi pi-search"
-                            @click="searchInvoices"
-                            size="small"
-                            class="w-full md:w-32"
-                        />
-                    <Button
-                            label="Clear"
-                            icon="pi pi-times"
-                            severity="secondary"
-                            @click="clearFilters"
-                            size="small"
-                            class="w-full md:w-32"
-                        />
-                </div>
-            </div>
+  <Head title="Invoices" />
+  <GuestLayout>
+    <NavbarLayout />
 
-            <!-- Filters -->
-            <div class="mb-8 mt-6">
-                <div class="flex flex-wrap justify-between text-sm mb-2">
-                    <!-- Invoice No. Start - Restrict to Numbers -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="invoice_no_start" class="mb-1 w-1/2 font-semibold ">Invoice No. Start:</label>
-                        <InputText
-                            v-model="filters.invoice_no_start"
-                            placeholder="Input Invoice No Start"
-                            v-keyfilter="['num']"
-                            size="small"
-                            class="w-full mr-8 items-start"
-                        />
+    <!-- Breadcrumb -->
+    <div class="py-3">
+      <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+        <template #item="{ item }">
+          <Link
+            :href="item.to"
+            class="text-sm hover:text-primary flex items-start justify-center gap-1"
+          >
+            <i v-if="item.icon" :class="item.icon"></i>
+            {{ item.label }}
+          </Link>
+        </template>
+      </Breadcrumb>
+    </div>
+
+    <div class="invoices space-y-4">
+      <!-- Search Filters -->
+      <div class="flex justify-end w-full gap-4">
+        <Button label="Clear" @click="clearFilters" class="p-button-secondary w-24" icon="pi pi-times" size="small" />
+      </div>
+
+                  <div class="w-full mt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm pb-3">
+                        <!-- Invoice No. Start - Restrict to Numbers -->
+                        <div>
+                            <label for="invoice_no_start" class="mb-1 w-1/2 font-semibold ">Invoice No. Start:</label>
+                            <InputText v-model="filters.invoice_no_start" placeholder="Invoice No From" class="w-full mr-8" size="small" showClear/>
+                        </div>
+
+                        <!-- Invoice No. End - Restrict to Numbers -->
+                        <div>
+                            <label for="invoice_no_end" class="mb-1 w-1/2 font-semibold">Invoice No. End:</label>
+                            <InputText v-model="filters.invoice_no_end" placeholder="Invoice No To" class="w-full mr-8" size="small"/>
+                        </div>
+
+                        <!-- Currency Dropdown -->
+                        <div>
+                            <label for="currency" class="mb-1 w-1/2 font-semibold">Currency:</label>
+                            <Dropdown
+                              v-model="filters.currency"
+                              :options="currencyOptions"
+                              optionLabel="label"
+                              optionValue="value"
+                              placeholder="Select Currency"
+                              class="w-full"
+                              size="small"
+                              showClear
+                            />
+                        </div>
                     </div>
 
-                    <!-- Invoice No. End - Restrict to Numbers -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="invoice_no_end" class="mb-1 w-1/2 font-semibold">Invoice No. End:</label>
-                        <InputText
-                            v-model="filters.invoice_no_end"
-                            placeholder="Input Invoice No End"
-                            v-keyfilter="['num']"
-                            size="small"
-                            class="w-full mr-8 "
-                        />
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm pb-3">
 
-                    <!-- Currency Dropdown -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="currency" class="mb-1 w-1/2 font-semibold">Currency:</label>
-                        <Dropdown
-                            v-model="filters.currency"
-                            :options="currencyOptions"
-                            placeholder="Select Currency"
+                        <div>
+                            <label for="end_date" class="mb-1 w-1/2 font-semibold">Start Date:</label>
+                            <Calendar v-model="filters.start_date" placeholder="Start Date" class="w-full mr-8"
+                              icon="pi pi-calendar"
+                              size="small"
+                              :minDate="new Date()"
+                              showButtonBar
+                              :showIcon="true"
+                              :clearable="true"/>
+                        </div>
+
+                        <!-- End Date -->
+                        <div>
+                            <label for="end_date" class="mb-1 w-1/2 font-semibold">End Date:</label>
+                            <Calendar
+                              v-model="filters.end_date"
+                              placeholder="End Date"
+                              class="w-full mr-8"
+                              icon="pi pi-calendar"
+                              size="small"
+                              :minDate="new Date()"
+                              showButtonBar
+                              :showIcon="true"
+                              :clearable="true"
+                            />
+                        </div>
+
+                        <!-- Payment Status -->
+                        <div>
+                            <label for="status" class="mb-1 w-1/2 font-semibold">Payment Status:</label>
+                            <Dropdown
+                            v-model="filters.payment_status"
+                            :options="paymentStatusOptions"
                             optionLabel="label"
                             optionValue="value"
-                            size="small"
+                            placeholder="Payment Status"
                             class="w-full"
-                        />
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap justify-between text-sm mb-2">
-
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="end_date" class="mb-1 w-1/2 font-semibold">Start Date:</label>
-                        <DatePicker
-                            v-model="filters.start_date"
-                            placeholder="Pick Start Date"
                             size="small"
-                            class="w-full mr-8"
-                        />
+                            showClear
+                            />
+                        </div>
                     </div>
 
-                    <!-- End Date -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="end_date" class="mb-1 w-1/2 font-semibold">End Date:</label>
-                        <DatePicker
-                            v-model="filters.end_date"
-                            placeholder="Pick End Date"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm">
+                        <!-- Customer Name - Restrict to Letters Only -->
+                        <div>
+                            <label for="customer" class="mb-1 w-1/2 font-semibold">Customer:</label>
+                            <InputText v-model="filters.customer" placeholder="Customer" class="w-full mr-8" size="small"/>
+                        </div>
 
-                    <!-- Payment Status -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="status" class="mb-1 w-1/2 font-semibold">Payment Status:</label>
-                        <Dropdown
-                            v-model="filters.status"
-                            :options="statusOptions"
-                            placeholder="Select Status"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full"
-                        />
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap justify-between text-sm">
-                    <!-- Customer Name - Restrict to Letters Only -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="customer" class="mb-1 w-1/2 font-semibold">Customer:</label>
-                        <InputText
-                            v-model="filters.customer"
-                            placeholder="Input Customer Name"
-                            v-keyfilter="['alpha']"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
-
-                    <!-- Customer Type -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="category_name_english" class="mb-1 w-1/2 font-semibold">Customer Type:</label>
-                        <Dropdown
-                            v-model="filters.category_name_english"
-                            :options="customerTypeOptions"
-                            placeholder="Select Customer Type"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
-
-                    <!-- Income Type -->
-                    <div class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center">
-                        <label for="income_type" class="w-1/2 font-semibold">Income Type:</label>
-                        <Dropdown
-                            placeholder="Select Income Type"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full"
-                        />
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- Data Table -->
-            <DataTable
-                :value="invoices.data"
-                paginator
-                :rows="5"
-                :rowsPerPageOptions="[5, 10, 20, 50]"
-                size="small"
-                class="text-sm"
-            >
-                <Column
-                    class=""
-                    v-for="col in showColumns"
-                    :key="col.field"
-                    :field="col.field"
-                    :header="col.header"
-                    sortable
-                />
-
-                <Column header="Amount Due">
-                    <template #body="{ data }">
-                        <span :class="{'text-red-500': computeAmountDue(data) > 0}">
-                            <!-- Display amount due or fully paid status -->
-                            {{ computeAmountDue(data) }}
-                        </span>
-                    </template>
-                </Column>
-
-                <Column header="Overdue">
-                    <template #body="{ data }">
-                        <span :class="over_due(data).class">
-                            <!-- Display overdue status or fully paid message -->
-                            {{ over_due(data).text }}
-                        </span>
-                    </template>
-                </Column>
-
-
-                <Column field="payment_status" header="Payment Status">
-                    <template #body="{ data }">
-                        <div class="flex">
-                            <Button
-                                :icon="statusIcon(data)"
-                                :label="paymentStatus(data)"
-                                :class="statusClass(paymentStatus(data))"
+                        <!-- Customer Type -->
+                        <div>
+                            <label for="category_name_english" class="mb-1 w-1/2 font-semibold">Customer Type:</label>
+                            <Dropdown
+                                v-model="filters.category_name_english"
+                                :options="customerTypeOptions"
+                                placeholder="Select Customer Type"
+                                optionLabel="label"
+                                optionValue="value"
                                 size="small"
-                                class="text-sm flex-grow w-auto"
-                                outlined
+                                class="w-full mr-8"
                             />
                         </div>
-                    </template>
-                </Column>
 
-
-                <!-- Actions -->
-                <!-- <Column
-                    header="Actions"
-                    headerStyle="text-align: center"
-                    bodyStyle="text-align: center"
-                >
-                    <template #body="{ data }">
-                        <div class="flex gap-2 justify-center">
-                            <Button
-                                icon="pi pi-print"
-                                class="p-button-info"
-                                aria-label="Print"
-                                @click="printInvoice(data.invoice_no)"
-                                outlined
+                        <!-- Income Type -->
+                        <div>
+                            <label for="income_type" class="w-1/2 font-semibold">Overdue Status:</label>
+                            <Dropdown
+                            v-model="filters.overdue_status"
+                            :options="[
+                                { label: 'All', value: null },
+                                { label: 'Overdue', value: 'overdue' },
+                                { label: 'Due Today', value: 'today' },
+                                { label: 'Upcoming', value: 'upcoming' },
+                                { label: 'Fully Paid', value: 'paid' },
+                            ]"
+                            optionLabel="label"
+                            optionValue="value"
+                            placeholder="Overdue Status"
+                            class="w-full"
+                            size="small"
+                            showClear
                             />
                         </div>
-                    </template>
-                </Column> -->
-            </DataTable>
+                    </div>
+                </div>
 
-            <Dialog
-                v-model:visible="isStatusDialogVisible"
-                header="Change Invoice Status"
-                :modal="true"
-                class="w-96"
+      <!-- Data Table -->
+      <DataTable
+        :value="filteredInvoices"
+        paginator
+        :rows="5"
+        :rowsPerPageOptions="[5, 10, 20, 50]"
+        size="small"
+        class="text-sm pt-6"
+      >
+        <Column
+          v-for="col in showColumns"
+          :key="col.field"
+          :field="col.field"
+          :header="col.header"
+          sortable
+        />
+        <Column header="Amount">
+          <template #body="{ data }">
+            <span :class="{ 'text-blue-500': computeAmountDue(data) >= 0 }">
+              {{ formatCurrency(data.grand_total) }} (KHR)
+            </span>
+          </template>
+        </Column>
+
+        <Column header="Amount Paid">
+          <template #body="{ data }">
+            <span
+              :class="{
+                'text-green-500': computeAmountDue(data) == 0,
+                'text-yellow-500': computeAmountDue(data) > 0 && data.paid_amount > 0,
+                'text-gray-500': data.paid_amount == 0
+              }"
             >
-                <div class="p-4">
-                    <p class="text-center text-base mb-3">
-                        Do you want to approve or reject this invoice?
-                    </p>
+              {{ formatCurrency(data.paid_amount) }} (KHR)
+            </span>
+          </template>
+        </Column>
 
-                    <textarea
-                        v-model="statusForm.comment"
-                        placeholder="Enter your comment..."
-                        class="w-full p-2 border rounded"
-                        :class="{ 'border-red-500': statusForm.errors.comment }"
-                    ></textarea>
-                    <p v-if="statusForm.errors.comment" class="text-red-500 text-xs mt-1">
-                        {{ statusForm.errors.comment }}
-                    </p>
-
-                    <div class="flex justify-center gap-4 mt-4">
-                        <Button
-                            label="Revise"
-                            icon="pi pi-times"
-                            class="p-button-danger"
-                            size="small"
-                            @click="changeStatus('revise')"
-                            :disabled="statusForm.processing"
-                        />
-                        <Button
-                            label="Approve"
-                            icon="pi pi-check"
-                            class="p-button-success"
-                            size="small"
-                            @click="changeStatus('approved')"
-                            :disabled="statusForm.processing"
-                        />
-                    </div>
-                </div>
-            </Dialog>
-
-            <Dialog v-model:visible="isCommentDialogVisible" header="Comments" class="w-80">
-                <div v-if="selectedComment.length > 0">
-                    <div v-for="(item, index) in selectedComment" :key="index" class="text-border">
-                        <p>{{ item.comment || "No comment text" }}</p>
-                        <small>{{ formatDate(item.created_at) }}</small>
-                    </div>
-                </div>
-                <div v-else>
-                    <p>No comments available</p>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <Button label="Close" class="p-button-secondary" @click="isCommentDialogVisible = false" />
-                </div>
-            </Dialog>
-
-        </div>
-    </GuestLayout>
+        <Column header="Amount Due">
+          <template #body="{ data }">
+            <span :class="{ 'text-red-500': computeAmountDue(data) > 0 }">
+              {{ formatCurrency(computeAmountDue(data)) }} (KHR)
+            </span>
+          </template>
+        </Column>
+        <Column header="Overdue">
+          <template #body="{ data }">
+            <span :class="over_due(data).class">{{ over_due(data).text }}</span>
+          </template>
+        </Column>
+        <Column field="payment_status" header="Payment Status">
+          <template #body="{ data }">
+            <Button
+              :icon="statusIcon(data)"
+              :label="paymentStatus(data)"
+              :class="statusClass(paymentStatus(data))"
+              size="small"
+              class="text-sm flex-grow w-36"
+              outlined
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+  </GuestLayout>
 </template>
+
 
 <script setup>
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { useForm } from '@inertiajs/vue3';
-import { Head, Link } from "@inertiajs/vue3";
-import {
-    Button,
-    DataTable,
-    Column,
-    DatePicker,
-    InputText,
-    Dropdown,
-    Dialog,
-} from "primevue";
-import KeyFilter from "primevue/keyfilter";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import ChooseColumns from "@/Components/ChooseColumns.vue";
+import { Head, Link, usePage } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { Inertia } from "@inertiajs/inertia";
-import moment from "moment";
-import Customers from "@/Components/Customers.vue";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import {
+  Button,
+  DataTable,
+  Column,
+  InputText,
+  Dropdown,
+  Calendar,
+} from "primevue";
 import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
+import moment from "moment";
 
 // Props
-defineProps({
-    invoices: {
-        type: Object,
-        required: true,
-    },
+const props = defineProps({
+  invoices: {
+    type: Object,
+    required: true,
+  },
 });
 
-// The Breadcrumb Quotations
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value || 0);
+};
+
+
+// Breadcrumb
 const page = usePage();
 const items = computed(() => [
-    {
-        label: "",
-        to: "/",
-        icon: "pi pi-home",
-    },
-    { label: page.props.title || "Invoices", to: route("invoices.index") },
+  { label: "", to: "/", icon: "pi pi-home" },
+  { label: page.props.title || "Invoices", to: route("invoices.index") },
 ]);
 
-const storedFilters = localStorage.getItem("invoiceFilters");
-const filters = ref(
-    storedFilters
-        ? JSON.parse(storedFilters)
-        : {
-              invoice_no_start: null,
-              invoice_no_end: null,
-              category_name_english: null,
-              currency: null,
-              start_date: null,
-              end_date: null,
-              customer: null,
-              payment_status: null,
-              income_type: null,
-          }
-);
-
-const customerTypeOptions = ref([
-    { label: "Individual", value: "Individual" },
-    { label: "Public Organization", value: "Public Organization" },
-    { label: "NGO", value: "NGO" },
-    { label: "Private Company", value: "Private Company" },
-]);
-
-const currencyOptions = ref([
-    { label: "KHR", value: "USD" },
-    { label: "USD", value: "KHR" },
-]);
-
-const statusOptions = ref([
-  { label: "Pending", value: "Pending" },
-  { label: "Fully Paid", value: "Fully Paid" },
-  { label: "Partially Paid", value: "Partially Paid" },
-  { label: "Overdue", value: "Overdue" }
-]);
-
-
-
-const columns = [
-    { field: "invoice_no", header: "Invoice No" },
-    { field: "invoice_date", header: "Date" },
-    { field: "invoice_end_date", header: "Due Date" },
-    { field: "agreement_no", header: "Agreement No" },
-    { field: "customer.name", header: "Customer" },
-    { field: "grand_total", header: "Amount" },
-    { field: "paid_amount", header: "Amount Paid" },
-];
-
-const isCommentDialogVisible = ref(false);
-const selectedInvoice = ref(null);
-const isStatusDialogVisible = ref(false);
-
-const statusForm = useForm({
-    status: '',
-    comment: '',
+// Filters
+const filters = ref({
+  invoice_no_start: null,
+  invoice_no_end: null,
+  customer: null,
+  status: null,
+  start_date: null,
+  end_date: null,
+  category_name_english: null,
+  currency: null,
+  overdue_status: null,
 });
 
-
-// Open the status dialog for a selected invoice
-const toggleStatus = (invoice) => {
-    selectedInvoice.value = invoice;
-    isStatusDialogVisible.value = true;
-
-    // Reset form fields before showing the dialog
-    statusForm.reset();
-};
-
-const formatDate = (dateString) => {
-    return moment(dateString).format('MMMM D, YYYY [at] h:mm A');
-};
+// Columns
+const columns = [
+  { field: "invoice_no", header: "Invoice No" },
+  { field: "invoice_date", header: "Date" },
+  { field: "invoice_end_date", header: "Due Date" },
+  { field: "agreement_no", header: "Agreement No" },
+  { field: "customer.name", header: "Customer" },
+];
 
 const selectedColumns = ref(columns.slice());
 const showColumns = ref(columns);
 
-const updateColumns = () => {
-    showColumns.value = selectedColumns.value;
+// Dropdown options
+const statusOptions = ref([
+  { label: "Pending", value: "Pending" },
+  { label: "Fully Paid", value: "Fully Paid" },
+  { label: "Partially Paid", value: "Partially Paid" },
+  { label: "Overdue", value: "Overdue" },
+]);
+
+const paymentStatusOptions = ref([
+  { label: "Fully Paid", value: "Fully Paid" },
+  { label: "Partially Paid", value: "Partially Paid" },
+  { label: "Overdue", value: "Overdue" },
+  { label: "Not Paid", value: "Not Paid" },
+  { label: "Pending", value: "Pending" },
+]);
+
+
+const currencyOptions = ref([
+  { label: "KHR", value: "USD" },
+  { label: "USD", value: "KHR" },
+]);
+
+// Clear filters
+const clearFilters = () => {
+  filters.value = {
+    invoice_no_start: null,
+    invoice_no_end: null,
+    customer: null,
+    status: null,
+    start_date: null,
+    end_date: null,
+    category_name_english: null,
+    currency: null,
+    overdue_status: null,
+  };
 };
 
-const navigateToCreate = () => {
-    Inertia.visit("/invoices/create");
-};
+// Custom filtered invoices logic
+const filteredInvoices = computed(() => {
+  const f = filters.value;
 
-const editInvoice = (id) => {
-    Inertia.visit(`/invoices/${id}/edit`);
-};
+  return props.invoices.data.filter((invoice) => {
+    if (f.invoice_no_start && invoice.invoice_no < f.invoice_no_start) return false;
+    if (f.invoice_no_end && invoice.invoice_no > f.invoice_no_end) return false;
+    if (f.customer && !invoice.customer?.name?.toLowerCase().includes(f.customer.toLowerCase())) return false;
+    if (f.status && invoice.status?.toLowerCase() !== f.status.toLowerCase()) return false;
+    if (f.payment_status && paymentStatus(invoice) !== f.payment_status) return false;
+    if (f.start_date && new Date(invoice.start_date) < new Date(f.start_date)) return false;
+    if (f.end_date && new Date(invoice.end_date) > new Date(f.end_date)) return false;
 
-const deleteInvoice = (id) => {
-    if (confirm("Are you sure you want to delete this invoice?")) {
-        Inertia.delete(`/invoices/${id}`);
+    if (f.category_name_english) {
+      const category = invoice.customer?.customerCategory?.category_name_english?.toLowerCase() || "";
+      if (!category.includes(f.category_name_english.toLowerCase())) return false;
     }
+
+    if (f.currency && invoice.currency !== f.currency) return false;
+
+    if (f.overdue_status) {
+      const amountDue = computeAmountDue(invoice);
+      const dueDate = moment(invoice.invoice_end_date);
+      const today = moment();
+      const daysDiff = today.diff(dueDate, "days");
+
+      if (f.overdue_status === "paid") {
+        if (amountDue > 0) return false;
+      }
+
+      if (f.overdue_status === "overdue") {
+        if (!(amountDue > 0 && daysDiff > 0)) return false;
+      }
+
+      if (f.overdue_status === "today") {
+        if (!(amountDue > 0 && daysDiff === 0)) return false;
+      }
+
+      if (f.overdue_status === "upcoming") {
+        if (!(amountDue > 0 && daysDiff < 0)) return false;
+      }
+    }
+
+    return true;
+  });
+});
+
+
+// Helpers
+const computeAmountDue = (invoice) => {
+  const grandTotal = invoice.grand_total || 0;
+  const paid = invoice.paid_amount || 0;
+  const due = grandTotal - paid;
+  return due <= 0 ? 0 : due.toFixed(2);
 };
 
 const over_due = (rowData) => {
-    const amountDue = computeAmountDue(rowData);
+  const amountDue = computeAmountDue(rowData);
+  if (amountDue <= 0) return { text: "Fully Paid", class: "text-green-500" };
+  if (!rowData.invoice_end_date) return { text: "-", class: "" };
 
-    if (amountDue <= 0) {
-        // If the amount due is 0, it's fully paid
-        return { text: "Fully Paid", class: "text-green-500" };  // Green color for fully paid
-    }
+  const dueDate = moment(rowData.invoice_end_date);
+  const today = moment();
+  const daysDiff = today.diff(dueDate, "days");
 
-    if (!rowData.end_date) return { text: "-", class: "" }; // If there's no end date, return "-"
-
-    const dueDate = moment(rowData.invoice_end_date);
-    const currentDate = moment();
-    const overdue = currentDate.diff(dueDate, "days");
-
-    // If overdue is 0, return "Not Past Due", otherwise return the number of overdue days
-    if (overdue > 0) {
-        return { text: `${overdue} days ago`, class: "text-red-500" }; // Red color for overdue
-    } else {
-        return { text: "Not Past Due", class: "text-yellow-500" }; // Yellow color for not past due
-    }
-};
-
-
-const statusIcon = (invoice) => {
-    const status = paymentStatus(invoice);
-    return status === 'Fully Paid' ? 'pi pi-check'
-         : status === 'Partially Paid' ? 'pi pi-pencil'
-         : status === 'Overdue' ? 'pi pi-times'
-         : 'pi pi-clock';
-};
-
-const statusClass = (status) => {
-    return {
-        'p-button-success': status === 'Fully Paid',
-        'p-button-info': status === 'Partially Paid',
-        'p-button-danger': status === 'Overdue',
-        'p-button-secondary': status === 'Pending',
-    };
+  if (daysDiff > 0) return { text: `${daysDiff} day(s) overdue`, class: "text-red-500" };
+  if (daysDiff < 0) return { text: `${Math.abs(daysDiff)} day(s) left`, class: "text-blue-500" };
+  return { text: "Due Today", class: "text-orange-500" };
 };
 
 const paymentStatus = (invoice) => {
-    const grandTotal = Number(invoice.grand_total || 0);
-    const amountPaid = Number(invoice.paid_amount || 0);
-    const amountDue = grandTotal - amountPaid;
+  const grandTotal = Number(invoice.grand_total || 0);
+  const paid = Number(invoice.paid_amount || 0);
+  const due = grandTotal - paid;
 
-    if (amountDue <= 0) return "Fully Paid";
-    if (amountPaid == 0) return "Not Paid";
-    if (amountDue < grandTotal) return "Partially Paid";
-    if (over_due(invoice) !== "Not Past Due") return "Overdue";
-    return "Pending";
+  if (due <= 0) return "Fully Paid";
+  if (paid === 0) return "Not Paid";
+  if (due < grandTotal) return "Partially Paid";
+  return "Pending";
 };
 
-const printInvoice = (id) => {
-    const invoiceUrl = `/invoices/${id}`;
-    const printWindow = window.open(invoiceUrl, "_blank");
-    setTimeout(() => {
-        printWindow.print();
-    }, 1000);
+const statusIcon = (invoice) => {
+  const status = paymentStatus(invoice);
+  return status === "Fully Paid"
+    ? "pi pi-check"
+    : status === "Partially Paid"
+    ? "pi pi-pencil"
+    : status === "Overdue"
+    ? "pi pi-times"
+    : "pi pi-clock";
 };
 
-const searchInvoices = () => {
-    const formattedStartDate = filters.value.start_date
-        ? moment(filters.value.start_date).format("YYYY-MM-DD")
-        : null;
-    const formattedEndDate = filters.value.end_date
-        ? moment(filters.value.end_date).format("YYYY-MM-DD")
-        : null;
-
-    // Create an object with all filter values
-    const invoiceFilters = {
-        invoice_no_start: filters.value.invoice_no_start,
-        invoice_no_end: filters.value.invoice_no_end,
-        category_name_english: filters.value.category_name_english,
-        currency: filters.value.currency,
-        start_date: formattedStartDate,
-        end_date: formattedEndDate,
-        customer: filters.value.customer,
-        payment_status: filters.value.payment_status,
-        income_type: filters.value.income_type,
-    };
-
-    // Save all filter values to localStorage as a JSON string
-    localStorage.setItem("invoiceFilters", JSON.stringify(invoiceFilters));
-
-    Inertia.get("/invoices", invoiceFilters);
+const statusClass = (status) => {
+  return {
+    "p-button-success": status === "Fully Paid",
+    "p-button-info": status === "Partially Paid",
+    "p-button-danger": status === "Overdue",
+    "p-button-warn": status === "Not Paid",
+    "p-button-secondary": status === "Pending",
+  };
 };
-
-const computeAmountProgressPercentage = (invoice) => {
-    const grandTotal = invoice.grand_total || 0;
-    const installmentPaid = invoice.installment_paid || 0;
-    // If grandTotal is 0, return 0 to avoid division by zero
-    return grandTotal > 0 ? ((installmentPaid / grandTotal) * 100).toFixed(2) : 0;
-};
-
-
-const clearFilters = () => {
-    filters.value = {
-        invoice_no_start: null,
-        invoice_no_end: null,
-        category_name_english: null, // Changed from customer_type to category_name_english
-        currency: null,
-        start_date: null,
-        end_date: null,
-        customer: null,
-        status: null,
-    };
-    searchInvoices();
-};
-
-const computeAmountDue = (invoice) => {
-    const grandTotal = invoice.grand_total || 0;
-    const installmentPaid = invoice.paid_amount || 0;
-    const amountDue = grandTotal - installmentPaid;
-
-    // If the amount due is 0, it's fully paid
-    if (amountDue <= 0) {
-        return 0;  // Return 0 if fully paid
-    }
-
-    return amountDue.toFixed(2);  // Return the amount due as a fixed decimal number
-};
-
-
 </script>
+
 
 <style scoped>
 .invoices {

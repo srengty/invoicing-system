@@ -126,6 +126,7 @@
                             label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
+                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
                         />
                     </div>
                 </template>

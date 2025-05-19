@@ -45,13 +45,12 @@
                             >Quotation No</label
                         >
                         <Select
-                            v-model="form.quotation_no"
-                            :options="quotations"
-                            optionLabel="quotation_no"
-                            optionValue="quotation_no"
-                            placeholder="Select Quotation"
-                            class="w-full"
-                            required
+                        v-model="form.quotation_no"
+                        :options="availableQuotations"
+                        optionLabel="quotation_no"
+                        optionValue="quotation_no"
+                        placeholder="Select Quotation"
+                        class="w-full"
                         />
                     </div>
                     <div>
@@ -275,7 +274,7 @@
                     >
                         <p class="font-bold">Total KHR:</p>
                         <p class="font-bold text-right">
-                            ៛{{ calculateTotalKHR }}
+                            ៛{{ formatCurrency(calculateTotalKHR) }}
                         </p>
                     </div>
 
@@ -316,7 +315,7 @@
                     >
                         <p class="font-bold">Exchange Rate:</p>
                         <p class="font-bold text-right">
-                            {{ calculateExchangeRate }}
+                            {{ formatCurrency(calculateExchangeRate) }}
                         </p>
                     </div>
 
@@ -550,6 +549,7 @@ const {
     customers,
     paymentSchedules,
     receipts,
+    invoices
 } = usePage().props;
 
 const props = defineProps({
@@ -940,6 +940,23 @@ watch(
     }
 );
 
+const availableQuotations = computed(() => {
+  return quotations.filter((quotation) => {
+    // Find all invoices related to this quotation
+    const relatedInvoices = invoices.filter(
+      (inv) => inv.quotation_no === quotation.quotation_no
+    );
+
+    // Check if any related invoice fully paid the quotation total
+    const isFullyPaid = relatedInvoices.some(
+      (inv) => Number(inv.paid_amount) === Number(quotation.total)
+    );
+
+    // Exclude fully paid quotations
+    return !isFullyPaid;
+  });
+});
+
 // Existing methods from original component
 watch(
     () => form.quotation_no,
@@ -956,6 +973,18 @@ watch(
                 form.customer_id = selectedQuotation.customer_id || "";
                 form.address = selectedQuotation.address || "";
                 form.phone = selectedQuotation.phone_number || "";
+                if (selectedQuotation.quotation_date) {
+                    form.start_date = selectedQuotation.quotation_date;
+
+                    // Calculate end_date as 14 days after quotation_date
+                    const start = new Date(selectedQuotation.quotation_date);
+                    const end = new Date(start);
+                    end.setDate(start.getDate() + 14);
+
+                    // Format as mm/dd/yyyy or dd/mm/yyyy depending on your needs
+                    const formattedEndDate = `${String(end.getDate()).padStart(2, "0")}/${String(end.getMonth() + 1).padStart(2, "0")}/${end.getFullYear()}`;
+                    form.end_date = formattedEndDate;
+                }
 
                 // Agreement handling
                 if (selectedQuotation.agreement) {

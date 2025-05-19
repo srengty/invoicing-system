@@ -31,138 +31,33 @@
                         @apply="updateColumns"
                         size="small"
                     />
-                    <Button
-                        label="Search"
-                        icon="pi pi-search"
-                        @click="searchInvoices"
-                        size="small"
-                        class="w-full md:w-32"
+                    <Dropdown
+                    v-model="filters.status"
+                    :options="statusOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Filter by Status"
+                    class="w-48"
+                    size="small"
                     />
                     <Button
-                        label="Clear"
-                        icon="pi pi-times"
-                        severity="secondary"
-                        @click="clearFilters"
-                        size="small"
-                        class="w-full md:w-32"
+                    label="Clear"
+                    icon="pi pi-times"
+                    class="p-button-secondary"
+                    size="small"
+                    @click="filters.status = null"
                     />
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="mb-8 mt-6">
-                <div class="flex flex-wrap justify-between text-sm mb-2">
-                    <div
-                        class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center"
-                    >
-                        <label for="end_date" class="mb-1 w-1/2 font-semibold"
-                            >Start Date:</label
-                        >
-                        <DatePicker
-                            v-model="filters.start_date"
-                            placeholder="Pick Start Date"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
-
-                    <!-- End Date -->
-                    <div
-                        class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center"
-                    >
-                        <label for="end_date" class="mb-1 w-1/2 font-semibold"
-                            >End Date:</label
-                        >
-                        <DatePicker
-                            v-model="filters.end_date"
-                            placeholder="Pick End Date"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
-
-                    <!-- Payment Status -->
-                    <div
-                        class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center"
-                    >
-                        <label for="status" class="mb-1 w-1/2 font-semibold"
-                            >Status:</label
-                        >
-                        <Dropdown
-                            v-model="filters.status"
-                            :options="statusOptions"
-                            placeholder="Select Status"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full"
-                        />
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap justify-between text-sm">
-                    <!-- Customer Name - Restrict to Letters Only -->
-                    <div
-                        class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center"
-                    >
-                        <label for="customer" class="mb-1 w-1/2 font-semibold"
-                            >Customer:</label
-                        >
-                        <InputText
-                            v-model="filters.customer"
-                            placeholder="Input Customer Name"
-                            v-keyfilter="['alpha']"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
-
-                    <!-- Customer Type -->
-                    <div
-                        class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center"
-                    >
-                        <label
-                            for="category_name_english"
-                            class="mb-1 w-1/2 font-semibold"
-                            >Customer Type:</label
-                        >
-                        <Dropdown
-                            v-model="filters.category_name_english"
-                            :options="customerTypeOptions"
-                            placeholder="Select Customer Type"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full mr-8"
-                        />
-                    </div>
-
-                    <!-- Income Type -->
-                    <div
-                        class="flex flex-row w-full sm:w-1/3 md:w-1/3 items-center"
-                    >
-                        <label for="income_type" class="w-1/2 font-semibold"
-                            >Income Type:</label
-                        >
-                        <Dropdown
-                            placeholder="Select Income Type"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            class="w-full"
-                        />
-                    </div>
                 </div>
             </div>
 
             <!-- Data Table -->
             <DataTable
-                :value="invoices.data"
+                :value="filteredInvoices"
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
                 size="small"
-                class="text-sm"
+                class="text-sm mt-8"
             >
                 <Column
                     class=""
@@ -172,6 +67,14 @@
                     :header="col.header"
                     sortable
                 />
+
+                <Column field="grand_total" header="Amount">
+                    <template #body="{ data }">
+                        <span :class="{ 'text-blue-500': (data.grand_total) >= 0 }">
+                        {{ formatCurrency(data.grand_total) }} (KHR)
+                        </span>
+                    </template>
+                </Column>
 
                 <Column field="status" header="Status">
                     <template #body="{ data }">
@@ -426,6 +329,7 @@
                 class="text-sm"
             >
                 <div v-if="selectedInvoice" class="p-4 space-y-4">
+                    <!-- Header Info -->
                     <div class="flex justify-between">
                         <div class="flex flex-col w-1/2 gap-4">
                             <p>
@@ -439,20 +343,13 @@
                             <p>
                                 <strong>Email:</strong>
                                 <a
-                                    v-if="
-                                        selectedInvoice.email ||
-                                        selectedInvoice.customer?.email
-                                    "
+                                    v-if="selectedInvoice.email || selectedInvoice.customer?.email"
                                     :href="`mailto:${
-                                        selectedInvoice.email ||
-                                        selectedInvoice.customer?.email
+                                        selectedInvoice.email || selectedInvoice.customer?.email
                                     }`"
                                     class="text-blue-600 hover:underline"
                                 >
-                                    {{
-                                        selectedInvoice.email ||
-                                        selectedInvoice.customer?.email
-                                    }}
+                                    {{ selectedInvoice.email || selectedInvoice.customer?.email }}
                                 </a>
                                 <span v-else>N/A</span>
                             </p>
@@ -475,6 +372,7 @@
                         </div>
                     </div>
 
+                    <!-- Products Table -->
                     <span class="font-bold block mb-2 text-center">Items</span>
                     <DataTable
                         :value="selectedInvoice.products"
@@ -490,21 +388,44 @@
                         </Column>
                     </DataTable>
 
+                    <!-- ✅ Payment Schedule Table -->
+                    <div v-if="selectedScheduleArray.length > 0" class="mb-6 p-6">
+                        <span class="font-bold block mb-2 text-center">Payment Schedule</span>
+                        <DataTable
+                            :value="selectedScheduleArray"
+                            class="mb-6 p-datatable-sm p-datatable-gridlines"
+                            responsiveLayout="scroll"
+                        >
+                            <Column field="id" header="ID" />
+                            <Column field="due_date" header="Due Date" />
+                            <Column field="amount" header="Amount">
+                                <template #body="{ data }">
+                                    ៛{{ formatCurrency(data.amount) }}
+                                </template>
+                            </Column>
+                            <Column field="percentage" header="%" />
+                            <Column field="short_description" header="Description" />
+                            <Column field="status" header="Status" />
+                        </DataTable>
+                    </div>
+                    <div v-else>
+                        <p>No payment schedule data available</p>
+                    </div>
+
+                    <!-- Totals -->
                     <div class="text-left">
                         <br />
                         <p>
                             <strong>Total:</strong>
                             {{ formatCurrency(selectedInvoice.grand_total) }}
-                            <span class="text-xs text-gray-500 ml-1"
-                                >(KHR)</span
-                            >
+                            <span class="text-xs text-gray-500 ml-1">(KHR)</span>
                         </p>
                     </div>
                 </div>
+
+                <!-- Comments -->
                 <div class="p-4">
-                    <label for="comment" class="block font-bold mb-2"
-                        >Comment:</label
-                    >
+                    <label for="comment" class="block font-bold mb-2">Comment:</label>
                     <textarea
                         id="comment"
                         v-model="statusForm.comment"
@@ -519,6 +440,8 @@
                         {{ statusForm.errors.comment }}
                     </p>
                 </div>
+
+                <!-- Footer Buttons -->
                 <template #footer>
                     <Button
                         label="Approve"
@@ -526,9 +449,7 @@
                         class="p-button-success"
                         size="small"
                         @click="changeStatus('approved')"
-                        :disabled="
-                            statusForm.processing || !statusForm.comment.trim()
-                        "
+                        :disabled="statusForm.processing || !statusForm.comment.trim()"
                     />
                     <Button
                         label="Revise"
@@ -536,9 +457,7 @@
                         class="p-button-danger"
                         size="small"
                         @click="changeStatus('revise')"
-                        :disabled="
-                            statusForm.processing || !statusForm.comment.trim()
-                        "
+                        :disabled="statusForm.processing || !statusForm.comment.trim()"
                     />
                     <Button
                         label="Close"
@@ -547,6 +466,7 @@
                     />
                 </template>
             </Dialog>
+
         </div>
     </GuestLayout>
 </template>
@@ -575,12 +495,13 @@ import Breadcrumb from "primevue/breadcrumb";
 import { usePage } from "@inertiajs/vue3";
 
 // Props
-defineProps({
+const props = defineProps({
     invoices: {
         type: Object,
         required: true,
     },
 });
+
 
 // The Breadcrumb Quotations
 const page = usePage();
@@ -593,22 +514,9 @@ const items = computed(() => [
     { label: page.props.title || "Invoices", to: route("invoices.index") },
 ]);
 
-const storedFilters = localStorage.getItem("invoiceFilters");
-const filters = ref(
-    storedFilters
-        ? JSON.parse(storedFilters)
-        : {
-              invoice_no_start: null,
-              invoice_no_end: null,
-              category_name_english: null,
-              currency: null,
-              start_date: null,
-              end_date: null,
-              customer: null,
-              status: null,
-              income_type: null,
-          }
-);
+const filters = ref({
+  status: null,
+});
 
 const selectedInvoice = ref(null);
 const isViewDialogVisible = ref(false);
@@ -622,36 +530,41 @@ const viewInvoice = (invoice) => {
     isViewDialogVisible.value = true;
 };
 
-const formatCurrency = (value) =>
-    new Intl.NumberFormat("en-US", {
+const selectedScheduleArray = computed(() => {
+    // Check both possible property names
+    return selectedInvoice.value?.payment_schedules || 
+           selectedInvoice.value?.paymentSchedules || 
+           [];
+});
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(value || 0);
-
-const customerTypeOptions = ref([
-    { label: "Individual", value: "Individual" },
-    { label: "Public Organization", value: "Public Organization" },
-    { label: "NGO", value: "NGO" },
-    { label: "Private Company", value: "Private Company" },
-]);
-
-const currencyOptions = ref([
-    { label: "KHR", value: "USD" },
-    { label: "USD", value: "KHR" },
-]);
+};
 
 const statusOptions = ref([
-    { label: "Pending", value: "pending" },
-    { label: "Approved", value: "approved" },
-    { label: "Revise", value: "revise" },
+  { label: "Pending", value: "Pending" },
+  { label: "Approved", value: "approved" },
+  { label: "Revise", value: "revise" },
+  { label: "Rejected", value: "rejected" },
 ]);
 
 const columns = [
     { field: "start_date", header: "Date" },
     { field: "end_date", header: "Due Date" },
     { field: "customer.name", header: "Customer" },
-    { field: "grand_total", header: "Amount" },
 ];
+
+const filteredInvoices = computed(() => {
+  if (!filters.value.status) return props.invoices.data;
+
+  return props.invoices.data.filter((invoice) => {
+    return invoice.status === filters.value.status;
+  });
+});
+
 
 const selectedComment = ref("");
 const commentText = ref("");
