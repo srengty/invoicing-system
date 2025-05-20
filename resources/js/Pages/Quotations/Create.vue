@@ -357,11 +357,16 @@
             </div>
         </form>
     </GuestLayout>
+    <!-- Add Customer Dialog -->
     <Dialog
         v-model:visible="isCreateCustomerVisible"
         modal
         header="Add Customer"
         class="w-2/3"
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
     >
         <template #header>
             <div class="flex items-center gap-2">
@@ -390,6 +395,10 @@
         header="Add Item (Popup)"
         :style="{ width: '450px' }"
         class="text-sm"
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
     >
         <div class="p-fluid grid gap-4 text-sm">
             <!-- Division Selection -->

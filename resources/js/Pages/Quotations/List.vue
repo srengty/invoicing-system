@@ -20,7 +20,12 @@
         </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
-        <ConfirmDialog />
+        <ConfirmDialog
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
+        />
 
         <div class="quotations text-sm p-4">
             <div class="flex justify-end p-4 gap-4">
@@ -285,6 +290,10 @@
                     modal
                     :style="{ width: '40rem' }"
                     class="text-sm"
+                    :draggable="false"
+                    :resizable="false"
+                    :position="'center'"
+                    :closeOnEscape="false"
                 >
                     <div
                         v-if="selectedQuotation"
@@ -447,6 +456,10 @@
                     modal
                     :style="{ width: '30rem' }"
                     class="text-sm"
+                    :draggable="false"
+                    :resizable="false"
+                    :position="'center'"
+                    :closeOnEscape="false"
                 >
                     <div v-if="selectedQuotation" class="flex flex-col gap-4">
                         <p>
@@ -491,6 +504,7 @@
                         </div>
                     </div>
                 </Dialog>
+
                 <!-- Confirm Dialog for comment -->
                 <Dialog
                     v-model:visible="isCommentDialogVisible"
@@ -498,6 +512,10 @@
                     modal
                     :style="{ width: '20rem' }"
                     class="text-sm"
+                    :draggable="false"
+                    :resizable="false"
+                    :position="'center'"
+                    :closeOnEscape="false"
                 >
                     <div class="">
                         <p class="text-gray-700 rounded border p-2">

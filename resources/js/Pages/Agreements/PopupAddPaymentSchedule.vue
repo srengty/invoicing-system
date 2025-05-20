@@ -14,6 +14,10 @@
             :visible="isShowing"
             @update:visible="isShowing = $event"
             modal
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <AddPayment v-model="model" @cancel="doCancel" @save="doSave" />
         </Dialog>

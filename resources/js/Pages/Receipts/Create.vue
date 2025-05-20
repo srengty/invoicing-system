@@ -6,6 +6,10 @@
         :modal="true"
         :style="{ width: '50vw' }"
         @hide="closeDialog"
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
     >
         <form @submit.prevent="isEditMode ? updateReceipt() : createReceipt()">
             <div class="grid">
@@ -166,9 +170,13 @@
                             v-if="formData.invoice_no"
                             v-model="formData.paid_amount"
                             class="w-full"
-                            mode="currency"
-                            :currency="selectedInvoice?.currency || 'USD'"
-                            locale="en-US"
+                            :readonly="!!formData.invoice_no"
+                            mode="decimal"
+                            :minFractionDigits="2"
+                            :maxFractionDigits="2"
+                            thousandSeparator=","
+                            decimalSeparator="."
+                            suffix=" ( KHR )"
                             size="small"
                             @input="updateAmountInWords"
                         />
@@ -177,10 +185,13 @@
                             v-else
                             v-model="formData.paid_amount"
                             class="w-full"
-                            mode="currency"
-                            currency="USD"
-                            locale="en-US"
-                            placeholder="Enter amount paid  "
+                            placeholder="Enter amount paid "
+                            mode="decimal"
+                            :minFractionDigits="2"
+                            :maxFractionDigits="2"
+                            thousandSeparator=","
+                            decimalSeparator="."
+                            suffix=" ( KHR )"
                             size="small"
                         />
                     </div>
@@ -248,7 +259,10 @@
         modal
         header="Add Customer"
         class="w-2/3"
-        @show="loadCustomerCategories"
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
     >
         <template #header>
             <div class="flex items-center gap-2">
@@ -256,17 +270,17 @@
                 <span class="text-xl font-semibold bor">Create Customers</span>
             </div>
         </template>
+
         <Customers
             :customerCategories="customerCategories"
-            redirect_route="receipts.create"
-            :mode="'dialog'"
-            @customer-created="handleCustomerCreated"
+            redirect_route="receitps.create"
+            :mode="'create'"
         />
     </Dialog>
 </template>
 
 <script setup>
-import Customers from "@/Components/Customers.vue";
+import Customers from "@/Components/CustomersReceipts.vue";
 import { convertCurrencyToWords } from "@/utils/currencyWords";
 import { ref, computed, onMounted, defineExpose, watch } from "vue";
 import { router } from "@inertiajs/vue3";
@@ -324,7 +338,6 @@ const formData = ref({
 
 const customers = ref([]);
 const invoices = ref([]);
-const customerCategories = ref([]);
 const paymentMethods = ref([
     { label: "Cash", value: "Cash" },
     { label: "Bank Transfer", value: "Bank Transfer" },
@@ -359,7 +372,7 @@ const resetForm = () => {
 
 const loadCustomers = async () => {
     try {
-        const response = await axios.get("/api/customers");
+        const response = await axios.get("/settings/customer-categories");
         customers.value = (response.data.customers || []).map((customer) => ({
             ...customer,
             name_with_code: `${customer.name} (${customer.customer_code})`,
@@ -378,11 +391,14 @@ const loadInvoices = async () => {
     try {
         const response = await axios.get(route("receipts.create"));
         invoices.value = (response.data.invoices || [])
-        .filter((invoice) => Number(invoice.grand_total) > Number(invoice.paid_amount))
-        .map((invoice) => ({
-            ...invoice,
-            label: `${invoice.invoice_no} - ${invoice.customer_name}`,
-        }));
+            .filter(
+                (invoice) =>
+                    Number(invoice.grand_total) > Number(invoice.paid_amount)
+            )
+            .map((invoice) => ({
+                ...invoice,
+                label: `${invoice.invoice_no} - ${invoice.customer_name}`,
+            }));
     } catch (error) {
         console.error("Error loading invoices", error);
         toast.add({
@@ -394,18 +410,16 @@ const loadInvoices = async () => {
     }
 };
 
-
+const customerCategories = ref([]);
 const loadCustomerCategories = async () => {
     try {
         const response = await axios.get("/settings/customer-categories");
         customerCategories.value = response.data.categories || [];
     } catch (error) {
-        console.error("Error loading customer categories", error);
         toast.add({
             severity: "error",
             summary: "Error",
             detail: "Failed to load customer categories",
-            life: 3000,
         });
     }
 };
@@ -551,9 +565,7 @@ const updateInvoiceDetails = () => {
         return;
     }
 
-    const invoice = invoices.value.find(
-        (inv) => inv.invoice_no === selectedNo
-    );
+    const invoice = invoices.value.find((inv) => inv.invoice_no === selectedNo);
 
     if (!invoice) {
         toast.add({
@@ -611,23 +623,20 @@ const customerLabel = (customer) => {
     return ` ${customer.name}`;
 };
 
-const handleCustomerCreated = (newCustomer) => {
+function handleCustomerCreated(newCustomer) {
     customers.value.push({
         ...newCustomer,
         name_with_code: `${newCustomer.name} (${newCustomer.customer_code})`,
     });
-
     formData.value.customer_id = newCustomer.id;
     formData.value.customer_code = newCustomer.customer_code;
     isCreateCustomerVisible.value = false;
-
     toast.add({
         severity: "success",
-        summary: "Success",
-        detail: "Customer created successfully",
-        life: 3000,
+        summary: "Added",
+        detail: `${newCustomer.name} selected`,
     });
-};
+}
 
 const isLoading = ref(false);
 

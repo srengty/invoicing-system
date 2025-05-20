@@ -35,30 +35,29 @@ class ReceiptController extends Controller
      */
     public function create()
     {
-        $lastReceipt = Receipt::orderBy('receipt_no', 'desc')->first();
-        $nextReceiptNo = $this->generateReceiptNumber($lastReceipt);
-    
-        $invoices = Invoice::with(['customer', 'paymentSchedules'])  // Make sure to load the paymentSchedules relation
-            ->select('id', 'invoice_no', 'grand_total', 'paid_amount', 'currency', 'customer_id')
-            ->where('status', 'Approved')
+        $lastReceipt      = Receipt::orderBy('receipt_no', 'desc')->first();
+        $nextReceiptNo    = $this->generateReceiptNumber($lastReceipt);
+        $customerCategories = CustomerCategory::all();
+
+        $invoices = Invoice::with(['customer','paymentSchedules'])
+            ->select('id','invoice_no','grand_total','paid_amount','currency','customer_id')
+            ->where('status','Approved')
             ->whereRaw('grand_total > paid_amount')
             ->get()
-            ->map(function ($invoice) {
-                $invoice->customer_name = $invoice->customer?->name ?? null;
-                $invoice->customer_code = $invoice->customer?->code ?? null;
-    
-                // Get the IDs of payment schedules for the invoice
-                $invoice->payment_schedule_ids = $invoice->paymentSchedules->pluck('id')->toArray(); // Adjusting here
-    
+            ->map(function($invoice){
+                $invoice->customer_name         = $invoice->customer?->name;
+                $invoice->customer_code         = $invoice->customer?->code;
+                $invoice->payment_schedule_ids  = $invoice->paymentSchedules->pluck('id')->all();
                 return $invoice;
             });
-    
+
         return response()->json([
-            'nextReceiptNo' => $nextReceiptNo,
-            'invoices' => $invoices,
+            'nextReceiptNo'      => $nextReceiptNo,
+            'invoices'           => $invoices,
+            'customerCategories' => $customerCategories,   // use your loaded variable
         ]);
     }
-    
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -147,14 +146,14 @@ class ReceiptController extends Controller
     public function update(Request $request, $receipt_no)
     {
         $receipt = Receipt::where('receipt_no', (string)$receipt_no)->first();
-    
+
         if (!$receipt) {
             return response()->json([
                 'success' => false,
                 'message' => "Receipt not found",
             ], 404);
         }
-    
+
         $validated = $request->validate([
             'receipt_no' => 'required|string|unique:receipts,receipt_no,'.$receipt_no.',receipt_no',
             'receipt_date' => 'required|date',
@@ -165,9 +164,9 @@ class ReceiptController extends Controller
             'payment_schedule_ids' => 'nullable|array',
             'payment_schedule_ids.*' => 'exists:payment_schedules,id',
         ]);
-    
+
         $customer = Customer::findOrFail($validated['customer_id']);
-    
+
         $receipt->update([
             'invoice_no' => $validated['invoice_no'] ?? null,
             'receipt_no' => $validated['receipt_no'],
@@ -178,26 +177,26 @@ class ReceiptController extends Controller
             'amount_in_words' => $this->convertToWords($validated['paid_amount']),
             'payment_method' => $validated['payment_method'],
         ]);
-    
+
         // Update the payment schedules
         if (!empty($validated['payment_schedule_ids'])) {
             $paymentScheduleIds = $validated['payment_schedule_ids'];
-    
+
             // Attach to receipt (many-to-many relationship)
             $receipt->paymentSchedules()->sync($paymentScheduleIds);
-    
+
             // Update the statuses of the payment schedules
             PaymentSchedule::whereIn('id', $paymentScheduleIds)
                 ->update(['status' => 'paid']);  // Or your desired logic
         }
-    
+
         return response()->json([
             'success' => true,
             'message' => 'Receipt updated successfully',
             'receipt' => $receipt->fresh()
         ]);
     }
-    
+
 
     protected function generateNextReceiptNumber($currentReceiptNo)
     {

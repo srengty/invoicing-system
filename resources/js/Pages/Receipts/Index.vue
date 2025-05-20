@@ -149,6 +149,10 @@
             :modal="true"
             :style="{ width: '50vw' }"
             @hide="closeDialog"
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <div
                 class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 m-4 mt-0"
@@ -263,6 +267,7 @@
             ref="receiptDialog"
             :customerCategories="customerCategories"
             @receipt-created="handleReceiptCreated"
+            :draggable="false"
         />
         <!-- Dialog for Edit  -->
         <CreateReceiptDialog
@@ -271,6 +276,7 @@
             :receipt="editingReceipt"
             @receipt-created="handleReceiptCreated"
             @receipt-updated="handleReceiptUpdated"
+            :draggable="false"
         />
     </GuestLayout>
 </template>

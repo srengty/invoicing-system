@@ -383,6 +383,10 @@ list agreement
                 :modal="true"
                 :dismissableMask="true"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="grid">
                     <div class="col-12">
@@ -495,6 +499,10 @@ list agreement
                 :modal="true"
                 :dismissableMask="true"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="grid">
                     <div class="col-12">

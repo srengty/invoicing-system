@@ -121,6 +121,9 @@
                             @click="
                                 doEditPaymentSchedule({ ...slotProps.data })
                             "
+                            :disabled="
+                                getPaymentStatus(slotProps.data) === 'PAID'
+                            "
                         />
                         <Button
                             icon="pi pi-trash"
@@ -129,6 +132,9 @@
                             @click="
                                 doDeletePaymentSchedule({ ...slotProps.data })
                             "
+                            :disabled="
+                                getPaymentStatus(slotProps.data) === 'PAID'
+                            "
                         />
                         <Button
                             icon="pi pi-file-pdf"
@@ -136,7 +142,9 @@
                             label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
-                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
+                            :disabled="
+                                getPaymentStatus(slotProps.data) === 'PAID'
+                            "
                         />
                     </div>
                 </template>
@@ -168,6 +176,10 @@
             :visible="isShowing"
             @update:visible="isShowing = $event"
             modal
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <AddPayment
                 v-model="editingSchedule"
