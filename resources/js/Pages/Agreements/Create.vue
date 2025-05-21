@@ -425,7 +425,7 @@
                         v-model="schedule.exchange_rate"
                     ></InputText>
                 </div> -->
-                <div class="flex justify-end gap-2 mt-10">
+                <div class="flex justify-end gap-2 mt-10 mb-10">
                     <Button
                         label="Save"
                         type="submit"

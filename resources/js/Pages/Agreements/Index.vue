@@ -54,18 +54,18 @@ list agreement
                     />
                     <Button
                         icon="pi pi-plus"
-                        label="New"
+                        label="Issue Agreement"
                         @click="openCreate"
                         raised
                         size="small"
                     ></Button>
-                    <ChooseColumns
+                    <!-- <ChooseColumns
                         :columns="columns"
                         v-model="selectedColumns"
                         @apply="updateColumns"
                         size="small"
                         raised
-                    />
+                    /> -->
                 </div>
             </div>
             <DataTable
@@ -330,11 +330,21 @@ list agreement
                     >
                         <template #body="slotProps">
                             <Button
+                                severity=""
+                                size="small"
+                                icon="pi pi-eye"
+                                outlined
+                                class="mr-2"
+                                :disabled="slotProps.data.status === 'Closed'"
+                                v-tooltip="'Cannot view closed agreement'"
+                                @click="viewAgreementDetails(slotProps.data)"
+                            />
+                            <Button
                                 severity="info"
                                 size="small"
                                 icon="pi pi-pencil"
                                 outlined
-                                class="mr-2"
+                                class="ml-2"
                                 :disabled="slotProps.data.status === 'Closed'"
                                 v-tooltip="'Cannot edit closed agreement'"
                                 @click="
@@ -346,16 +356,7 @@ list agreement
                                     )
                                 "
                             />
-                            <Button
-                                severity=""
-                                size="small"
-                                icon="pi pi-eye"
-                                outlined
-                                class="ml-2"
-                                :disabled="slotProps.data.status === 'Closed'"
-                                v-tooltip="'Cannot view closed agreement'"
-                                @click="viewAgreementDetails(slotProps.data)"
-                            />
+
                             <!-- <Button
                                 severity=""
                                 size="small"
@@ -872,7 +873,7 @@ const columns = [
     { field: "short_description", header: "Short description" },
     {
         field: "actions",
-        header: "Edit / View",
+        header: "  View / Edit",
     },
 ];
 const defaultColumns = columns.filter(

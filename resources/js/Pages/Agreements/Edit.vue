@@ -229,7 +229,7 @@
                                     :minFractionDigits="2"
                                     :maxFractionDigits="2"
                                     fluid
-                                    min="0"
+                                    :min="0"
                                 />
                             </InputGroup>
                             <!-- Short Description -->
@@ -368,14 +368,15 @@
                     {{ totalPercentage }}%) and match agreement amount
                 </Message>
                 <!-- Save Button -->
-                <div class="flex justify-end gap-2 mt-10">
+                <div class="flex justify-end gap-2 mt-10 mb-10">
                     <Button
-                        label="Save Changes"
+                        label="Update"
                         type="submit"
                         raised
-                        class="w-full md:w-40"
+                        class="w-full md:w-28"
                         :disabled="processing || !isPaymentScheduleValid"
                         icon="pi pi-check"
+                        size="small"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -385,6 +386,7 @@
                         :disabled="processing"
                         icon="pi pi-times"
                         @click="cancelChanges"
+                        size="small"
                     />
                 </div>
             </Form>
