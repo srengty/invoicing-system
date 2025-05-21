@@ -282,7 +282,7 @@
                                     :minFractionDigits="2"
                                     :maxFractionDigits="2"
                                     fluid
-                                    min="0"
+                                    :min="0"
                                 />
                             </InputGroup>
                             <span class="text-sm">Short description</span>
@@ -533,7 +533,7 @@ const form = reactive({
     agreement_doc: [],
     progress: null,
     start_date: new Date(),
-    end_date: moment(new Date()).add(14, "days").toDate(),
+    end_date: moment(new Date()).add(30, "days").toDate(),
     agreement_amount: 0,
     short_description: "",
     attachments: [],
@@ -637,7 +637,7 @@ watch(
     () => form.start_date,
     (newStartDate) => {
         if (newStartDate) {
-            form.end_date = moment(newStartDate).add(14, "days").toDate();
+            form.end_date = moment(newStartDate).add(30, "days").toDate();
         }
     },
     { immediate: true }
@@ -701,7 +701,7 @@ onMounted(() => {
             props.agreement.start_date,
             "DD/MM/YYYY"
         ).toDate();
-        form.end_date = moment(form.start_date).add(14, "days").toDate();
+        form.end_date = moment(form.start_date).add(30, "days").toDate();
         form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
         form.currency = props.agreement.currency;
