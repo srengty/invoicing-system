@@ -108,16 +108,17 @@
 
                         <!-- Customer Type -->
                         <div>
-                            <label for="category_name_english" class="mb-1 w-1/2 font-semibold">Customer Type:</label>
-                            <Dropdown
-                                v-model="filters.category_name_english"
-                                :options="customerTypeOptions"
-                                placeholder="Select Customer Type"
-                                optionLabel="label"
-                                optionValue="value"
-                                size="small"
-                                class="w-full mr-8"
-                            />
+                          <label for="customer_category_id" class="mb-1 w-1/2 font-semibold">Customer Type:</label>
+                          <Dropdown
+                            v-model="filters.customer_category_id"
+                            :options="customerTypeOptions"
+                            placeholder="Select Customer Type"
+                            optionLabel="label"
+                            optionValue="value"
+                            size="small"
+                            class="w-full mr-8"
+                            showClear
+                          />
                         </div>
 
                         <!-- Income Type -->
@@ -260,7 +261,7 @@ const filters = ref({
   status: null,
   start_date: null,
   end_date: null,
-  category_name_english: null,
+  customer_category_id: null,
   currency: null,
   overdue_status: null,
 });
@@ -293,6 +294,12 @@ const paymentStatusOptions = ref([
   { label: "Pending", value: "Pending" },
 ]);
 
+const customerTypeOptions = ref([
+  { label: "Individual", value: 1 }, // Assuming 1 is the ID for Individual
+  { label: "Public Organization", value: 2 },
+  { label: "NGO", value: 3 },
+  { label: "Private Company", value: 4 },
+]);
 
 const currencyOptions = ref([
   { label: "KHR", value: "USD" },
@@ -354,6 +361,13 @@ const filteredInvoices = computed(() => {
 
       if (f.overdue_status === "upcoming") {
         if (!(amountDue > 0 && daysDiff < 0)) return false;
+      }
+    }
+
+    if (f.customer_category_id) {
+      const customerCategoryId = invoice.customer?.customer_category_id;
+      if (!customerCategoryId || customerCategoryId != f.customer_category_id) {
+        return false;
       }
     }
 

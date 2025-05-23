@@ -344,7 +344,7 @@ class InvoiceController extends Controller
     public function index(Request $request)
     {
         // Initialize the query builder for the invoices
-        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments');
+        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments') ->where('status', 'Approved');;
 
         // Apply pagination after all filters
         $invoices = $query->orderBy('created_at', 'desc')->paginate(); 
@@ -362,7 +362,7 @@ class InvoiceController extends Controller
     public function list(Request $request)
     {
         // Initialize the query builder for the invoices
-        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments');
+        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments', 'paymentSchedules');
 
         // Apply pagination after all filters
         $invoices = $query->orderBy('created_at', 'desc')->paginate();
@@ -380,10 +380,8 @@ class InvoiceController extends Controller
     public function show($invoice_no)
     {
         // Load the invoice with customer
-        $invoice = Invoice::with('customer','payment_schedules')->where('id', $invoice_no)->firstOrFail();
-
-       dd($invoice->invoice_payment_schedules);
-
+        $invoice = Invoice::with(['customer','paymentSchedules'])->where('id', $invoice_no)->firstOrFail();
+        
         if ($invoice->status === 'Approved') {
             abort(403, 'This invoice has been paid and can no longer be modified.');
         }
@@ -407,6 +405,14 @@ class InvoiceController extends Controller
         )
         ->get();
 
+        $paymentSchedules = $invoice->paymentSchedules->map(function ($schedule) {
+            return [
+                'id' => $schedule->id,
+                'amount' => $schedule->amount,
+                'short_description' => $schedule->short_description,
+                // add more fields if needed
+            ];
+        });
 
         return Inertia::render('Invoices/Print', [
             'invoice' => [
@@ -438,91 +444,173 @@ class InvoiceController extends Controller
                 'acceptance_date' => $invoice->acceptance_date
                     ? Carbon::parse($invoice->acceptance_date)->format('Y-m-d')
                     : null,
+                'payment_schedules' => $paymentSchedules,
             ],
         ]);
     }
 
-    // Show the edit page for an existing invoice
     public function edit($id)
     {
-        $invoice = Invoice::with('customer', 'products')->findOrFail($id);
-
-        $agreements = Agreement::all();
-        $quotations = Quotation::all();
-        $customers = Customer::all(); // Pass the full Customer model instances
-        $products = Product::all(); // Pass the full Product model instances
+        $invoice = Invoice::with(['customer', 'products', 'receipts'])->findOrFail($id);
 
         return Inertia::render('Invoices/Edit', [
             'invoice' => $invoice,
-            'agreements' => $agreements,
-            'quotations' => $quotations,
-            'customers' => $customers, // Pass the full models to the form
-            'products' => $products, // Pass the full Product models
+            'agreements' => Agreement::all(),
+            'quotations' => Quotation::all(),
+            'customers' => Customer::all(),
+            'products' => Product::all(),
+            'receipts' => Receipt::all(),
         ]);
     }
 
-    // Update an existing invoice
+
+    // Show the edit page for an existing invoice
     public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'invoice_no' => 'required|unique:invoices,invoice_no,' . $id,
-            'agreement_no' => 'required',
-            'quotation_no' => 'required',
-            'customer_id' => 'required',
-            'address' => 'required',
-            'phone' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date',
-            'products' => 'nullable|array', // Make products optional
-            'products.*.id' => 'required|exists:products,id', // Validate product IDs
-            'products.*.quantity' => 'required|numeric|min:1', // Validate product quantities
+        $data = $request->validate([
+            'agreement_no' => 'nullable|integer|exists:agreements,agreement_no',
+            'quotation_no' => 'nullable|integer|exists:quotations,quotation_no',
+            'customer_id' => 'required|exists:customers,id',
+            'address' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:255',
+            'terms' => 'nullable|string|max:255',
+            'total_usd' => 'nullable|numeric',
+            'exchange_rate' => 'nullable|numeric|min:0',
+            'payment_schedules' => 'nullable|array',
+            'payment_schedules.*.id' => 'nullable|integer|exists:payment_schedules,id',
+            'currency' => 'nullable|string|in:KHR,USD',
+            'start_date' => 'nullable|string',
+            'end_date' => 'nullable|string',
+            'paid_amount' => 'nullable|numeric|min:0',
+            'products' => 'required|array|min:1',
+            'products.*.id' => 'required|integer|exists:products,id',
+            'products.*.quantity' => 'required|numeric|min:1',
+            'products.*.price' => 'required|numeric|min:0',
+            'products.*.include_catalog' => 'nullable|boolean',
+            'products.*.pdf_url' => 'nullable|string',
+            'receipt_no' => 'nullable|integer',
         ]);
 
-        $invoice = Invoice::findOrFail($id);
+        try {
+            $invoice = Invoice::findOrFail($id);
 
-        // Format start_date and end_date using Carbon
-        $startDate = Carbon::parse($validated['start_date'])->toDateTimeString();
-        $endDate = Carbon::parse($validated['end_date'])->toDateTimeString();
+            $startDate = $this->parseDate($data['start_date'] ?? null, now());
+            $endDate = $this->parseDate($data['end_date'] ?? null, now()->addDays(14));
 
-        // Calculate the new grand total based on the selected products
-        $grand_total = 0;
-        foreach ($validated['products'] as $product) {
-            $prod = Product::find($product['id']);
-            $grand_total += $prod->price * $product['quantity'];
-        }
+            $grand_total = 0;
 
-        // Assuming tax is still 10%
-        $tax = 0.00 * $grand_total;
-        $grand_total += $tax;  // Add tax to grand total
-
-        // Update the invoice with the validated data
-        $invoice->update([
-            'invoice_no' => $validated['invoice_no'],
-            'agreement_no' => $validated['agreement_no'],
-            'quotation_no' => $validated['quotation_no'],
-            'customer_id' => $validated['customer_id'],
-            'address' => $validated['address'],
-            'phone' => $validated['phone'],
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'grand_total' => $grand_total,
-            'products.*.id' => 'required|exists:products,id',
-            'products.*.quantity' => 'required|numeric|min:1', // Store only the grand total
-        ]);
-
-        // Handle updating the products associated with this invoice
-        if (isset($validated['products'])) {
-            // First, detach all current products
-            $invoice->products()->detach();
-
-            // Attach the new products with their quantities
-            foreach ($validated['products'] as $product) {
-                $invoice->products()->attach($product['id'], ['quantity' => $product['quantity']]);
+            // Calculate grand_total
+            if (!empty($data['payment_schedules'])) {
+                $grand_total = collect($data['payment_schedules'])->sum(fn ($s) => PaymentSchedule::find($s['id'])?->amount ?? 0);
+            } elseif (!empty($data['quotation_no'])) {
+                $quotation = Quotation::where('quotation_no', $data['quotation_no'])->first();
+                $grand_total = $quotation?->total ?? 0;
+            } else {
+                foreach ($data['products'] as $product) {
+                    $productData = Product::find($product['id']);
+                    if ($productData && $productData->status === 'approved') {
+                        $grand_total += $product['price'] * $product['quantity'];
+                    }
+                }
             }
-        }
 
-        return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully!');
+            // Handle receipt logic
+            $receipt = !empty($data['receipt_no'])
+                ? Receipt::where('receipt_no', $data['receipt_no'])->first()
+                : null;
+
+            $paid_amount = 0;
+            $installment_paid = 0;
+
+            if ($receipt) {
+                $paid_amount = $receipt->paid_amount;
+
+                if ($receipt->installment_paid > 0) {
+                    $paid_amount = min($receipt->installment_paid, $grand_total);
+                    $installment_paid = max($receipt->installment_paid - $paid_amount, 0);
+                } elseif ($paid_amount > $grand_total) {
+                    $installment_paid = $paid_amount - $grand_total;
+                    $paid_amount = $grand_total;
+                }
+            }
+
+            if (empty($data['receipt_no'])) {
+                $paid_amount = 0;
+                $installment_paid = 0;
+            }
+
+            $exchangeRate = $data['exchange_rate'] ?? null;
+            $total_usd = $exchangeRate && $exchangeRate > 0
+                ? $grand_total / $exchangeRate
+                : $data['total_usd'] ?? null;
+
+            // Update invoice
+            $invoice->update([
+                'quotation_no' => $data['quotation_no'] ?? null,
+                'agreement_no' => $data['agreement_no'] ?? null,
+                'customer_id' => $data['customer_id'],
+                'address' => $data['address'] ?? null,
+                'phone' => $data['phone'] ?? null,
+                'terms' => $data['terms'] ?? null,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'grand_total' => $grand_total,
+                'total_usd' => $total_usd,
+                'exchange_rate' => $exchangeRate,
+                'currency' => $data['currency'] ?? 'KHR',
+                'status' => $data['status'] ?? 'Pending',
+                'paid_amount' => $paid_amount,
+                'installment_paid' => $installment_paid,
+                'receipt_no' => $data['receipt_no'] ?? null,
+            ]);
+
+            // Sync products
+            $pivotData = [];
+            foreach ($data['products'] as $product) {
+                $pivotData[$product['id']] = [
+                    'quantity' => $product['quantity'],
+                    'price' => $product['price'],
+                    'include_catalog' => $product['include_catalog'] ?? false,
+                    'pdf_url' => $product['pdf_url'] ?? null,
+                ];
+            }
+            $invoice->products()->sync($pivotData);
+
+            // Sync payment schedules
+            $invoice->paymentSchedules()->detach();
+            if (!empty($data['payment_schedules'])) {
+                $ids = collect($data['payment_schedules'])->pluck('id')->toArray();
+                $invoice->paymentSchedules()->attach($ids);
+
+                if ($receipt) {
+                    PaymentSchedule::whereIn('id', $ids)->update(['status' => 'Paid']);
+                }
+            }
+
+            // Update receipt
+            if ($receipt && $invoice->invoice_no) {
+                $receipt->update([
+                    'invoice_no' => $invoice->invoice_no,
+                    'installment_paid' => $installment_paid,
+                ]);
+            }
+
+            return redirect()->route('invoices.list')->with('success', 'Invoice updated successfully!');
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', 'An error occurred: ' . $e->getMessage());
+        }
     }
+
+/**
+ * Parse a date from `d/m/Y` or fallback.
+ */
+    private function parseDate(?string $date, Carbon $fallback): string
+    {
+        return $date && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $date)
+            ? Carbon::createFromFormat('d/m/Y', $date)->format('Y-m-d')
+            : $fallback->format('Y-m-d');
+    }
+
 
     // Delete an invoice
     public function destroy($id)

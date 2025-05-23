@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('invoice_product', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('invoice_id')->unique()->nullable();
+            $table->unsignedBigInteger('invoice_id')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->integer('quantity');
             $table->json('product_unit_prices')->nullable();

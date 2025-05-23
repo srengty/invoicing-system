@@ -41,72 +41,31 @@
                     class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm"
                 >
                     <div>
-                        <label for="quotation_no" class="block font-medium"
-                            >Quotation No</label
-                        >
+                        <label for="quotation_no" class="block font-medium">Quotation No</label>
                         <Select
-                        v-model="form.quotation_no"
-                        :options="availableQuotations"
-                        optionLabel="quotation_no"
-                        optionValue="quotation_no"
-                        placeholder="Select Quotation"
-                        class="w-full"
-                        />
-                    </div>
-                    <div>
-                        <label for="agreement_no" class="block font-medium"
-                            >Agreement No</label
-                        >
-                        <Select
-                            v-model="form.agreement_no"
-                            :options="
-                                form.agreement_no || !form.quotation_no
-                                    ? agreements
-                                    : agreements.filter(
-                                          (a) => a.status === 'Open'
-                                      )
-                            "
-                            optionLabel="agreement_no"
-                            optionValue="agreement_no"
-                            placeholder="Select Agreement"
+                            v-model="form.quotation_no"
+                            :options="availableQuotations"
+                            optionLabel="quotation_no"
+                            optionValue="quotation_no"
+                            placeholder="Select Quotation"
                             class="w-full"
                         />
                     </div>
-                    <div>
-                        <label for="payment_schedule" class="block font-medium"
-                            >Payment Schedule</label
-                        >
-                        <MultiSelect
-                            v-model="form.payment_schedules"
-                            :options="formattedPaymentSchedules"
-                            optionLabel="label"
-                            optionValue="id"
-                            placeholder="Select Payment Schedule"
-                            class="w-full"
-                        />
-                    </div>
+
                     <div class="">
-                        <div class="">
-                            <!-- Display label as 'Receipt No' but bind the id to the model -->
-                            <label for="receipt_no" class="block font-medium"
-                                >Receipt No (for deposit)</label
-                            >
-                            <div class="flex w-full gap-3">
-                                <Select
-                                v-model="form.receipt_no"
-                                :options="availableReceipts"
-                                optionLabel="receipt_no"
-                                optionValue="receipt_no"
-                                placeholder="Select Receipt"
-                                class="w-full"
-                                />
-                            </div>
-                        </div>
+                        <label for="receipt_no" class="block font-medium">Receipt No (for deposit)</label>
+                        <Select
+                            v-model="form.receipt_no"
+                            :options="availableReceipts"
+                            optionLabel="receipt_no"
+                            optionValue="receipt_no"
+                            placeholder="Select Receipt"
+                            class="w-full"
+                        />
                     </div>
+
                     <div>
-                        <label for="customer_id" class="block font-medium"
-                            >Customer</label
-                        >
+                        <label for="customer_id" class="block font-medium">Customer</label>
                         <Select
                             v-model="form.customer_id"
                             :options="customers"
@@ -114,51 +73,37 @@
                             optionValue="id"
                             placeholder="Select Customer"
                             class="w-full"
+                            :disabled="isReadOnly" 
                             required
                         />
                     </div>
+
                     <div>
-                        <label for="status" class="block font-medium"
-                            >Status</label
-                        >
-                        <Select
-                            v-model="form.status"
-                            :options="StatusOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            placeholder="Select Status"
-                            class="w-full"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label for="address" class="block font-medium"
-                            >Address</label
-                        >
+                        <label for="address" class="block font-medium">Address</label>
                         <InputText
                             id="address"
                             v-model="form.address"
                             class="w-full"
                             placeholder="Enter address"
                             size="small"
+                            :readonly="isReadOnly"
                         />
                     </div>
+
                     <div>
-                        <label for="phone" class="block font-medium"
-                            >Phone</label
-                        >
+                        <label for="phone" class="block font-medium">Phone</label>
                         <InputText
                             id="phone"
                             v-model="form.phone"
                             class="w-full"
                             placeholder="Enter phone number"
                             size="small"
+                            :readonly="isReadOnly"
                         />
                     </div>
+
                     <div>
-                        <label for="start_date" class="block font-medium"
-                            >Date</label
-                        >
+                        <label for="start_date" class="block font-medium">Date</label>
                         <DatePicker
                             id="start_date"
                             v-model="form.start_date"
@@ -166,13 +111,12 @@
                             placeholder="Select date"
                             size="small"
                             dateFormat="dd/mm/yy"
+                            :readonly="isReadOnly"
                         />
                     </div>
 
                     <div>
-                        <label for="end_date" class="block font-medium"
-                            >Due Date</label
-                        >
+                        <label for="end_date" class="block font-medium">Due Date</label>
                         <DatePicker
                             id="end_date"
                             v-model="form.end_date"
@@ -180,6 +124,7 @@
                             placeholder="Select due date"
                             size="small"
                             dateFormat="dd/mm/yy"
+                            :readonly="isReadOnly"
                         />
                     </div>
                 </div>
@@ -204,6 +149,7 @@
                                 v-model="slotProps.data.qty"
                                 @input="updateProductSubtotal(slotProps.data)"
                                 class="w-full"
+                                :readonly="isReadOnly"
                             />
                         </template>
                     </Column>
@@ -214,6 +160,7 @@
                                 v-model="slotProps.data.unitPrice"
                                 @input="updateProductSubtotal(slotProps.data)"
                                 class="w-full"
+                                :readonly="isReadOnly"
                             />
                         </template>
                     </Column>
@@ -225,6 +172,7 @@
                                 icon="pi pi-times"
                                 class="p-button-text p-button-danger"
                                 @click="removeProduct(slotProps.data.id)"
+                                :disabled="isReadOnly"
                             />
                         </template>
                     </Column>
@@ -234,20 +182,11 @@
                                 <Checkbox
                                     v-model="slotProps.data.include_catalog"
                                     :binary="true"
-                                    @change="
-                                        () => {
-                                            checkCatalogAvailability(
-                                                slotProps.data
-                                            );
-                                        }
-                                    "
+                                    @change="() => { checkCatalogAvailability(slotProps.data); }"
+                                    :readonly="isReadOnly"
                                 />
                                 <span>
-                                    {{
-                                        slotProps.data.include_catalog
-                                            ? "Included"
-                                            : "Include"
-                                    }}
+                                    {{ slotProps.data.include_catalog ? "Included" : "Include" }}
                                 </span>
                             </div>
                         </template>
@@ -255,9 +194,7 @@
                 </DataTable>
 
                 <div class="pl-2 pr-6">
-                    <!-- Installment Paid (calculated from selected payment schedules) -->
-
-                    <div
+                    <!-- <div
                         v-if="form.installment_paid > 0"
                         class="total-container mt-4 flex justify-between items-center"
                     >
@@ -265,7 +202,7 @@
                         <p class="font-bold text-right">
                             ៛{{ formatCurrency(form.installment_paid) }}
                         </p>
-                    </div>
+                    </div> -->
 
                     <!-- Total KHR from all products -->
 
@@ -283,14 +220,28 @@
                     <div
                         class="total-container mt-4 flex justify-between items-center"
                     >
-                        <p class="font-bold">Final Total KHR:</p>
-                        <input
-                            type="number"
-                            v-model.number="form.paid_amount"
-                            placeholder="Enter Amount"
-                            step="0.01"
-                            class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
-                        />
+                        <p class="font-bold">Deposit Total:</p>
+                        <p class="font-bold text-right">
+                            ៛{{ formatCurrency(form.deposit_amount) }}
+                        </p>
+                    </div>
+
+                    <!-- <div
+                        class="total-container mt-4 flex justify-between items-center"
+                    >
+                        <p class="font-bold">Remaining deposit:</p>
+                        <p class="font-bold text-right">
+                            ៛{{ formatCurrency(form.installment_paid) }}
+                        </p>
+                    </div> -->
+
+                    <div
+                        class="total-container mt-4 flex justify-between items-center"
+                    >
+                        <p class="font-bold">Final Total:</p>
+                        <p class="font-bold text-right">
+                            ៛{{ formatCurrency(form.installment_paid) }}
+                        </p>
                     </div>
 
                     <!-- Final Total USD (editable) -->
@@ -602,11 +553,9 @@ const items = computed(() => [
     },
 ]);
 
-const StatusOptions = [
-    { label: "Pending", value: "Pending" },
-    { label: "Approved", value: "Approved" },
-    { label: "Revise", value: "Revise" },
-];
+const isReadOnly = computed(() => {
+    return form.quotation_no ? true : false;
+});
 
 // Product List and Dialog Management
 const productsList = ref([]);
@@ -684,32 +633,6 @@ function getOrdinalSuffix(number) {
         suffixes[(remainder - 20) % 10] || suffixes[remainder] || suffixes[0]
     );
 }
-
-const formattedPaymentSchedules = computed(() => {
-    const fullList = filteredPaymentSchedules.value;
-
-    return fullList
-        .filter((ps) => ps.status !== "PAID") // Only show unpaid
-        .map((ps) => {
-            // Find this schedule's position in the full list of the same agreement
-            const sameAgreementSchedules = fullList.filter(
-                (s) => s.agreement_no === ps.agreement_no
-            );
-
-            const rankIndex = sameAgreementSchedules.findIndex(
-                (s) => s.id === ps.id
-            );
-            const rankID = rankIndex + 1;
-            const suffix = getOrdinalSuffix(rankID);
-            const isDisabled = rankID === 1 && ps.is_created;
-
-            return {
-                id: ps.id,
-                label: `${ps.agreement_no} (${rankID}${suffix} Payment)`,
-                disabled: isDisabled,
-            };
-        });
-});
 
 const calculateTotalKHR = computed(() => {
     return productsList.value.reduce(
@@ -1047,81 +970,6 @@ watch(
     { deep: true }
 );
 
-watch(
-    () => form.agreement_no,
-    async (newAgreementNo) => {
-        if (newAgreementNo) {
-            const selectedAgreement = agreements.find(
-                (a) => a.agreement_no === newAgreementNo
-            );
-
-            if (selectedAgreement) {
-                console.log("Selected Agreement:", selectedAgreement);
-
-                // Set quotation if the agreement is linked to one
-                form.quotation_no = selectedAgreement.quotation_no || "";
-                filteredPaymentSchedules.value = props.paymentSchedules.filter(
-                    (ps) => ps.agreement_no === newAgreementNo // Assuming paymentSchedules have agreement_no field
-                );
-
-                // Auto-fill address only if empty
-                if (!form.address) {
-                    form.address = selectedAgreement.address || "";
-                }
-
-                // Auto-fill start and end dates with correct format (yyyy-mm-dd)
-                form.start_date = selectedAgreement.start_date
-                    ? selectedAgreement.start_date
-                    : "";
-                form.end_date = selectedAgreement.end_date
-                    ? selectedAgreement.end_date
-                    : "";
-
-                // Auto-fill payment schedule if available
-                if (selectedAgreement) {
-                    // Filter paymentSchedules based on the selected agreement
-                    filteredPaymentSchedules.value = props.paymentSchedules
-                        .filter((ps) => ps.agreement_no === newAgreementNo) // Assuming paymentSchedules have agreement_no field
-                        .sort((a, b) => a.id - b.id); // Sort by ID to determine rankID (1-based)
-                }
-
-                // Calculate instalment paid (sum of all invoice amounts related to this agreement)
-                form.installment_paid = Array.isArray(
-                    selectedAgreement.invoices
-                )
-                    ? selectedAgreement.invoices.reduce(
-                          (sum, invoice) => sum + invoice.amount,
-                          0
-                      )
-                    : 0;
-
-                // Recalculate Grand Total
-                form.grand_total = calculateTotal.value - form.installment_paid;
-
-                console.log(
-                    "Updated Form Data after Agreement Selection:",
-                    form
-                );
-            }
-        } else {
-            console.log("Agreement Deselected - Keeping existing data");
-
-            // Reset payment schedule when agreement is deselected
-            form.payment_schedules = []; // Reset the payment schedule field
-            filteredPaymentSchedules.value = []; // Reset available payment schedules
-
-            // Reset other fields if necessary
-            form.start_date = "";
-            form.end_date = "";
-            form.installment_paid = 0;
-            filteredPaymentSchedules.value = [];
-
-            console.log("Reset Form Data after Agreement Deselection:", form);
-        }
-    },
-    { deep: true }
-);
-
 const indexTemplate = (rowData, { index }) => {
     return index + 1; // Return the index + 1 for 1-based index display
 };
@@ -1335,32 +1183,39 @@ watch(
       const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
       if (!receipt) return;
 
-      // Check if this receipt was used in a previous invoice
       const usedInInvoice = receipt.invoice_no;
 
-      if (usedInInvoice && receipt.installment_paid > 0) {
-        // 🔁 Reuse receipt with remaining installment
-        form.customer_id = receipt.customer_id;
+      // Determine total price based on whether a quotation is selected
+      let totalPrice;
+      if (form.quotation_no) {
+        const selectedQuotation = quotations.find(
+          (q) => q.quotation_no === form.quotation_no
+        );
+        totalPrice = selectedQuotation?.total || 0;
+      } else {
+        totalPrice = calculateTotalKHR.value; // Manual product total
+      }
 
+      // Case 1: Receipt reused with remaining installment
+      if (usedInInvoice && receipt.installment_paid > 0) {
+        form.customer_id = receipt.customer_id;
         const customer = customers.find((c) => c.id === receipt.customer_id);
         form.address = customer?.address || "";
         form.phone = customer?.phone || customer?.phone_number || "";
+        form.deposit_amount = receipt.paid_amount;
 
-        const availableInstallment = receipt.installment_paid;
-
-        // ✅ Use installment_paid instead of paid_amount
-        form.paid_amount = availableInstallment;
-        form.installment_paid = 0;
-
-        // Optional: Update grand total if quotation is selected
-        let totalPrice = calculateTotalKHR.value;
-        if (form.quotation_no) {
-          const selectedQuotation = quotations.find(
-            (q) => q.quotation_no === form.quotation_no
-          );
-          if (selectedQuotation) {
-            totalPrice = selectedQuotation.total || 0;
-          }
+        if (receipt.paid_amount > totalPrice) {
+          form.paid_amount = totalPrice;
+          form.installment_paid = 0;
+          receipt.installment_paid = receipt.paid_amount - totalPrice;
+        } else if (receipt.paid_amount < totalPrice) {
+          form.paid_amount = receipt.paid_amount;
+          form.installment_paid = totalPrice - receipt.paid_amount;
+          receipt.installment_paid = 0;
+        } else {
+          form.paid_amount = receipt.paid_amount;
+          form.installment_paid = 0;
+          receipt.installment_paid = 0;
         }
 
         form.grand_total = totalPrice;
@@ -1368,11 +1223,13 @@ watch(
         toast.add({
           severity: "info",
           summary: "Installment Applied",
-          detail: `Used ${formatCurrency(availableInstallment)} from previous receipt installment`,
+          detail: `Used ${formatCurrency(form.paid_amount)} from previous receipt`,
           life: 3000,
         });
-      } else if (usedInInvoice && receipt.installment_paid === 0) {
-        // ❌ Fully consumed receipt
+      }
+
+      // Case 2: Receipt has no remaining installment
+      else if (usedInInvoice && receipt.installment_paid === 0) {
         toast.add({
           severity: "warn",
           summary: "Receipt Already Used",
@@ -1381,33 +1238,31 @@ watch(
         });
         form.receipt_no = "";
         return;
-      } else {
-        // 🆕 Fresh receipt
-        form.customer_id = receipt.customer_id;
+      }
 
+      // Case 3: New receipt
+      else {
+        form.customer_id = receipt.customer_id;
         const customer = customers.find((c) => c.id === receipt.customer_id);
         form.address = customer?.address || "";
         form.phone = customer?.phone || customer?.phone_number || "";
+        form.deposit_amount = receipt.paid_amount;
 
-        let totalPrice = calculateTotalKHR.value;
-        if (form.quotation_no) {
-          const selectedQuotation = quotations.find(
-            (q) => q.quotation_no === form.quotation_no
-          );
-          if (selectedQuotation) {
-            totalPrice = selectedQuotation.total || 0;
-          }
+        if (receipt.paid_amount > totalPrice) {
+          form.paid_amount = totalPrice;
+          form.installment_paid = 0;
+          receipt.installment_paid = receipt.paid_amount - totalPrice;
+        } else if (receipt.paid_amount < totalPrice) {
+          form.paid_amount = receipt.paid_amount;
+          form.installment_paid = totalPrice - receipt.paid_amount;
+          receipt.installment_paid = 0;
+        } else {
+          form.paid_amount = receipt.paid_amount;
+          form.installment_paid = 0;
+          receipt.installment_paid = 0;
         }
 
         form.grand_total = totalPrice;
-        form.paid_amount = receipt.paid_amount;
-
-        if (receipt.paid_amount > totalPrice) {
-          form.installment_paid = receipt.paid_amount - totalPrice;
-          form.paid_amount = totalPrice;
-        } else {
-          form.installment_paid = 0;
-        }
 
         if (receipt.payment_schedule_ids) {
           form.payment_schedules = receipt.payment_schedule_ids;
@@ -1428,7 +1283,6 @@ watch(
   },
   { immediate: true }
 );
-
 
 
 </script>

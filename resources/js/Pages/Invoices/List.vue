@@ -188,6 +188,16 @@
                                 outlined
                             />
                             <Button
+                                v-if="canEditInvoice(data)"
+                                icon="pi pi-pencil"
+                                aria-label="Edit"
+                                severity="warning"
+                                class="custom-button"
+                                @click="editInvoice(data)"
+                                size="small"
+                                outlined
+                            />
+                            <Button
                                 icon="pi pi-print"
                                 aria-label="Print"
                                 @click="printInvoice(data.id)"
@@ -198,51 +208,6 @@
                     </template>
                 </Column>
             </DataTable>
-
-            <!-- <Dialog
-                v-model:visible="isStatusDialogVisible"
-                header="Change Invoice Status"
-                :modal="true"
-                class="w-96"
-            >
-                <div class="p-4">
-                    <p class="text-center text-base mb-3">
-                        Do you want to approve or reject this invoice?
-                    </p>
-
-                    <textarea
-                        v-model="statusForm.comment"
-                        placeholder="Enter your comment..."
-                        class="w-full p-2 border rounded"
-                        :class="{ 'border-red-500': statusForm.errors.comment }"
-                    ></textarea>
-                    <p
-                        v-if="statusForm.errors.comment"
-                        class="text-red-500 text-xs mt-1"
-                    >
-                        {{ statusForm.errors.comment }}
-                    </p>
-
-                    <div class="flex justify-center gap-4 mt-4">
-                        <Button
-                            label="Revise"
-                            icon="pi pi-times"
-                            class="p-button-danger"
-                            size="small"
-                            @click="changeStatus('revise')"
-                            :disabled="statusForm.processing"
-                        />
-                        <Button
-                            label="Approve"
-                            icon="pi pi-check"
-                            class="p-button-success"
-                            size="small"
-                            @click="changeStatus('approved')"
-                            :disabled="statusForm.processing"
-                        />
-                    </div>
-                </div>
-            </Dialog> -->
 
             <Dialog
                 v-model:visible="isCommentDialogVisible"
@@ -375,42 +340,30 @@
                     <!-- Products Table -->
                     <span class="font-bold block mb-2 text-center">Items</span>
                     <DataTable
-                        :value="selectedInvoice.products"
-                        responsiveLayout="scroll"
-                        class="text-sm"
+                    v-if="selectedInvoice.payment_schedules?.length"
+                    :value="selectedInvoice.payment_schedules"
+                    responsiveLayout="scroll"
+                    class="text-sm mb-4"
                     >
-                        <Column field="name" header="Item" />
-                        <Column field="pivot.quantity" header="Qty" />
-                        <Column header="Unit Price">
-                            <template #body="{ data }">
-                                {{ formatCurrency(data.pivot.price) }}
-                            </template>
-                        </Column>
+                    <Column field="id" header="Payment Schedule ID" />
+                    <Column field="amount" header="Amount" />
+                    <Column field="short_description" header="Description" />
                     </DataTable>
 
-                    <!-- ✅ Payment Schedule Table -->
-                    <div v-if="selectedScheduleArray.length > 0" class="mb-6 p-6">
-                        <span class="font-bold block mb-2 text-center">Payment Schedule</span>
-                        <DataTable
-                            :value="selectedScheduleArray"
-                            class="mb-6 p-datatable-sm p-datatable-gridlines"
-                            responsiveLayout="scroll"
-                        >
-                            <Column field="id" header="ID" />
-                            <Column field="due_date" header="Due Date" />
-                            <Column field="amount" header="Amount">
-                                <template #body="{ data }">
-                                    ៛{{ formatCurrency(data.amount) }}
-                                </template>
-                            </Column>
-                            <Column field="percentage" header="%" />
-                            <Column field="short_description" header="Description" />
-                            <Column field="status" header="Status" />
-                        </DataTable>
-                    </div>
-                    <div v-else>
-                        <p>No payment schedule data available</p>
-                    </div>
+                    <DataTable
+                    v-else
+                    :value="selectedInvoice.products"
+                    responsiveLayout="scroll"
+                    class="text-sm"
+                    >
+                    <Column field="name" header="Item" />
+                    <Column field="pivot.quantity" header="Qty" />
+                    <Column header="Unit Price">
+                        <template #body="{ data }">
+                        {{ formatCurrency(data.pivot.price) }}
+                        </template>
+                    </Column>
+                    </DataTable>
 
                     <!-- Totals -->
                     <div class="text-left">
@@ -493,6 +446,7 @@ import Customers from "@/Components/Customers.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import Breadcrumb from "primevue/breadcrumb";
 import { usePage } from "@inertiajs/vue3";
+import { watch } from "vue";
 
 // Props
 const props = defineProps({
@@ -523,19 +477,12 @@ const isViewDialogVisible = ref(false);
 const isFeedbackDialogVisible = ref(false);
 const comment = ref("");
 const viewInvoice = (invoice) => {
-    // clear any old comment
     statusForm.reset();
-    // load the invoice
     selectedInvoice.value = invoice;
+    console.log('Selected Invoice:', invoice);
+    console.log('Payment Schedules:', invoice.paymentSchedules);
     isViewDialogVisible.value = true;
 };
-
-const selectedScheduleArray = computed(() => {
-    // Check both possible property names
-    return selectedInvoice.value?.payment_schedules || 
-           selectedInvoice.value?.paymentSchedules || 
-           [];
-});
 
 const formatCurrency = (value) => {
     return new Intl.NumberFormat("en-US", {
@@ -584,6 +531,15 @@ const toggleStatus = (invoice) => {
     // Reset form fields before showing the dialog
     statusForm.reset();
 };
+
+const canEditInvoice = (invoice) => {
+  return invoice.status !== 'approved' || invoice.status == 'revise';
+};
+
+const editInvoice = (invoice) => {
+  Inertia.visit(`/invoices/${invoice.id}/edit`);
+};
+
 
 const changeStatus = (status) => {
     if (!selectedInvoice.value) return;

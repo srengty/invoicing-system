@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoice_payment_schedule', function (Blueprint $table) {
+        Schema::create('invoice_receipt', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('invoice_id');
             $table->foreign('invoice_id')->references('id')->on('invoices')->onDelete('cascade');
-            $table->foreignId('payment_schedule_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('receipt_no');
+            $table->foreign('receipt_no')->references('receipt_no')->on('receipts')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('invoice_payment_schedule');
+        Schema::dropIfExists('invoice_receipt');
     }
 };

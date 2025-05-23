@@ -121,6 +121,7 @@
                             @click="
                                 doEditPaymentSchedule({ ...slotProps.data })
                             "
+                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
                         />
                         <Button
                             icon="pi pi-trash"
@@ -129,6 +130,7 @@
                             @click="
                                 doDeletePaymentSchedule({ ...slotProps.data })
                             "
+                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
                         />
                         <Button
                             icon="pi pi-file-pdf"

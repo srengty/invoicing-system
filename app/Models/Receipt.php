@@ -34,6 +34,11 @@ class Receipt extends Model
         return $this->belongsTo(Invoice::class, 'invoice_no', 'invoice_no');
     }
 
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'invoice_receipt', 'receipt_no', 'invoice_id', 'receipt_no', 'id');
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -46,7 +51,7 @@ class Receipt extends Model
 
     public function paymentSchedules()
     {
-        return $this->belongsToMany(PaymentSchedule::class, 'payment_schedule_receipt', 'receipt_receipt_no', 'payment_schedule_id', 'receipt_no', 'id');
+        return $this->belongsToMany(PaymentSchedule::class, 'payment_schedule_receipt', 'receipt_receipt_no', 'payment_schedule_id', 'receipt_no', 'id')->withPivot('paid_amount');;
     }
     
 

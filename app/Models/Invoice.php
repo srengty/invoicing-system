@@ -100,6 +100,7 @@ class Invoice extends Model
     public function paymentSchedules()
     {
         return $this->belongsToMany(PaymentSchedule::class, 'invoice_payment_schedule');
+        
     }
 
 
