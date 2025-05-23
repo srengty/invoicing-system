@@ -23,7 +23,7 @@
             v-if="hasDueSoonOrPastDuePayments"
             class="mb-4 p-4 border-round"
             :class="
-                hasPastDuePayments
+                alterHasPastDuePayments
                     ? 'bg-red-100 border-red-300 border-1'
                     : 'bg-orange-100 border-orange-300 border-1'
             "
@@ -32,10 +32,12 @@
                 <i
                     class="pi pi-exclamation-triangle text-xl"
                     :class="
-                        hasPastDuePayments ? 'text-red-500' : 'text-orange-500'
+                        alterHasPastDuePayments
+                            ? 'text-red-500'
+                            : 'text-orange-500'
                     "
                 ></i>
-                <span v-if="hasPastDuePayments" class="text-red-800">
+                <span v-if="alterHasPastDuePayments" class="text-red-800">
                     You have {{ pastDuePaymentsCount }} past due payment(s).
                     Please generate invoices immediately!
                 </span>
@@ -160,7 +162,7 @@
                         </template>
                     </Column>
                     <!-- column for customer name -->
-                     <Column
+                    <Column
                         v-if="col.field === 'customer.name'"
                         :field="col.field"
                         :header="col.header"
@@ -168,28 +170,48 @@
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
-                            <div class="flex items-center">
-                                <span
-                                    :class="{
-                                        'text-red-500 font-bold':
+                            <div class="flex flex-col">
+                                <div class="flex items-center">
+                                    <span
+                                        :class="{
+                                            'text-red-500 font-bold':
+                                                hasDueSoonOrPastDuePayments(
+                                                    slotProps.data
+                                                ),
+                                        }"
+                                    >
+                                        {{ slotProps.data.customer?.name }}
+                                    </span>
+                                    <i
+                                        v-if="
                                             hasDueSoonOrPastDuePayments(
                                                 slotProps.data
-                                            ),
-                                    }"
+                                            )
+                                        "
+                                        class="pi pi-exclamation-circle text-red-500 ml-1"
+                                        v-tooltip.top="
+                                            getPaymentStatusTooltip(
+                                                slotProps.data
+                                            )
+                                        "
+                                    ></i>
+                                </div>
+                                <!-- Show days until due for DUE SOON payments -->
+                                <div
+                                    v-if="hasDueSoonPayments(slotProps.data)"
+                                    class="text-xs text-orange-500 mt-1"
                                 >
-                                    {{ slotProps.data.customer?.name }}
-                                </span>
-                                <i
-                                    v-if="
-                                        hasDueSoonOrPastDuePayments(
-                                            slotProps.data
-                                        )
-                                    "
-                                    class="pi pi-exclamation-circle text-red-500 ml-1"
-                                    v-tooltip.top="
-                                        getPaymentStatusTooltip(slotProps.data)
-                                    "
-                                ></i>
+                                    Due in
+                                    {{ getNearestDueDays(slotProps.data) }} days
+                                </div>
+                                <!-- Show overdue days for PAST DUE payments -->
+                                <div
+                                    v-if="hasPastDuePayments(slotProps.data)"
+                                    class="text-xs text-red-500 mt-1"
+                                >
+                                    Overdue by
+                                    {{ getOverdueDays(slotProps.data) }} days
+                                </div>
                             </div>
                         </template>
                     </Column>
@@ -203,20 +225,27 @@
                         style="width: 5%; font-size: 14px"
                     >
                         <template #body="slotProps">
-                            <Tag
-                                :value="getStatusLabel(slotProps.data.status)"
-                                :severity="
-                                    getStatusSeverity(slotProps.data.status)
-                                "
-                                style="text-transform: uppercase"
-                            />
-                            <span
-                                v-if="isExpiringSoon(slotProps.data)"
-                                class="ml-2 text-xs text-yellow-600"
-                            >
-                                (Expires in
-                                {{ daysUntilExpiration(slotProps.data) }} days)
-                            </span>
+                            <div class="flex flex-col">
+                                <Tag
+                                    :value="
+                                        getStatusLabel(slotProps.data.status)
+                                    "
+                                    :severity="
+                                        getStatusSeverity(slotProps.data.status)
+                                    "
+                                    style="text-transform: uppercase"
+                                />
+                                <span
+                                    v-if="isExpiringSoon(slotProps.data)"
+                                    class="ml-2 text-xs text-yellow-600"
+                                >
+                                    (Expires in
+                                    {{
+                                        daysUntilExpiration(slotProps.data)
+                                    }}
+                                    days)
+                                </span>
+                            </div>
                         </template>
                     </Column>
                     <!-- column for Total Amount -->
@@ -911,6 +940,7 @@ import {
     ProgressSpinner,
     Card,
     Calendar,
+    DatePicker,
 } from "primevue";
 
 const toast = useToast();
@@ -1142,11 +1172,11 @@ const viewAgreementDetails = async (agreement) => {
             payment_schedules:
                 response.data.payment_schedules?.map((schedule) => ({
                     ...schedule,
-                    due_date: moment(schedule.due_date, [
-                        "YYYY-MM-DD",
-                        "DD/MM/YYYY",
-                        moment.ISO_8601,
-                    ]).format("YYYY-MM-DD"),
+                    due_date: moment(
+                        schedule.due_date,
+                        ["YYYY-MM-DD", "DD/MM/YYYY"],
+                        true
+                    ).format("YYYY-MM-DD"),
                 })) || [],
         };
 
@@ -1222,7 +1252,11 @@ const rowClass = (agreement) => {
 const isExpiringSoon = (agreement) => {
     if (agreement.status !== "Open") return false;
 
-    const endDate = moment(agreement.end_date, "DD/MM/YYYY");
+    const endDate = moment(
+        agreement.end_date,
+        ["YYYY-MM-DD", "DD/MM/YYYY"],
+        true
+    );
     const today = moment();
     const daysRemaining = endDate.diff(today, "days");
 
@@ -1230,7 +1264,11 @@ const isExpiringSoon = (agreement) => {
 };
 
 const daysUntilExpiration = (agreement) => {
-    const endDate = moment(agreement.end_date, "DD/MM/YYYY");
+    const endDate = moment(
+        agreement.end_date,
+        ["YYYY-MM-DD", "DD/MM/YYYY"],
+        true
+    );
     const today = moment();
     return endDate.diff(today, "days");
 };
@@ -1253,11 +1291,11 @@ const getStatusLabel = (status) => {
     const upperStatus = status?.toUpperCase();
     switch (upperStatus) {
         case "OPEN":
-            return "Open";
+            return "OPEN";
         case "CLOSED":
-            return "Closed";
+            return "CLOSED";
         case "ABNORMAL CLOSED":
-            return "Abnormal Closed";
+            return "ABNORMAL CLOSED";
         default:
             return status || "Unknown";
     }
@@ -1346,7 +1384,7 @@ const getPaymentStatusTooltip = (agreement) => {
     return message;
 };
 
-const hasPastDuePayments = computed(() => {
+const alterHasPastDuePayments = computed(() => {
     return processedAgreements.value.some((agreement) => {
         return (agreement.payment_schedules || []).some(
             (schedule) => getPaymentStatus(schedule) === "PAST DUE"
@@ -1375,6 +1413,60 @@ const dueSoonPaymentsCount = computed(() => {
         );
     }, 0);
 });
+
+const hasDueSoonPayments = (agreement) => {
+    return (agreement.payment_schedules || []).some(
+        (schedule) => getPaymentStatus(schedule) === "DUE SOON"
+    );
+};
+
+const hasPastDuePayments = (agreement) => {
+    return (agreement.payment_schedules || []).some(
+        (schedule) => getPaymentStatus(schedule) === "PAST DUE"
+    );
+};
+
+const getNearestDueDays = (agreement) => {
+    const today = moment();
+    let nearestDays = Infinity;
+
+    (agreement.payment_schedules || []).forEach((schedule) => {
+        if (getPaymentStatus(schedule) === "DUE SOON") {
+            const dueDate = moment(
+                schedule.due_date,
+                ["YYYY-MM-DD", "DD/MM/YYYY"],
+                true
+            );
+            const daysUntilDue = dueDate.diff(today, "days");
+            if (daysUntilDue < nearestDays) {
+                nearestDays = daysUntilDue;
+            }
+        }
+    });
+
+    return nearestDays !== Infinity ? nearestDays : 0;
+};
+
+const getOverdueDays = (agreement) => {
+    const today = moment();
+    let maxOverdue = 0;
+
+    (agreement.payment_schedules || []).forEach((schedule) => {
+        if (getPaymentStatus(schedule) === "PAST DUE") {
+            const dueDate = moment(
+                schedule.due_date,
+                ["YYYY-MM-DD", "DD/MM/YYYY"],
+                true
+            );
+            const overdueDays = today.diff(dueDate, "days");
+            if (overdueDays > maxOverdue) {
+                maxOverdue = overdueDays;
+            }
+        }
+    });
+
+    return maxOverdue;
+};
 </script>
 
 <style scoped>
