@@ -12,14 +12,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Check and update payment statuses daily at 00:01 AM
         $schedule->command('payments:check-statuses')
-                 ->dailyAt('00:01')
-                 ->timezone('Asia/Phnom_Penh') // Adjust to your timezone
-                 ->description('Update payment schedules to PAST DUE when overdue');
-        $schedule->command('agreements:update-statuses')->daily();
-
-        // You can add other scheduled commands here
+                ->dailyAt('00:01')
+                ->timezone('Asia/Phnom_Penh');
     }
 
     /**

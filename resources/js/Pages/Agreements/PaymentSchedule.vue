@@ -1,5 +1,32 @@
 <template>
     <div>
+        <!-- Due Soon/Past Due Payments -->
+        <div
+            v-if="hasDueSoonOrPastDuePayments"
+            class="mb-4 p-4 border-round"
+            :class="
+                hasPastDuePayments
+                    ? 'bg-red-100 border-red-300 border-1'
+                    : 'bg-orange-100 border-orange-300 border-1'
+            "
+        >
+            <div class="flex align-items-center gap-3">
+                <i
+                    class="pi pi-exclamation-triangle text-xl"
+                    :class="
+                        hasPastDuePayments ? 'text-red-500' : 'text-orange-500'
+                    "
+                ></i>
+                <span v-if="hasPastDuePayments" class="text-red-800">
+                    You have {{ pastDuePaymentsCount }} past due payment(s).
+                    Please generate invoices immediately!
+                </span>
+                <span v-else class="text-orange-800">
+                    You have {{ dueSoonPaymentsCount }} payment(s) due soon
+                    (within 13 days). Please generate invoices to avoid delays.
+                </span>
+            </div>
+        </div>
         <DataTable
             v-model:editingRows="editingRows"
             editMode="row"
@@ -18,7 +45,14 @@
             </Column>
             <Column field="due_date" header="Due Date" sortable>
                 <template #body="slotProps">
-                    <span>
+                    <span
+                        :class="{
+                            'text-red-500':
+                                getPaymentStatus(slotProps.data) ===
+                                    'DUE SOON' ||
+                                getPaymentStatus(slotProps.data) === 'PAST DUE',
+                        }"
+                    >
                         {{ formatDate(slotProps.data.due_date) }}
                     </span>
                 </template>
@@ -26,7 +60,7 @@
                     <DatePicker
                         v-model="data[field]"
                         fluid
-                        date-format="yy/mm/dd"
+                        date-format="yy-mm-dd"
                     />
                 </template>
             </Column>
@@ -40,7 +74,7 @@
                     <DatePicker
                         v-model="data[field]"
                         fluid
-                        date-format="yy/mm/dd"
+                        date-format="yy-mm-dd"
                     />
                 </template>
             </Column>
@@ -122,6 +156,7 @@
                                 doEditPaymentSchedule({ ...slotProps.data })
                             "
                             :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
+
                         />
                         <Button
                             icon="pi pi-trash"
@@ -138,7 +173,9 @@
                             label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
-                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
+                            :disabled="
+                                getPaymentStatus(slotProps.data) === 'PAID'
+                            "
                         />
                     </div>
                 </template>
@@ -170,6 +207,10 @@
             :visible="isShowing"
             @update:visible="isShowing = $event"
             modal
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <AddPayment
                 v-model="editingSchedule"
@@ -290,7 +331,7 @@ const maxDate = computed(() => {
 
 const formatDate = (date) => {
     if (!date) return "";
-    return moment(date).format("YYYY/MM/DD");
+    return moment(date).format("YYYY-MM-DD");
 };
 
 const currencySign = computed(
@@ -352,13 +393,6 @@ const generateInvoice = (paymentItem) => {
     router.visit(route("invoices.generate", { id: paymentScheduleId }));
 };
 
-const isPastDue = (date) => {
-    if (!date) return false;
-    const today = moment();
-    const dueDate = moment(date);
-    return dueDate.isValid() && dueDate.isBefore(today, "day");
-};
-
 const getPaymentStatus = (schedule) => {
     // First check if fully paid
     if (schedule.status === "PAID" || schedule.paid_amount >= schedule.amount) {
@@ -370,19 +404,31 @@ const getPaymentStatus = (schedule) => {
         return "PARTIALLY_PAID";
     }
 
-    // Then check if past due
+    // Check due date status
     const today = moment();
     const dueDate = moment(
         schedule.due_date,
         ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
         true
     );
-    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+
+    if (!dueDate.isValid()) {
+        return schedule.status || "UPCOMING";
+    }
+
+    // Check if past due
+    if (dueDate.isBefore(today, "day")) {
         return "PAST DUE";
     }
 
-    // Default to upcoming
-    return schedule.status;
+    // Check if due within 13 days (inclusive)
+    const daysUntilDue = dueDate.diff(today, "days");
+    if (daysUntilDue <= 13 && daysUntilDue >= 0) {
+        return "DUE SOON";
+    }
+
+    // Default to upcoming for payments beyond 13 days
+    return "UPCOMING";
 };
 
 const getStatusSeverity = (schedule) => {
@@ -394,8 +440,10 @@ const getStatusSeverity = (schedule) => {
             return "warning";
         case "PAST DUE":
             return "danger";
+        case "DUE SOON":
+            return "warn"; // Orange color
         case "UPCOMING":
-            return "info";
+            return "info"; // Blue color
         default:
             return "warning";
     }
@@ -408,6 +456,8 @@ const paymentRowClass = (data) => {
         "border-l-4 border-green-500": status === "PAID",
         "bg-yellow-50": status === "PARTIALLY_PAID",
         "border-l-4 border-yellow-500": status === "PARTIALLY_PAID",
+        "bg-orange-50": status === "DUE SOON",
+        "border-l-4 border-orange-500": status === "DUE SOON",
         "bg-red-50": status === "PAST DUE",
         "border-l-4 border-red-500": status === "PAST DUE",
         "bg-blue-50": status === "UPCOMING",
@@ -463,5 +513,26 @@ const doSave = () => {
         });
     }
 };
+const hasDueSoonOrPastDuePayments = computed(() => {
+    return items.value.some((item) => {
+        const status = getPaymentStatus(item);
+        return status === "DUE SOON" || status === "PAST DUE";
+    });
+});
+
+const hasPastDuePayments = computed(() => {
+    return items.value.some((item) => getPaymentStatus(item) === "PAST DUE");
+});
+
+const pastDuePaymentsCount = computed(() => {
+    return items.value.filter((item) => getPaymentStatus(item) === "PAST DUE")
+        .length;
+});
+
+const dueSoonPaymentsCount = computed(() => {
+    return items.value.filter((item) => getPaymentStatus(item) === "DUE SOON")
+        .length;
+});
 </script>
+
 <style lang="scss" scoped></style>

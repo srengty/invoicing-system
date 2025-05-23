@@ -1,6 +1,11 @@
 <template>
     <Head title="Products" />
-    <ConfirmDialog />
+    <ConfirmDialog
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
+    />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
         <NavbarLayout />
@@ -162,6 +167,10 @@
                 header="Product Details"
                 :modal="true"
                 class="flex rounded-lg shadow-lg w-auto"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <template #header>
                     <div class="flex items-center gap-2">
@@ -371,6 +380,10 @@
                 class="text-sm bg-color-green-100"
                 size="small"
                 @hide="closeForm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <template #header>
                     <div class="flex items-center gap-2">
@@ -639,6 +652,10 @@
                 header="Change Product Status"
                 :modal="true"
                 class="w-80"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="p-2 pt-0">
                     <p class="text-lg text-center pb-2">
@@ -676,6 +693,10 @@
                 header="Comment"
                 :modal="true"
                 class="w-80"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="">
                     <p class="text-gray-700 rounded border p-2">

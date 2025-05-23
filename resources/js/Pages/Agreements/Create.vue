@@ -117,7 +117,7 @@
                             </Message>
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -250,7 +250,7 @@
                             >
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -259,7 +259,7 @@
                             />
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -282,7 +282,7 @@
                                     :minFractionDigits="2"
                                     :maxFractionDigits="2"
                                     fluid
-                                    min="0"
+                                    :min="0"
                                 />
                             </InputGroup>
                             <span class="text-sm">Short description</span>
@@ -425,7 +425,7 @@
                         v-model="schedule.exchange_rate"
                     ></InputText>
                 </div> -->
-                <div class="flex justify-end gap-2 mt-10">
+                <div class="flex justify-end gap-2 mt-10 mb-10">
                     <Button
                         label="Save"
                         type="submit"
@@ -533,7 +533,7 @@ const form = reactive({
     agreement_doc: [],
     progress: null,
     start_date: new Date(),
-    end_date: moment(new Date()).add(14, "days").toDate(),
+    end_date: moment(new Date()).add(30, "days").toDate(),
     agreement_amount: 0,
     short_description: "",
     attachments: [],
@@ -637,7 +637,7 @@ watch(
     () => form.start_date,
     (newStartDate) => {
         if (newStartDate) {
-            form.end_date = moment(newStartDate).add(14, "days").toDate();
+            form.end_date = moment(newStartDate).add(30, "days").toDate();
         }
     },
     { immediate: true }
@@ -701,7 +701,7 @@ onMounted(() => {
             props.agreement.start_date,
             "DD/MM/YYYY"
         ).toDate();
-        form.end_date = moment(form.start_date).add(14, "days").toDate();
+        form.end_date = moment(form.start_date).add(30, "days").toDate();
         form.agreement_amount = props.agreement.amount;
         form.short_description = props.agreement.short_description;
         form.currency = props.agreement.currency;
@@ -773,18 +773,18 @@ const submit = ({ states, valid }) => {
     const data = {
         ...form,
         agreement_date: form.agreement_date
-            ? form.agreement_date.toLocaleDateString("fr-FR")
+            ? moment(form.agreement_date).format("DD/MM/YYYY")
             : null,
         start_date: form.start_date
-            ? form.start_date.toLocaleDateString("fr-FR")
+            ? moment(form.start_date).format("DD/MM/YYYY")
             : null,
         end_date: form.end_date
-            ? form.end_date.toLocaleDateString("fr-FR")
+            ? moment(form.end_date).format("DD/MM/YYYY")
             : null,
         payment_schedule: form.payment_schedule.map((v) => ({
             ...v,
             due_date: v.due_date
-                ? v.due_date.toLocaleDateString("fr-FR")
+                ? moment(v.due_date).format("DD/MM/YYYY")
                 : null,
         })),
     };

@@ -179,6 +179,7 @@ class AgreementController extends Controller
                 'currency' => $value['currency'],
                 'exchange_rate' => $value['exchange_rate'] ?? ($value['currency'] === 'KHR' ? $exchangeRate : 1),
             ]);
+            $schedule->updateStatus();
             $schedule->save();
             // $value['agreement_no'] = $request->agreement_no;
         }

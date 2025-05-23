@@ -78,7 +78,7 @@
                             <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -196,7 +196,7 @@
                             <!-- Start Date -->
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -206,7 +206,7 @@
                             <!-- End Date -->
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -229,7 +229,7 @@
                                     :minFractionDigits="2"
                                     :maxFractionDigits="2"
                                     fluid
-                                    min="0"
+                                    :min="0"
                                 />
                             </InputGroup>
                             <!-- Short Description -->
@@ -368,14 +368,15 @@
                     {{ totalPercentage }}%) and match agreement amount
                 </Message>
                 <!-- Save Button -->
-                <div class="flex justify-end gap-2 mt-10">
+                <div class="flex justify-end gap-2 mt-10 mb-10">
                     <Button
-                        label="Save Changes"
+                        label="Update"
                         type="submit"
                         raised
-                        class="w-full md:w-40"
+                        class="w-full md:w-28"
                         :disabled="processing || !isPaymentScheduleValid"
                         icon="pi pi-check"
+                        size="small"
                     ></Button>
                     <Button
                         label="Cancel"
@@ -385,6 +386,7 @@
                         :disabled="processing"
                         icon="pi pi-times"
                         @click="cancelChanges"
+                        size="small"
                     />
                 </div>
             </Form>

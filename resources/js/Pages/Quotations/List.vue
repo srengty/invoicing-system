@@ -20,7 +20,12 @@
         </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
-        <ConfirmDialog />
+        <ConfirmDialog
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
+        />
 
         <div class="quotations text-sm p-4">
             <div class="flex justify-end p-4 gap-4">
@@ -219,18 +224,29 @@
                         </template>
                     </Column>
                     <!-- Action Column -->
-                    <Column header="View / Print" style="width: 10%">
+                    <Column header="View / Edit / Print" style="width: 10%">
                         <template #body="slotProps">
-                            <div class="flex gap-4">
+                            <div class="flex gap-2">
                                 <Button
                                     icon="pi pi-eye"
                                     aria-label="View"
-                                    severity="info"
+                                    severity=""
                                     class="custom-button"
                                     @click="viewQuotation(slotProps.data)"
                                     size="small"
                                     outlined
                                     :disabled="!slotProps.data.active"
+                                />
+                                <Button
+                                    icon="pi pi-pencil"
+                                    size="small"
+                                    outlined
+                                    severity="info"
+                                    class="custom-button"
+                                    :disabled="
+                                        slotProps.data.status === 'Approved'
+                                    "
+                                    @click="editQuotation(slotProps.data)"
                                 />
                                 <div>
                                     <Button
@@ -285,6 +301,10 @@
                     modal
                     :style="{ width: '40rem' }"
                     class="text-sm"
+                    :draggable="false"
+                    :resizable="false"
+                    :position="'center'"
+                    :closeOnEscape="false"
                 >
                     <div
                         v-if="selectedQuotation"
@@ -425,12 +445,12 @@
                                 selectedQuotation.status === 'Revise'
                             "
                         />
-                        <Button
+                        <!-- <Button
                             label="Edit"
                             severity="info"
                             @click="editQuotation"
                             :disabled="selectedQuotation.status === 'Approved'"
-                        />
+                        /> -->
 
                         <Button
                             label="Close"
@@ -447,6 +467,10 @@
                     modal
                     :style="{ width: '30rem' }"
                     class="text-sm"
+                    :draggable="false"
+                    :resizable="false"
+                    :position="'center'"
+                    :closeOnEscape="false"
                 >
                     <div v-if="selectedQuotation" class="flex flex-col gap-4">
                         <p>
@@ -491,6 +515,7 @@
                         </div>
                     </div>
                 </Dialog>
+
                 <!-- Confirm Dialog for comment -->
                 <Dialog
                     v-model:visible="isCommentDialogVisible"
@@ -498,6 +523,10 @@
                     modal
                     :style="{ width: '20rem' }"
                     class="text-sm"
+                    :draggable="false"
+                    :resizable="false"
+                    :position="'center'"
+                    :closeOnEscape="false"
                 >
                     <div class="">
                         <p class="text-gray-700 rounded border p-2">
@@ -642,27 +671,39 @@ const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
 };
 
-const editQuotation = () => {
-    if (selectedQuotation.value.status !== "Approved") {
-        console.log(selectedQuotation.value);
-        router.visit(route("quotations.create"), {
-            method: "get",
-            data: {
-                quotation: JSON.stringify(selectedQuotation.value),
-            },
-            preserveState: true,
-            preserveScroll: true,
-        });
+// const editQuotation = () => {
+//     if (selectedQuotation.value.status !== "Approved") {
+//         console.log(selectedQuotation.value);
+//         router.visit(route("quotations.create"), {
+//             method: "get",
+//             data: {
+//                 quotation: JSON.stringify(selectedQuotation.value),
+//             },
+//             preserveState: true,
+//             preserveScroll: true,
+//         });
 
-        isViewDialogVisible.value = false;
-    } else {
-        showToast(
-            "error",
-            "Edit Disabled",
-            "You cannot edit an approved quotation!",
-            3000
-        );
-    }
+//         isViewDialogVisible.value = false;
+//     } else {
+//         showToast(
+//             "error",
+//             "Edit Disabled",
+//             "You cannot edit an approved quotation!",
+//             3000
+//         );
+//     }
+// };
+const editQuotation = (quotation) => {
+    selectedQuotation.value = quotation;
+
+    router.visit(route("quotations.create"), {
+        method: "get",
+        data: {
+            quotation: JSON.stringify(quotation),
+        },
+        preserveState: true,
+        preserveScroll: true,
+    });
 };
 
 const viewQuotation = (quotation) => {

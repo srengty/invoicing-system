@@ -20,9 +20,8 @@
                 size="30"
                 v-model="model.due_date"
                 fluid
-                date-format="yy/mm/dd"
+                date-format="yy-mm-dd"
                 :min-date="minDate"
-                :max-date="maxDate"
             />
             <label for="due_date" class="">Due date</label>
         </FloatLabel>
@@ -142,9 +141,10 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import { currencies } from "@/constants";
 import { useToast } from "primevue/usetoast";
+import moment from "moment";
 import {
     FloatLabel,
     InputText,
@@ -194,6 +194,9 @@ const exchangeRate = computed(() => {
 const emit = defineEmits(["cancel", "save"]);
 const model = defineModel({
     type: Object,
+    default: () => ({
+        due_date: moment(new Date()).add(30, "days").toDate(),
+    }),
 });
 const props = defineProps({
     startDate: [String, Date],
@@ -203,13 +206,9 @@ const props = defineProps({
         default: () => false,
     },
 });
-const minDate = computed(() => {
-    return props.startDate ? new Date(props.startDate) : new Date();
-});
+const minDate = computed(() => new Date());
+const maxDate = computed(() => null);
 
-const maxDate = computed(() => {
-    return props.endDate ? new Date(props.endDate) : null;
-});
 const amountPercentage = ref({
     amount: 0,
     percentage: 0,
@@ -221,7 +220,17 @@ const rates = {
     KHRUSD: 1.0 / 4100.0,
     USDKHR: 4100,
 };
+const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}/${month}/${day}`;
+};
 onMounted(() => {
+    const dueDate = moment().add(14, "days");
+    model.value.due_date = dueDate.format("YYYY-MM-DD");
+    model.value.due_date = dueDate.toDate();
+
     amountPercentage.value = {
         percentage: model.value.percentage || 0,
         amount: model.value.amount || 0,
@@ -296,12 +305,6 @@ const doSave = () => {
 };
 const doCancel = () => {
     emit("cancel");
-    toast.add({
-        severity: "info",
-        summary: "Info",
-        detail: "Operation cancelled",
-        life: 3000,
-    });
 };
 </script>
 

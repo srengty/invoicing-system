@@ -27,12 +27,23 @@ class CheckPaymentStatuses extends Command
      */
     public function handle()
     {
-        $today = Carbon::today()->format('Y-m-d');
+        $today = Carbon::today();
+        $dueSoonThreshold = $today->copy()->addDays(13);
 
+        // Update past due payments
         PaymentSchedule::where('status', '!=', 'PAID')
             ->whereDate('due_date', '<', $today)
-            ->where('status', '!=', 'PAST DUE')
-            ->update(['status' => 'PAST DUE']);
+            ->update(['status' => 'PAST_DUE']);
+
+        // Update due soon payments (due within 13 days, including today)
+        PaymentSchedule::where('status', '!=', 'PAID')
+            ->whereBetween('due_date', [$today, $dueSoonThreshold])
+            ->update(['status' => 'DUE_SOON']);
+
+        // Reset payments beyond 13 days to UPCOMING if they're not PAID
+        PaymentSchedule::where('status', '!=', 'PAID')
+            ->whereDate('due_date', '>', $dueSoonThreshold)
+            ->update(['status' => 'UPCOMING']);
 
         $this->info('Payment statuses checked and updated successfully.');
     }

@@ -1,4 +1,3 @@
-list agreement
 <template>
     <Head title="Agreements"></Head>
     <GuestLayout>
@@ -19,6 +18,33 @@ list agreement
         </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
+        <!-- Due Soon/Past Due Payments -->
+        <div
+            v-if="hasDueSoonOrPastDuePayments"
+            class="mb-4 p-4 border-round"
+            :class="
+                hasPastDuePayments
+                    ? 'bg-red-100 border-red-300 border-1'
+                    : 'bg-orange-100 border-orange-300 border-1'
+            "
+        >
+            <div class="flex align-items-center gap-3">
+                <i
+                    class="pi pi-exclamation-triangle text-xl"
+                    :class="
+                        hasPastDuePayments ? 'text-red-500' : 'text-orange-500'
+                    "
+                ></i>
+                <span v-if="hasPastDuePayments" class="text-red-800">
+                    You have {{ pastDuePaymentsCount }} past due payment(s).
+                    Please generate invoices immediately!
+                </span>
+                <span v-else class="text-orange-800">
+                    You have {{ dueSoonPaymentsCount }} payment(s) due soon
+                    (within 13 days). Please generate invoices to avoid delays.
+                </span>
+            </div>
+        </div>
         <div class="agreements pl-4 pr-4">
             <div class="flex justify-end items-center">
                 <div class="flex gap-2">
@@ -54,18 +80,18 @@ list agreement
                     />
                     <Button
                         icon="pi pi-plus"
-                        label="New"
+                        label="Issue Agreement"
                         @click="openCreate"
                         raised
                         size="small"
                     ></Button>
-                    <ChooseColumns
+                    <!-- <ChooseColumns
                         :columns="columns"
                         v-model="selectedColumns"
                         @apply="updateColumns"
                         size="small"
                         raised
-                    />
+                    /> -->
                 </div>
             </div>
             <DataTable
@@ -87,6 +113,7 @@ list agreement
                         v-if="
                             ![
                                 'actions',
+                                'customer.name',
                                 'agreement_doc',
                                 'agreement_date',
                                 'start_date',
@@ -132,6 +159,41 @@ list agreement
                             >
                         </template>
                     </Column>
+                    <!-- column for customer name -->
+                     <Column
+                        v-if="col.field === 'customer.name'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template #body="slotProps">
+                            <div class="flex items-center">
+                                <span
+                                    :class="{
+                                        'text-red-500 font-bold':
+                                            hasDueSoonOrPastDuePayments(
+                                                slotProps.data
+                                            ),
+                                    }"
+                                >
+                                    {{ slotProps.data.customer?.name }}
+                                </span>
+                                <i
+                                    v-if="
+                                        hasDueSoonOrPastDuePayments(
+                                            slotProps.data
+                                        )
+                                    "
+                                    class="pi pi-exclamation-circle text-red-500 ml-1"
+                                    v-tooltip.top="
+                                        getPaymentStatusTooltip(slotProps.data)
+                                    "
+                                ></i>
+                            </div>
+                        </template>
+                    </Column>
+
                     <!-- column for status -->
                     <Column
                         v-if="col.field === 'status'"
@@ -297,6 +359,7 @@ list agreement
                             {{ formatDate(slotProps.data.start_date) }}
                         </template>
                     </Column>
+                    <!-- End Date Column -->
                     <Column
                         v-else-if="col.field === 'end_date'"
                         :field="col.field"
@@ -330,13 +393,21 @@ list agreement
                     >
                         <template #body="slotProps">
                             <Button
+                                severity=""
+                                size="small"
+                                icon="pi pi-eye"
+                                outlined
+                                class="mr-2"
+                                :disabled="slotProps.data.status === 'Closed'"
+                                @click="viewAgreementDetails(slotProps.data)"
+                            />
+                            <Button
                                 severity="info"
                                 size="small"
                                 icon="pi pi-pencil"
                                 outlined
-                                class="mr-2"
+                                class="ml-2"
                                 :disabled="slotProps.data.status === 'Closed'"
-                                v-tooltip="'Cannot edit closed agreement'"
                                 @click="
                                     router.get(
                                         route('agreements.edit', {
@@ -346,16 +417,7 @@ list agreement
                                     )
                                 "
                             />
-                            <Button
-                                severity=""
-                                size="small"
-                                icon="pi pi-eye"
-                                outlined
-                                class="ml-2"
-                                :disabled="slotProps.data.status === 'Closed'"
-                                v-tooltip="'Cannot view closed agreement'"
-                                @click="viewAgreementDetails(slotProps.data)"
-                            />
+
                             <!-- <Button
                                 severity=""
                                 size="small"
@@ -383,6 +445,10 @@ list agreement
                 :modal="true"
                 :dismissableMask="true"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="grid">
                     <div class="col-12">
@@ -495,6 +561,10 @@ list agreement
                 :modal="true"
                 :dismissableMask="true"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="grid">
                     <div class="col-12">
@@ -730,11 +800,28 @@ list agreement
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    <span>
+                                    <span
+                                        :class="{
+                                            'text-red-500':
+                                                getPaymentStatus(
+                                                    slotProps.data
+                                                ) === 'DUE SOON' ||
+                                                getPaymentStatus(
+                                                    slotProps.data
+                                                ) === 'PAST DUE',
+                                        }"
+                                    >
                                         {{
                                             formatDate(slotProps.data.due_date)
                                         }}
                                     </span>
+                                </template>
+                                <template #editor="{ data, field }">
+                                    <DatePicker
+                                        v-model="data[field]"
+                                        fluid
+                                        date-format="yy-mm-dd"
+                                    />
                                 </template>
                             </Column>
                             <Column
@@ -864,7 +951,7 @@ const columns = [
     { field: "short_description", header: "Short description" },
     {
         field: "actions",
-        header: "Edit / View",
+        header: "  View / Edit",
     },
 ];
 const defaultColumns = columns.filter(
@@ -924,12 +1011,7 @@ const getFieldValue = (obj, path) => {
 };
 const startDateFilter = ref(null);
 const endDateFilter = ref(null);
-const rowClass = (data) => {
-    return {
-        "bg-red-50": data.due_payment > 0,
-        "border-l-4 border-red-500": data.due_payment > 0,
-    };
-};
+
 const calculateDuePayment = (agreement) => {
     if (
         !agreement.payment_schedules ||
@@ -964,14 +1046,19 @@ const processedAgreements = computed(() => {
         const totalPercentage =
             agreement.amount > 0 ? (totalPaid / agreement.amount) * 100 : 0;
 
+        // Safely attach payment_schedules if they exist
+        const schedules = agreement.payment_schedules || [];
+
         return {
             ...agreement,
+            payment_schedules: schedules,
             due_payment: calculateDuePayment(agreement),
             total_progress_payment: totalPaid,
             total_progress_payment_percentage: totalPercentage,
         };
     });
 });
+
 // Filter agreements locally (alternative to server-side search)
 const filteredAgreements = computed(() => {
     return processedAgreements.value.filter((agreement) => {
@@ -1077,7 +1164,6 @@ const viewAgreementDetails = async (agreement) => {
     }
 };
 
-// Add this method in your script setup
 const isPastDue = (date) => {
     if (!date) return false;
     const today = moment();
@@ -1088,12 +1174,51 @@ const isPastDue = (date) => {
     );
     return dueDate.isValid() && dueDate.isBefore(today, "day");
 };
-const paymentScheduleRowClass = (data) => {
+const paymentScheduleRowClass = (payment) => {
+    const status = getPaymentStatus(payment);
+    console.log("Row Class for:", payment.id, "Status:", status); // Debug
+
     return {
-        "bg-red-50": isPastDue(data.due_date),
+        "bg-red-100": status === "PAST DUE",
+        "bg-orange-100": status === "DUE SOON",
+        "border-l-4 border-red-500": status === "PAST DUE",
+        "border-l-4 border-orange-500": status === "DUE SOON",
+        // ... other statuses
+        "bg-green-50": status === "PAID",
+        "border-l-4 border-green-500": status === "PAID",
+        "bg-yellow-50": status === "PARTIALLY_PAID",
+        "border-l-4 border-yellow-500": status === "PARTIALLY_PAID",
+        "bg-blue-50": status === "UPCOMING",
+        "border-l-4 border-blue-500": status === "UPCOMING",
     };
 };
-// function to display expries date
+const rowClass = (agreement) => {
+    let hasPastDue = false;
+    let hasDueSoon = false;
+
+    (agreement.payment_schedules || []).forEach((schedule) => {
+        const status = getPaymentStatus(schedule);
+        if (status === "PAST DUE") hasPastDue = true;
+        else if (status === "DUE SOON") hasDueSoon = true;
+    });
+
+    if (hasPastDue) {
+        return {
+            "bg-red-100": true,
+            "border-l-4 border-red-500": true,
+        };
+    }
+
+    if (hasDueSoon) {
+        return {
+            "bg-orange-100": true,
+            "border-l-4 border-orange-500": true,
+        };
+    }
+
+    return {};
+};
+
 const isExpiringSoon = (agreement) => {
     if (agreement.status !== "Open") return false;
 
@@ -1109,7 +1234,7 @@ const daysUntilExpiration = (agreement) => {
     const today = moment();
     return endDate.diff(today, "days");
 };
-// Status methods for agreement
+
 const getStatusSeverity = (status) => {
     const upperStatus = status?.toUpperCase();
     switch (upperStatus) {
@@ -1149,33 +1274,107 @@ const getPaymentStatus = (schedule) => {
         return "PARTIALLY_PAID";
     }
 
-    // Then check if past due
+    // Check due date status
     const today = moment();
     const dueDate = moment(
         schedule.due_date,
         ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
         true
     );
-    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+
+    if (!dueDate.isValid()) {
+        return schedule.status || "UPCOMING";
+    }
+
+    // Check if past due
+    if (dueDate.isBefore(today, "day")) {
         return "PAST DUE";
     }
 
+    // Check if due within 14 days
+    const daysUntilDue = dueDate.diff(today, "days");
+    if (daysUntilDue <= 13 && daysUntilDue >= 0) {
+        return "DUE SOON";
+    }
+
     // Default to upcoming
-    return schedule.status;
+    return "UPCOMING";
 };
 const getStatusSeverityPayment = (schedule) => {
     const status = getPaymentStatus(schedule);
     switch (status) {
         case "PAID":
             return "success";
+        case "PARTIALLY_PAID":
+            return "warning";
         case "PAST DUE":
             return "danger";
+        case "DUE SOON":
+            return "warn"; // Orange color
         case "UPCOMING":
             return "info";
         default:
             return "warning";
     }
 };
+// <!-- Due Soon/Past Due Payments -->
+const hasDueSoonOrPastDuePayments = (agreement) => {
+    return (agreement.payment_schedules || []).some((schedule) => {
+        const status = getPaymentStatus(schedule);
+        return status === "DUE SOON" || status === "PAST DUE";
+    });
+};
+
+const getPaymentStatusTooltip = (agreement) => {
+    const schedules = agreement.payment_schedules || [];
+    const pastDueCount = schedules.filter(
+        (s) => getPaymentStatus(s) === "PAST DUE"
+    ).length;
+    const dueSoonCount = schedules.filter(
+        (s) => getPaymentStatus(s) === "DUE SOON"
+    ).length;
+
+    let message = "";
+    if (pastDueCount > 0 && dueSoonCount > 0) {
+        message = `This agreement has ${pastDueCount} past due and ${dueSoonCount} due soon payments`;
+    } else if (pastDueCount > 0) {
+        message = `This agreement has ${pastDueCount} past due payment(s)`;
+    } else if (dueSoonCount > 0) {
+        message = `This agreement has ${dueSoonCount} payment(s) due soon`;
+    }
+
+    return message;
+};
+
+const hasPastDuePayments = computed(() => {
+    return processedAgreements.value.some((agreement) => {
+        return (agreement.payment_schedules || []).some(
+            (schedule) => getPaymentStatus(schedule) === "PAST DUE"
+        );
+    });
+});
+
+const pastDuePaymentsCount = computed(() => {
+    return processedAgreements.value.reduce((count, agreement) => {
+        return (
+            count +
+            (agreement.payment_schedules || []).filter(
+                (schedule) => getPaymentStatus(schedule) === "PAST DUE"
+            ).length
+        );
+    }, 0);
+});
+
+const dueSoonPaymentsCount = computed(() => {
+    return processedAgreements.value.reduce((count, agreement) => {
+        return (
+            count +
+            (agreement.payment_schedules || []).filter(
+                (schedule) => getPaymentStatus(schedule) === "DUE SOON"
+            ).length
+        );
+    }, 0);
+});
 </script>
 
 <style scoped>

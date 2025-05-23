@@ -1,6 +1,11 @@
 <template>
     <Head title="Customers/Organization Name" />
-    <ConfirmDialog />
+    <ConfirmDialog
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
+    />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
         <NavbarLayout />
@@ -127,6 +132,10 @@
             modal
             header="Add Customer"
             class="w-2/3"
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <template #header>
                 <div class="flex items-center gap-2">
@@ -152,6 +161,10 @@
             modal
             header="Edit Customer"
             class="w-2/3"
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <template #header>
                 <div class="flex items-center gap-2">
@@ -178,6 +191,10 @@
             modal
             header="View Customer"
             class="w-2/3"
+            :draggable="false"
+            :resizable="false"
+            :position="'center'"
+            :closeOnEscape="false"
         >
             <template #header>
                 <div class="flex items-center gap-2">
@@ -357,7 +374,7 @@ const toggleActive = (customer) => {
         message: `Are you sure you want to ${action} this customer?`,
         header: "Confirmation",
         icon: "pi pi-exclamation-triangle",
-           rejectProps: {
+        rejectProps: {
             label: "Cancel",
             icon: "pi pi-times",
             outlined: true,
