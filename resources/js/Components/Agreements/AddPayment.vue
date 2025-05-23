@@ -20,7 +20,7 @@
                 size="30"
                 v-model="model.due_date"
                 fluid
-                date-format="yy/mm/dd"
+                date-format="yy-mm-dd"
                 :min-date="minDate"
             />
             <label for="due_date" class="">Due date</label>
@@ -228,7 +228,7 @@ const formatDate = (date) => {
 };
 onMounted(() => {
     const dueDate = moment().add(14, "days");
-    model.value.due_date = dueDate.format("YYYY/MM/DD");
+    model.value.due_date = dueDate.format("YYYY-MM-DD");
     model.value.due_date = dueDate.toDate();
 
     amountPercentage.value = {

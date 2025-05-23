@@ -78,7 +78,7 @@
                             <!-- Agreement Date -->
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -196,7 +196,7 @@
                             <!-- Start Date -->
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -206,7 +206,7 @@
                             <!-- End Date -->
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon

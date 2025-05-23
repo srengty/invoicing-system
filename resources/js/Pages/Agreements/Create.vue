@@ -117,7 +117,7 @@
                             </Message>
                             <span class="text-sm required">Date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="agreement_date"
                                 v-model="form.agreement_date"
                                 showIcon
@@ -250,7 +250,7 @@
                             >
                             <span class="text-sm">Start date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="start_date"
                                 v-model="form.start_date"
                                 showIcon
@@ -259,7 +259,7 @@
                             />
                             <span class="text-sm">End date</span>
                             <DatePicker
-                                date-format="yy/mm/dd"
+                                date-format="yy-mm-dd"
                                 name="end_date"
                                 v-model="form.end_date"
                                 showIcon
@@ -773,18 +773,18 @@ const submit = ({ states, valid }) => {
     const data = {
         ...form,
         agreement_date: form.agreement_date
-            ? form.agreement_date.toLocaleDateString("fr-FR")
+            ? moment(form.agreement_date).format("DD/MM/YYYY")
             : null,
         start_date: form.start_date
-            ? form.start_date.toLocaleDateString("fr-FR")
+            ? moment(form.start_date).format("DD/MM/YYYY")
             : null,
         end_date: form.end_date
-            ? form.end_date.toLocaleDateString("fr-FR")
+            ? moment(form.end_date).format("DD/MM/YYYY")
             : null,
         payment_schedule: form.payment_schedule.map((v) => ({
             ...v,
             due_date: v.due_date
-                ? v.due_date.toLocaleDateString("fr-FR")
+                ? moment(v.due_date).format("DD/MM/YYYY")
                 : null,
         })),
     };

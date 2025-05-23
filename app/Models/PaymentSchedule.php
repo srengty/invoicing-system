@@ -80,20 +80,33 @@ class PaymentSchedule extends Model
     public function updateStatus()
     {
         $this->status = $this->determineStatus();
+        $this->save();
         return $this;
     }
 
-    protected function determineStatus()
+    public function determineStatus()
     {
+        $dueDate = Carbon::createFromFormat('d/m/Y', $this->due_date);
+        $today = Carbon::today();
+
         if ($this->total_paid_amount >= $this->amount) {
             return 'PAID';
         } elseif ($this->total_paid_amount > 0) {
             return 'PARTIALLY_PAID';
         }
 
-        $dueDate = Carbon::createFromFormat('d/m/Y', $this->due_date);
-        return $dueDate->isPast() ? 'PAST_DUE' : 'UPCOMING';
+        if ($dueDate->isPast()) {
+            return 'PAST_DUE';
+        }
+
+        $daysUntilDue = $today->diffInDays($dueDate, false);
+        if ($daysUntilDue >= 0 && $daysUntilDue <= 13) {
+            return 'DUE_SOON';
+        }
+
+        return 'UPCOMING';
     }
+
 
     // protected static function booted()
     // {

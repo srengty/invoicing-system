@@ -22,8 +22,8 @@
                     Please generate invoices immediately!
                 </span>
                 <span v-else class="text-orange-800">
-                    You have {{ dueSoonPaymentsCount }} payment(s) due soon.
-                    Please generate invoices to avoid delays.
+                    You have {{ dueSoonPaymentsCount }} payment(s) due soon
+                    (within 13 days). Please generate invoices to avoid delays.
                 </span>
             </div>
         </div>
@@ -53,7 +53,7 @@
                     <DatePicker
                         v-model="data[field]"
                         fluid
-                        date-format="yy/mm/dd"
+                        date-format="yy-mm-dd"
                     />
                 </template>
             </Column>
@@ -67,7 +67,7 @@
                     <DatePicker
                         v-model="data[field]"
                         fluid
-                        date-format="yy/mm/dd"
+                        date-format="yy-mm-dd"
                     />
                 </template>
             </Column>
@@ -327,7 +327,7 @@ const maxDate = computed(() => {
 
 const formatDate = (date) => {
     if (!date) return "";
-    return moment(date).format("YYYY/MM/DD");
+    return moment(date).format("YYYY-MM-DD");
 };
 
 const currencySign = computed(
@@ -417,13 +417,13 @@ const getPaymentStatus = (schedule) => {
         return "PAST DUE";
     }
 
-    // Check if due within 14 days
+    // Check if due within 13 days (inclusive)
     const daysUntilDue = dueDate.diff(today, "days");
     if (daysUntilDue <= 13 && daysUntilDue >= 0) {
         return "DUE SOON";
     }
 
-    // Default to upcoming
+    // Default to upcoming for payments beyond 13 days
     return "UPCOMING";
 };
 
@@ -437,9 +437,9 @@ const getStatusSeverity = (schedule) => {
         case "PAST DUE":
             return "danger";
         case "DUE SOON":
-            return "warn";
+            return "warn"; // Orange color
         case "UPCOMING":
-            return "info";
+            return "info"; // Blue color
         default:
             return "warning";
     }
@@ -529,7 +529,6 @@ const dueSoonPaymentsCount = computed(() => {
     return items.value.filter((item) => getPaymentStatus(item) === "DUE SOON")
         .length;
 });
-
 </script>
 
 <style lang="scss" scoped></style>

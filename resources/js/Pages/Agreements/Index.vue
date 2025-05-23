@@ -40,8 +40,8 @@
                     Please generate invoices immediately!
                 </span>
                 <span v-else class="text-orange-800">
-                    You have {{ dueSoonPaymentsCount }} PaymentSchedule(s) due
-                    soon. Please generate invoices to avoid delays.
+                    You have {{ dueSoonPaymentsCount }} payment(s) due soon
+                    (within 13 days). Please generate invoices to avoid delays.
                 </span>
             </div>
         </div>
@@ -1139,11 +1139,6 @@ const paymentScheduleRowClass = (payment) => {
     };
 };
 const rowClass = (agreement) => {
-    console.log(
-        "Checking rowClass for:",
-        agreement.agreement_no,
-        agreement.payment_schedules
-    );
     let hasPastDue = false;
     let hasDueSoon = false;
 
@@ -1167,15 +1162,7 @@ const rowClass = (agreement) => {
         };
     }
 
-    // Optional: add yellow for soon-to-expire agreements
-    if (isExpiringSoon(agreement)) {
-        return {
-            "bg-yellow-100": true,
-            "border-l-4 border-yellow-500": true,
-        };
-    }
-
-    return {}; // default no class
+    return {};
 };
 
 const isExpiringSoon = (agreement) => {
@@ -1269,7 +1256,7 @@ const getStatusSeverityPayment = (schedule) => {
         case "PAST DUE":
             return "danger";
         case "DUE SOON":
-            return "warn";
+            return "warn"; // Orange color
         case "UPCOMING":
             return "info";
         default:
