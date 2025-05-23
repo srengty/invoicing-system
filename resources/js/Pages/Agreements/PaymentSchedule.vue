@@ -45,7 +45,14 @@
             </Column>
             <Column field="due_date" header="Due Date" sortable>
                 <template #body="slotProps">
-                    <span>
+                    <span
+                        :class="{
+                            'text-red-500':
+                                getPaymentStatus(slotProps.data) ===
+                                    'DUE SOON' ||
+                                getPaymentStatus(slotProps.data) === 'PAST DUE',
+                        }"
+                    >
                         {{ formatDate(slotProps.data.due_date) }}
                     </span>
                 </template>

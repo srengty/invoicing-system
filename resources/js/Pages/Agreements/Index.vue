@@ -113,6 +113,7 @@
                         v-if="
                             ![
                                 'actions',
+                                'customer.name',
                                 'agreement_doc',
                                 'agreement_date',
                                 'start_date',
@@ -158,6 +159,41 @@
                             >
                         </template>
                     </Column>
+                    <!-- column for customer name -->
+                     <Column
+                        v-if="col.field === 'customer.name'"
+                        :field="col.field"
+                        :header="col.header"
+                        sortable
+                        style="width: 5%; font-size: 14px"
+                    >
+                        <template #body="slotProps">
+                            <div class="flex items-center">
+                                <span
+                                    :class="{
+                                        'text-red-500 font-bold':
+                                            hasDueSoonOrPastDuePayments(
+                                                slotProps.data
+                                            ),
+                                    }"
+                                >
+                                    {{ slotProps.data.customer?.name }}
+                                </span>
+                                <i
+                                    v-if="
+                                        hasDueSoonOrPastDuePayments(
+                                            slotProps.data
+                                        )
+                                    "
+                                    class="pi pi-exclamation-circle text-red-500 ml-1"
+                                    v-tooltip.top="
+                                        getPaymentStatusTooltip(slotProps.data)
+                                    "
+                                ></i>
+                            </div>
+                        </template>
+                    </Column>
+
                     <!-- column for status -->
                     <Column
                         v-if="col.field === 'status'"
@@ -323,6 +359,7 @@
                             {{ formatDate(slotProps.data.start_date) }}
                         </template>
                     </Column>
+                    <!-- End Date Column -->
                     <Column
                         v-else-if="col.field === 'end_date'"
                         :field="col.field"
@@ -763,11 +800,28 @@
                             </Column>
                             <Column field="due_date" header="Due Date" sortable>
                                 <template #body="slotProps">
-                                    <span>
+                                    <span
+                                        :class="{
+                                            'text-red-500':
+                                                getPaymentStatus(
+                                                    slotProps.data
+                                                ) === 'DUE SOON' ||
+                                                getPaymentStatus(
+                                                    slotProps.data
+                                                ) === 'PAST DUE',
+                                        }"
+                                    >
                                         {{
                                             formatDate(slotProps.data.due_date)
                                         }}
                                     </span>
+                                </template>
+                                <template #editor="{ data, field }">
+                                    <DatePicker
+                                        v-model="data[field]"
+                                        fluid
+                                        date-format="yy-mm-dd"
+                                    />
                                 </template>
                             </Column>
                             <Column
@@ -1264,14 +1318,33 @@ const getStatusSeverityPayment = (schedule) => {
     }
 };
 // <!-- Due Soon/Past Due Payments -->
-const hasDueSoonOrPastDuePayments = computed(() => {
-    return processedAgreements.value.some((agreement) => {
-        return (agreement.payment_schedules || []).some((schedule) => {
-            const status = getPaymentStatus(schedule);
-            return status === "DUE SOON" || status === "PAST DUE";
-        });
+const hasDueSoonOrPastDuePayments = (agreement) => {
+    return (agreement.payment_schedules || []).some((schedule) => {
+        const status = getPaymentStatus(schedule);
+        return status === "DUE SOON" || status === "PAST DUE";
     });
-});
+};
+
+const getPaymentStatusTooltip = (agreement) => {
+    const schedules = agreement.payment_schedules || [];
+    const pastDueCount = schedules.filter(
+        (s) => getPaymentStatus(s) === "PAST DUE"
+    ).length;
+    const dueSoonCount = schedules.filter(
+        (s) => getPaymentStatus(s) === "DUE SOON"
+    ).length;
+
+    let message = "";
+    if (pastDueCount > 0 && dueSoonCount > 0) {
+        message = `This agreement has ${pastDueCount} past due and ${dueSoonCount} due soon payments`;
+    } else if (pastDueCount > 0) {
+        message = `This agreement has ${pastDueCount} past due payment(s)`;
+    } else if (dueSoonCount > 0) {
+        message = `This agreement has ${dueSoonCount} payment(s) due soon`;
+    }
+
+    return message;
+};
 
 const hasPastDuePayments = computed(() => {
     return processedAgreements.value.some((agreement) => {
