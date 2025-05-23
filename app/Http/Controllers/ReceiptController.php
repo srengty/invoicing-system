@@ -177,7 +177,7 @@ class ReceiptController extends Controller
         if (!empty($validated['payment_schedule_ids'])) {
             $receipt->paymentSchedules()->sync($validated['payment_schedule_ids']);
             PaymentSchedule::whereIn('id', $validated['payment_schedule_ids'])
-                ->update(['status' => 'paid']); // or customize logic
+                ->update(['status' => 'PIAD']); // or customize logic
         }
 
         return response()->json([

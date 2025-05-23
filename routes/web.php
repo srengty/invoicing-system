@@ -76,8 +76,6 @@ Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'ge
 Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'updateStatus'])
     ->name('invoices.updateStatus');
 Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
-Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
-
 
 // Receipts
 Route::resource('receipts', ReceiptController::class);
