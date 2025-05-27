@@ -10,6 +10,7 @@ use App\Models\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class AgreementController extends Controller
 {
@@ -18,67 +19,117 @@ class AgreementController extends Controller
      */
     public function index()
     {
-        $agreements = Agreement::with(['customer', 'paymentSchedules.receipts', 'invoices.receipts'])
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($agreement) {
-                // Calculate total paid amount from payment schedules (based on receipts)
-                $totalPaid = 0;
-                $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) use ($agreement, &$totalPaid) {
-                    // Calculate the total paid amount for each schedule
-                    $paidAmount = $schedule->receipts->sum('paid_amount');
-                    $totalPaid += $paidAmount;
+        $agreements = Agreement::with([
+            'customer',
+            'paymentSchedules.invoices.receipts',
+            'paymentSchedules.receipts',
+        ])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function ($agreement) {
+            $totalPaid = 0;
 
-                    $dueAmount = $schedule->amount - $paidAmount;
+            // Process payment schedules with paid/due amounts + linked invoices
+            $paymentSchedules = $agreement->paymentSchedules->map(function ($schedule) use (&$totalPaid) {
+                $paidAmount = $schedule->receipts->sum('paid_amount');
+                $totalPaid += $paidAmount;
 
+                $dueAmount = $schedule->amount - $paidAmount;
+
+                $isPastDue = false;
+                if (!empty($schedule->due_date)) {
+                    $date = \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date);
+                    $isPastDue = $dueAmount > 0 && $date->isPast();
+                }
+
+                // Map invoices linked to this payment schedule
+                $invoices = $schedule->invoices->map(function ($invoice) {
                     return [
-                        ...$schedule->toArray(),
-                        'paid_amount' => $paidAmount,
-                        'amount' => $dueAmount,
-                        'is_past_due' => $dueAmount > 0 && \Carbon\Carbon::createFromFormat('d/m/Y', $schedule->due_date)->isPast(),
+                        'invoice_no' => $invoice->invoice_no,
+                        'id' => $invoice->id,
+                        'total_receipts' => $invoice->receipts->sum('paid_amount'),
+                        'receipts' => $invoice->receipts->map(function ($receipt) {
+                            return [
+                                'receipt_no' => $receipt->receipt_no,
+                                'paid_amount' => $receipt->paid_amount,
+                                'receipt_date' => $receipt->receipt_date,
+                            ];
+                        }),
                     ];
                 });
 
-                // Calculate total due payment for past-due schedules with unpaid amounts
-                $duePayment = $paymentSchedules->sum(function ($schedule) {
-                    if ($schedule['is_past_due'] && $schedule['amount'] > 0) {
-                        return $schedule['amount'];
-                    }
-                    return 0;
-                });
+                return [
+                    ...$schedule->toArray(),
+                    'paid_amount' => $paidAmount,
+                    'amount' => $dueAmount,
+                    'is_past_due' => $isPastDue,
+                    'invoices' => $invoices,
+                ];
+            });
 
-                // Calculate the total progress payment percentage
-                $paymentPercentage = $agreement->amount > 0 ? ($totalPaid / $agreement->amount) * 100 : 0;
+            // Calculate total due payment for past due schedules
+            $duePayment = $paymentSchedules->sum(function ($schedule) {
+                return ($schedule['is_past_due'] && $schedule['amount'] > 0) ? $schedule['amount'] : 0;
+            });
 
-                // Prepare progress payments with invoice numbers
-                $progressPayments = $agreement->invoices->flatMap(function ($invoice) {
+            // Payment progress percentage against agreement amount
+            $paymentPercentage = $agreement->amount > 0 ? ($totalPaid / $agreement->amount) * 100 : 0;
+
+            // Aggregate all invoice receipts for progress payments
+            $invoiceReceipts = $agreement->paymentSchedules->flatMap(function ($schedule) {
+                return $schedule->invoices->flatMap(function ($invoice) {
                     return $invoice->receipts->map(function ($receipt) use ($invoice) {
                         return [
                             'receipt_no' => $receipt->receipt_no,
                             'amount' => $receipt->paid_amount,
                             'date' => $receipt->receipt_date,
-                            'payment_schedule_id' => $receipt->payment_schedule_id,
-                            'invoice_no' => $invoice->invoice_no, // Add invoice number
-                            'invoice_id' => $invoice->id, // Add invoice ID for linking
+                            'payment_schedule_id' => null, // Not linked directly here
+                            'invoice_no' => $invoice->invoice_no,
+                            'invoice_id' => $invoice->id,
+                            'source' => 'invoice_receipt',
                         ];
                     });
                 });
-
-                return [
-                    ...$agreement->toArray(),
-                    'payment_schedules' => $paymentSchedules,
-                    'due_payment' => $duePayment,
-                    'total_progress_payment' => $totalPaid,
-                    'total_progress_payment_percentage' => $paymentPercentage,
-                    'progress_payments' => $progressPayments,
-
-                ];
             });
 
+            // Payment schedule receipts via pivot
+            $paymentScheduleIds = $agreement->paymentSchedules->pluck('id')->toArray();
+
+            $pivotReceipts = DB::table('payment_schedule_receipt as psr')
+                ->join('receipts as r', 'psr.receipt_receipt_no', '=', 'r.receipt_no')
+                ->join('invoice_payment_schedule as ips', 'psr.payment_schedule_id', '=', 'ips.payment_schedule_id')
+                ->join('invoices as i', 'ips.invoice_id', '=', 'i.id')
+                ->whereIn('psr.payment_schedule_id', $paymentScheduleIds)
+                ->select(
+                    'r.receipt_no',
+                    'r.paid_amount as amount',
+                    'r.receipt_date as date',
+                    'psr.payment_schedule_id',
+                    'i.invoice_no',
+                    'i.id as invoice_id',
+                    DB::raw("'pivot_receipt' as source")
+                )
+                ->get();
+
+
+            // Merge all progress payments from invoices and pivot table
+            $progressPayments = $invoiceReceipts->merge($pivotReceipts);
+
+            return [
+                ...$agreement->toArray(),
+                'payment_schedules' => $paymentSchedules,
+                'due_payment' => $duePayment,
+                'total_progress_payment' => $totalPaid,
+                'total_progress_payment_percentage' => $paymentPercentage,
+                'progress_payments' => $progressPayments,
+            ];
+        });
+
         return Inertia::render('Agreements/Index', [
-            'agreements' => $agreements
+            'agreements' => $agreements,
         ]);
     }
+
 
     protected function determineAgreementStatus($agreement)
     {

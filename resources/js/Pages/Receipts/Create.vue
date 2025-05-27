@@ -22,17 +22,17 @@
                             <div class="flex flex-col gap-2">
                                 <div v-for="(invoice, index) in formData.invoices" :key="index" class="flex gap-2">
                                     <Dropdown
-                                        v-model="formData.invoices[index]"
-                                        :options="availableInvoices"
-                                        :optionLabel="invoiceLabel" 
-                                        optionValue="invoice_no"
-                                        placeholder="Select Invoice"
-                                        class="w-full"
-                                        filter
-                                        filterPlaceholder="Search invoices"
-                                        showClear
-                                        @change="updateInvoiceDetailsMulti"
-                                        size="small"
+                                    v-model="formData.invoices[index]"
+                                    :options="getAvailableInvoicesForIndex(index)"
+                                    :optionLabel="invoiceLabel"
+                                    optionValue="invoice_no"
+                                    placeholder="Select Invoice"
+                                    class="w-full"
+                                    filter
+                                    filterPlaceholder="Search invoices"
+                                    showClear
+                                    @change="updateInvoiceDetailsMulti"
+                                    size="small"
                                     />
 
                                     <!-- Show Add button only on the last invoice row -->
@@ -349,13 +349,15 @@ const paymentMethods = ref([
 
 // Computed properties
 const availableInvoices = computed(() => {
-    return invoices.value.filter(invoice => {
+    console.log(formData.value.invoices);
+    const filterInvoice= invoices.value.filter(invoice => {
         // Filter out invoices that are already selected (except the current one)
         const isSelected = formData.value.invoices.some(
-            selectedInvoiceNo => selectedInvoiceNo === invoice.invoice_no
+            selectedInvoiceNo => selectedInvoiceNo === invoice.invoice
         );
         return !isSelected;
     });
+    return filterInvoice
 });
 
 const selectedCurrency = computed(() => {
@@ -530,6 +532,16 @@ const loadCustomerCategories = async () => {
         });
     }
 };
+
+const getAvailableInvoicesForIndex = (index) => {
+  const selectedInvoices = formData.value.invoices.filter((inv, i) => i !== index && inv !== null);
+
+  return invoices.value.filter(invoice => {
+    // Exclude invoices already selected in other dropdowns
+    return !selectedInvoices.includes(invoice.invoice_no);
+  });
+};
+
 
 watch(
     () => props.receipt,
@@ -789,6 +801,8 @@ const syncPaidAmountToSchedules = () => {
         schedule.paid_amount = perScheduleAmount;
     });
 };
+
+
 
 
 const createReceipt = async () => {

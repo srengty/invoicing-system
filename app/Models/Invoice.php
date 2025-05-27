@@ -133,6 +133,12 @@ class Invoice extends Model
         return $this->hasMany(Agreement::class);
     }
 
+    public function invoiceReceipts()
+    {
+        return $this->belongsToMany(Receipt::class, 'invoice_receipt', 'invoice_id', 'receipt_id');
+    }
+
+
     // In Invoice model
     // public function updatePaidAmount()
     // {

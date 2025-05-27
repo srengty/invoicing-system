@@ -218,13 +218,36 @@ class InvoiceController extends Controller
             }
         }
 
-        // 10. Attach payment schedules & update status if receipt is used
+        // 10. Attach payment schedules & update status and paid_amount if receipt is used
         if (!empty($data['payment_schedules'])) {
             $ids = collect($data['payment_schedules'])->pluck('id')->toArray();
             $invoice->paymentSchedules()->attach($ids);
 
-            if (!empty($data['receipt_no'])) {
-                \App\Models\PaymentSchedule::whereIn('id', $ids)->update(['status' => 'Paid']);
+            // Update payment schedules status and paid_amount if receipt is used
+            if ($request->has('receipt_no') && $receipt) {
+                $totalSchedulesAmount = \App\Models\PaymentSchedule::whereIn('id', $ids)->sum('amount');
+                $paidPerSchedule = $totalSchedulesAmount > 0 ? ($paid_amount / $totalSchedulesAmount) : 0;
+
+                \App\Models\PaymentSchedule::whereIn('id', $ids)->update([
+                    'status' => 'Paid',
+                    'paid_amount' => DB::raw("amount * $paidPerSchedule")
+                ]);
+
+                // Insert or update payment_schedule_receipt pivot records
+                foreach ($ids as $schedule_id) {
+                    DB::table('payment_schedule_receipt')->updateOrInsert(
+                        [
+                            'payment_schedule_id' => $schedule_id,
+                            'receipt_receipt_no' => $request->input('receipt_no'),
+                        ],
+                        [
+                            'payment_schedule_id' => $schedule_id,
+                            'receipt_receipt_no' => $request->input('receipt_no'),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
+                }
             }
         }
 
@@ -232,10 +255,10 @@ class InvoiceController extends Controller
         if (!empty($data['receipt_no']) && $invoice->invoice_no && $receipt) {
             $receipt->update([
                 'invoice_no' => $invoice->invoice_no,
+                'paid_amount' => $paid_amount,
                 'installment_paid' => $installment_paid,
             ]);
         }
-
 
         return redirect()->route('invoices.list')->with('success', 'Invoice created successfully!');
     }
@@ -601,9 +624,7 @@ class InvoiceController extends Controller
         }
     }
 
-/**
- * Parse a date from `d/m/Y` or fallback.
- */
+
     private function parseDate(?string $date, Carbon $fallback): string
     {
         return $date && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $date)

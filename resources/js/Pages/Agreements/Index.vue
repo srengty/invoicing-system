@@ -1043,41 +1043,44 @@ const startDateFilter = ref(null);
 const endDateFilter = ref(null);
 
 const calculateDuePayment = (agreement) => {
-    if (
-        !agreement.payment_schedules ||
-        agreement.payment_schedules.length === 0
-    ) {
-        return 0;
+  if (!agreement.payment_schedules || agreement.payment_schedules.length === 0) {
+    return 0;
+  }
+
+  const today = moment();
+  let duePayment = 0;
+
+  agreement.payment_schedules.forEach((schedule) => {
+    const dueDate = moment(schedule.due_date, [
+      "YYYY-MM-DD",
+      "DD/MM/YYYY",
+      moment.ISO_8601,
+    ]);
+
+    // Only sum if due date is valid and before today, and amount is positive
+    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+      duePayment += parseFloat(schedule.amount) || 0;
     }
+  });
 
-    const today = moment();
-    let duePayment = 0;
-
-    agreement.payment_schedules.forEach((schedule) => {
-        const dueDate = moment(schedule.due_date, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            moment.ISO_8601,
-        ]);
-        if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
-            duePayment += parseFloat(schedule.amount) || 0;
-        }
-    });
-
-    return duePayment;
+  return duePayment;
 };
+
 const processedAgreements = computed(() => {
     return props.agreements.map((agreement) => {
-        const totalPaid = (agreement.progress_payments || []).reduce(
-            (sum, receipt) => sum + (parseFloat(receipt.amount) || 0),
+        // Change here: sum paid_amount from payment_schedules instead of progress_payments
+        console.log(agreement.total_progress_payment_percentage)
+        const totalPaid = (agreement.payment_schedules || []).reduce(
+            (sum, schedule) => sum + (parseFloat(schedule.paid_amount) || 0),
             0
         );
 
         const totalPercentage =
             agreement.amount > 0 ? (totalPaid / agreement.amount) * 100 : 0;
 
-        // Safely attach payment_schedules if they exist
         const schedules = agreement.payment_schedules || [];
+
+        const duePayment = calculateDuePayment(agreement);
 
         return {
             ...agreement,

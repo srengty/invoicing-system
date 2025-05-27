@@ -53,11 +53,31 @@ class ReceiptController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'receipt_no' => 'required|string|unique:receipts',
-            'receipt_date' => 'required|date',
-            'customer_id' => 'required|exists:customers,id',
-            'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
-            'paid_amount' => ['required', 'numeric', 'min:0.01'],
+        'receipt_no' => 'required|string|unique:receipts',
+        'receipt_date' => 'required|date',
+        'customer_id' => 'required|exists:customers,id',
+        'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
+        'paid_amount' => [
+            'required',
+            'numeric',
+            'min:0.01',
+            function ($attribute, $value, $fail) use ($request) {
+                // Sum remaining balance of invoices
+                    if (!empty($request->invoices) && is_array($request->invoices)) {
+                        $totalRemaining = 0;
+                        $invoices = \App\Models\Invoice::whereIn('invoice_no', $request->invoices)->get();
+
+                        foreach ($invoices as $invoice) {
+                            $remaining = $invoice->grand_total - $invoice->paid_amount;
+                            $totalRemaining += $remaining;
+                        }
+
+                        // if ($value > $totalRemaining) {
+                        //     $fail("The paid amount cannot exceed the total remaining invoice balance of " . number_format($totalRemaining, 2));
+                        // }
+                    }
+                },
+            ],
             'invoices' => 'nullable|array|min:1',
             'invoices.*' => 'nullable|exists:invoices,invoice_no',
             'payment_schedule_ids' => 'nullable|array',
@@ -84,42 +104,57 @@ class ReceiptController extends Controller
 
         // Process invoices and payment schedules
         if (!empty($validated['invoices'])) {
-        $invoices = Invoice::whereIn('invoice_no', $validated['invoices'])->get();
-        $receipt->invoices()->sync($invoices->pluck('id'));
+            $invoices = Invoice::whereIn('invoice_no', $validated['invoices'])->get();
+            $receipt->invoices()->sync($invoices->pluck('id'));
 
-        foreach ($invoices as $invoice) {
-            // Update invoice paid amount
-            $remaining = $invoice->grand_total - $invoice->paid_amount;
-            $invoice->paid_amount += $remaining;
-            $invoice->save();
+            foreach ($invoices as $invoice) {
+                $totalPrice = $invoice->grand_total;
+                $receiptPaid = $validated['paid_amount'];
 
-            // Update related payment schedules
-            $schedules = $invoice->paymentSchedules;
-            foreach ($schedules as $schedule) {
-                $schedule->paid_amount += $remaining;
-                $schedule->status = $this->determinePaymentStatus($schedule);
-                $schedule->save();
-                
-                // Safe attach - won't create duplicates
-                $receipt->paymentSchedules()->syncWithoutDetaching([$schedule->id]);
+                if ($receiptPaid > $totalPrice) {
+                    // Overpaid - invoice can't exceed total
+                    $invoice->paid_amount = $totalPrice;
+                    $invoice->installment_paid = 0;
+
+                    // Store leftover installment on receipt
+                    $receipt->installment_paid = $receiptPaid - $totalPrice;
+                } elseif ($receiptPaid < $totalPrice) {
+                    // Underpaid - invoice partial payment
+                    $invoice->paid_amount = $receiptPaid;
+                    $invoice->installment_paid = $totalPrice - $receiptPaid;
+
+                    // No leftover on receipt
+                    $receipt->installment_paid = 0;
+                } else {
+                    // Exact payment
+                    $invoice->paid_amount = $receiptPaid;
+                    $invoice->installment_paid = 0;
+                    $receipt->installment_paid = 0;
+                }
+                $invoice->receipt_no = $receipt->receipt_no;
+
+                $invoice->save();
+            }
+
+            // After all invoices updated, save receipt too
+            $receipt->save();
+
+        }
+
+        // Handle explicitly selected payment schedules
+        if (!empty($validated['payment_schedule_ids'])) {
+            foreach ($validated['payment_schedule_ids'] as $scheduleId) {
+                $schedule = PaymentSchedule::find($scheduleId);
+                if ($schedule) {
+                    $schedule->paid_amount += $validated['paid_amount'];
+                    $schedule->status = $this->determinePaymentStatus($schedule);
+                    $schedule->save();
+                    
+                    // Safe attach
+                    $receipt->paymentSchedules()->syncWithoutDetaching([$scheduleId]);
+                }
             }
         }
-    }
-
-    // Handle explicitly selected payment schedules
-    if (!empty($validated['payment_schedule_ids'])) {
-        foreach ($validated['payment_schedule_ids'] as $scheduleId) {
-            $schedule = PaymentSchedule::find($scheduleId);
-            if ($schedule) {
-                $schedule->paid_amount += $validated['paid_amount'];
-                $schedule->status = $this->determinePaymentStatus($schedule);
-                $schedule->save();
-                
-                // Safe attach
-                $receipt->paymentSchedules()->syncWithoutDetaching([$scheduleId]);
-            }
-        }
-    }
 
         return redirect()->route('receipts.index')->with('success', 'Receipt created successfully!');
     }
