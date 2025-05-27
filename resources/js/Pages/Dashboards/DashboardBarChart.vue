@@ -4,10 +4,10 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-md font-medium text-gray-400 mb-5">
-                        Welcome! Dashboard to see you...
+                       
                     </h1>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex">
                     <Select
                         v-model="selectedLanguage"
                         :options="languageOptions"
@@ -92,7 +92,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { Head,Link } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { Card, Button, SelectButton, Select } from "primevue";
 import VerticalBar from "../../Layouts/Charts/VerticalBar.vue";
 import StackedBar from "../../Layouts/Charts/StackedBar.vue";
