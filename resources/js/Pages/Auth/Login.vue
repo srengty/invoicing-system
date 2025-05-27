@@ -78,29 +78,42 @@
                     </Message>
                 </div>
 
-                <div class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">
-                        Remember me
-                    </span>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <Checkbox
+                            name="remember"
+                            v-model:checked="form.remember"
+                        />
+                        <span
+                            class="ms-2 text-sm text-gray-600 dark:text-gray-400"
+                        >
+                            Remember me
+                        </span>
+                    </div>
+                    <div>
+                        <Link
+                            :href="route('password.request')"
+                            class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                        >
+                            Forgot password?
+                        </Link>
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <Link
-                        v-if="canResetPassword"
-                        :href="route('password.request')"
-                        class="text-sm text-gray-600 underline hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-                    >
-                        Forgot your password?
-                    </Link>
-
                     <PrimaryButton
-                        class="px-6 py-2"
+                        class="w-full mt-4 flex justify-center"
                         :class="{ 'opacity-25': form.processing }"
                         :disabled="form.processing"
                     >
                         Log in
                     </PrimaryButton>
+                <div class="flex items-center justify-center">
+                    <Link
+                        :href="route('canRegister')"
+                        class="text-sm text-gray-600 underline hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+                    >
+                        Don't have an account?
+                    </Link>
                 </div>
             </form>
         </div>

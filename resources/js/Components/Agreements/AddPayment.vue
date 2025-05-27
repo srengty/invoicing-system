@@ -227,9 +227,9 @@ const formatDate = (date) => {
     return `${year}/${month}/${day}`;
 };
 onMounted(() => {
-    const dueDate = moment().add(14, "days");
-    model.value.due_date = dueDate.format("YYYY-MM-DD");
-    model.value.due_date = dueDate.toDate();
+    if (!model.value.id) {
+        model.value.due_date = moment().add(14, "days").toDate();
+    }
 
     amountPercentage.value = {
         percentage: model.value.percentage || 0,
