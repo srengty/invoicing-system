@@ -32,20 +32,20 @@
                         size="small"
                     />
                     <Dropdown
-                    v-model="filters.status"
-                    :options="statusOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Filter by Status"
-                    class="w-48"
-                    size="small"
+                        v-model="filters.status"
+                        :options="statusOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Filter by Status"
+                        class="w-48"
+                        size="small"
                     />
                     <Button
-                    label="Clear"
-                    icon="pi pi-times"
-                    class="p-button-secondary"
-                    size="small"
-                    @click="filters.status = null"
+                        label="Clear"
+                        icon="pi pi-times"
+                        class="p-button-secondary"
+                        size="small"
+                        @click="filters.status = null"
                     />
                 </div>
             </div>
@@ -70,8 +70,10 @@
 
                 <Column field="grand_total" header="Amount">
                     <template #body="{ data }">
-                        <span :class="{ 'text-blue-500': (data.grand_total) >= 0 }">
-                        {{ formatCurrency(data.grand_total) }} (KHR)
+                        <span
+                            :class="{ 'text-blue-500': data.grand_total >= 0 }"
+                        >
+                            {{ formatCurrency(data.grand_total) }} (KHR)
                         </span>
                     </template>
                 </Column>
@@ -213,6 +215,10 @@
                 v-model:visible="isCommentDialogVisible"
                 header="Comments"
                 class="w-80"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div v-if="selectedComment.length > 0">
                     <div
@@ -242,6 +248,10 @@
                 modal
                 :style="{ width: '30rem' }"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div v-if="selectedInvoice" class="flex flex-col gap-4">
                     <p>
@@ -292,6 +302,10 @@
                 modal
                 :style="{ width: '40rem' }"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div v-if="selectedInvoice" class="p-4 space-y-4">
                     <!-- Header Info -->
@@ -308,13 +322,20 @@
                             <p>
                                 <strong>Email:</strong>
                                 <a
-                                    v-if="selectedInvoice.email || selectedInvoice.customer?.email"
+                                    v-if="
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    "
                                     :href="`mailto:${
-                                        selectedInvoice.email || selectedInvoice.customer?.email
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
                                     }`"
                                     class="text-blue-600 hover:underline"
                                 >
-                                    {{ selectedInvoice.email || selectedInvoice.customer?.email }}
+                                    {{
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    }}
                                 </a>
                                 <span v-else>N/A</span>
                             </p>
@@ -340,29 +361,32 @@
                     <!-- Products Table -->
                     <span class="font-bold block mb-2 text-center">Items</span>
                     <DataTable
-                    v-if="selectedInvoice.payment_schedules?.length"
-                    :value="selectedInvoice.payment_schedules"
-                    responsiveLayout="scroll"
-                    class="text-sm mb-4"
+                        v-if="selectedInvoice.payment_schedules?.length"
+                        :value="selectedInvoice.payment_schedules"
+                        responsiveLayout="scroll"
+                        class="text-sm mb-4"
                     >
-                    <Column field="id" header="Payment Schedule ID" />
-                    <Column field="amount" header="Amount" />
-                    <Column field="short_description" header="Description" />
+                        <Column field="id" header="Payment Schedule ID" />
+                        <Column field="amount" header="Amount" />
+                        <Column
+                            field="short_description"
+                            header="Description"
+                        />
                     </DataTable>
 
                     <DataTable
-                    v-else
-                    :value="selectedInvoice.products"
-                    responsiveLayout="scroll"
-                    class="text-sm"
+                        v-else
+                        :value="selectedInvoice.products"
+                        responsiveLayout="scroll"
+                        class="text-sm"
                     >
-                    <Column field="name" header="Item" />
-                    <Column field="pivot.quantity" header="Qty" />
-                    <Column header="Unit Price">
-                        <template #body="{ data }">
-                        {{ formatCurrency(data.pivot.price) }}
-                        </template>
-                    </Column>
+                        <Column field="name" header="Item" />
+                        <Column field="pivot.quantity" header="Qty" />
+                        <Column header="Unit Price">
+                            <template #body="{ data }">
+                                {{ formatCurrency(data.pivot.price) }}
+                            </template>
+                        </Column>
                     </DataTable>
 
                     <!-- Totals -->
@@ -371,14 +395,18 @@
                         <p>
                             <strong>Total:</strong>
                             {{ formatCurrency(selectedInvoice.grand_total) }}
-                            <span class="text-xs text-gray-500 ml-1">(KHR)</span>
+                            <span class="text-xs text-gray-500 ml-1"
+                                >(KHR)</span
+                            >
                         </p>
                     </div>
                 </div>
 
                 <!-- Comments -->
                 <div class="p-4">
-                    <label for="comment" class="block font-bold mb-2">Comment:</label>
+                    <label for="comment" class="block font-bold mb-2"
+                        >Comment:</label
+                    >
                     <textarea
                         id="comment"
                         v-model="statusForm.comment"
@@ -402,7 +430,9 @@
                         class="p-button-success"
                         size="small"
                         @click="changeStatus('approved')"
-                        :disabled="statusForm.processing || !statusForm.comment.trim()"
+                        :disabled="
+                            statusForm.processing || !statusForm.comment.trim()
+                        "
                     />
                     <Button
                         label="Revise"
@@ -410,7 +440,9 @@
                         class="p-button-danger"
                         size="small"
                         @click="changeStatus('revise')"
-                        :disabled="statusForm.processing || !statusForm.comment.trim()"
+                        :disabled="
+                            statusForm.processing || !statusForm.comment.trim()
+                        "
                     />
                     <Button
                         label="Close"
@@ -419,7 +451,6 @@
                     />
                 </template>
             </Dialog>
-
         </div>
     </GuestLayout>
 </template>
@@ -456,7 +487,6 @@ const props = defineProps({
     },
 });
 
-
 // The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
@@ -469,7 +499,7 @@ const items = computed(() => [
 ]);
 
 const filters = ref({
-  status: null,
+    status: null,
 });
 
 const selectedInvoice = ref(null);
@@ -479,8 +509,8 @@ const comment = ref("");
 const viewInvoice = (invoice) => {
     statusForm.reset();
     selectedInvoice.value = invoice;
-    console.log('Selected Invoice:', invoice);
-    console.log('Payment Schedules:', invoice.paymentSchedules);
+    console.log("Selected Invoice:", invoice);
+    console.log("Payment Schedules:", invoice.paymentSchedules);
     isViewDialogVisible.value = true;
 };
 
@@ -492,10 +522,10 @@ const formatCurrency = (value) => {
 };
 
 const statusOptions = ref([
-  { label: "Pending", value: "Pending" },
-  { label: "Approved", value: "approved" },
-  { label: "Revise", value: "revise" },
-  { label: "Rejected", value: "rejected" },
+    { label: "Pending", value: "Pending" },
+    { label: "Approved", value: "approved" },
+    { label: "Revise", value: "revise" },
+    { label: "Rejected", value: "rejected" },
 ]);
 
 const columns = [
@@ -505,13 +535,12 @@ const columns = [
 ];
 
 const filteredInvoices = computed(() => {
-  if (!filters.value.status) return props.invoices.data;
+    if (!filters.value.status) return props.invoices.data;
 
-  return props.invoices.data.filter((invoice) => {
-    return invoice.status === filters.value.status;
-  });
+    return props.invoices.data.filter((invoice) => {
+        return invoice.status === filters.value.status;
+    });
 });
-
 
 const selectedComment = ref("");
 const commentText = ref("");
@@ -533,13 +562,12 @@ const toggleStatus = (invoice) => {
 };
 
 const canEditInvoice = (invoice) => {
-  return invoice.status !== 'approved' || invoice.status == 'revise';
+    return invoice.status !== "approved" || invoice.status == "revise";
 };
 
 const editInvoice = (invoice) => {
-  Inertia.visit(`/invoices/${invoice.id}/edit`);
+    Inertia.visit(`/invoices/${invoice.id}/edit`);
 };
-
 
 const changeStatus = (status) => {
     if (!selectedInvoice.value) return;

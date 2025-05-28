@@ -41,7 +41,9 @@
                     class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm"
                 >
                     <div>
-                        <label for="quotation_no" class="block font-medium">Quotation No</label>
+                        <label for="quotation_no" class="block font-medium"
+                            >Quotation No</label
+                        >
                         <Select
                             v-model="form.quotation_no"
                             :options="availableQuotations"
@@ -53,7 +55,9 @@
                     </div>
 
                     <div class="">
-                        <label for="receipt_no" class="block font-medium">Receipt No (for deposit)</label>
+                        <label for="receipt_no" class="block font-medium"
+                            >Receipt No (for deposit)</label
+                        >
                         <Select
                             v-model="form.receipt_no"
                             :options="availableReceipts"
@@ -65,7 +69,9 @@
                     </div>
 
                     <div>
-                        <label for="customer_id" class="block font-medium">Customer</label>
+                        <label for="customer_id" class="block font-medium"
+                            >Customer</label
+                        >
                         <Select
                             v-model="form.customer_id"
                             :options="customers"
@@ -73,13 +79,15 @@
                             optionValue="id"
                             placeholder="Select Customer"
                             class="w-full"
-                            :disabled="isReadOnly" 
+                            :disabled="isReadOnly"
                             required
                         />
                     </div>
 
                     <div>
-                        <label for="address" class="block font-medium">Address</label>
+                        <label for="address" class="block font-medium"
+                            >Address</label
+                        >
                         <InputText
                             id="address"
                             v-model="form.address"
@@ -91,7 +99,9 @@
                     </div>
 
                     <div>
-                        <label for="phone" class="block font-medium">Phone</label>
+                        <label for="phone" class="block font-medium"
+                            >Phone</label
+                        >
                         <InputText
                             id="phone"
                             v-model="form.phone"
@@ -103,7 +113,9 @@
                     </div>
 
                     <div>
-                        <label for="start_date" class="block font-medium">Date</label>
+                        <label for="start_date" class="block font-medium"
+                            >Date</label
+                        >
                         <DatePicker
                             id="start_date"
                             v-model="form.start_date"
@@ -116,7 +128,9 @@
                     </div>
 
                     <div>
-                        <label for="end_date" class="block font-medium">Due Date</label>
+                        <label for="end_date" class="block font-medium"
+                            >Due Date</label
+                        >
                         <DatePicker
                             id="end_date"
                             v-model="form.end_date"
@@ -182,11 +196,21 @@
                                 <Checkbox
                                     v-model="slotProps.data.include_catalog"
                                     :binary="true"
-                                    @change="() => { checkCatalogAvailability(slotProps.data); }"
+                                    @change="
+                                        () => {
+                                            checkCatalogAvailability(
+                                                slotProps.data
+                                            );
+                                        }
+                                    "
                                     :readonly="isReadOnly"
                                 />
                                 <span>
-                                    {{ slotProps.data.include_catalog ? "Included" : "Include" }}
+                                    {{
+                                        slotProps.data.include_catalog
+                                            ? "Included"
+                                            : "Include"
+                                    }}
                                 </span>
                             </div>
                         </template>
@@ -333,6 +357,10 @@
                 header="Add Item (Popup)"
                 :style="{ width: '550px' }"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div class="p-fluid grid gap-4 text-sm">
                     <!-- Division Selection -->
@@ -500,7 +528,7 @@ const {
     customers,
     paymentSchedules,
     receipts,
-    invoices
+    invoices,
 } = usePage().props;
 
 const props = defineProps({
@@ -608,11 +636,13 @@ const handleReceiptCreated = async ({ receipt, shouldReload }) => {
 };
 
 const availableReceipts = computed(() =>
-  receipts.filter(receipt =>
-    (!receipt.invoice_no || receipt.invoice_no === "") || receipt.installment_paid > 0
-  )
+    receipts.filter(
+        (receipt) =>
+            !receipt.invoice_no ||
+            receipt.invoice_no === "" ||
+            receipt.installment_paid > 0
+    )
 );
-
 
 const divisionOptions = ref([]);
 const formatCurrency = (value) => {
@@ -864,20 +894,20 @@ watch(
 );
 
 const availableQuotations = computed(() => {
-  return quotations.filter((quotation) => {
-    // Find all invoices related to this quotation
-    const relatedInvoices = invoices.filter(
-      (inv) => inv.quotation_no === quotation.quotation_no
-    );
+    return quotations.filter((quotation) => {
+        // Find all invoices related to this quotation
+        const relatedInvoices = invoices.filter(
+            (inv) => inv.quotation_no === quotation.quotation_no
+        );
 
-    // Check if any related invoice fully paid the quotation total
-    const isFullyPaid = relatedInvoices.some(
-      (inv) => Number(inv.paid_amount) === Number(quotation.total)
-    );
+        // Check if any related invoice fully paid the quotation total
+        const isFullyPaid = relatedInvoices.some(
+            (inv) => Number(inv.paid_amount) === Number(quotation.total)
+        );
 
-    // Exclude fully paid quotations
-    return !isFullyPaid;
-  });
+        // Exclude fully paid quotations
+        return !isFullyPaid;
+    });
 });
 
 // Existing methods from original component
@@ -905,13 +935,20 @@ watch(
                     end.setDate(start.getDate() + 14);
 
                     // Format as mm/dd/yyyy or dd/mm/yyyy depending on your needs
-                    const formattedEndDate = `${String(end.getDate()).padStart(2, "0")}/${String(end.getMonth() + 1).padStart(2, "0")}/${end.getFullYear()}`;
+                    const formattedEndDate = `${String(end.getDate()).padStart(
+                        2,
+                        "0"
+                    )}/${String(end.getMonth() + 1).padStart(
+                        2,
+                        "0"
+                    )}/${end.getFullYear()}`;
                     form.end_date = formattedEndDate;
                 }
 
                 // Agreement handling
                 if (selectedQuotation.agreement) {
-                    form.agreement_no = selectedQuotation.agreement.agreement_no;
+                    form.agreement_no =
+                        selectedQuotation.agreement.agreement_no;
                     filteredAgreements.value = [selectedQuotation.agreement];
                 } else {
                     form.agreement_no = "";
@@ -925,36 +962,44 @@ watch(
                     Array.isArray(selectedQuotation.product_quotations) &&
                     selectedQuotation.product_quotations.length > 0
                 ) {
-                    productsList.value = selectedQuotation.product_quotations.map((pq) => ({
-                        id: pq.product.id,
-                        product: pq.product.name || "Unknown Product",
-                        qty: pq.quantity || 1,
-                        unit: pq.product.unit || "Unit",
-                        unitPrice: pq.price || 0,
-                        subTotal: (pq.quantity || 1) * (pq.price || 0),
-                        remark: pq.remark || "",
-                        category_id: pq.product.category_id || null,
-                        acc_code: pq.product.acc_code || "",
-                        include_catalog: false,
-                        pdf_url: pq.product.pdf_url || null,
-                    }));
+                    productsList.value =
+                        selectedQuotation.product_quotations.map((pq) => ({
+                            id: pq.product.id,
+                            product: pq.product.name || "Unknown Product",
+                            qty: pq.quantity || 1,
+                            unit: pq.product.unit || "Unit",
+                            unitPrice: pq.price || 0,
+                            subTotal: (pq.quantity || 1) * (pq.price || 0),
+                            remark: pq.remark || "",
+                            category_id: pq.product.category_id || null,
+                            acc_code: pq.product.acc_code || "",
+                            include_catalog: false,
+                            pdf_url: pq.product.pdf_url || null,
+                        }));
                 } else {
                     productsList.value = [];
                 }
 
                 // Always use quotation total if available
-                const total = selectedQuotation.total ??
+                const total =
+                    selectedQuotation.total ??
                     selectedQuotation.product_quotations?.reduce((sum, pq) => {
                         return sum + (pq.quantity || 1) * (pq.price || 0);
-                    }, 0) ?? 0;
+                    }, 0) ??
+                    0;
 
                 form.grand_total = total;
 
-                console.log("Auto-filled grand_total & paid_amount from quotation:", total);
+                console.log(
+                    "Auto-filled grand_total & paid_amount from quotation:",
+                    total
+                );
             }
         } else {
             // Reset if no quotation
-            filteredAgreements.value = agreements.filter((a) => a.status === "Open");
+            filteredAgreements.value = agreements.filter(
+                (a) => a.status === "Open"
+            );
             form.agreement_no = "";
             form.customer_id = "";
             form.address = "";
@@ -1051,7 +1096,9 @@ const submitInvoice = async () => {
     });
 
     if (form.quotation_no) {
-        const selectedQuotation = quotations.find((q) => q.quotation_no === form.quotation_no);
+        const selectedQuotation = quotations.find(
+            (q) => q.quotation_no === form.quotation_no
+        );
         if (selectedQuotation) {
             form.grand_total = selectedQuotation.total;
         }
@@ -1059,7 +1106,6 @@ const submitInvoice = async () => {
         // Only set these if not from quotation
         form.grand_total = Number(form.grand_total);
     }
-
 
     // If USD total wasn't set, set it based on exchange rate if available
     if (!form.total_usd && form.exchange_rate > 0) {
@@ -1177,112 +1223,116 @@ watch(
 
 // Core logic to process receipt selection in Create Invoice
 watch(
-  () => form.receipt_no,
-  async (newReceiptNo) => {
-    if (newReceiptNo) {
-      const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
-      if (!receipt) return;
+    () => form.receipt_no,
+    async (newReceiptNo) => {
+        if (newReceiptNo) {
+            const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
+            if (!receipt) return;
 
-      const usedInInvoice = receipt.invoice_no;
+            const usedInInvoice = receipt.invoice_no;
 
-      // Determine total price based on whether a quotation is selected
-      let totalPrice;
-      if (form.quotation_no) {
-        const selectedQuotation = quotations.find(
-          (q) => q.quotation_no === form.quotation_no
-        );
-        totalPrice = selectedQuotation?.total || 0;
-      } else {
-        totalPrice = calculateTotalKHR.value; // Manual product total
-      }
+            // Determine total price based on whether a quotation is selected
+            let totalPrice;
+            if (form.quotation_no) {
+                const selectedQuotation = quotations.find(
+                    (q) => q.quotation_no === form.quotation_no
+                );
+                totalPrice = selectedQuotation?.total || 0;
+            } else {
+                totalPrice = calculateTotalKHR.value; // Manual product total
+            }
 
-      // Case 1: Receipt reused with remaining installment
-      if (usedInInvoice && receipt.installment_paid > 0) {
-        form.customer_id = receipt.customer_id;
-        const customer = customers.find((c) => c.id === receipt.customer_id);
-        form.address = customer?.address || "";
-        form.phone = customer?.phone || customer?.phone_number || "";
-        form.deposit_amount = receipt.paid_amount;
+            // Case 1: Receipt reused with remaining installment
+            if (usedInInvoice && receipt.installment_paid > 0) {
+                form.customer_id = receipt.customer_id;
+                const customer = customers.find(
+                    (c) => c.id === receipt.customer_id
+                );
+                form.address = customer?.address || "";
+                form.phone = customer?.phone || customer?.phone_number || "";
+                form.deposit_amount = receipt.paid_amount;
 
-        if (receipt.paid_amount > totalPrice) {
-          form.paid_amount = totalPrice;
-          form.installment_paid = 0;
-          receipt.installment_paid = receipt.paid_amount - totalPrice;
-        } else if (receipt.paid_amount < totalPrice) {
-          form.paid_amount = receipt.paid_amount;
-          form.installment_paid = totalPrice - receipt.paid_amount;
-          receipt.installment_paid = 0;
+                if (receipt.paid_amount > totalPrice) {
+                    form.paid_amount = totalPrice;
+                    form.installment_paid = 0;
+                    receipt.installment_paid = receipt.paid_amount - totalPrice;
+                } else if (receipt.paid_amount < totalPrice) {
+                    form.paid_amount = receipt.paid_amount;
+                    form.installment_paid = totalPrice - receipt.paid_amount;
+                    receipt.installment_paid = 0;
+                } else {
+                    form.paid_amount = receipt.paid_amount;
+                    form.installment_paid = 0;
+                    receipt.installment_paid = 0;
+                }
+
+                form.grand_total = totalPrice;
+
+                toast.add({
+                    severity: "info",
+                    summary: "Installment Applied",
+                    detail: `Used ${formatCurrency(
+                        form.paid_amount
+                    )} from previous receipt`,
+                    life: 3000,
+                });
+            }
+
+            // Case 2: Receipt has no remaining installment
+            else if (usedInInvoice && receipt.installment_paid === 0) {
+                toast.add({
+                    severity: "warn",
+                    summary: "Receipt Already Used",
+                    detail: `Receipt ${receipt.receipt_no} has no remaining balance`,
+                    life: 3000,
+                });
+                form.receipt_no = "";
+                return;
+            }
+
+            // Case 3: New receipt
+            else {
+                form.customer_id = receipt.customer_id;
+                const customer = customers.find(
+                    (c) => c.id === receipt.customer_id
+                );
+                form.address = customer?.address || "";
+                form.phone = customer?.phone || customer?.phone_number || "";
+                form.deposit_amount = receipt.paid_amount;
+
+                if (receipt.paid_amount > totalPrice) {
+                    form.paid_amount = totalPrice;
+                    form.installment_paid = 0;
+                    receipt.installment_paid = receipt.paid_amount - totalPrice;
+                } else if (receipt.paid_amount < totalPrice) {
+                    form.paid_amount = receipt.paid_amount;
+                    form.installment_paid = totalPrice - receipt.paid_amount;
+                    receipt.installment_paid = 0;
+                } else {
+                    form.paid_amount = receipt.paid_amount;
+                    form.installment_paid = 0;
+                    receipt.installment_paid = 0;
+                }
+
+                form.grand_total = totalPrice;
+
+                if (receipt.payment_schedule_ids) {
+                    form.payment_schedules = receipt.payment_schedule_ids;
+                }
+
+                toast.add({
+                    severity: "info",
+                    summary: "Receipt Selected",
+                    detail: `Auto-filled info from receipt ${receipt.receipt_no}`,
+                    life: 2500,
+                });
+            }
         } else {
-          form.paid_amount = receipt.paid_amount;
-          form.installment_paid = 0;
-          receipt.installment_paid = 0;
+            form.installment_paid = 0;
+            form.paid_amount = 0;
+            form.payment_schedules = [];
         }
-
-        form.grand_total = totalPrice;
-
-        toast.add({
-          severity: "info",
-          summary: "Installment Applied",
-          detail: `Used ${formatCurrency(form.paid_amount)} from previous receipt`,
-          life: 3000,
-        });
-      }
-
-      // Case 2: Receipt has no remaining installment
-      else if (usedInInvoice && receipt.installment_paid === 0) {
-        toast.add({
-          severity: "warn",
-          summary: "Receipt Already Used",
-          detail: `Receipt ${receipt.receipt_no} has no remaining balance`,
-          life: 3000,
-        });
-        form.receipt_no = "";
-        return;
-      }
-
-      // Case 3: New receipt
-      else {
-        form.customer_id = receipt.customer_id;
-        const customer = customers.find((c) => c.id === receipt.customer_id);
-        form.address = customer?.address || "";
-        form.phone = customer?.phone || customer?.phone_number || "";
-        form.deposit_amount = receipt.paid_amount;
-
-        if (receipt.paid_amount > totalPrice) {
-          form.paid_amount = totalPrice;
-          form.installment_paid = 0;
-          receipt.installment_paid = receipt.paid_amount - totalPrice;
-        } else if (receipt.paid_amount < totalPrice) {
-          form.paid_amount = receipt.paid_amount;
-          form.installment_paid = totalPrice - receipt.paid_amount;
-          receipt.installment_paid = 0;
-        } else {
-          form.paid_amount = receipt.paid_amount;
-          form.installment_paid = 0;
-          receipt.installment_paid = 0;
-        }
-
-        form.grand_total = totalPrice;
-
-        if (receipt.payment_schedule_ids) {
-          form.payment_schedules = receipt.payment_schedule_ids;
-        }
-
-        toast.add({
-          severity: "info",
-          summary: "Receipt Selected",
-          detail: `Auto-filled info from receipt ${receipt.receipt_no}`,
-          life: 2500,
-        });
-      }
-    } else {
-      form.installment_paid = 0;
-      form.paid_amount = 0;
-      form.payment_schedules = [];
-    }
-  },
-  { immediate: true }
+    },
+    { immediate: true }
 );
-
-
 </script>
