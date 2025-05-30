@@ -450,6 +450,8 @@
                 <InputNumber
                     v-model="selectedProduct.price"
                     :min="0"
+                    :minFractionDigits="2"
+                    :maxFractionDigits="2"
                     @keydown="preventMinus"
                     size="small"
                     class="w-full text-sm"

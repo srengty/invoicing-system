@@ -19,18 +19,6 @@
         <div class="invoices">
             <div class="flex justify-end items-center">
                 <div class="flex gap-2">
-                    <Button
-                        icon="pi pi-plus"
-                        label="Create Invoice"
-                        size="small"
-                        @click="navigateToCreate"
-                    />
-                    <ChooseColumns
-                        :columns="columns"
-                        v-model="selectedColumns"
-                        @apply="updateColumns"
-                        size="small"
-                    />
                     <Dropdown
                         v-model="filters.status"
                         :options="statusOptions"
@@ -47,6 +35,18 @@
                         size="small"
                         @click="filters.status = null"
                     />
+                    <Button
+                        icon="pi pi-plus"
+                        label="Issue Invoice"
+                        size="small"
+                        @click="navigateToCreate"
+                    />
+                    <!-- <ChooseColumns
+                        :columns="columns"
+                        v-model="selectedColumns"
+                        @apply="updateColumns"
+                        size="small"
+                    /> -->
                 </div>
             </div>
 
@@ -65,7 +65,7 @@
                     :key="col.field"
                     :field="col.field"
                     :header="col.header"
-                    sortable
+                    :sortable="col.sortable"
                 />
 
                 <Column field="grand_total" header="Amount">
@@ -79,50 +79,42 @@
                 </Column>
 
                 <Column field="status" header="Status">
-                    <template #body="{ data }">
+                    <template #body="slotProps">
                         <div class="flex">
-                            <Button
-                                :icon="
-                                    data.status === 'approved'
-                                        ? 'pi pi-check'
-                                        : data.status === 'rejected'
-                                        ? 'pi pi-times'
-                                        : data.status === 'revise'
-                                        ? 'pi pi-pencil'
-                                        : 'pi pi-clock'
-                                "
-                                :label="
-                                    data.status === 'approved'
-                                        ? 'Approved'
-                                        : data.status === 'rejected'
-                                        ? 'Rejected'
-                                        : data.status === 'revise'
-                                        ? 'Revise'
-                                        : 'Pending'
-                                "
-                                :class="
-                                    data.status === 'pending'
-                                        ? 'p-button-warning'
-                                        : data.status === 'approved'
-                                        ? 'p-button-success'
-                                        : data.status === 'revise'
-                                        ? 'p-button-danger'
-                                        : 'p-button-warning'
-                                "
-                                size="small"
-                                @click="toggleStatus(data)"
-                                class="text-sm flex-grow w-auto"
-                                :disabled="data.status === 'approved'"
-                                outlined
-                            />
+                            <span
+                                class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
+                                :class="{
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.status === 'Pending',
+                                    'bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.status === 'revise',
+                                    'bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.status === 'approved',
+                                }"
+                            >
+                                <i
+                                    :class="{
+                                        'pi pi-clock':
+                                            slotProps.data.status === 'Pending',
+                                        'pi pi-times':
+                                            slotProps.data.status === 'revise',
+                                        'pi pi-check':
+                                            slotProps.data.status ===
+                                            'approved',
+                                    }"
+                                ></i>
+                                {{ capitalize(slotProps.data.status) }}
+                            </span>
                             <Button
                                 v-if="
-                                    data.invoice_comments &&
-                                    data.invoice_comments.length > 0
+                                    slotProps.data.invoice_comments &&
+                                    slotProps.data.invoice_comments.length > 0
                                 "
                                 icon="pi pi-comment"
                                 class="p-button-info ml-2"
-                                @click="viewComment(data.invoice_comments)"
+                                @click="
+                                    viewComment(slotProps.data.invoice_comments)
+                                "
                                 outlined
                             />
                         </div>
@@ -342,9 +334,13 @@
                         </div>
                         <div class="flex flex-col w-1/2 items-end gap-4">
                             <div class="grid gap-4">
-                                <p>
+                                <p v-if="selectedInvoice.quotation_no">
                                     <strong>Quotation No.:</strong>
                                     {{ selectedInvoice.quotation_no }}
+                                </p>
+                                <p v-else-if="selectedInvoice.agreement_no">
+                                    <strong>Agreement No.:</strong>
+                                    {{ selectedInvoice.agreement_no }}
                                 </p>
                                 <p>
                                     <strong>Invoice No.:</strong>
@@ -523,15 +519,17 @@ const formatCurrency = (value) => {
 
 const statusOptions = ref([
     { label: "Pending", value: "Pending" },
-    { label: "Approved", value: "approved" },
-    { label: "Revise", value: "revise" },
-    { label: "Rejected", value: "rejected" },
+    { label: "Approved", value: "Approved" },
+    { label: "Revise", value: "Revise" },
+    { label: "Rejected", value: "Rejected" },
 ]);
 
 const columns = [
-    { field: "start_date", header: "Date" },
-    { field: "end_date", header: "Due Date" },
-    { field: "customer.name", header: "Customer" },
+    { field: "invoice_no", header: "Invoice No" },
+    { field: "start_date", header: "Date", sortable: true },
+    { field: "end_date", header: "Due Date", sortable: true },
+    { field: "customer.name", header: "Customer", sortable: true },
+    { field: "agreement_no", header: "Agreement No" },
 ];
 
 const filteredInvoices = computed(() => {
@@ -563,6 +561,12 @@ const toggleStatus = (invoice) => {
 
 const canEditInvoice = (invoice) => {
     return invoice.status !== "approved" || invoice.status == "revise";
+};
+
+// right after your other consts
+const capitalize = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 };
 
 const editInvoice = (invoice) => {

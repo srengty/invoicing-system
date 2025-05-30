@@ -20,7 +20,7 @@
         <Toast position="top-right" group="tr" />
         <!-- Due Soon/Past Due Payments -->
         <div
-            v-if="hasDueSoonOrPastDuePayments"
+            v-if="hasDueSoonOrPastDuePaymentsAlter"
             class="mb-4 p-4 border-round"
             :class="
                 alterHasPastDuePayments
@@ -240,9 +240,7 @@
                                     class="ml-2 text-xs text-yellow-600"
                                 >
                                     (Expires in
-                                    {{
-                                        daysUntilExpiration(slotProps.data)
-                                    }}
+                                    {{ daysUntilExpiration(slotProps.data) }}
                                     days)
                                 </span>
                             </div>
@@ -1043,33 +1041,36 @@ const startDateFilter = ref(null);
 const endDateFilter = ref(null);
 
 const calculateDuePayment = (agreement) => {
-  if (!agreement.payment_schedules || agreement.payment_schedules.length === 0) {
-    return 0;
-  }
-
-  const today = moment();
-  let duePayment = 0;
-
-  agreement.payment_schedules.forEach((schedule) => {
-    const dueDate = moment(schedule.due_date, [
-      "YYYY-MM-DD",
-      "DD/MM/YYYY",
-      moment.ISO_8601,
-    ]);
-
-    // Only sum if due date is valid and before today, and amount is positive
-    if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
-      duePayment += parseFloat(schedule.amount) || 0;
+    if (
+        !agreement.payment_schedules ||
+        agreement.payment_schedules.length === 0
+    ) {
+        return 0;
     }
-  });
 
-  return duePayment;
+    const today = moment();
+    let duePayment = 0;
+
+    agreement.payment_schedules.forEach((schedule) => {
+        const dueDate = moment(schedule.due_date, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            moment.ISO_8601,
+        ]);
+
+        // Only sum if due date is valid and before today, and amount is positive
+        if (dueDate.isValid() && dueDate.isBefore(today, "day")) {
+            duePayment += parseFloat(schedule.amount) || 0;
+        }
+    });
+
+    return duePayment;
 };
 
 const processedAgreements = computed(() => {
     return props.agreements.map((agreement) => {
         // Change here: sum paid_amount from payment_schedules instead of progress_payments
-        console.log(agreement.total_progress_payment_percentage)
+        console.log(agreement.total_progress_payment_percentage);
         const totalPaid = (agreement.payment_schedules || []).reduce(
             (sum, schedule) => sum + (parseFloat(schedule.paid_amount) || 0),
             0
@@ -1366,6 +1367,15 @@ const hasDueSoonOrPastDuePayments = (agreement) => {
     });
 };
 
+const hasDueSoonOrPastDuePaymentsAlter = computed(() => {
+    return filteredAgreements.value.some((agreement) => {
+        return (agreement.payment_schedules || []).some((schedule) => {
+            const status = getPaymentStatus(schedule);
+            return status === "DUE SOON" || status === "PAST DUE";
+        });
+    });
+});
+
 const getPaymentStatusTooltip = (agreement) => {
     const schedules = agreement.payment_schedules || [];
     const pastDueCount = schedules.filter(
@@ -1388,7 +1398,7 @@ const getPaymentStatusTooltip = (agreement) => {
 };
 
 const alterHasPastDuePayments = computed(() => {
-    return processedAgreements.value.some((agreement) => {
+    return filteredAgreements.value.some((agreement) => {
         return (agreement.payment_schedules || []).some(
             (schedule) => getPaymentStatus(schedule) === "PAST DUE"
         );
@@ -1396,7 +1406,7 @@ const alterHasPastDuePayments = computed(() => {
 });
 
 const pastDuePaymentsCount = computed(() => {
-    return processedAgreements.value.reduce((count, agreement) => {
+    return filteredAgreements.value.reduce((count, agreement) => {
         return (
             count +
             (agreement.payment_schedules || []).filter(
@@ -1407,7 +1417,7 @@ const pastDuePaymentsCount = computed(() => {
 });
 
 const dueSoonPaymentsCount = computed(() => {
-    return processedAgreements.value.reduce((count, agreement) => {
+    return filteredAgreements.value.reduce((count, agreement) => {
         return (
             count +
             (agreement.payment_schedules || []).filter(
@@ -1416,7 +1426,6 @@ const dueSoonPaymentsCount = computed(() => {
         );
     }, 0);
 });
-
 const hasDueSoonPayments = (agreement) => {
     return (agreement.payment_schedules || []).some(
         (schedule) => getPaymentStatus(schedule) === "DUE SOON"
