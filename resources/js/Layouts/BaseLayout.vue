@@ -1,7 +1,9 @@
 <template>
     <div class="surface-ground min-h-screen p-5">
-        <div class="w-full">
-            <DashboardChart />
+        <div>
+            <h1 class="text-md font-medium text-gray-400 mb-5">
+                Welcome! Dashboard to see you...
+            </h1>
         </div>
         <div class="mt-6">
             <div class="grid grid-cols-4 gap-2 w-full">
@@ -82,8 +84,11 @@
                 </div>
             </div>
         </div>
+        <div class="w-full">
+            <DashboardChart />
+        </div>
         <div class="mt-6">
-            <DashboardTable/>
+            <DashboardTable />
         </div>
     </div>
 </template>

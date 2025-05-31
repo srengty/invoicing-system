@@ -21,15 +21,14 @@
         <div class="p-4">
             <div class="flex justify-between items-center ml-4">
                 <h1 class="text-xl font-semibold text-gray-800">
-                    Products Categories
+                    <!-- Products Categories -->
                 </h1>
                 <Button
-                    type="button"
-                    size="small"
-                    class="p-button-success"
+                    icon="pi pi-plus"
+                    label="New Item Categories"
                     @click="openModal"
-                    >Add New</Button
-                >
+                    size="small"
+                />
             </div>
             <div class="mt-4 text-sm">
                 <DataTable
@@ -37,6 +36,7 @@
                     :paginator="true"
                     :rows="10"
                     :rowsPerPageOptions="[5, 10, 20]"
+                    :showGridlines="true"
                 >
                     <Column field="category_name_khmer" header="Name"></Column>
                     <Column

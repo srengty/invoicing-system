@@ -5,11 +5,26 @@
         :modal="true"
         :style="{ width: '50vw' }"
         @hide="closeDialog"
+        :draggable="false"
+        :resizable="false"
+        :position="'center'"
+        :closeOnEscape="false"
     >
         <template #header>
-            <div style="display: flex; align-items: center; justify-content: flex-start;">
-            <i class="pi pi-receipt text-success" style="color: #28a745; margin-right: 8px;" ></i>
-            <span>{{ isEditMode ? 'Edit Receipt' : 'Create New Receipt' }}</span>
+            <div
+                style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                "
+            >
+                <i
+                    class="pi pi-receipt text-success"
+                    style="color: #28a745; margin-right: 8px"
+                ></i>
+                <span>{{
+                    isEditMode ? "Edit Receipt" : "Create New Receipt"
+                }}</span>
             </div>
         </template>
 
@@ -20,24 +35,35 @@
                         <div class="field w-full">
                             <label for="invoice_no">Invoice(s)</label>
                             <div class="flex flex-col gap-2">
-                                <div v-for="(invoice, index) in formData.invoices" :key="index" class="flex gap-2">
+                                <div
+                                    v-for="(
+                                        invoice, index
+                                    ) in formData.invoices"
+                                    :key="index"
+                                    class="flex gap-2"
+                                >
                                     <Dropdown
-                                    v-model="formData.invoices[index]"
-                                    :options="getAvailableInvoicesForIndex(index)"
-                                    :optionLabel="invoiceLabel"
-                                    optionValue="invoice_no"
-                                    placeholder="Select Invoice"
-                                    class="w-full"
-                                    filter
-                                    filterPlaceholder="Search invoices"
-                                    showClear
-                                    @change="updateInvoiceDetailsMulti"
-                                    size="small"
+                                        v-model="formData.invoices[index]"
+                                        :options="
+                                            getAvailableInvoicesForIndex(index)
+                                        "
+                                        :optionLabel="invoiceLabel"
+                                        optionValue="invoice_no"
+                                        placeholder="Select Invoice"
+                                        class="w-full"
+                                        filter
+                                        filterPlaceholder="Search invoices"
+                                        showClear
+                                        @change="updateInvoiceDetailsMulti"
+                                        size="small"
                                     />
 
                                     <!-- Show Add button only on the last invoice row -->
                                     <Button
-                                        v-if="index === formData.invoices.length - 1"
+                                        v-if="
+                                            index ===
+                                            formData.invoices.length - 1
+                                        "
                                         icon="pi pi-plus"
                                         @click="addInvoice"
                                         severity="success"
@@ -57,7 +83,6 @@
                                 </div>
                             </div>
                         </div>
-                        
                     </div>
                 </div>
 
@@ -65,7 +90,9 @@
                     <div class="flex w-full gap-6">
                         <div class="w-1/2">
                             <div class="field">
-                                <label for="receipt_no" class="required">Receipt No</label>
+                                <label for="receipt_no" class="required"
+                                    >Receipt No</label
+                                >
                                 <InputText
                                     v-model="formData.receipt_no"
                                     class="w-full"
@@ -76,7 +103,9 @@
                         </div>
                         <div class="field w-1/2">
                             <div class="field">
-                                <label for="receipt_date" class="required">Date</label>
+                                <label for="receipt_date" class="required"
+                                    >Date</label
+                                >
                                 <DatePicker
                                     v-model="formData.receipt_date"
                                     dateFormat="yy-mm-dd"
@@ -107,7 +136,7 @@
                     </div>
                 </div>
 
-                <div class="p-2 ">
+                <div class="p-2">
                     <hr />
                 </div>
 
@@ -115,35 +144,35 @@
                     <div class="flex w-full gap-6">
                         <div class="field w-1/2">
                             <div class="field">
-                        <label for="customer_id" class="required"
-                            >Customer</label
-                        >
-                        <div class="flex gap-2">
-                            <Dropdown
-                                v-model="formData.customer_id"
-                                :options="customers"
-                                :optionLabel="customerLabel"
-                                optionValue="id"
-                                placeholder="Search customer..."
-                                class="w-full"
-                                :disabled="hasInvoicesSelected"
-                                filter
-                                filterPlaceholder="Search customers"
-                                showClear
-                                @change="updateCustomerDetails"
-                                size="small"
-                            />
-                            <Button
-                                icon="pi pi-plus"
-                                title="add customer"
-                                label="Customer"
-                                raised
-                                @click="isCreateCustomerVisible = true"
-                                class="w-44 start"
-                                size="small"
-                            />
-                        </div>
-                    </div>
+                                <label for="customer_id" class="required"
+                                    >Customer</label
+                                >
+                                <div class="flex gap-2">
+                                    <Dropdown
+                                        v-model="formData.customer_id"
+                                        :options="customers"
+                                        :optionLabel="customerLabel"
+                                        optionValue="id"
+                                        placeholder="Search customer..."
+                                        class="w-full"
+                                        :disabled="hasInvoicesSelected"
+                                        filter
+                                        filterPlaceholder="Search customers"
+                                        showClear
+                                        @change="updateCustomerDetails"
+                                        size="small"
+                                    />
+                                    <Button
+                                        icon="pi pi-plus"
+                                        title="add customer"
+                                        label="Customer"
+                                        raised
+                                        @click="isCreateCustomerVisible = true"
+                                        class="w-44 start"
+                                        size="small"
+                                    />
+                                </div>
+                            </div>
                         </div>
                         <div class="w-1/2">
                             <div class="field">
@@ -203,7 +232,9 @@
                     <div class="flex w-full gap-6">
                         <div class="field w-1/2">
                             <div class="field">
-                                <label for="payment_method">Payment Method</label>
+                                <label for="payment_method"
+                                    >Payment Method</label
+                                >
                                 <Dropdown
                                     v-model="formData.payment_method"
                                     :options="paymentMethods"
@@ -217,7 +248,9 @@
                         </div>
                         <div class="w-1/2">
                             <div class="field">
-                                <label for="payment_reference_no">Payment Reference No (if any)</label>
+                                <label for="payment_reference_no"
+                                    >Payment Reference No (if any)</label
+                                >
                                 <InputText
                                     v-model="formData.payment_reference_no"
                                     class="w-full"
@@ -228,7 +261,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div
                     class="col-12 md:col-6"
                     v-if="formData.payment_schedule_ids?.length"
@@ -261,10 +294,10 @@
                         :disabled="isLoading || !canSubmit"
                     />
                 </div>
-            </div>    
+            </div>
         </form>
     </Dialog>
-    
+
     <!-- Add Customer Dialog -->
     <Dialog
         v-model:visible="isCreateCustomerVisible"
@@ -353,42 +386,49 @@ const paymentMethods = ref([
 // Computed properties
 const availableInvoices = computed(() => {
     console.log(formData.value.invoices);
-    const filterInvoice= invoices.value.filter(invoice => {
+    const filterInvoice = invoices.value.filter((invoice) => {
         // Filter out invoices that are already selected (except the current one)
         const isSelected = formData.value.invoices.some(
                 selectedInvoiceNo => selectedInvoiceNo === invoice.invoice_no
             );
         return !isSelected;
     });
-    return filterInvoice
+    return filterInvoice;
 });
 
 const selectedCurrency = computed(() => {
-    if (!formData.value.invoices || formData.value.invoices.length === 0) return 'USD';
-    
+    if (!formData.value.invoices || formData.value.invoices.length === 0)
+        return "USD";
+
     // If multiple invoices, check if they all have same currency
     const selectedInvoices = formData.value.invoices
-        .map(invoiceNo => invoices.value.find(inv => inv.invoice_no === invoiceNo))
+        .map((invoiceNo) =>
+            invoices.value.find((inv) => inv.invoice_no === invoiceNo)
+        )
         .filter(Boolean);
-    
-    if (selectedInvoices.length === 0) return 'USD';
-    
+
+    if (selectedInvoices.length === 0) return "USD";
+
     const firstCurrency = selectedInvoices[0].currency;
-    const allSameCurrency = selectedInvoices.every(inv => inv.currency === firstCurrency);
-    
-    return allSameCurrency ? firstCurrency : 'USD';
+    const allSameCurrency = selectedInvoices.every(
+        (inv) => inv.currency === firstCurrency
+    );
+
+    return allSameCurrency ? firstCurrency : "USD";
 });
 
 const hasInvoicesSelected = computed(() => {
-    return formData.value.invoices.some(inv => inv !== null);
+    return formData.value.invoices.some((inv) => inv !== null);
 });
 
 const canSubmit = computed(() => {
-    return formData.value.receipt_no && 
-           formData.value.receipt_date && 
-           formData.value.customer_id && 
-           formData.value.paid_amount > 0 &&
-           formData.value.payment_method;
+    return (
+        formData.value.receipt_no &&
+        formData.value.receipt_date &&
+        formData.value.customer_id &&
+        formData.value.paid_amount > 0 &&
+        formData.value.payment_method
+    );
 });
 
 onMounted(async () => {
@@ -435,7 +475,10 @@ const loadInvoices = async () => {
     try {
         const response = await axios.get(route("receipts.create"));
         invoices.value = (response.data.invoices || [])
-            .filter((invoice) => Number(invoice.grand_total) > Number(invoice.paid_amount))
+            .filter(
+                (invoice) =>
+                    Number(invoice.grand_total) > Number(invoice.paid_amount)
+            )
             .map((invoice) => ({
                 ...invoice,
                 label: `${invoice.invoice_no} - ${invoice.customer_name}`,
@@ -462,14 +505,14 @@ const removeInvoice = (index) => {
 
 const updateInvoiceDetailsMulti = () => {
     const selectedInvoiceNos = formData.value.invoices.filter(Boolean);
-    
+
     if (selectedInvoiceNos.length === 0) {
         resetCustomerAndAmounts();
         return;
     }
 
     const selectedInvoices = selectedInvoiceNos
-        .map(no => invoices.value.find(inv => inv.invoice_no === no))
+        .map((no) => invoices.value.find((inv) => inv.invoice_no === no))
         .filter(Boolean);
 
     if (selectedInvoices.length === 0) {
@@ -479,14 +522,16 @@ const updateInvoiceDetailsMulti = () => {
 
     // Check if all selected invoices have the same customer
     const firstCustomerId = selectedInvoices[0].customer_id;
-    const allSameCustomer = selectedInvoices.every(inv => inv.customer_id === firstCustomerId);
-    
+    const allSameCustomer = selectedInvoices.every(
+        (inv) => inv.customer_id === firstCustomerId
+    );
+
     if (!allSameCustomer) {
         toast.add({
-            severity: 'warn',
-            summary: 'Warning',
-            detail: 'All invoices must belong to the same customer',
-            life: 3000
+            severity: "warn",
+            summary: "Warning",
+            detail: "All invoices must belong to the same customer",
+            life: 3000,
         });
         return;
     }
@@ -505,7 +550,7 @@ const updateInvoiceDetailsMulti = () => {
 
     // Combine payment schedule IDs (unique)
     const combinedScheduleIds = selectedInvoices.flatMap(
-        inv => inv.payment_schedules?.map(ps => ps.id) || []
+        (inv) => inv.payment_schedules?.map((ps) => ps.id) || []
     );
     formData.value.payment_schedule_ids = [...new Set(combinedScheduleIds)];
 
@@ -537,14 +582,15 @@ const loadCustomerCategories = async () => {
 };
 
 const getAvailableInvoicesForIndex = (index) => {
-  const selectedInvoices = formData.value.invoices.filter((inv, i) => i !== index && inv !== null);
+    const selectedInvoices = formData.value.invoices.filter(
+        (inv, i) => i !== index && inv !== null
+    );
 
-  return invoices.value.filter(invoice => {
-    // Exclude invoices already selected in other dropdowns
-    return !selectedInvoices.includes(invoice.invoice_no);
-  });
+    return invoices.value.filter((invoice) => {
+        // Exclude invoices already selected in other dropdowns
+        return !selectedInvoices.includes(invoice.invoice_no);
+    });
 };
-
 
 watch(
     () => props.receipt,
@@ -569,7 +615,7 @@ watch(
 
             if (newVal.invoice_no) {
                 const existingInvoice = invoices.value.find(
-                    inv => inv.invoice_no === newVal.invoice_no
+                    (inv) => inv.invoice_no === newVal.invoice_no
                 );
 
                 if (!existingInvoice) {
@@ -595,7 +641,7 @@ watch(
 
 const updateCustomerDetails = () => {
     const selectedCustomer = customers.value.find(
-        customer => customer.id === formData.value.customer_id
+        (customer) => customer.id === formData.value.customer_id
     );
 
     if (selectedCustomer) {
@@ -787,26 +833,24 @@ watch(
 );
 
 const paymentSchedules = ref([
-  // Your payment schedules objects with id and paid_amount properties
+    // Your payment schedules objects with id and paid_amount properties
 ]);
 
 const syncPaidAmountToSchedules = () => {
-    const schedules = paymentSchedules.value.filter(schedule =>
+    const schedules = paymentSchedules.value.filter((schedule) =>
         formData.value.payment_schedule_ids.includes(schedule.id)
     );
     const totalSchedules = schedules.length;
     if (totalSchedules === 0) return;
 
     // Divide paid_amount evenly or based on schedule amount
-    const perScheduleAmount = Number(formData.value.paid_amount) / totalSchedules;
+    const perScheduleAmount =
+        Number(formData.value.paid_amount) / totalSchedules;
 
-    schedules.forEach(schedule => {
+    schedules.forEach((schedule) => {
         schedule.paid_amount = perScheduleAmount;
     });
 };
-
-
-
 
 const createReceipt = async () => {
     isLoading.value = true;
@@ -814,8 +858,8 @@ const createReceipt = async () => {
     try {
         syncPaidAmountToSchedules();
         const invoicesToSend = formData.value.invoices.length
-            ? formData.value.invoices.map(inv => inv || null)
-            : [null];  // ensure at least one item, null means no invoice selected
+            ? formData.value.invoices.map((inv) => inv || null)
+            : [null]; // ensure at least one item, null means no invoice selected
 
         const payload = {
             invoices: invoicesToSend,
@@ -829,9 +873,9 @@ const createReceipt = async () => {
             payment_method: formData.value.payment_method,
             payment_reference_no: formData.value.payment_reference_no || null,
             payment_schedule_ids: formData.value.payment_schedule_ids || [],
-            payment_schedules: paymentSchedules.value.filter(schedule =>
+            payment_schedules: paymentSchedules.value.filter((schedule) =>
                 formData.value.payment_schedule_ids.includes(schedule.id)
-            )
+            ),
         };
 
         const response = await axios.post(route("receipts.store"), payload);
@@ -870,11 +914,10 @@ const createReceipt = async () => {
     }
 };
 
-
 const formattedScheduleId = computed(() => {
     if (!formData.value.payment_schedule_ids?.length) return "No schedules";
     return formData.value.payment_schedule_ids
-        .map(id => `PS-${String(id).padStart(6, "0")}`)
+        .map((id) => `PS-${String(id).padStart(6, "0")}`)
         .join(", ");
 });
 </script>

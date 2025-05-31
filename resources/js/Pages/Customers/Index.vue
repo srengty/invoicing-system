@@ -62,6 +62,7 @@
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
                 class="text-sm"
+                :showGridlines="true"
             >
                 <Column
                     field="customer_category_name"
@@ -78,6 +79,7 @@
                     :key="col.field"
                     :field="col.field"
                     :header="col.header"
+                    :sortable="col.sortable"
                 ></Column>
 
                 <Column header="Actions">
@@ -266,8 +268,8 @@ const items = computed(() => [
 
 const columns = [
     { field: "name", header: "Name", style: { width: "5%" } },
-    { field: "code", header: "Code", style: { width: "5%" } },
-    { field: "credit_period", header: "Credit Period", style: { width: "5%" } },
+    { field: "code", header: "Code", style: { width: "5%" }, sortable: true },
+    { field: "credit_period", header: "Credit Period", style: { width: "10%" } },
     { field: "address", header: "Address", style: { width: "5%" } },
     { field: "website", header: "Website", style: { width: "5%" } },
     { field: "phone_number", header: "Phone", style: { width: "5%" } },

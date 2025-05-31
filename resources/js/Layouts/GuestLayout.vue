@@ -11,12 +11,13 @@ import MainNavTree from "./MainNavTree.vue";
         <div
             class="w-full h-screen overflow-y-auto bg-white shadow-md sm:rounded-lg dark:bg-gray-800 grid grid-cols-1 md:grid-cols-6"
         >
-            <div class="row-span-2 bg-slate-100 dark:bg-slate-100">
+            <div
+                class="row-span-2 bg-slate-100 dark:bg-slate-100 sticky top-0 h-screen overflow-auto"
+            >
                 <div
                     class="flex flex-col items-center justify-center py-2 pb-5 mb-3"
                 >
                     <Link href="/">
-                        <!-- <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" /> -->
                         <img src="/logo.png" alt="Logo" class="h-20 w-20" />
                     </Link>
                     <div class="text-sm">
@@ -25,6 +26,7 @@ import MainNavTree from "./MainNavTree.vue";
                 </div>
                 <MainNavTree />
             </div>
+
             <div class="md:col-span-5">
                 <!-- <div class="bg-slate-100 dark:bg-slate-100 min-h-10">
                     &emsp;

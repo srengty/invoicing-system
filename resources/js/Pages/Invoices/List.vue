@@ -19,34 +19,34 @@
         <div class="invoices">
             <div class="flex justify-end items-center">
                 <div class="flex gap-2">
+                    <Dropdown
+                        v-model="filters.status"
+                        :options="statusOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        placeholder="Filter by Status"
+                        class="w-48"
+                        size="small"
+                    />
+                    <Button
+                        label="Clear"
+                        icon="pi pi-times"
+                        class="p-button-secondary"
+                        size="small"
+                        @click="filters.status = null"
+                    />
                     <Button
                         icon="pi pi-plus"
-                        label="Create Invoice"
+                        label="Issue Invoice"
                         size="small"
                         @click="navigateToCreate"
                     />
-                    <ChooseColumns
+                    <!-- <ChooseColumns
                         :columns="columns"
                         v-model="selectedColumns"
                         @apply="updateColumns"
                         size="small"
-                    />
-                    <Dropdown
-                    v-model="filters.status"
-                    :options="statusOptions"
-                    optionLabel="label"
-                    optionValue="value"
-                    placeholder="Filter by Status"
-                    class="w-48"
-                    size="small"
-                    />
-                    <Button
-                    label="Clear"
-                    icon="pi pi-times"
-                    class="p-button-secondary"
-                    size="small"
-                    @click="filters.status = null"
-                    />
+                    /> -->
                 </div>
             </div>
 
@@ -65,62 +65,56 @@
                     :key="col.field"
                     :field="col.field"
                     :header="col.header"
-                    sortable
+                    :sortable="col.sortable"
                 />
 
                 <Column field="grand_total" header="Amount">
                     <template #body="{ data }">
-                        <span :class="{ 'text-blue-500': (data.grand_total) >= 0 }">
-                        {{ formatCurrency(data.grand_total) }} (KHR)
+                        <span
+                            :class="{ 'text-blue-500': data.grand_total >= 0 }"
+                        >
+                            {{ formatCurrency(data.grand_total) }} (KHR)
                         </span>
                     </template>
                 </Column>
 
                 <Column field="status" header="Status">
-                    <template #body="{ data }">
+                    <template #body="slotProps">
                         <div class="flex">
-                            <Button
-                                :icon="
-                                    data.status === 'approved'
-                                        ? 'pi pi-check'
-                                        : data.status === 'rejected'
-                                        ? 'pi pi-times'
-                                        : data.status === 'revise'
-                                        ? 'pi pi-pencil'
-                                        : 'pi pi-clock'
-                                "
-                                :label="
-                                    data.status === 'approved'
-                                        ? 'Approved'
-                                        : data.status === 'rejected'
-                                        ? 'Rejected'
-                                        : data.status === 'revise'
-                                        ? 'Revise'
-                                        : 'Pending'
-                                "
-                                :class="
-                                    data.status === 'pending'
-                                        ? 'p-button-warning'
-                                        : data.status === 'approved'
-                                        ? 'p-button-success'
-                                        : data.status === 'revise'
-                                        ? 'p-button-danger'
-                                        : 'p-button-warning'
-                                "
-                                size="small"
-                                @click="toggleStatus(data)"
-                                class="text-sm flex-grow w-auto"
-                                :disabled="data.status === 'approved'"
-                                outlined
-                            />
+                            <span
+                                class="p-2 border rounded w-28 h-8 flex items-center justify-center gap-2"
+                                :class="{
+                                    'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        slotProps.data.status === 'Pending',
+                                    'bg-red-100 text-red-800 border-red-400':
+                                        slotProps.data.status === 'revise',
+                                    'bg-green-100 text-green-800 border-green-400':
+                                        slotProps.data.status === 'approved',
+                                }"
+                            >
+                                <i
+                                    :class="{
+                                        'pi pi-clock':
+                                            slotProps.data.status === 'Pending',
+                                        'pi pi-times':
+                                            slotProps.data.status === 'revise',
+                                        'pi pi-check':
+                                            slotProps.data.status ===
+                                            'approved',
+                                    }"
+                                ></i>
+                                {{ capitalize(slotProps.data.status) }}
+                            </span>
                             <Button
                                 v-if="
-                                    data.invoice_comments &&
-                                    data.invoice_comments.length > 0
+                                    slotProps.data.invoice_comments &&
+                                    slotProps.data.invoice_comments.length > 0
                                 "
                                 icon="pi pi-comment"
                                 class="p-button-info ml-2"
-                                @click="viewComment(data.invoice_comments)"
+                                @click="
+                                    viewComment(slotProps.data.invoice_comments)
+                                "
                                 outlined
                             />
                         </div>
@@ -213,6 +207,10 @@
                 v-model:visible="isCommentDialogVisible"
                 header="Comments"
                 class="w-80"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div v-if="selectedComment.length > 0">
                     <div
@@ -242,6 +240,10 @@
                 modal
                 :style="{ width: '30rem' }"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div v-if="selectedInvoice" class="flex flex-col gap-4">
                     <p>
@@ -292,6 +294,10 @@
                 modal
                 :style="{ width: '40rem' }"
                 class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
             >
                 <div v-if="selectedInvoice" class="p-4 space-y-4">
                     <!-- Header Info -->
@@ -308,22 +314,33 @@
                             <p>
                                 <strong>Email:</strong>
                                 <a
-                                    v-if="selectedInvoice.email || selectedInvoice.customer?.email"
+                                    v-if="
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    "
                                     :href="`mailto:${
-                                        selectedInvoice.email || selectedInvoice.customer?.email
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
                                     }`"
                                     class="text-blue-600 hover:underline"
                                 >
-                                    {{ selectedInvoice.email || selectedInvoice.customer?.email }}
+                                    {{
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    }}
                                 </a>
                                 <span v-else>N/A</span>
                             </p>
                         </div>
                         <div class="flex flex-col w-1/2 items-end gap-4">
                             <div class="grid gap-4">
-                                <p>
+                                <p v-if="selectedInvoice.quotation_no">
                                     <strong>Quotation No.:</strong>
                                     {{ selectedInvoice.quotation_no }}
+                                </p>
+                                <p v-else-if="selectedInvoice.agreement_no">
+                                    <strong>Agreement No.:</strong>
+                                    {{ selectedInvoice.agreement_no }}
                                 </p>
                                 <p>
                                     <strong>Invoice No.:</strong>
@@ -340,29 +357,32 @@
                     <!-- Products Table -->
                     <span class="font-bold block mb-2 text-center">Items</span>
                     <DataTable
-                    v-if="selectedInvoice.payment_schedules?.length"
-                    :value="selectedInvoice.payment_schedules"
-                    responsiveLayout="scroll"
-                    class="text-sm mb-4"
+                        v-if="selectedInvoice.payment_schedules?.length"
+                        :value="selectedInvoice.payment_schedules"
+                        responsiveLayout="scroll"
+                        class="text-sm mb-4"
                     >
-                    <Column field="id" header="Payment Schedule ID" />
-                    <Column field="amount" header="Amount" />
-                    <Column field="short_description" header="Description" />
+                        <Column field="id" header="Payment Schedule ID" />
+                        <Column field="amount" header="Amount" />
+                        <Column
+                            field="short_description"
+                            header="Description"
+                        />
                     </DataTable>
 
                     <DataTable
-                    v-else
-                    :value="selectedInvoice.products"
-                    responsiveLayout="scroll"
-                    class="text-sm"
+                        v-else
+                        :value="selectedInvoice.products"
+                        responsiveLayout="scroll"
+                        class="text-sm"
                     >
-                    <Column field="name" header="Item" />
-                    <Column field="pivot.quantity" header="Qty" />
-                    <Column header="Unit Price">
-                        <template #body="{ data }">
-                        {{ formatCurrency(data.pivot.price) }}
-                        </template>
-                    </Column>
+                        <Column field="name" header="Item" />
+                        <Column field="pivot.quantity" header="Qty" />
+                        <Column header="Unit Price">
+                            <template #body="{ data }">
+                                {{ formatCurrency(data.pivot.price) }}
+                            </template>
+                        </Column>
                     </DataTable>
 
                     <!-- Totals -->
@@ -371,14 +391,18 @@
                         <p>
                             <strong>Total:</strong>
                             {{ formatCurrency(selectedInvoice.grand_total) }}
-                            <span class="text-xs text-gray-500 ml-1">(KHR)</span>
+                            <span class="text-xs text-gray-500 ml-1"
+                                >(KHR)</span
+                            >
                         </p>
                     </div>
                 </div>
 
                 <!-- Comments -->
                 <div class="p-4">
-                    <label for="comment" class="block font-bold mb-2">Comment:</label>
+                    <label for="comment" class="block font-bold mb-2"
+                        >Comment:</label
+                    >
                     <textarea
                         id="comment"
                         v-model="statusForm.comment"
@@ -402,7 +426,9 @@
                         class="p-button-success"
                         size="small"
                         @click="changeStatus('approved')"
-                        :disabled="statusForm.processing || !statusForm.comment.trim()"
+                        :disabled="
+                            statusForm.processing || !statusForm.comment.trim()
+                        "
                     />
                     <Button
                         label="Revise"
@@ -410,7 +436,9 @@
                         class="p-button-danger"
                         size="small"
                         @click="changeStatus('revise')"
-                        :disabled="statusForm.processing || !statusForm.comment.trim()"
+                        :disabled="
+                            statusForm.processing || !statusForm.comment.trim()
+                        "
                     />
                     <Button
                         label="Close"
@@ -419,7 +447,6 @@
                     />
                 </template>
             </Dialog>
-
         </div>
     </GuestLayout>
 </template>
@@ -456,7 +483,6 @@ const props = defineProps({
     },
 });
 
-
 // The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
@@ -469,7 +495,7 @@ const items = computed(() => [
 ]);
 
 const filters = ref({
-  status: null,
+    status: null,
 });
 
 const selectedInvoice = ref(null);
@@ -479,8 +505,8 @@ const comment = ref("");
 const viewInvoice = (invoice) => {
     statusForm.reset();
     selectedInvoice.value = invoice;
-    console.log('Selected Invoice:', invoice);
-    console.log('Payment Schedules:', invoice.paymentSchedules);
+    console.log("Selected Invoice:", invoice);
+    console.log("Payment Schedules:", invoice.paymentSchedules);
     isViewDialogVisible.value = true;
 };
 
@@ -492,26 +518,27 @@ const formatCurrency = (value) => {
 };
 
 const statusOptions = ref([
-  { label: "Pending", value: "Pending" },
-  { label: "Approved", value: "approved" },
-  { label: "Revise", value: "revise" },
-  { label: "Rejected", value: "rejected" },
+    { label: "Pending", value: "Pending" },
+    { label: "Approved", value: "Approved" },
+    { label: "Revise", value: "Revise" },
+    { label: "Rejected", value: "Rejected" },
 ]);
 
 const columns = [
-    { field: "start_date", header: "Date" },
-    { field: "end_date", header: "Due Date" },
-    { field: "customer.name", header: "Customer" },
+    { field: "invoice_no", header: "Invoice No" },
+    { field: "start_date", header: "Date", sortable: true },
+    { field: "end_date", header: "Due Date", sortable: true },
+    { field: "customer.name", header: "Customer", sortable: true },
+    { field: "agreement_no", header: "Agreement No" },
 ];
 
 const filteredInvoices = computed(() => {
-  if (!filters.value.status) return props.invoices.data;
+    if (!filters.value.status) return props.invoices.data;
 
-  return props.invoices.data.filter((invoice) => {
-    return invoice.status === filters.value.status;
-  });
+    return props.invoices.data.filter((invoice) => {
+        return invoice.status === filters.value.status;
+    });
 });
-
 
 const selectedComment = ref("");
 const commentText = ref("");
@@ -533,13 +560,18 @@ const toggleStatus = (invoice) => {
 };
 
 const canEditInvoice = (invoice) => {
-  return invoice.status !== 'approved' || invoice.status == 'revise';
+    return invoice.status !== "approved" || invoice.status == "revise";
+};
+
+// right after your other consts
+const capitalize = (text) => {
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 };
 
 const editInvoice = (invoice) => {
-  Inertia.visit(`/invoices/${invoice.id}/edit`);
+    Inertia.visit(`/invoices/${invoice.id}/edit`);
 };
-
 
 const changeStatus = (status) => {
     if (!selectedInvoice.value) return;

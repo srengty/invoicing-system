@@ -65,6 +65,7 @@
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
                 striped
+                :showGridlines="true"
             >
                 <Column header="Division">
                     <template #body="{ data }">
@@ -85,7 +86,11 @@
                     :header="col.header"
                     sortable
                 />
-
+                <Column header="Price" sortable>
+                    <template #body="{ data }">
+                        {{ formatPrice(data.price) }}
+                    </template>
+                </Column>
                 <!-- ✅ Status Button Column -->
                 <Column header="Status">
                     <template #body="{ data }">
@@ -303,7 +308,9 @@
                                     id="price"
                                     :value="
                                         selectedProduct?.price
-                                            ? `${selectedProduct.price} KHR`
+                                            ? `${formatPrice(
+                                                  selectedProduct.price
+                                              )} KHR`
                                             : 'N/A'
                                     "
                                     class="w-full text-sm"
@@ -372,7 +379,6 @@
                     />
                 </div>
             </Dialog>
-
             <!-- Product Form Dialog -->
             <Dialog
                 v-model:visible="isFormVisible"
@@ -553,6 +559,10 @@
                                 <InputNumber
                                     id="price"
                                     v-model="form.price"
+                                    mode="decimal"
+                                    :useGrouping="true"
+                                    :minFractionDigits="2"
+                                    :maxFractionDigits="2"
                                     class="w-full text-sm"
                                     size="small"
                                     placeholder="Enter Price in KHR"
@@ -646,7 +656,7 @@
                     </div>
                 </form>
             </Dialog>
-
+            <!-- Change Product Status -->
             <Dialog
                 v-model:visible="isStatusDialogVisible"
                 header="Change Product Status"
@@ -687,7 +697,7 @@
                     </div>
                 </div>
             </Dialog>
-
+            <!--Display Comment Dialog -->
             <Dialog
                 v-model:visible="isCommentDialogVisible"
                 header="Comment"
@@ -954,8 +964,14 @@ const columns = [
     { field: "code", header: "Item Code" },
     { field: "name_kh", header: "Name (KH)" },
     { field: "unit", header: "Unit" },
-    { field: "price", header: "Price" },
 ];
+const formatPrice = (value) => {
+    if (value == null || isNaN(value)) return "";
+    return new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(value);
+};
 
 // State for form and view dialogs
 const isFormVisible = ref(false);

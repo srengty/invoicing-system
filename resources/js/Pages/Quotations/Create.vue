@@ -450,6 +450,8 @@
                 <InputNumber
                     v-model="selectedProduct.price"
                     :min="0"
+                    :minFractionDigits="2"
+                    :maxFractionDigits="2"
                     @keydown="preventMinus"
                     size="small"
                     class="w-full text-sm"
@@ -644,6 +646,8 @@ onMounted(() => {
         form.total = newProps.total || 0;
         form.tax = newProps.tax || 0;
         form.grand_total = newProps.grand_total || 0;
+        form.total_usd = newProps.total_usd || 0;
+        form.exchange_rate = newProps.exchange_rate || 0;
 
         // Populate selectedProductsData with existing products
         if (newProps.products && Array.isArray(newProps.products)) {

@@ -87,6 +87,7 @@
                     paginator
                     :rows="5"
                     :rowsPerPageOptions="[5, 10, 20, 50]"
+                    :showGridlines="true"
                     tableStyle="min-width: 50rem"
                 >
                     <!-- <Column headerStyle="width: 5%" header="Select">
