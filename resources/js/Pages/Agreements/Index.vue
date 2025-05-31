@@ -124,6 +124,7 @@
                                 'amount',
                                 'due_payment',
                                 'total_progress_payment',
+                                'payment_schedules',  
                                 'total_progress_payment_percentage',
                             ].includes(col.field)
                         "
@@ -287,46 +288,36 @@
                         </template>
                     </Column>
                     <!-- Update the total_progress_payment column to show the sum of all receipts -->
-                    <Column
-                        v-if="col.field === 'total_progress_payment'"
-                        :field="col.field"
-                        :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
-                    >
-                        <template #body="slotProps">
-                            <div class="flex items-center">
-                                <span
-                                    class="hover:text-primary hover:underline cursor-pointer transition-all duration-200"
-                                    @click="
-                                        showProgressPayments(slotProps.data)
-                                    "
-                                >
-                                    {{
-                                        formatCurrency(
-                                            slotProps.data
-                                                .total_progress_payment
-                                        )
-                                    }}
-                                </span>
-                                <Button
-                                    v-if="
-                                        slotProps.data.progress_payments?.length
-                                    "
-                                    icon="pi pi-info-circle"
-                                    @click="
-                                        showProgressPayments(slotProps.data)
-                                    "
-                                    severity="secondary"
-                                    size="small"
-                                    text
-                                    rounded
-                                    class="ml-2"
-                                    v-tooltip.top="'View progress payments'"
-                                />
-                            </div>
-                        </template>
-                    </Column>
+                  <Column
+                    v-if="col.field === 'payment_schedules'"
+                    :field="col.field"
+                    :header="col.header"
+                    sortable
+                    style="width: 5%; font-size: 14px"
+                >
+                    <template #body="slotProps">
+                        <div class="flex items-center">
+                            <span
+                                class="hover:text-primary hover:underline cursor-pointer transition-all duration-200"
+                                @click="showProgressPayments(slotProps.data)"
+                            >
+                                {{ formatCurrency(getTotalPaidAmount(slotProps.data.payment_schedules)) }}
+                            </span>
+                            <Button
+                                v-if="(slotProps.data.payment_schedules || []).length"
+                                icon="pi pi-info-circle"
+                                @click="showProgressPayments(slotProps.data)"
+                                severity="secondary"
+                                size="small"
+                                text
+                                rounded
+                                class="ml-2"
+                                v-tooltip.top="'View all payment schedules'"
+                            />
+                        </div>
+                    </template>
+                </Column>
+
                     <!-- Update the total_progress_payment_percentage column to show the percentage -->
                     <Column
                         v-if="col.field === 'total_progress_payment_percentage'"
@@ -468,120 +459,121 @@
             </DataTable>
             <!-- Total Progress Payment Dialog (View) -->
             <Dialog
-                v-model:visible="progressPaymentsDialog"
-                :style="{ width: '45vw' }"
-                header="Progress Payment Details"
-                :modal="true"
-                :dismissableMask="true"
-                class="text-sm"
-                :draggable="false"
-                :resizable="false"
-                :position="'center'"
-                :closeOnEscape="false"
+            v-model:visible="progressPaymentsDialog"
+            :style="{ width: '45vw' }"
+            header="Progress Payment Details"
+            modal
+            dismissableMask
+            class="text-sm"
+            :draggable="false"
+            :resizable="false"
+            position="center"
+            :closeOnEscape="false"
             >
-                <div class="grid">
-                    <div class="col-12">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
-                                        >Agreement No:</label
-                                    >
-                                    <div class="text-sm">
-                                        {{ selectedAgreement?.agreement_no }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
-                                        >Customer:</label
-                                    >
-                                    <div>
-                                        {{ selectedAgreement?.customer?.name }}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
-                                        >Total Amount:</label
-                                    >
-                                    <div>
-                                        {{
-                                            formatCurrency(
-                                                selectedAgreement?.amount
-                                            )
-                                        }}
-                                        ({{ selectedAgreement?.currency }})
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold">Status:</label>
-                                    <Tag
-                                        :value="
-                                            getStatusLabel(
-                                                selectedAgreement?.status
-                                            )
-                                        "
-                                        :severity="
-                                            getStatusSeverity(
-                                                selectedAgreement?.status
-                                            )
-                                        "
-                                    />
-                                </div>
-                            </div>
+            <div class="grid">
+                <div class="col-12">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-12 md:col-6 lg:col-3">
+                    <div class="field flex gap-2">
+                        <label class="font-semibold">Agreement No:</label>
+                        <div class="text-sm">{{ selectedAgreement?.agreement_no || 'N/A' }}</div>
+                    </div>
+                    </div>
+                    <div class="col-12 md:col-6 lg:col-3">
+                    <div class="field flex gap-2">
+                        <label class="font-semibold">Customer:</label>
+                        <div>{{ selectedAgreement?.customer?.name || 'N/A' }}</div>
+                    </div>
+                    </div>
+                    <div class="col-12 md:col-6 lg:col-3">
+                    <div class="field flex gap-2">
+                        <label class="font-semibold">Total Amount:</label>
+                        <div>
+                        {{ formatCurrency(selectedAgreement?.amount || 0) }}
+                        ({{ selectedAgreement?.currency || '-' }})
                         </div>
                     </div>
+                    </div>
+                    <div class="col-12 md:col-6 lg:col-3">
+                    <div class="field flex gap-2">
+                        <label class="font-semibold">Status:</label>
+                        <Tag
+                        :value="getStatusLabel(selectedAgreement?.status)"
+                        :severity="getStatusSeverity(selectedAgreement?.status)"
+                        />
+                    </div>
+                    </div>
                 </div>
-                <Divider class="my-4" />
-                <div class="text-md font-bold mb-3">Progress Payments</div>
-                <DataTable
-                    :value="selectedProgressPayments"
-                    :paginator="true"
-                    :rows="5"
-                    :rowsPerPageOptions="[5, 10, 20]"
-                    :stripedRows="true"
-                    :showGridlines="true"
-                    class="mt-3 text-sm"
-                    size="small"
-                >
-                    <Column field="index" header="No." sortable class="text-sm">
-                        <template #body="slotProps">
-                            {{ slotProps.index + 1 }}
-                        </template>
-                    </Column>
-                    <Column
-                        field="receipt_no"
-                        header="Receipt No"
-                        sortable
-                    ></Column>
-                    <Column field="amount" header="Amount" sortable>
-                        <template #body="slotProps">
-                            <span class="font-semibold">
-                                {{ formatCurrency(slotProps.data.amount) }}
-                            </span>
-                        </template>
-                    </Column>
-                    <Column
-                        field="invoice_no"
-                        header="Invoice No"
-                        sortable
-                    ></Column>
-                </DataTable>
+                </div>
+            </div>
 
-                <template #footer>
-                    <Button
-                        label="Close"
-                        icon="pi pi-times"
-                        @click="progressPaymentsDialog = false"
-                        class="p-button-text"
-                    />
+            <Divider class="my-4" />
+
+            <div class="text-md font-bold mb-3">Progress Payments</div>
+
+            <DataTable
+            :value="paidProgressPayments"
+            :paginator="true"
+            :rows="5"
+            :rowsPerPageOptions="[5, 10, 20]"
+            :stripedRows="true"
+            :showGridlines="true"
+            class="mt-3 text-sm"
+            size="small"
+            >
+            <Column field="id" header="No." sortable>
+                <template #body="slotProps">
+                {{ slotProps.index + 1 }}
                 </template>
+            </Column>
+            <Column field="due_date" header="Due Date" sortable>
+                <template #body="slotProps">
+                <span
+                    :class="{
+                    'text-red-500': 
+                        getPaymentStatus(slotProps.data) === 'DUE SOON' || 
+                        getPaymentStatus(slotProps.data) === 'PAST DUE',
+                    }"
+                >
+                    {{ formatDate(slotProps.data.due_date) }}
+                </span>
+                </template>
+            </Column>
+            <Column field="short_description" header="Description" sortable>
+                <template #body="slotProps">
+                {{ slotProps.data.short_description || "N/A" }}
+                </template>
+            </Column>
+            <Column field="percentage" header="Percentage" sortable>
+                <template #body="slotProps">
+                {{ Math.trunc(slotProps.data.percentage) }}%
+                </template>
+            </Column>
+            <Column field="amount" header="Amount" sortable>
+                <template #body="slotProps">
+                {{ formatCurrency(slotProps.data.amount) }} ({{ slotProps.data.currency }})
+                </template>
+            </Column>
+            <Column header="Status" sortable>
+                <template #body="slotProps">
+                <Tag
+                    :value="getPaymentStatus(slotProps.data)"
+                    :severity="getStatusSeverityPayment(slotProps.data)"
+                    class="text-transform: uppercase"
+                />
+                </template>
+            </Column>
+            </DataTable>
+            <template #footer>
+                <Button
+                label="Close"
+                icon="pi pi-times"
+                @click="progressPaymentsDialog = false"
+                class="p-button-text"
+                />
+            </template>
             </Dialog>
+
             <!-- Agreement Details Dialog (View)-->
             <Dialog
                 v-model:visible="agreementDetailsDialog"
@@ -971,7 +963,7 @@ const columns = [
     { field: "status", header: "Status" },
     { field: "amount", header: "Total amount" },
     { field: "due_payment", header: "Due Payment" },
-    { field: "total_progress_payment", header: "Total Progress Payment" }, //sum of all recipes amount
+    { field: "payment_schedules", header: "Total Progress Payment" }, //sum of all recipes amount
     {
         field: "total_progress_payment_percentage",
         header: "Total Progress Payment %",
@@ -984,6 +976,21 @@ const columns = [
         header: "  View / Edit",
     },
 ];
+
+const getTotalPaidAmount = (paymentSchedules = []) => {
+    return paymentSchedules.reduce((total, schedule) => {
+        const paidAmount = parseFloat(schedule.paid_amount || 0);
+        return total + paidAmount;
+    }, 0);
+};
+
+const paidProgressPayments = computed(() => {
+  if (!selectedAgreement.value?.payment_schedules) return []
+  return selectedAgreement.value.payment_schedules.filter(
+    (schedule) => getPaymentStatus(schedule) === "PAID"
+  )
+})
+
 const defaultColumns = columns.filter(
     (col) =>
         ![
@@ -1140,8 +1147,7 @@ const progressBarClass = (percentage) => {
 const progressPaymentsDialog = ref(false);
 const selectedProgressPayments = ref([]);
 const selectedAgreement = ref(null);
-const paymentDetailsDialog = ref(false);
-const currentPayment = ref(null);
+
 const showProgressPayments = (agreement) => {
     try {
         selectedAgreement.value = { ...agreement };

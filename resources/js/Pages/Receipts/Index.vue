@@ -72,11 +72,15 @@
                         {{ formatDate(slotProps.data.receipt_date) }}
                     </template>
                 </Column>
-                <Column
-                    field="invoice_no"
-                    header="Invoice No"
-                    style="width: 5%; font-size: 14px"
-                ></Column>
+                <Column header="Invoice No" style="width: 10%; font-size: 14px">
+                    <template #body="slotProps">
+                        <ul>
+                        <li v-for="invoice in slotProps.data.invoices" :key="invoice.id">
+                            {{ invoice.invoice_no }}
+                        </li>
+                        </ul>
+                    </template>
+                </Column>
                 <Column
                     field="customer.name"
                     header="Customer"
@@ -112,15 +116,6 @@
                             icon="pi pi-eye"
                             size="small"
                             @click="viewReceipt(slotProps.data)"
-                            outlined
-                            class="mr-2"
-                        />
-                        <Button
-                            severity="warning"
-                            aria-label="Edit"
-                            icon="pi pi-pencil"
-                            size="small"
-                            @click="editReceipt(slotProps.data)"
                             outlined
                             class="mr-2"
                         />
@@ -366,6 +361,19 @@ const viewReceipt = (receipt) => {
     dialogVisible.value = true;
 };
 
+const editReceipt = (receipt) => {
+    editingReceipt.value = {
+        ...receipt,
+        customer_id: receipt.customer.id,
+        receipt_date: new Date(receipt.receipt_date),
+    };
+
+    if (receiptDialog.value) {
+        receiptDialog.value.show();
+    }
+};
+
+
 const closeDialog = () => {
     dialogVisible.value = false;
 };
@@ -389,17 +397,6 @@ const formatCurrency = (value) => {
     });
 };
 const editingReceipt = ref(null);
-const editReceipt = (receipt) => {
-    editingReceipt.value = {
-        ...receipt,
-        customer_id: receipt.customer.id,
-        receipt_date: new Date(receipt.receipt_date),
-    };
-
-    if (receiptDialog.value) {
-        receiptDialog.value.show();
-    }
-};
 
 const handleReceiptCreated = async ({ shouldReload }) => {
     if (shouldReload) {

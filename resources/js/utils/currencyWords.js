@@ -5,18 +5,20 @@ export function convertCurrencyToWords(num) {
     const wholePart = Math.floor(num);
 
     if (wholePart === 0 && decimalPart === 0) {
-        return "Zero dollars";
+        return "Zero Real";
     }
 
     const wholeWords = convertNumberToWords(wholePart);
     const decimalWords = decimalPart > 0 ? convertNumberToWords(decimalPart) : null;
 
-    let result = wholeWords + " dollar" + (wholePart !== 1 ? "s" : "");
+    // Singular if exactly 1, else plural
+    let result = wholeWords + " Real" + (wholePart === 1 ? "" : "s");
 
     if (decimalWords) {
-        result += " and " + decimalWords + " cent" + (decimalPart !== 1 ? "s" : "");
+        result += " and " + decimalWords + " cent" + (decimalPart === 1 ? "" : "s");
     }
 
+    // Capitalize first letter
     return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
@@ -28,6 +30,12 @@ function convertNumberToWords(num) {
     const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
 
     let words = [];
+
+    if (num >= 1000000) {
+        const millions = Math.floor(num / 1000000);
+        words.push(convertNumberToWords(millions) + " million" + (millions === 1 ? "" : "s"));
+        num %= 1000000;
+    }
 
     if (num >= 1000) {
         const thousands = Math.floor(num / 1000);

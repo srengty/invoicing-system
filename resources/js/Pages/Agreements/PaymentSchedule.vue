@@ -168,13 +168,14 @@
                             :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
                         />
                         <Button
-                            icon="pi pi-file-pdf"
+                            :icon="slotProps.data.invoice_generated ? 'pi pi-check' : 'pi pi-file-pdf'"
+                            :label="slotProps.data.invoice_generated ? 'Invoice Generated' : 'Generate Invoice'"
                             class="p-button-success p-button-outlined"
-                            label="Generate invoice"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
                             :disabled="
-                                getPaymentStatus(slotProps.data) === 'PAID'
+                                getPaymentStatus(slotProps.data) === 'PAID' ||
+                                slotProps.data.invoice_generated === true
                             "
                         />
                     </div>

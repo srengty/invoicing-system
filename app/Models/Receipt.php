@@ -34,9 +34,17 @@ class Receipt extends Model
         return $this->belongsTo(Invoice::class, 'invoice_no', 'invoice_no');
     }
 
+    // Receipt.php
     public function invoices()
     {
-        return $this->belongsToMany(Invoice::class, 'invoice_receipt', 'receipt_no', 'invoice_id', 'receipt_no', 'id');
+        return $this->belongsToMany(
+            Invoice::class,                // Related model
+            'invoice_receipt',             // Pivot table
+            'receipt_no',          // Foreign key on pivot table referencing this model (Receipt)
+            'invoice_id',                 // Foreign key on pivot table referencing related model (Invoice)
+            'receipt_no',                  // Local key on Receipt model (primary key)
+            'id'                          // Local key on Invoice model (primary key)
+        );
     }
 
     public function customer()

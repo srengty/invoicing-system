@@ -172,10 +172,13 @@
                                 <InputNumber
                                     v-model="formData.paid_amount"
                                     class="w-full"
-                                    mode="currency"
-                                    :currency="selectedCurrency"
-                                    locale="en-US"
-                                    placeholder="Enter amount paid"
+                                    placeholder="Enter amount paid "
+                                    mode="decimal"
+                                    :minFractionDigits="2"
+                                    :maxFractionDigits="2"
+                                    thousandSeparator=","
+                                    decimalSeparator="."
+                                    suffix=" ( KHR )"
                                     size="small"
                                     @input="updateAmountInWords"
                                 />
@@ -353,8 +356,8 @@ const availableInvoices = computed(() => {
     const filterInvoice= invoices.value.filter(invoice => {
         // Filter out invoices that are already selected (except the current one)
         const isSelected = formData.value.invoices.some(
-            selectedInvoiceNo => selectedInvoiceNo === invoice.invoice
-        );
+                selectedInvoiceNo => selectedInvoiceNo === invoice.invoice_no
+            );
         return !isSelected;
     });
     return filterInvoice
@@ -652,7 +655,7 @@ const invoiceLabel = (invoice) => {
     if (!invoice) return "";
     let label = `${invoice.invoice_no} - ${invoice.customer_code} (${invoice.customer_name})`;
     const remaining = Number(invoice.grand_total) - Number(invoice.paid_amount);
-    label += ` - ${remaining.toFixed(2)} ${invoice.currency || 'USD'} remaining`;
+    label += ` - ${remaining.toFixed(2)} KHR remaining`;
     return label;
 };
 

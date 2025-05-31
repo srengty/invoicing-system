@@ -269,12 +269,18 @@ class InvoiceController extends Controller
         $quotations = Quotation::with('agreement')->where('status','Approved')->get();
         $customers = Customer::all();
         $paymentSchedules = PaymentSchedule::all();
-        $receipts = Receipt::all();
+        
+        // Modified receipts query to exclude those already used in invoices from payment schedules
+        $receipts = Receipt::whereDoesntHave('invoice', function($query) {
+            $query->whereHas('paymentSchedules');
+        })->get();
 
-        // NEW: get full selected schedule details
+        
+
+        // Get full selected schedule details
         $selectedSchedule = PaymentSchedule::with([
             'agreement' => function($query) {
-                $query->with('customer'); // Make sure customer relationship is loaded
+                $query->with('customer');
             },
             'invoices',
             'receipts'
@@ -294,10 +300,8 @@ class InvoiceController extends Controller
             $prefill['customer_id'] = $selectedSchedule->agreement->customer_id ?? null;
             $prefill['quotation_no'] = $selectedSchedule->agreement->quotation_no ?? null;
             $prefill['phone'] = $selectedSchedule->agreement->customer->phone_number ?? null;
-
         }
 
-        // NEW: Pass the full schedule as `selectedPaymentSchedule`
         return Inertia::render('Invoices/Generate', [
             'agreements' => $agreements,
             'quotations' => $quotations,

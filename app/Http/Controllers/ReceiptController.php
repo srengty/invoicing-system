@@ -61,20 +61,32 @@ class ReceiptController extends Controller
             'required',
             'numeric',
             'min:0.01',
-            function ($attribute, $value, $fail) use ($request) {
-                // Sum remaining balance of invoices
-                    if (!empty($request->invoices) && is_array($request->invoices)) {
-                        $totalRemaining = 0;
+function ($attribute, $value, $fail) use ($request) {
+                    if (!empty($request->invoices) && is_array($request->invoices) && count($request->invoices) > 0) {
                         $invoices = \App\Models\Invoice::whereIn('invoice_no', $request->invoices)->get();
 
+                        // Check all invoices belong to same customer
+                        $customerIds = $invoices->pluck('customer_id')->unique();
+                        if ($customerIds->count() > 1) {
+                            $fail("All invoices must belong to the same customer.");
+                            return;
+                        }
+
+                        $agreementNos = $invoices->pluck('agreement_no')->unique();
+                        if ($agreementNos->count() > 1) {
+                            $fail("All invoices must belong to the same agreement.");
+                            return;
+                        }
+
+                        $totalRemaining = 0;
                         foreach ($invoices as $invoice) {
                             $remaining = $invoice->grand_total - $invoice->paid_amount;
                             $totalRemaining += $remaining;
                         }
 
-                        // if ($value > $totalRemaining) {
-                        //     $fail("The paid amount cannot exceed the total remaining invoice balance of " . number_format($totalRemaining, 2));
-                        // }
+                        if ($totalRemaining > 0 && $value > $totalRemaining) {
+                            $fail("The paid amount cannot exceed the total remaining invoice balance of " . number_format($totalRemaining, 2));
+                        }
                     }
                 },
             ],
@@ -87,6 +99,42 @@ class ReceiptController extends Controller
         $customer = Customer::find($validated['customer_id']);
         if (!$customer) {
             return redirect()->back()->with('error', 'Customer not found.');
+        }
+
+        if (!empty($validated['payment_schedule_ids'])) {
+            $schedules = \App\Models\PaymentSchedule::whereIn('id', $validated['payment_schedule_ids'])->get();
+
+            $agreementIds = $schedules->pluck('agreement_id')->unique();
+
+            if ($agreementIds->count() > 1) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['payment_schedule_ids' => 'All payment schedules must belong to the same agreement.']);
+            }
+
+            $agreementId = $agreementIds->first();
+
+            if (!empty($validated['invoices'])) {
+                $invoices = \App\Models\Invoice::whereIn('invoice_no', $validated['invoices'])->get();
+
+                $invoiceAgreementIds = $invoices->pluck('agreement_id')->unique();
+
+                if ($invoiceAgreementIds->count() > 1 || !$invoiceAgreementIds->contains($agreementId)) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['invoices' => 'All invoices must belong to the same agreement as the payment schedules.']);
+                }
+
+                // Optional: Check customer consistency
+                $invoiceCustomerIds = $invoices->pluck('customer_id')->unique();
+                $scheduleCustomerId = $schedules->first()->agreement->customer_id;
+
+                if ($invoiceCustomerIds->count() > 1 || $invoiceCustomerIds->first() != $scheduleCustomerId) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['customer' => 'Invoices and payment schedules must belong to the same customer.']);
+                }
+            }
         }
 
         // Create receipt
@@ -141,17 +189,27 @@ class ReceiptController extends Controller
 
         }
 
-        // Handle explicitly selected payment schedules
         if (!empty($validated['payment_schedule_ids'])) {
+            // Get the total number of schedules
+            $scheduleCount = count($validated['payment_schedule_ids']);
+            $remainingAmount = $validated['paid_amount'];
+
             foreach ($validated['payment_schedule_ids'] as $scheduleId) {
                 $schedule = PaymentSchedule::find($scheduleId);
-                if ($schedule) {
-                    $schedule->paid_amount += $validated['paid_amount'];
+                if ($schedule && $remainingAmount > 0) {
+                    // Calculate how much to apply (min between remaining and due)
+                    $dueAmount = $schedule->amount - $schedule->paid_amount;
+                    $appliedAmount = min($remainingAmount, $dueAmount);
+
+                    $schedule->paid_amount += $appliedAmount;
                     $schedule->status = $this->determinePaymentStatus($schedule);
                     $schedule->save();
-                    
-                    // Safe attach
+
+                    // Safe attach to pivot table
                     $receipt->paymentSchedules()->syncWithoutDetaching([$scheduleId]);
+
+                    // Reduce remaining paid amount
+                    $remainingAmount -= $appliedAmount;
                 }
             }
         }
