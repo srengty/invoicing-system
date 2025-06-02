@@ -28,7 +28,7 @@
         />
 
         <div class="quotations text-sm p-4">
-            <div class="flex justify-end p-4 gap-4">
+            <div class="flex justify-end pb-4 gap-4">
                 <!-- <div>
                     <Button
                         label="Download Print"
@@ -54,6 +54,15 @@
                         v-model="searchTerm"
                         placeholder="Search"
                         class="w-64"
+                        size="small"
+                    />
+                </div>
+                <div>
+                    <Button
+                        label="Clear"
+                        @click="clearFilters"
+                        class="p-button-secondary w-24"
+                        icon="pi pi-times"
                         size="small"
                     />
                 </div>
@@ -172,18 +181,18 @@
                             <div class="flex items-center">
                                 <span
                                     @click="handleStatusClick(slotProps.data)"
-                                    class="p-2 border rounded w-24 h-8 flex items-center justify-center"
+                                    class="p-2 rounded w-24 h-8 flex items-center justify-center"
                                     :class="{
-                                        'bg-blue-100 text-blue-800 border-blue-400':
+                                        'bg-blue-100 text-blue-800 border-2 border-blue-200':
                                             slotProps.data.customer_status ===
                                             'Sent',
-                                        'bg-yellow-100 text-yellow-800 border-yellow-400':
+                                        'bg-yellow-100 text-yellow-800 border-yellow-200':
                                             slotProps.data.customer_status ===
                                             'Pending',
-                                        'bg-green-100 text-green-800 border-green-400':
+                                        'bg-green-100 text-green-800 border-green-200':
                                             slotProps.data.customer_status ===
                                             'Accept',
-                                        'bg-red-100 text-red-800 border-red-400':
+                                        'bg-red-100 text-red-800 border-red-200':
                                             slotProps.data.customer_status ===
                                             'Reject',
                                     }"
@@ -284,12 +293,22 @@
                                         ? 'pi pi-unlock'
                                         : 'pi pi-lock'
                                 "
+                                :label="
+                                    slotProps.data.active
+                                        ? 'Activate'
+                                        : 'Deactivate'
+                                "
                                 :severity="
                                     slotProps.data.active ? 'success' : 'danger'
                                 "
-                                class="p-button-rounded p-button-text"
+                                :class="{
+                                    'p-button-success': slotProps.data.active,
+                                    'p-button-danger': !slotProps.data.active,
+                                    ' w-28 h-8 flex items-center justify-center': true,
+                                }"
                                 @click="toggleActive(slotProps.data)"
                                 size="small"
+                                outlined
                             />
                         </template>
                     </Column>
@@ -590,6 +609,10 @@ const searchOptions = ref([
     { label: "Status", value: "status" },
     { label: "Customer Status", value: "customer_status" },
 ]);
+const clearFilters = () => {
+    searchType.value = "";
+    searchTerm.value = "";
+};
 
 // The Breadcrumb Quotations
 const page = usePage();

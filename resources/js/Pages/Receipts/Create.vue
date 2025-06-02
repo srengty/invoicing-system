@@ -199,18 +199,18 @@
                             <div class="field">
                                 <label>Paid Amount</label>
                                 <InputNumber
-                                v-model="formData.paid_amount"
-                                class="w-full"
-                                placeholder="Enter amount paid "
-                                mode="decimal"
-                                :minFractionDigits="2"
-                                :maxFractionDigits="2"
-                                thousandSeparator=","
-                                decimalSeparator="."
-                                suffix=" ( KHR )"
-                                size="small"
-                                @input="updateAmountInWords"
-                                :readonly="isPaidAmountReadOnly" 
+                                    v-model="formData.paid_amount"
+                                    class="w-full"
+                                    placeholder="Enter amount paid "
+                                    mode="decimal"
+                                    :minFractionDigits="2"
+                                    :maxFractionDigits="2"
+                                    thousandSeparator=","
+                                    decimalSeparator="."
+                                    suffix=" ( KHR )"
+                                    size="small"
+                                    @input="updateAmountInWords"
+                                    :readonly="isPaidAmountReadOnly"
                                 />
                             </div>
                         </div>
@@ -340,8 +340,7 @@ import {
     Select,
     Toast,
 } from "primevue";
-import { useToast } from 'primevue/usetoast';
-
+import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const dialogVisible = ref(false);
@@ -391,8 +390,8 @@ const availableInvoices = computed(() => {
     const filterInvoice = invoices.value.filter((invoice) => {
         // Filter out invoices that are already selected (except the current one)
         const isSelected = formData.value.invoices.some(
-                selectedInvoiceNo => selectedInvoiceNo === invoice.invoice_no
-            );
+            (selectedInvoiceNo) => selectedInvoiceNo === invoice.invoice_no
+        );
         return !isSelected;
     });
     return filterInvoice;
@@ -917,10 +916,10 @@ const createReceipt = async () => {
 };
 
 const isPaidAmountReadOnly = computed(() => {
-  return (
-    formData.value.payment_schedule_ids &&
-    formData.value.payment_schedule_ids.length > 0
-  );
+    return (
+        formData.value.payment_schedule_ids &&
+        formData.value.payment_schedule_ids.length > 0
+    );
 });
 
 const formattedScheduleId = computed(() => {

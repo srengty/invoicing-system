@@ -18,21 +18,44 @@
         </div>
         <Toast />
         <!-- <BodyLayout> -->
-        <div class="p-4">
+        <div class="px-4">
             <div class="flex justify-between items-center ml-4">
                 <h1 class="text-xl font-semibold text-gray-800">
                     <!-- Products Categories -->
                 </h1>
-                <Button
-                    icon="pi pi-plus"
-                    label="New Item Categories"
-                    @click="openModal"
-                    size="small"
-                />
+                <div class="flex items-center gap-2">
+                    <Dropdown
+                        v-model="searchType"
+                        :options="searchOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        class="w-48 text-sm"
+                        placeholder="Search by"
+                    />
+                    <InputText
+                        v-model="searchTerm"
+                        placeholder="Search"
+                        class="w-64"
+                        size="small"
+                    />
+                    <Button
+                        label="Clear"
+                        @click="clearFilters"
+                        class="p-button-secondary w-24"
+                        icon="pi pi-times"
+                        size="small"
+                    />
+                    <Button
+                        icon="pi pi-plus"
+                        label="New Item Categories"
+                        @click="openModal"
+                        size="small"
+                    />
+                </div>
             </div>
             <div class="mt-4 text-sm">
                 <DataTable
-                    :value="productCategories"
+                    :value="filteredCategories"
                     :paginator="true"
                     :rows="10"
                     :rowsPerPageOptions="[5, 10, 20]"
@@ -185,7 +208,15 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { DataTable, Column, Dialog, Button, InputText, Toast } from "primevue";
+import {
+    DataTable,
+    Column,
+    Dialog,
+    Button,
+    InputText,
+    Toast,
+    Dropdown,
+} from "primevue";
 import { Head, Link } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import BodyLayout from "@/Layouts/BodyLayout.vue";
@@ -218,6 +249,31 @@ const form = ref({
     description_khmer: "",
     description_english: "",
     id: null,
+});
+const searchType = ref("");
+const searchTerm = ref("");
+const searchOptions = [
+    { label: "Name", value: "category_name_khmer" },
+    { label: "Name En", value: "category_name_english" },
+    { label: "Description", value: "description_khmer" },
+    { label: "Description En", value: "description_english" },
+];
+const clearFilters = () => {
+    searchType.value = "";
+    searchTerm.value = "";
+};
+const filteredCategories = computed(() => {
+    // If no searchType or no searchTerm, return everything
+    if (!searchType.value || !searchTerm.value.trim()) {
+        return productCategories.value;
+    }
+
+    const term = searchTerm.value.toString().toLowerCase();
+    return productCategories.value.filter((cat) => {
+        // Safely grab the field to search; convert to string + lowercase
+        const fieldValue = String(cat[searchType.value] ?? "").toLowerCase();
+        return fieldValue.includes(term);
+    });
 });
 
 const openDetailModal = (category) => {

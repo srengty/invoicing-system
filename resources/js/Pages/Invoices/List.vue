@@ -16,7 +16,7 @@
                 </template>
             </Breadcrumb>
         </div>
-        <div class="invoices">
+        <div class="invoices px-4">
             <div class="flex justify-end items-center">
                 <div class="flex gap-2">
                     <Dropdown
@@ -35,12 +35,20 @@
                         size="small"
                         @click="filters.status = null"
                     />
+
                     <Button
                         icon="pi pi-plus"
                         label="Issue Invoice"
                         size="small"
                         @click="navigateToCreate"
                     />
+                    <Link :href="route('quotations.create')"
+                        ><Button
+                            icon="pi pi-plus"
+                            label="Issue Quotation"
+                            size="small"
+                            raised
+                    /></Link>
                     <!-- <ChooseColumns
                         :columns="columns"
                         v-model="selectedColumns"
@@ -58,6 +66,9 @@
                 :rowsPerPageOptions="[5, 10, 20, 50]"
                 size="small"
                 class="text-sm mt-8"
+                sortMode="single"
+                sortField="invoice_no"
+                :sortOrder="-1"
             >
                 <Column
                     class=""
@@ -129,7 +140,7 @@
                                 'Current customer status: ' +
                                 (slotProps.data.customer_status || 'Unknown')
                             "
-                            class="p-2 border rounded w-auto h-8 flex items-center justify-center cursor-pointer"
+                            class="p-2 border rounded h-8 w-28 flex items-center justify-center cursor-pointer"
                             :class="{
                                 'bg-blue-100 text-blue-800 border-blue-400':
                                     slotProps.data.customer_status === 'Sent',
@@ -166,7 +177,7 @@
 
                 <!-- Actions -->
                 <Column
-                    header="View / Print"
+                    header="View / Edit / Print"
                     headerStyle="text-align: center"
                     bodyStyle="text-align: center"
                 >
@@ -363,7 +374,11 @@
                         class="text-sm mb-4"
                     >
                         <Column field="id" header="Payment Schedule ID" />
-                        <Column field="amount" header="Amount" />
+                        <Column field="amount" header="Amount">
+                            <template #body="{ data }">
+                                {{ formatCurrency(data.amount) }}
+                            </template>
+                        </Column>
                         <Column
                             field="short_description"
                             header="Description"
@@ -455,6 +470,7 @@
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import { useForm } from "@inertiajs/vue3";
 import { Head, Link } from "@inertiajs/vue3";
+import { route } from "ziggy-js";
 import {
     Button,
     DataTable,
@@ -525,7 +541,7 @@ const statusOptions = ref([
 ]);
 
 const columns = [
-    { field: "invoice_no", header: "Invoice No" },
+    { field: "invoice_no", header: "Invoice No", sortable: true },
     { field: "start_date", header: "Date", sortable: true },
     { field: "end_date", header: "Due Date", sortable: true },
     { field: "customer.name", header: "Customer", sortable: true },
@@ -714,8 +730,4 @@ const computeAmountDue = (invoice) => {
 };
 </script>
 
-<style scoped>
-.invoices {
-    padding: 1rem;
-}
-</style>
+<style scoped></style>

@@ -18,7 +18,7 @@
         </div>
         <div class="create-invoice text-sm">
             <!-- Header Section with Buttons -->
-            <div class="flex justify-end items-center p-3 mr-4">
+            <!-- <div class="flex justify-end items-center px-4 mr-4">
                 <div class="flex gap-4">
                     <Button
                         label="Add Product"
@@ -31,14 +31,15 @@
                         label="Add Receipts"
                         icon="pi pi-plus"
                         @click="openCreate"
+                        size="small"
                     />
                 </div>
-            </div>
+            </div> -->
 
             <!-- Invoice Form Section -->
             <form @submit.prevent="submitInvoice">
                 <div
-                    class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm"
+                    class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm"
                 >
                     <div>
                         <label for="quotation_no" class="block font-medium"
@@ -59,14 +60,13 @@
                             >Receipt No (for deposit)</label
                         >
                         <Select
-                        v-model="form.receipt_no"
-                        :options="availableReceipts"
-                        optionLabel="receipt_no"
-                        optionValue="receipt_no"
-                        placeholder="Select Receipt"
-                        class="w-full"
+                            v-model="form.receipt_no"
+                            :options="availableReceipts"
+                            optionLabel="receipt_no"
+                            optionValue="receipt_no"
+                            placeholder="Select Receipt"
+                            class="w-full"
                         />
-
                     </div>
 
                     <div>
@@ -113,7 +113,7 @@
                         />
                     </div>
 
-                    <div>
+                    <!-- <div>
                         <label for="start_date" class="block font-medium"
                             >Date</label
                         >
@@ -126,9 +126,9 @@
                             dateFormat="dd/mm/yy"
                             :readonly="isReadOnly"
                         />
-                    </div>
+                    </div> -->
 
-                    <div>
+                    <!-- <div>
                         <label for="end_date" class="block font-medium"
                             >Due Date</label
                         >
@@ -141,6 +141,18 @@
                             dateFormat="dd/mm/yy"
                             :readonly="isReadOnly"
                         />
+                    </div> -->
+                </div>
+                <div class="flex justify-start items-center px-8 mt-4">
+                    <div class="flex gap-4">
+                        <Button
+                            label="Add Item"
+                            icon="pi pi-plus"
+                            type="button"
+                            @click="openAddItemDialog"
+                            size="small"
+                            class="w-36"
+                        />
                     </div>
                 </div>
             </form>
@@ -151,36 +163,58 @@
                     :value="productsList"
                     class="p-datatable-striped"
                     responsiveLayout="scroll"
+                    paginator
+                    :rows="5"
+                    :rowsPerPageOptions="[5, 10, 20, 50]"
                 >
                     <Column header="No.">
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
                         </template>
                     </Column>
-                    <Column field="product" header="Product"></Column>
+                    <Column field="product" header="Name"></Column>
                     <Column field="qty" header="Qty">
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.qty"
                                 @input="updateProductSubtotal(slotProps.data)"
-                                class="w-full"
-                                :readonly="isReadOnly"
+                                :step="1"
+                                :min="1"
+                                :useGrouping="false"
+                                :maxFractionDigits="0"
+                                @keydown="preventMinus"
+                                class="w-5/4"
+                                size="small"
                             />
                         </template>
                     </Column>
                     <Column field="unit" header="Unit"></Column>
                     <Column field="unitPrice" header="Unit Price">
                         <template #body="slotProps">
-                            <InputText
+                            <InputNumber
                                 v-model="slotProps.data.unitPrice"
+                                mode="decimal"
+                                :minFractionDigits="2"
+                                :maxFractionDigits="2"
+                                :useGrouping="true"
                                 @input="updateProductSubtotal(slotProps.data)"
+                                @keydown="preventMinus"
                                 class="w-full"
                                 :readonly="isReadOnly"
                             />
                         </template>
                     </Column>
-                    <Column field="subTotal" header="Sub Total"></Column>
-                    <Column header="Action">
+                    <Column field="subTotal" header="Subtotal">
+                        <template #body="slotProps">
+                            <span>
+                                {{ formatCurrency(slotProps.data.subTotal) }}
+                                <span class="text-xs text-gray-500 ml-1"
+                                    >KHR</span
+                                >
+                            </span>
+                        </template>
+                    </Column>
+                    <!-- <Column header="Action">
                         <template #body="slotProps">
                             <Button
                                 label="Remove"
@@ -189,6 +223,39 @@
                                 @click="removeProduct(slotProps.data.id)"
                                 :disabled="isReadOnly"
                             />
+                        </template>
+                    </Column> -->
+                    <Column header="Actions">
+                        <template #body="slotProps">
+                            <div class="flex gap-2 items-center">
+                                <Button
+                                    icon="pi pi-trash"
+                                    class="p-button-danger w-[10px] custom-button"
+                                    title="remove"
+                                    @click="removeProduct(slotProps.data.id)"
+                                    :disabled="isReadOnly"
+                                    size="small"
+                                    raised
+                                />
+                                <Button
+                                    icon="pi pi-pencil"
+                                    severity="info"
+                                    title="edit"
+                                    @click="editProduct(slotProps.data.id)"
+                                    size="small"
+                                    class="custom-button"
+                                    raised
+                                />
+                                <Button
+                                    icon="pi pi-print"
+                                    class="custom-button"
+                                    title="Print Catalog"
+                                    :disabled="!slotProps.data.pdf_url"
+                                    @click="printCatalog(slotProps.data)"
+                                    size="small"
+                                    raised
+                                />
+                            </div>
                         </template>
                     </Column>
                     <Column header="Catalog">
@@ -356,7 +423,7 @@
                 v-model:visible="isAddItemDialogVisible"
                 modal
                 header="Add Item (Popup)"
-                :style="{ width: '550px' }"
+                :style="{ width: '450px' }"
                 class="text-sm"
                 :draggable="false"
                 :resizable="false"
@@ -418,6 +485,8 @@
                         <InputNumber
                             v-model="selectedProduct.price"
                             :min="0"
+                            :minFractionDigits="2"
+                            :maxFractionDigits="2"
                             @keydown="preventMinus"
                             size="small"
                             class="w-full text-sm"
@@ -522,7 +591,8 @@ import Breadcrumb from "primevue/breadcrumb";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
 import { getDepartment } from "../../data";
-import { useToast } from 'primevue/usetoast';
+import { useToast } from "primevue/usetoast";
+import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
 
@@ -534,7 +604,7 @@ const {
     paymentSchedules,
     receipts,
     invoices,
-    usedReceiptNos
+    usedReceiptNos,
 } = usePage().props;
 
 const props = defineProps({
@@ -617,7 +687,7 @@ const usedReceiptNosRef = ref(usedReceiptNos || []);
 const customerCategories = ref([]);
 const isReceiptDialogVisible = ref(false);
 const openCreate = () => {
-    isReceiptDialogVisible.value = true;
+    router.visit(route("receipts"));
 };
 const handleReceiptCreated = async ({ receipt, shouldReload }) => {
     if (receipt) {
@@ -644,19 +714,19 @@ const handleReceiptCreated = async ({ receipt, shouldReload }) => {
 };
 
 const availableReceipts = computed(() => {
-  return receipts.filter(receipt => {
-    // Exclude receipts that are already used (exists in usedReceiptNos)
-    if (usedReceiptNosRef.value.includes(receipt.receipt_no)) {
-      return false;
-    }
+    return receipts.filter((receipt) => {
+        // Exclude receipts that are already used (exists in usedReceiptNos)
+        if (usedReceiptNosRef.value.includes(receipt.receipt_no)) {
+            return false;
+        }
 
-    // Optionally filter by selected customer to only show matching receipts
-    if (form.customer_id && receipt.customer_id !== form.customer_id) {
-      return false;
-    }
+        // Optionally filter by selected customer to only show matching receipts
+        if (form.customer_id && receipt.customer_id !== form.customer_id) {
+            return false;
+        }
 
-    return true; // include all other receipts
-  });
+        return true; // include all other receipts
+    });
 });
 
 const divisionOptions = ref([]);
@@ -960,7 +1030,7 @@ watch(
             });
         }
     },
-    { immediate: true },
+    { immediate: true }
 );
 
 watch(
@@ -993,12 +1063,21 @@ const updateSelectedProductDetails = () => {
 };
 
 const getCategoryName = (categoryId) => {
-    // You'll need to implement this based on your category data structure
-    return categoryId ? `Category ${categoryId}` : "N/A";
+    if (!categoryId || !Array.isArray(props.productCategories)) {
+        return "";
+    }
+    const category = props.productCategories.find(
+        (cat) => cat.id === categoryId
+    );
+    return category
+        ? category.category_name_english || category.category_name_khmer
+        : "";
 };
 
-const preventMinus = (e) => {
-    if (e.key === "-") e.preventDefault();
+const preventMinus = (event) => {
+    if (event.key === "-" || event.key === "." || event.key === ",") {
+        event.preventDefault();
+    }
 };
 
 // Add/Update Product to List
@@ -1025,6 +1104,7 @@ const addItemToTable = () => {
         remark: selectedProduct.value.remark,
         include_catalog: false, // default
         pdf_url: selectedProduct.value.pdf_url,
+        category_id: selectedProduct.value.category_id,
     };
 
     if (existingIndex >= 0 && editingProduct.value !== null) {
@@ -1077,98 +1157,103 @@ const availableQuotations = computed(() => {
 
 // Existing methods from original component
 watch(
-  () => form.quotation_no,
-  (newQuotationNo) => {
-    if (newQuotationNo) {
-      const selectedQuotation = quotations.find(
-        (q) => q.quotation_no === newQuotationNo
-      );
+    () => form.quotation_no,
+    (newQuotationNo) => {
+        if (newQuotationNo) {
+            const selectedQuotation = quotations.find(
+                (q) => q.quotation_no === newQuotationNo
+            );
 
-      if (selectedQuotation) {
-        // Auto-fill customer and contact info
-        form.customer_id = selectedQuotation.customer_id || "";
-        form.address = selectedQuotation.address || "";
-        form.phone = selectedQuotation.phone_number || "";
+            if (selectedQuotation) {
+                // Auto-fill customer and contact info
+                form.customer_id = selectedQuotation.customer_id || "";
+                form.address = selectedQuotation.address || "";
+                form.phone = selectedQuotation.phone_number || "";
 
-        // Set start_date to quotation_date (expecting ISO string)
-        if (selectedQuotation.quotation_date) {
-          form.start_date = selectedQuotation.quotation_date;
+                // Set start_date to quotation_date (expecting ISO string)
+                if (selectedQuotation.quotation_date) {
+                    form.start_date = selectedQuotation.quotation_date;
 
-          // Calculate end_date as 14 days after quotation_date
-          const startDate = new Date(selectedQuotation.quotation_date);
-          startDate.setDate(startDate.getDate() + 14);
+                    // Calculate end_date as 14 days after quotation_date
+                    const startDate = new Date(
+                        selectedQuotation.quotation_date
+                    );
+                    startDate.setDate(startDate.getDate() + 14);
 
-          // Format as YYYY-MM-DD for consistent model binding
-          const pad = (n) => (n < 10 ? "0" + n : n);
-          const formattedEndDate = `${startDate.getFullYear()}-${pad(
-            startDate.getMonth() + 1
-          )}-${pad(startDate.getDate())}`;
+                    // Format as YYYY-MM-DD for consistent model binding
+                    const pad = (n) => (n < 10 ? "0" + n : n);
+                    const formattedEndDate = `${startDate.getFullYear()}-${pad(
+                        startDate.getMonth() + 1
+                    )}-${pad(startDate.getDate())}`;
 
-          form.end_date = formattedEndDate;
+                    form.end_date = formattedEndDate;
+                } else {
+                    form.start_date = "";
+                    form.end_date = "";
+                }
+
+                // Set agreement if exists
+                if (selectedQuotation.agreement) {
+                    form.agreement_no =
+                        selectedQuotation.agreement.agreement_no;
+                    filteredAgreements.value = [selectedQuotation.agreement];
+                } else {
+                    form.agreement_no = "";
+                    filteredAgreements.value = agreements.filter(
+                        (a) => a.quotation == null && a.status === "Open"
+                    );
+                }
+
+                // Set products list if any
+                if (
+                    Array.isArray(selectedQuotation.product_quotations) &&
+                    selectedQuotation.product_quotations.length > 0
+                ) {
+                    productsList.value =
+                        selectedQuotation.product_quotations.map((pq) => ({
+                            id: pq.product.id,
+                            product: pq.product.name || "Unknown Product",
+                            qty: pq.quantity || 1,
+                            unit: pq.product.unit || "Unit",
+                            unitPrice: pq.price || 0,
+                            subTotal: (pq.quantity || 1) * (pq.price || 0),
+                            remark: pq.remark || "",
+                            category_id: pq.product.category_id || null,
+                            acc_code: pq.product.acc_code || "",
+                            include_catalog: false,
+                            pdf_url: pq.product.pdf_url || null,
+                        }));
+                } else {
+                    productsList.value = [];
+                }
+
+                // Set grand total from quotation total or sum of products
+                const total =
+                    selectedQuotation.total ??
+                    selectedQuotation.product_quotations?.reduce((sum, pq) => {
+                        return sum + (pq.quantity || 1) * (pq.price || 0);
+                    }, 0) ??
+                    0;
+
+                form.grand_total = total;
+            }
         } else {
-          form.start_date = "";
-          form.end_date = "";
+            // Reset form when no quotation selected
+            filteredAgreements.value = agreements.filter(
+                (a) => a.status === "Open"
+            );
+            form.agreement_no = "";
+            form.customer_id = "";
+            form.address = "";
+            form.phone = "";
+            form.start_date = "";
+            form.end_date = "";
+            productsList.value = [];
+            form.grand_total = 0;
         }
-
-        // Set agreement if exists
-        if (selectedQuotation.agreement) {
-          form.agreement_no = selectedQuotation.agreement.agreement_no;
-          filteredAgreements.value = [selectedQuotation.agreement];
-        } else {
-          form.agreement_no = "";
-          filteredAgreements.value = agreements.filter(
-            (a) => a.quotation == null && a.status === "Open"
-          );
-        }
-
-        // Set products list if any
-        if (
-          Array.isArray(selectedQuotation.product_quotations) &&
-          selectedQuotation.product_quotations.length > 0
-        ) {
-          productsList.value = selectedQuotation.product_quotations.map((pq) => ({
-            id: pq.product.id,
-            product: pq.product.name || "Unknown Product",
-            qty: pq.quantity || 1,
-            unit: pq.product.unit || "Unit",
-            unitPrice: pq.price || 0,
-            subTotal: (pq.quantity || 1) * (pq.price || 0),
-            remark: pq.remark || "",
-            category_id: pq.product.category_id || null,
-            acc_code: pq.product.acc_code || "",
-            include_catalog: false,
-            pdf_url: pq.product.pdf_url || null,
-          }));
-        } else {
-          productsList.value = [];
-        }
-
-        // Set grand total from quotation total or sum of products
-        const total =
-          selectedQuotation.total ??
-          selectedQuotation.product_quotations?.reduce((sum, pq) => {
-            return sum + (pq.quantity || 1) * (pq.price || 0);
-          }, 0) ??
-          0;
-
-        form.grand_total = total;
-      }
-    } else {
-      // Reset form when no quotation selected
-      filteredAgreements.value = agreements.filter((a) => a.status === "Open");
-      form.agreement_no = "";
-      form.customer_id = "";
-      form.address = "";
-      form.phone = "";
-      form.start_date = "";
-      form.end_date = "";
-      productsList.value = [];
-      form.grand_total = 0;
-    }
-  },
-  { immediate: true }
+    },
+    { immediate: true }
 );
-
 
 const indexTemplate = (rowData, { index }) => {
     return index + 1; // Return the index + 1 for 1-based index display
@@ -1199,6 +1284,44 @@ const removeProduct = (productId) => {
     );
 };
 
+const editProduct = (productId) => {
+    const index = productsList.value.findIndex((p) => p.id === productId);
+    if (index === -1) return;
+    editingProduct.value = index;
+    const row = productsList.value[index];
+    selectedProduct.value = {
+        id: row.id,
+        name: row.product,
+        category_id: row.category_id,
+        price: row.unitPrice,
+        acc_code: row.acc_code || "73048 ផលពីសេវាផ្សេងៗ",
+        quantity: row.qty,
+        remark: row.remark || "",
+        pdf_url: row.pdf_url || null,
+        unit: row.unit,
+    };
+    const original = props.products.find((p) => p.id === productId);
+    selectedDivision.value = original?.division_id || null;
+    selectedItem.value = original || null;
+    filterProductsByDivision();
+    isAddItemDialogVisible.value = true;
+};
+
+const printCatalog = (product) => {
+    if (!product.pdf_url) {
+        showToast(
+            "warn",
+            "No Catalog",
+            "This product does not have a catalog available.",
+            3000
+        );
+        return;
+    }
+
+    const pdfUrl = `/pdfs/${product.pdf_url.split("/").pop()}`;
+    window.open(pdfUrl, "_blank");
+};
+
 const updateProductSubtotal = (product) => {
     product.subTotal = product.qty * product.unitPrice;
 };
@@ -1209,84 +1332,88 @@ const updateProductSubtotal = (product) => {
 // };
 
 const submitInvoice = async () => {
-  if (!form.customer_id) {
-    toast.add({
-      severity: "error",
-      summary: "Validation Error",
-      detail: "Please select a customer before submitting.",
-      life: 3000,
-    });
-    return;
-  }
-
-  if (productsList.value.length === 0) {
-    toast.add({
-      severity: "error",
-      summary: "Validation Error",
-      detail: "Please add at least one product.",
-      life: 3000,
-    });
-    return;
-  }
-
-  if (form.receipt_no) {
-    const receipt = receipts.find((r) => r.receipt_no === form.receipt_no);
-    if (receipt && receipt.customer_id !== form.customer_id) {
-      toast.add({
-        severity: "error",
-        summary: "Receipt Error",
-        detail: "The selected receipt belongs to a different customer.",
-        life: 4000,
-      });
-      return;
+    if (!form.customer_id) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please select a customer before submitting.",
+            life: 3000,
+        });
+        return;
     }
-  }
 
-  // Add additional validation if needed (quotation/receipt customer mismatch)...
+    if (productsList.value.length === 0) {
+        toast.add({
+            severity: "error",
+            summary: "Validation Error",
+            detail: "Please add at least one product.",
+            life: 3000,
+        });
+        return;
+    }
 
-  form.products = productsList.value.map((prod) => ({
-    id: prod.id,
-    quantity: prod.qty ?? 1,
-    price: prod.unitPrice ?? 0,
-    acc_code: prod.acc_code ?? "",
-    category_id: prod.category_id ?? null,
-    remark: prod.remark ?? "",
-    include_catalog: Boolean(prod.include_catalog),
-    pdf_url: prod.pdf_url ?? null,
-  }));
+    if (form.receipt_no) {
+        const receipt = receipts.find((r) => r.receipt_no === form.receipt_no);
+        if (receipt && receipt.customer_id !== form.customer_id) {
+            toast.add({
+                severity: "error",
+                summary: "Receipt Error",
+                detail: "The selected receipt belongs to a different customer.",
+                life: 4000,
+            });
+            return;
+        }
+    }
 
-  form.payment_schedules = form.payment_schedules.map((id) => {
-    const schedule = paymentSchedules.find((ps) => ps.id === id);
-    return { id: id, amount: schedule?.amount || 0 };
-  });
+    // Add additional validation if needed (quotation/receipt customer mismatch)...
 
-  if (form.quotation_no) {
-    const selectedQuotation = quotations.find((q) => q.quotation_no === form.quotation_no);
-    if (selectedQuotation) form.grand_total = selectedQuotation.total;
-  } else {
-    form.grand_total = Number(form.grand_total);
-  }
+    form.products = productsList.value.map((prod) => ({
+        id: prod.id,
+        quantity: prod.qty ?? 1,
+        price: prod.unitPrice ?? 0,
+        acc_code: prod.acc_code ?? "",
+        category_id: prod.category_id ?? null,
+        remark: prod.remark ?? "",
+        include_catalog: Boolean(prod.include_catalog),
+        pdf_url: prod.pdf_url ?? null,
+    }));
 
-  if (!form.total_usd && form.exchange_rate > 0) {
-    form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(2);
-  }
-
-  form.installment_paid = Number(form.installment_paid) || 0;
-  form.paid_amount = Number(form.paid_amount) || 0;
-  form.total = calculateTotalKHR.value;
-  form.exchange_rate = Number(form.exchange_rate) || 0;
-
-  try {
-    await form.post("/invoices");
-  } catch (error) {
-    console.error("Error submitting invoice:", error);
-    toast.add({
-      severity: "error",
-      summary: "Submission Error",
-      detail: "An error occurred while submitting the invoice.",
-      life: 4000,
+    form.payment_schedules = form.payment_schedules.map((id) => {
+        const schedule = paymentSchedules.find((ps) => ps.id === id);
+        return { id: id, amount: schedule?.amount || 0 };
     });
-  }
+
+    if (form.quotation_no) {
+        const selectedQuotation = quotations.find(
+            (q) => q.quotation_no === form.quotation_no
+        );
+        if (selectedQuotation) form.grand_total = selectedQuotation.total;
+    } else {
+        form.grand_total = Number(form.grand_total);
+    }
+
+    if (!form.total_usd && form.exchange_rate > 0) {
+        form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
+            2
+        );
+    }
+
+    form.installment_paid = Number(form.installment_paid) || 0;
+    form.paid_amount = Number(form.paid_amount) || 0;
+    form.total = calculateTotalKHR.value;
+    form.exchange_rate = Number(form.exchange_rate) || 0;
+
+    try {
+        await form.post("/invoices");
+    } catch (error) {
+        console.error("Error submitting invoice:", error);
+        toast.add({
+            severity: "error",
+            summary: "Submission Error",
+            detail: "An error occurred while submitting the invoice.",
+            life: 4000,
+        });
+    }
 };
 const cancel = () => {
     toast.add({
@@ -1325,36 +1452,41 @@ const checkCatalogAvailability = (product) => {
 };
 
 watch(
-  () => form.start_date,
-  (newStartDate) => {
-    if (newStartDate) {
-      const startDate = new Date(newStartDate);
-      startDate.setDate(startDate.getDate() + 14);
+    () => form.start_date,
+    (newStartDate) => {
+        if (newStartDate) {
+            const startDate = new Date(newStartDate);
+            startDate.setDate(startDate.getDate() + 14);
 
-      const pad = (n) => (n < 10 ? "0" + n : n);
-      const newEndDate = `${startDate.getFullYear()}-${pad(
-        startDate.getMonth() + 1
-      )}-${pad(startDate.getDate())}`;
+            const pad = (n) => (n < 10 ? "0" + n : n);
+            const newEndDate = `${startDate.getFullYear()}-${pad(
+                startDate.getMonth() + 1
+            )}-${pad(startDate.getDate())}`;
 
-      form.end_date = newEndDate;
+            form.end_date = newEndDate;
+        }
     }
-  }
 );
 
 const updateInstallmentPaid = () => {
     let total = 0;
 
     if (form.quotation_no) {
-        const selectedQuotation = quotations.find(q => q.quotation_no === form.quotation_no);
+        const selectedQuotation = quotations.find(
+            (q) => q.quotation_no === form.quotation_no
+        );
         total = selectedQuotation?.total ?? 0;
     } else {
-        total = productsList.value.reduce((sum, p) => sum + (p.subTotal || 0), 0);
+        total = productsList.value.reduce(
+            (sum, p) => sum + (p.subTotal || 0),
+            0
+        );
     }
 
     form.grand_total = total;
 
     if (form.receipt_no) {
-        const receipt = receipts.find(r => r.receipt_no === form.receipt_no);
+        const receipt = receipts.find((r) => r.receipt_no === form.receipt_no);
         if (receipt) {
             if (receipt.paid_amount > total) {
                 form.paid_amount = total;
