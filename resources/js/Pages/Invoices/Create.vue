@@ -59,13 +59,14 @@
                             >Receipt No (for deposit)</label
                         >
                         <Select
-                            v-model="form.receipt_no"
-                            :options="availableReceipts"
-                            optionLabel="receipt_no"
-                            optionValue="receipt_no"
-                            placeholder="Select Receipt"
-                            class="w-full"
+                        v-model="form.receipt_no"
+                        :options="availableReceipts"
+                        optionLabel="receipt_no"
+                        optionValue="receipt_no"
+                        placeholder="Select Receipt"
+                        class="w-full"
                         />
+
                     </div>
 
                     <div>
@@ -503,6 +504,7 @@ import {
     InputText,
     DataTable,
     Column,
+    Toast,
     Dialog,
     DatePicker,
     Select,
@@ -520,6 +522,9 @@ import Breadcrumb from "primevue/breadcrumb";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
 import { getDepartment } from "../../data";
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 const {
     products,
@@ -529,6 +534,7 @@ const {
     paymentSchedules,
     receipts,
     invoices,
+    usedReceiptNos
 } = usePage().props;
 
 const props = defineProps({
@@ -606,6 +612,8 @@ const selectedProduct = ref({
     pdf_url: null,
     unit: "",
 });
+
+const usedReceiptNosRef = ref(usedReceiptNos || []);
 const customerCategories = ref([]);
 const isReceiptDialogVisible = ref(false);
 const openCreate = () => {
@@ -635,14 +643,21 @@ const handleReceiptCreated = async ({ receipt, shouldReload }) => {
     isReceiptDialogVisible.value = false;
 };
 
-const availableReceipts = computed(() =>
-    receipts.filter(
-        (receipt) =>
-            !receipt.invoice_no ||
-            receipt.invoice_no === "" ||
-            receipt.installment_paid > 0
-    )
-);
+const availableReceipts = computed(() => {
+  return receipts.filter(receipt => {
+    // Exclude receipts that are already used (exists in usedReceiptNos)
+    if (usedReceiptNosRef.value.includes(receipt.receipt_no)) {
+      return false;
+    }
+
+    // Optionally filter by selected customer to only show matching receipts
+    if (form.customer_id && receipt.customer_id !== form.customer_id) {
+      return false;
+    }
+
+    return true; // include all other receipts
+  });
+});
 
 const divisionOptions = ref([]);
 const formatCurrency = (value) => {
@@ -674,7 +689,7 @@ const calculateTotalKHR = computed(() => {
 const calculateExchangeRate = computed(() => {
     if (!form.total_usd || form.total_usd <= 0 || form.grand_total <= 0)
         return 0;
-    return (form.grand_total / form.total_usd).toFixed(2);
+    return (form.installment_paid / form.total_usd).toFixed(2);
 });
 
 onMounted(async () => {
@@ -788,14 +803,164 @@ const searchProducts = (event) => {
 watch(
     () => form.receipt_no,
     async (newReceiptNo) => {
-        if (newReceiptNo) {
-            const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
-            if (receipt) {
-                form.paid_amount = receipt.paid_amount; // Update paid_amount based on receipt
-                form.installment_paid = receipt.paid_amount; // Set installment_paid the same as paid_amount
+        if (!newReceiptNo) {
+            form.installment_paid = 0;
+            form.paid_amount = 0;
+            form.payment_schedules = [];
+            return;
+        }
+
+        const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
+        if (!receipt) return;
+
+        // Auto set customer if none selected
+        if (form.customer_id && form.customer_id !== receipt.customer_id) {
+            toast.add({
+                severity: "warn",
+                summary: "Customer Mismatch",
+                detail: `Selected receipt belongs to a different customer.`,
+                life: 3000,
+            });
+            form.receipt_no = "";
+            return;
+        }
+
+        const usedInInvoice = receipt.invoice_no;
+
+        // Determine total price based on quotation or manual product total
+        let totalPrice = 0;
+        if (form.quotation_no) {
+            const selectedQuotation = quotations.find(
+                (q) => q.quotation_no === form.quotation_no
+            );
+            totalPrice = selectedQuotation?.total || 0;
+        } else {
+            totalPrice = calculateTotalKHR.value;
+        }
+
+        // Update customer and contact info
+        form.customer_id = receipt.customer_id;
+        const customer = customers.find((c) => c.id === receipt.customer_id);
+        form.address = customer?.address || "";
+        form.phone = customer?.phone || customer?.phone_number || "";
+        form.deposit_amount = receipt.paid_amount;
+
+        // Case 1: Receipt reused with remaining installment
+        if (usedInInvoice && receipt.installment_paid > 0) {
+            if (receipt.paid_amount > totalPrice) {
+                form.paid_amount = totalPrice;
+                form.installment_paid = 0;
+                receipt.installment_paid = receipt.paid_amount - totalPrice;
+            } else if (receipt.paid_amount < totalPrice) {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = totalPrice - receipt.paid_amount;
+                receipt.installment_paid = 0;
+            } else {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = 0;
+                receipt.installment_paid = 0;
+            }
+
+            form.grand_total = totalPrice;
+
+            toast.add({
+                severity: "info",
+                summary: "Installment Applied",
+                detail: `Used ${formatCurrency(
+                    form.paid_amount
+                )} from previous receipt`,
+                life: 3000,
+            });
+        }
+
+        // Case 2: Receipt has no remaining installment
+        else if (usedInInvoice && receipt.installment_paid === 0) {
+            if (form.customer_id === receipt.customer_id) {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = 0;
+                form.grand_total = totalPrice;
+
+                if (receipt.payment_schedule_ids) {
+                    form.payment_schedules = receipt.payment_schedule_ids;
+                }
+
+                toast.add({
+                    severity: "info",
+                    summary: "Receipt Selected",
+                    detail: `Receipt ${receipt.receipt_no} reused for the same customer.`,
+                    life: 3000,
+                });
+            } else {
+                toast.add({
+                    severity: "warn",
+                    summary: "Receipt Already Used",
+                    detail: `Receipt ${receipt.receipt_no} has no remaining balance and belongs to a different customer.`,
+                    life: 3000,
+                });
+                form.receipt_no = "";
+                return;
             }
         }
-    }
+
+        // Case 3: New receipt (not used in invoice)
+        else {
+            if (receipt.paid_amount > totalPrice) {
+                form.paid_amount = totalPrice;
+                form.installment_paid = 0;
+                receipt.installment_paid = receipt.paid_amount - totalPrice;
+            } else if (receipt.paid_amount < totalPrice) {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = totalPrice - receipt.paid_amount;
+                receipt.installment_paid = 0;
+            } else {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = 0;
+                receipt.installment_paid = 0;
+            }
+
+            form.grand_total = totalPrice;
+
+            if (receipt.payment_schedule_ids) {
+                form.payment_schedules = receipt.payment_schedule_ids;
+            }
+
+            toast.add({
+                severity: "info",
+                summary: "Receipt Selected",
+                detail: `Auto-filled info from receipt ${receipt.receipt_no}`,
+                life: 2500,
+            });
+        }
+
+        // ✅ NEW: If there's no quotation, and products are already added, re-apply calculation
+        if (!form.quotation_no && productsList.value.length > 0) {
+            const dynamicTotal = calculateTotalKHR.value;
+
+            if (receipt.paid_amount > dynamicTotal) {
+                form.paid_amount = dynamicTotal;
+                form.installment_paid = 0;
+                receipt.installment_paid = receipt.paid_amount - dynamicTotal;
+            } else if (receipt.paid_amount < dynamicTotal) {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = dynamicTotal - receipt.paid_amount;
+                receipt.installment_paid = 0;
+            } else {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = 0;
+                receipt.installment_paid = 0;
+            }
+
+            form.grand_total = dynamicTotal;
+
+            toast.add({
+                severity: "info",
+                summary: "Recalculated",
+                detail: `Receipt amount adjusted to product total.`,
+                life: 2500,
+            });
+        }
+    },
+    { immediate: true },
 );
 
 watch(
@@ -912,108 +1077,98 @@ const availableQuotations = computed(() => {
 
 // Existing methods from original component
 watch(
-    () => form.quotation_no,
-    (newQuotationId) => {
-        if (newQuotationId) {
-            const selectedQuotation = quotations.find(
-                (q) => q.quotation_no === newQuotationId
-            );
+  () => form.quotation_no,
+  (newQuotationNo) => {
+    if (newQuotationNo) {
+      const selectedQuotation = quotations.find(
+        (q) => q.quotation_no === newQuotationNo
+      );
 
-            if (selectedQuotation) {
-                console.log("Selected Quotation:", selectedQuotation);
+      if (selectedQuotation) {
+        // Auto-fill customer and contact info
+        form.customer_id = selectedQuotation.customer_id || "";
+        form.address = selectedQuotation.address || "";
+        form.phone = selectedQuotation.phone_number || "";
 
-                // Auto-fill customer
-                form.customer_id = selectedQuotation.customer_id || "";
-                form.address = selectedQuotation.address || "";
-                form.phone = selectedQuotation.phone_number || "";
-                if (selectedQuotation.quotation_date) {
-                    form.start_date = selectedQuotation.quotation_date;
+        // Set start_date to quotation_date (expecting ISO string)
+        if (selectedQuotation.quotation_date) {
+          form.start_date = selectedQuotation.quotation_date;
 
-                    // Calculate end_date as 14 days after quotation_date
-                    const start = new Date(selectedQuotation.quotation_date);
-                    const end = new Date(start);
-                    end.setDate(start.getDate() + 14);
+          // Calculate end_date as 14 days after quotation_date
+          const startDate = new Date(selectedQuotation.quotation_date);
+          startDate.setDate(startDate.getDate() + 14);
 
-                    // Format as mm/dd/yyyy or dd/mm/yyyy depending on your needs
-                    const formattedEndDate = `${String(end.getDate()).padStart(
-                        2,
-                        "0"
-                    )}/${String(end.getMonth() + 1).padStart(
-                        2,
-                        "0"
-                    )}/${end.getFullYear()}`;
-                    form.end_date = formattedEndDate;
-                }
+          // Format as YYYY-MM-DD for consistent model binding
+          const pad = (n) => (n < 10 ? "0" + n : n);
+          const formattedEndDate = `${startDate.getFullYear()}-${pad(
+            startDate.getMonth() + 1
+          )}-${pad(startDate.getDate())}`;
 
-                // Agreement handling
-                if (selectedQuotation.agreement) {
-                    form.agreement_no =
-                        selectedQuotation.agreement.agreement_no;
-                    filteredAgreements.value = [selectedQuotation.agreement];
-                } else {
-                    form.agreement_no = "";
-                    filteredAgreements.value = agreements.filter(
-                        (a) => a.quotation == null && a.status === "Open"
-                    );
-                }
-
-                // Products
-                if (
-                    Array.isArray(selectedQuotation.product_quotations) &&
-                    selectedQuotation.product_quotations.length > 0
-                ) {
-                    productsList.value =
-                        selectedQuotation.product_quotations.map((pq) => ({
-                            id: pq.product.id,
-                            product: pq.product.name || "Unknown Product",
-                            qty: pq.quantity || 1,
-                            unit: pq.product.unit || "Unit",
-                            unitPrice: pq.price || 0,
-                            subTotal: (pq.quantity || 1) * (pq.price || 0),
-                            remark: pq.remark || "",
-                            category_id: pq.product.category_id || null,
-                            acc_code: pq.product.acc_code || "",
-                            include_catalog: false,
-                            pdf_url: pq.product.pdf_url || null,
-                        }));
-                } else {
-                    productsList.value = [];
-                }
-
-                // Always use quotation total if available
-                const total =
-                    selectedQuotation.total ??
-                    selectedQuotation.product_quotations?.reduce((sum, pq) => {
-                        return sum + (pq.quantity || 1) * (pq.price || 0);
-                    }, 0) ??
-                    0;
-
-                form.grand_total = total;
-
-                console.log(
-                    "Auto-filled grand_total & paid_amount from quotation:",
-                    total
-                );
-            }
+          form.end_date = formattedEndDate;
         } else {
-            // Reset if no quotation
-            filteredAgreements.value = agreements.filter(
-                (a) => a.status === "Open"
-            );
-            form.agreement_no = "";
-            form.customer_id = "";
-            form.address = "";
-            form.phone = "";
-            form.start_date = "";
-            form.end_date = "";
-            form.installment_paid = 0;
-            form.paid_amount = "";
-            productsList.value = [];
-            form.grand_total = 0;
+          form.start_date = "";
+          form.end_date = "";
         }
-    },
-    { deep: true }
+
+        // Set agreement if exists
+        if (selectedQuotation.agreement) {
+          form.agreement_no = selectedQuotation.agreement.agreement_no;
+          filteredAgreements.value = [selectedQuotation.agreement];
+        } else {
+          form.agreement_no = "";
+          filteredAgreements.value = agreements.filter(
+            (a) => a.quotation == null && a.status === "Open"
+          );
+        }
+
+        // Set products list if any
+        if (
+          Array.isArray(selectedQuotation.product_quotations) &&
+          selectedQuotation.product_quotations.length > 0
+        ) {
+          productsList.value = selectedQuotation.product_quotations.map((pq) => ({
+            id: pq.product.id,
+            product: pq.product.name || "Unknown Product",
+            qty: pq.quantity || 1,
+            unit: pq.product.unit || "Unit",
+            unitPrice: pq.price || 0,
+            subTotal: (pq.quantity || 1) * (pq.price || 0),
+            remark: pq.remark || "",
+            category_id: pq.product.category_id || null,
+            acc_code: pq.product.acc_code || "",
+            include_catalog: false,
+            pdf_url: pq.product.pdf_url || null,
+          }));
+        } else {
+          productsList.value = [];
+        }
+
+        // Set grand total from quotation total or sum of products
+        const total =
+          selectedQuotation.total ??
+          selectedQuotation.product_quotations?.reduce((sum, pq) => {
+            return sum + (pq.quantity || 1) * (pq.price || 0);
+          }, 0) ??
+          0;
+
+        form.grand_total = total;
+      }
+    } else {
+      // Reset form when no quotation selected
+      filteredAgreements.value = agreements.filter((a) => a.status === "Open");
+      form.agreement_no = "";
+      form.customer_id = "";
+      form.address = "";
+      form.phone = "";
+      form.start_date = "";
+      form.end_date = "";
+      productsList.value = [];
+      form.grand_total = 0;
+    }
+  },
+  { immediate: true }
 );
+
 
 const indexTemplate = (rowData, { index }) => {
     return index + 1; // Return the index + 1 for 1-based index display
@@ -1054,85 +1209,84 @@ const updateProductSubtotal = (product) => {
 // };
 
 const submitInvoice = async () => {
-    if (productsList.value.length === 0) {
-        alert("Please add at least one product.");
-        return;
-    }
-
-    form.invoice_no = form.invoice_no || "";
-
-    for (let product of selectedProductsData.value) {
-        if (product.include_catalog && !product.pdf_url) {
-            showToast(
-                "error",
-                "Error",
-                "Catalog PDF is missing for an included product.",
-                3000
-            );
-            return;
-        }
-    }
-    form.start_date = form.start_date || "";
-    form.end_date = form.end_date || "";
-
-    // Prepare the payload
-    form.products = productsList.value.map((prod) => ({
-        id: prod.id,
-        quantity: prod.qty ?? 1,
-        price: prod.unitPrice ?? 0,
-        acc_code: prod.acc_code ?? "",
-        category_id: prod.category_id ?? null,
-        remark: prod.remark ?? "",
-        include_catalog: Boolean(prod.include_catalog),
-        pdf_url: prod.pdf_url ?? null,
-    }));
-
-    form.payment_schedules = form.payment_schedules.map((id) => {
-        const schedule = paymentSchedules.find((ps) => ps.id === id);
-        return {
-            id: id,
-            amount: schedule?.amount || 0,
-        };
+  if (!form.customer_id) {
+    toast.add({
+      severity: "error",
+      summary: "Validation Error",
+      detail: "Please select a customer before submitting.",
+      life: 3000,
     });
+    return;
+  }
 
-    if (form.quotation_no) {
-        const selectedQuotation = quotations.find(
-            (q) => q.quotation_no === form.quotation_no
-        );
-        if (selectedQuotation) {
-            form.grand_total = selectedQuotation.total;
-        }
-    } else {
-        // Only set these if not from quotation
-        form.grand_total = Number(form.grand_total);
+  if (productsList.value.length === 0) {
+    toast.add({
+      severity: "error",
+      summary: "Validation Error",
+      detail: "Please add at least one product.",
+      life: 3000,
+    });
+    return;
+  }
+
+  if (form.receipt_no) {
+    const receipt = receipts.find((r) => r.receipt_no === form.receipt_no);
+    if (receipt && receipt.customer_id !== form.customer_id) {
+      toast.add({
+        severity: "error",
+        summary: "Receipt Error",
+        detail: "The selected receipt belongs to a different customer.",
+        life: 4000,
+      });
+      return;
     }
+  }
 
-    // If USD total wasn't set, set it based on exchange rate if available
-    if (!form.total_usd && form.exchange_rate > 0) {
-        form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
-            2
-        );
-    }
+  // Add additional validation if needed (quotation/receipt customer mismatch)...
 
-    // Ensure numeric values
-    form.installment_paid = Number(form.installment_paid) || 0;
-    form.paid_amount = Number(form.paid_amount) || 0;
+  form.products = productsList.value.map((prod) => ({
+    id: prod.id,
+    quantity: prod.qty ?? 1,
+    price: prod.unitPrice ?? 0,
+    acc_code: prod.acc_code ?? "",
+    category_id: prod.category_id ?? null,
+    remark: prod.remark ?? "",
+    include_catalog: Boolean(prod.include_catalog),
+    pdf_url: prod.pdf_url ?? null,
+  }));
 
-    form.total = calculateTotal.value;
-    form.grand_total = Number(form.grand_total) || calculateGrandTotal.value;
-    form.total_usd = form.total_usd || 0;
-    form.total = calculateTotalKHR.value;
-    form.exchange_rate = calculateExchangeRate.value;
-    form.receipt_no = form.receipt_no || "";
-    console.log(form.installment_paid);
+  form.payment_schedules = form.payment_schedules.map((id) => {
+    const schedule = paymentSchedules.find((ps) => ps.id === id);
+    return { id: id, amount: schedule?.amount || 0 };
+  });
 
-    console.log(form.installment_paid);
-    try {
-        form.post("/invoices");
-    } catch (error) {
-        console.error("Error submitting invoice:", error);
-        alert("An error occurred while submitting the invoice.");
-    }
+  if (form.quotation_no) {
+    const selectedQuotation = quotations.find((q) => q.quotation_no === form.quotation_no);
+    if (selectedQuotation) form.grand_total = selectedQuotation.total;
+  } else {
+    form.grand_total = Number(form.grand_total);
+  }
+
+  if (!form.total_usd && form.exchange_rate > 0) {
+    form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(2);
+  }
+
+  form.installment_paid = Number(form.installment_paid) || 0;
+  form.paid_amount = Number(form.paid_amount) || 0;
+  form.total = calculateTotalKHR.value;
+  form.exchange_rate = Number(form.exchange_rate) || 0;
+
+  try {
+    await form.post("/invoices");
+  } catch (error) {
+    console.error("Error submitting invoice:", error);
+    toast.add({
+      severity: "error",
+      summary: "Submission Error",
+      detail: "An error occurred while submitting the invoice.",
+      life: 4000,
+    });
+  }
 };
 const cancel = () => {
     toast.add({
@@ -1171,168 +1325,57 @@ const checkCatalogAvailability = (product) => {
 };
 
 watch(
-    () => form.start_date,
-    (newStartDate) => {
-        if (newStartDate) {
-            // If newStartDate is a Date object, we format it to "mm/dd/yyyy"
-            if (newStartDate instanceof Date) {
-                const month = String(newStartDate.getMonth() + 1).padStart(
-                    2,
-                    "0"
-                );
-                const day = String(newStartDate.getDate()).padStart(2, "0");
-                const year = newStartDate.getFullYear();
-                newStartDate = `${month}/${day}/${year}`;
-            }
+  () => form.start_date,
+  (newStartDate) => {
+    if (newStartDate) {
+      const startDate = new Date(newStartDate);
+      startDate.setDate(startDate.getDate() + 14);
 
-            // Now safely split newStartDate if it's a string in mm/dd/yyyy format
-            const [month, day, year] = newStartDate.split("/");
+      const pad = (n) => (n < 10 ? "0" + n : n);
+      const newEndDate = `${startDate.getFullYear()}-${pad(
+        startDate.getMonth() + 1
+      )}-${pad(startDate.getDate())}`;
 
-            // Create a Date object from the split values
-            const startDate = new Date(`${year}-${month}-${day}`);
-
-            // Add 14 days to the startDate
-            startDate.setDate(startDate.getDate() + 14);
-
-            // Format the end date as "mm/dd/yyyy"
-            const endDateFormatted =
-                String(startDate.getMonth() + 1).padStart(2, "0") +
-                "/" +
-                String(startDate.getDate()).padStart(2, "0") +
-                "/" +
-                startDate.getFullYear();
-
-            // Set form.end_date automatically
-            form.end_date = endDateFormatted;
-
-            console.log("Auto-set end_date:", form.end_date);
-        }
-
-        const autoFillEndDate = () => {
-            // Auto-calculate end date based on start date
-            if (form.start_date) {
-                const startDate = new Date(form.start_date);
-                startDate.setDate(startDate.getDate() + 14);
-                form.end_date = `${
-                    startDate.getMonth() + 1
-                }/${startDate.getDate()}/${startDate.getFullYear()}`;
-            }
-        };
+      form.end_date = newEndDate;
     }
+  }
 );
 
-// Core logic to process receipt selection in Create Invoice
-watch(
-    () => form.receipt_no,
-    async (newReceiptNo) => {
-        if (newReceiptNo) {
-            const receipt = receipts.find((r) => r.receipt_no === newReceiptNo);
-            if (!receipt) return;
+const updateInstallmentPaid = () => {
+    let total = 0;
 
-            const usedInInvoice = receipt.invoice_no;
+    if (form.quotation_no) {
+        const selectedQuotation = quotations.find(q => q.quotation_no === form.quotation_no);
+        total = selectedQuotation?.total ?? 0;
+    } else {
+        total = productsList.value.reduce((sum, p) => sum + (p.subTotal || 0), 0);
+    }
 
-            // Determine total price based on whether a quotation is selected
-            let totalPrice;
-            if (form.quotation_no) {
-                const selectedQuotation = quotations.find(
-                    (q) => q.quotation_no === form.quotation_no
-                );
-                totalPrice = selectedQuotation?.total || 0;
+    form.grand_total = total;
+
+    if (form.receipt_no) {
+        const receipt = receipts.find(r => r.receipt_no === form.receipt_no);
+        if (receipt) {
+            if (receipt.paid_amount > total) {
+                form.paid_amount = total;
+                form.installment_paid = 0;
+            } else if (receipt.paid_amount < total) {
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = total - receipt.paid_amount;
             } else {
-                totalPrice = calculateTotalKHR.value; // Manual product total
+                form.paid_amount = receipt.paid_amount;
+                form.installment_paid = 0;
             }
-
-            // Case 1: Receipt reused with remaining installment
-            if (usedInInvoice && receipt.installment_paid > 0) {
-                form.customer_id = receipt.customer_id;
-                const customer = customers.find(
-                    (c) => c.id === receipt.customer_id
-                );
-                form.address = customer?.address || "";
-                form.phone = customer?.phone || customer?.phone_number || "";
-                form.deposit_amount = receipt.paid_amount;
-
-                if (receipt.paid_amount > totalPrice) {
-                    form.paid_amount = totalPrice;
-                    form.installment_paid = 0;
-                    receipt.installment_paid = receipt.paid_amount - totalPrice;
-                } else if (receipt.paid_amount < totalPrice) {
-                    form.paid_amount = receipt.paid_amount;
-                    form.installment_paid = totalPrice - receipt.paid_amount;
-                    receipt.installment_paid = 0;
-                } else {
-                    form.paid_amount = receipt.paid_amount;
-                    form.installment_paid = 0;
-                    receipt.installment_paid = 0;
-                }
-
-                form.grand_total = totalPrice;
-
-                toast.add({
-                    severity: "info",
-                    summary: "Installment Applied",
-                    detail: `Used ${formatCurrency(
-                        form.paid_amount
-                    )} from previous receipt`,
-                    life: 3000,
-                });
-            }
-
-            // Case 2: Receipt has no remaining installment
-            else if (usedInInvoice && receipt.installment_paid === 0) {
-                toast.add({
-                    severity: "warn",
-                    summary: "Receipt Already Used",
-                    detail: `Receipt ${receipt.receipt_no} has no remaining balance`,
-                    life: 3000,
-                });
-                form.receipt_no = "";
-                return;
-            }
-
-            // Case 3: New receipt
-            else {
-                form.customer_id = receipt.customer_id;
-                const customer = customers.find(
-                    (c) => c.id === receipt.customer_id
-                );
-                form.address = customer?.address || "";
-                form.phone = customer?.phone || customer?.phone_number || "";
-                form.deposit_amount = receipt.paid_amount;
-
-                if (receipt.paid_amount > totalPrice) {
-                    form.paid_amount = totalPrice;
-                    form.installment_paid = 0;
-                    receipt.installment_paid = receipt.paid_amount - totalPrice;
-                } else if (receipt.paid_amount < totalPrice) {
-                    form.paid_amount = receipt.paid_amount;
-                    form.installment_paid = totalPrice - receipt.paid_amount;
-                    receipt.installment_paid = 0;
-                } else {
-                    form.paid_amount = receipt.paid_amount;
-                    form.installment_paid = 0;
-                    receipt.installment_paid = 0;
-                }
-
-                form.grand_total = totalPrice;
-
-                if (receipt.payment_schedule_ids) {
-                    form.payment_schedules = receipt.payment_schedule_ids;
-                }
-
-                toast.add({
-                    severity: "info",
-                    summary: "Receipt Selected",
-                    detail: `Auto-filled info from receipt ${receipt.receipt_no}`,
-                    life: 2500,
-                });
-            }
-        } else {
-            form.installment_paid = 0;
-            form.paid_amount = 0;
-            form.payment_schedules = [];
+            return;
         }
-    },
-    { immediate: true }
-);
+    }
+
+    // No receipt or no matching receipt
+    form.paid_amount = 0;
+    form.installment_paid = total;
+};
+
+watch(() => form.quotation_no, updateInstallmentPaid);
+watch(() => form.receipt_no, updateInstallmentPaid);
+watch(productsList, updateInstallmentPaid, { deep: true });
 </script>

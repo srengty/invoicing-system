@@ -71,21 +71,17 @@
                             class="w-full"
                         />
                     </div>
-                    <div class="">
-                        <div class="">
-                            <label for="receipt_no" class="block font-medium"
-                                >Receipt No (for deposit)</label
-                            >
-                            <div class="flex w-full gap-3">
-                                <Select
-                                    v-model="form.receipt_no"
-                                    :options="receipts"
-                                    optionLabel="receipt_no"
-                                    optionValue="receipt_no"
-                                    placeholder="Select Receipt"
-                                    class="w-full"
-                                />
-                            </div>
+                    <div>
+                        <label for="receipt_no" class="block font-medium">Receipt No (for deposit)</label>
+                        <div class="flex w-full gap-3">
+                            <Select
+                            v-model="form.receipt_no"
+                            :options="availableReceipts"
+                            optionLabel="receipt_no"
+                            optionValue="receipt_no"
+                            placeholder="Select Receipt"
+                            class="w-full"
+                            />
                         </div>
                     </div>
                     <div>
@@ -295,6 +291,7 @@ const {
     customers,
     paymentSchedules,
     receipts,
+    usedReceiptNos
 } = usePage().props;
 
 const props = defineProps({
@@ -344,6 +341,8 @@ const StatusOptions = [
 ];
 
 // Product List and Dialog Management
+const usedReceiptNosRef = ref(usedReceiptNos || []);
+const receiptsRef = ref(receipts || []);
 const productsList = ref([]);
 const filteredAgreements = ref([]);
 const editingProduct = ref(null);
@@ -380,6 +379,45 @@ function getOrdinalSuffix(number) {
         suffixes[(remainder - 20) % 10] || suffixes[remainder] || suffixes[0]
     );
 }
+
+const selectedPaymentSchedulesTotal = computed(() => {
+  if (!form.payment_schedules || form.payment_schedules.length === 0) return null;
+  return form.payment_schedules.reduce((total, id) => {
+    const schedule = paymentSchedules.find(ps => ps.id === id);
+    return total + (schedule?.amount || 0);
+  }, 0);
+});
+
+const availableReceipts = computed(() => {
+  const totalAmount = selectedPaymentSchedulesTotal.value;
+
+  return receipts.filter(receipt => {
+    // Exclude used receipts
+    if (usedReceiptNosRef.value.includes(receipt.receipt_no)) {
+      return false;
+    }
+
+    // Filter by customer if set
+    if (form.customer_id && receipt.customer_id !== form.customer_id) {
+      return false;
+    }
+
+    // If no payment schedules selected, maybe show all receipts (or return empty)
+    if (totalAmount === null) {
+      // return true; // show all receipts if you want
+      return false;  // or return false to show none until payment schedules selected
+    }
+
+    // Compare numeric values
+    if (Number(receipt.paid_amount) !== Number(totalAmount)) {
+      return false;
+    }
+
+    return true;
+  });
+});
+
+
 
 const formattedPaymentSchedules = computed(() => {
     if (selectedPaymentSchedule.value) {

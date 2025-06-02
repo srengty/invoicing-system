@@ -560,7 +560,13 @@ const toggleStatus = (invoice) => {
 };
 
 const canEditInvoice = (invoice) => {
-    return invoice.status !== "approved" || invoice.status == "revise";
+    const hasPaymentSchedules =
+        invoice.payment_schedules && invoice.payment_schedules.length > 0;
+
+    const editableStatus =
+        invoice.status !== "approved" || invoice.status === "revise";
+
+    return editableStatus && !hasPaymentSchedules;
 };
 
 // right after your other consts

@@ -199,17 +199,18 @@
                             <div class="field">
                                 <label>Paid Amount</label>
                                 <InputNumber
-                                    v-model="formData.paid_amount"
-                                    class="w-full"
-                                    placeholder="Enter amount paid "
-                                    mode="decimal"
-                                    :minFractionDigits="2"
-                                    :maxFractionDigits="2"
-                                    thousandSeparator=","
-                                    decimalSeparator="."
-                                    suffix=" ( KHR )"
-                                    size="small"
-                                    @input="updateAmountInWords"
+                                v-model="formData.paid_amount"
+                                class="w-full"
+                                placeholder="Enter amount paid "
+                                mode="decimal"
+                                :minFractionDigits="2"
+                                :maxFractionDigits="2"
+                                thousandSeparator=","
+                                decimalSeparator="."
+                                suffix=" ( KHR )"
+                                size="small"
+                                @input="updateAmountInWords"
+                                :readonly="isPaidAmountReadOnly" 
                                 />
                             </div>
                         </div>
@@ -327,7 +328,6 @@ import { convertCurrencyToWords } from "@/utils/currencyWords";
 import { ref, computed, onMounted, defineExpose, watch } from "vue";
 import { router } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
-import { useToast } from "primevue/usetoast";
 import { route } from "ziggy-js";
 import axios from "axios";
 import {
@@ -340,6 +340,8 @@ import {
     Select,
     Toast,
 } from "primevue";
+import { useToast } from 'primevue/usetoast';
+
 
 const toast = useToast();
 const dialogVisible = ref(false);
@@ -913,6 +915,13 @@ const createReceipt = async () => {
         isLoading.value = false;
     }
 };
+
+const isPaidAmountReadOnly = computed(() => {
+  return (
+    formData.value.payment_schedule_ids &&
+    formData.value.payment_schedule_ids.length > 0
+  );
+});
 
 const formattedScheduleId = computed(() => {
     if (!formData.value.payment_schedule_ids?.length) return "No schedules";

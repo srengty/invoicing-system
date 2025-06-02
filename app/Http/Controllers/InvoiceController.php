@@ -30,12 +30,24 @@ class InvoiceController extends Controller
     {
         // Get all agreements, quotations, customers, and products
         $agreements = Agreement::all();
-        $quotations = Quotation::with(["productQuotations","agreement","productQuotations.product"])->where("status","Approved")->get();
+        $quotations = Quotation::with(['productQuotations', 'agreement', 'productQuotations.product'])
+        ->where('status', 'Approved')
+        ->get()
+        ->map(function ($quotation) {
+            $quotation->end_date = null;
+            if (!empty($quotation->quotation_date)) {
+                // Parse the quotation_date and add 14 days
+                $quotationDate = Carbon::parse($quotation->quotation_date);
+                $quotation->end_date = $quotationDate->addDays(14)->format('Y-m-d');
+            }
+            return $quotation;
+        });
         $customers = Customer::all();
         $products = Product::all();
         $paymentSchedules = PaymentSchedule::all();
         $receipts = Receipt::all();
         $invoices = Invoice::select('id', 'quotation_no', 'paid_amount')->get();
+        $usedReceiptNos = DB::table('invoice_receipt')->pluck('receipt_no')->toArray();
 
         // Pass the full models to the form
         return Inertia::render('Invoices/Create', [
@@ -46,6 +58,7 @@ class InvoiceController extends Controller
             'paymentSchedules' => $paymentSchedules,
             'receipts'=> $receipts,
             'invoices' => $invoices,
+            'usedReceiptNos' => $usedReceiptNos,
         ]);
     }
 
@@ -77,16 +90,48 @@ class InvoiceController extends Controller
             'products.*.remark' => 'nullable|string',
             'products.*.include_catalog' => 'required|boolean',
             'products.*.pdf_url' => 'nullable|string',
-            'receipt_no' => 'nullable|integer|exists:receipts,receipt_no',
+            'receipt_no' => [
+                'nullable',
+                'integer',
+                'exists:receipts,receipt_no',
+                function ($attribute, $value, $fail) use ($request) {
+                    $used = DB::table('invoice_receipt')->where('receipt_no', $value)->exists();
+                    if ($used) {
+                        $fail('The selected receipt has already been used for another invoice.');
+                    }
+
+                    $receipt = Receipt::where('receipt_no', $value)->first();
+                    if ($receipt && $receipt->customer_id != $request->customer_id) {
+                        $fail('The selected receipt belongs to a different customer.');
+                    }
+                }
+            ],
         ]);
 
         if ($validated->fails()) {
-            return response()->json(['message' => $validated->errors()], 422);
+            return redirect()->back()
+                ->withErrors($validated)
+                ->withInput()
+                ->with('toast_error', 'Please fix the errors in the form.');
         }
 
         $data = $validated->validated();
 
-        // Format start and end dates
+        // Validate payment schedules belong to same customer
+        // if (!empty($data['payment_schedules'])) {
+        //     $scheduleCustomerIds = PaymentSchedule::whereIn('id', collect($data['payment_schedules'])->pluck('id'))
+        //         ->pluck('customer_id')
+        //         ->unique()
+        //         ->toArray();
+                
+        //     if (count($scheduleCustomerIds) > 1 || (isset($scheduleCustomerIds[0]) && $scheduleCustomerIds[0] != $data['customer_id'])) {
+        //         return redirect()->back()
+        //             ->withErrors(['payment_schedules' => 'All payment schedules must belong to the same customer as the invoice.'])
+        //             ->withInput();
+        //     }
+        // }
+
+        // Format dates
         $startDate = !empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])
             ? Carbon::createFromFormat('d/m/Y', $data['start_date'])->format('Y-m-d')
             : now()->format('Y-m-d');
@@ -95,96 +140,57 @@ class InvoiceController extends Controller
             ? Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d')
             : now()->addDays(14)->format('Y-m-d');
             
+        // Calculate grand total from different sources
         $grand_total = 0;
+        
+        // 1. From quotation if exists
+        if (!empty($data['quotation_no'])) {
+            $quotation = Quotation::where('quotation_no', $data['quotation_no'])->first();
+            if ($quotation) {
+                $grand_total = $quotation->total;
+            }
+        }
+        // 2. From products if no quotation
+        elseif (!empty($data['products'])) {
+            foreach ($data['products'] as $product) {
+                $grand_total += $product['price'] * $product['quantity'];
+            }
+        }
+        // 3. From payment schedules if no products or quotation
+        elseif (!empty($data['payment_schedules'])) {
+            $paymentSchedules = PaymentSchedule::whereIn('id', collect($data['payment_schedules'])->pluck('id'))->get();
+            $grand_total = $paymentSchedules->sum('amount');
+        }
+
+        // Handle receipt amounts
         $paid_amount = 0;
         $installment_paid = 0;
         $receipt = null;
 
-        // 1. Grand total from payment schedules (priority)
-        if (!empty($data['payment_schedules'])) {
-            foreach ($data['payment_schedules'] as $schedule) {
-                $scheduleModel = \App\Models\PaymentSchedule::find($schedule['id']);
-                if ($scheduleModel) {
-                    $grand_total += $scheduleModel->amount;
-                }
-            }
-        }
-        // 2. Fallback to quotation
-        elseif (!empty($data['quotation_no'])) {
-            $quotation = \App\Models\Quotation::with('products')->find($data['quotation_no']);
-                if (!empty($data['quotation_no'])) {
-                $quotation = \App\Models\Quotation::where('quotation_no', $data['quotation_no'])->first();
-                if ($quotation && $quotation->total !== null) {
-                    $grand_total = $quotation->total;
-                } else {
-                    // fallback to the value from payload
-                    $grand_total = $data['grand_total'] ?? 0;
-                }
-            } else {
-                // No quotation, use frontend value or recalculate
-                $grand_total = $data['grand_total'] ?? 0;
-            }
-        }
-
-        // 3. Fallback to product totals
-        elseif (!empty($data['products'])) {
-            foreach ($data['products'] as $product) {
-                $productData = \App\Models\Product::find($product['id']);
-                if ($productData && $productData->status === 'approved') {
-                    $grand_total += $product['price'] * $product['quantity'];
-                }
-            }
-        }
-
-        // 4. Handle receipt
         if (!empty($data['receipt_no'])) {
-            $receipt = \App\Models\Receipt::where('receipt_no', $data['receipt_no'])->first();
+            $receipt = Receipt::where('receipt_no', $data['receipt_no'])->first();
+            
             if ($receipt) {
-                $paid_amount = $receipt->paid_amount;
-
-                if ($receipt->installment_paid > 0) {
-                    if ($grand_total == $receipt->installment_paid) {
-                        $paid_amount = $receipt->installment_paid;
-                        $installment_paid = 0;
-                    } else {
-                        $paid_amount = min($receipt->installment_paid, $grand_total);
-                        $installment_paid = $receipt->installment_paid - $paid_amount;
-                    }
-                } else {
-                    if ($paid_amount > $grand_total) {
-                        $installment_paid = $paid_amount - $grand_total;
-                        $paid_amount = $grand_total;
-                    }
-                }
+                $paid_amount = min($receipt->paid_amount, $grand_total);
+                $installment_paid = $grand_total - $paid_amount;
             }
         }
 
-        // 5. If no receipt: paid = 0
-        if (empty($data['receipt_no'])) {
-            $paid_amount = 0;
-            $installment_paid = 0;
-        }
-
-        // 6. Calculate total_usd if exchange_rate is given
-        $currency = $data['currency'] ?? 'KHR';
+        // Calculate USD total if exchange rate provided
         $total_usd = isset($data['exchange_rate']) && $data['exchange_rate'] > 0
             ? $grand_total / $data['exchange_rate']
-            : $data['total_usd'] ?? null;
+            : ($data['total_usd'] ?? null);
 
-        // 7. Generate invoice number if status is Approved
+        // Generate invoice number if approved
         $invoice_no = null;
         if ($data['status'] === 'Approved') {
             $base = (date('Y') - 2025) * 1000000 + 25000001;
-            $last = \App\Models\Invoice::where('invoice_no', '>=', $base)->orderBy('invoice_no', 'desc')->first();
+            $last = Invoice::where('invoice_no', '>=', $base)->orderBy('invoice_no', 'desc')->first();
             $invoice_no = $last ? $last->invoice_no + 1 : $base;
         }
 
-        $invoiceDate = $data['status'] === 'Approved'
-            ? now()->format('Y-m-d H:i:s')
-            : (!empty($request->invoice_date) ? Carbon::parse($request->invoice_date)->format('Y-m-d H:i:s') : null);
-
-        // 8. Create invoice
-        $invoice = \App\Models\Invoice::create([
+        // Create the invoice
+        $invoice = Invoice::create([
             'invoice_no' => $invoice_no,
             'quotation_no' => $data['quotation_no'] ?? null,
             'agreement_no' => $data['agreement_no'] ?? null,
@@ -197,62 +203,36 @@ class InvoiceController extends Controller
             'grand_total' => $grand_total,
             'total_usd' => $total_usd,
             'exchange_rate' => $data['exchange_rate'] ?? null,
-            'currency' => $currency,
-            'invoice_date' => $invoiceDate,
+            'currency' => $data['currency'] ?? 'KHR',
+            'invoice_date' => $data['status'] === 'Approved' ? now() : null,
             'status' => $data['status'],
             'paid_amount' => $paid_amount,
             'installment_paid' => $installment_paid,
             'receipt_no' => $data['receipt_no'] ?? null,
         ]);
 
-        // 9. Attach products
+        // Attach products
         if (!empty($data['products'])) {
+            $productsToAttach = [];
             foreach ($data['products'] as $product) {
-                $invoice->products()->attach($product['id'], [
+                $productsToAttach[$product['id']] = [
                     'quantity' => $product['quantity'],
                     'price' => $product['price'],
                     'include_catalog' => $product['include_catalog'],
                     'pdf_url' => $product['pdf_url'] ?? null,
-                    'invoice_id' => $invoice->id,
-                ]);
+                ];
             }
+            $invoice->products()->sync($productsToAttach);
         }
 
-        // 10. Attach payment schedules & update status and paid_amount if receipt is used
+        // Attach payment schedules pivot
         if (!empty($data['payment_schedules'])) {
-            $ids = collect($data['payment_schedules'])->pluck('id')->toArray();
-            $invoice->paymentSchedules()->attach($ids);
-
-            // Update payment schedules status and paid_amount if receipt is used
-            if ($request->has('receipt_no') && $receipt) {
-                $totalSchedulesAmount = \App\Models\PaymentSchedule::whereIn('id', $ids)->sum('amount');
-                $paidPerSchedule = $totalSchedulesAmount > 0 ? ($paid_amount / $totalSchedulesAmount) : 0;
-
-                \App\Models\PaymentSchedule::whereIn('id', $ids)->update([
-                    'status' => 'Paid',
-                    'paid_amount' => DB::raw("amount * $paidPerSchedule")
-                ]);
-
-                // Insert or update payment_schedule_receipt pivot records
-                foreach ($ids as $schedule_id) {
-                    DB::table('payment_schedule_receipt')->updateOrInsert(
-                        [
-                            'payment_schedule_id' => $schedule_id,
-                            'receipt_receipt_no' => $request->input('receipt_no'),
-                        ],
-                        [
-                            'payment_schedule_id' => $schedule_id,
-                            'receipt_receipt_no' => $request->input('receipt_no'),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]
-                    );
-                }
-            }
+            $scheduleIds = collect($data['payment_schedules'])->pluck('id')->toArray();
+            $invoice->paymentSchedules()->sync($scheduleIds);
         }
 
-        // 11. Update receipt info after invoice creation
-        if (!empty($data['receipt_no']) && $invoice->invoice_no && $receipt) {
+        // Update receipt if used
+        if ($receipt) {
             $receipt->update([
                 'invoice_no' => $invoice->invoice_no,
                 'paid_amount' => $paid_amount,
@@ -269,14 +249,15 @@ class InvoiceController extends Controller
         $quotations = Quotation::with('agreement')->where('status','Approved')->get();
         $customers = Customer::all();
         $paymentSchedules = PaymentSchedule::all();
+        $usedReceiptNos = DB::table('invoice_receipt')->pluck('receipt_no')->toArray();
+        $receipts = Receipt::whereNotIn('receipt_no', $usedReceiptNos)->get();
         
         // Modified receipts query to exclude those already used in invoices from payment schedules
         $receipts = Receipt::whereDoesntHave('invoice', function($query) {
             $query->whereHas('paymentSchedules');
         })->get();
 
-        
-
+    
         // Get full selected schedule details
         $selectedSchedule = PaymentSchedule::with([
             'agreement' => function($query) {
@@ -310,6 +291,7 @@ class InvoiceController extends Controller
             'receipts' => $receipts,
             'prefill' => $prefill,
             'selectedPaymentSchedule' => $selectedSchedule,
+            'usedReceiptNos' => $usedReceiptNos,
         ]);
     }
 

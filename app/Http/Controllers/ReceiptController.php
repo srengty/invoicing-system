@@ -61,7 +61,7 @@ class ReceiptController extends Controller
             'required',
             'numeric',
             'min:0.01',
-function ($attribute, $value, $fail) use ($request) {
+            function ($attribute, $value, $fail) use ($request) {
                     if (!empty($request->invoices) && is_array($request->invoices) && count($request->invoices) > 0) {
                         $invoices = \App\Models\Invoice::whereIn('invoice_no', $request->invoices)->get();
 
