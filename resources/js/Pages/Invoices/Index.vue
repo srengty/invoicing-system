@@ -4,12 +4,12 @@
         <NavbarLayout />
 
         <!-- Breadcrumb -->
-        <div class="py-3">
-            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+        <div class="py-0 dark:bg-[#1d1d1d]">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0 ">
                 <template #item="{ item }">
                     <Link
                         :href="item.to"
-                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                        class="text-sm hover:text-primary flex items-start justify-center"
                     >
                         <i v-if="item.icon" :class="item.icon"></i>
                         {{ item.label }}

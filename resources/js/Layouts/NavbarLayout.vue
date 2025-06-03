@@ -1,6 +1,6 @@
 <template>
-    <div class="card">
-        <Toolbar class="p-4">
+    <div class="card  dark:bg-[#1d1d1d] dark:text-gray-100">
+        <Toolbar class="p-4 dark:bg-[#1d1d1d] dark:border-b dark:border-gray-700">
             <template #start>
                 <div class="flex items-center gap-8">
                     <h1 class="text-xl font-bold m-0">
@@ -12,7 +12,7 @@
                         </InputIcon>
                         <InputText
                             size="small"
-                            class="w-80"
+                            class="w-80 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
                             placeholder="Find invoices, clients, and more"
                         />
                     </IconField>
@@ -25,12 +25,14 @@
                     class="mr-3"
                     size="small"
                     outlined=""
+                    :class="['dark:text-gray-100', 'dark:border-gray-600']"
                 ></SplitButton>
                 <Avatar
                     :image="userAvatar"
                     style="width: 32px; height: 32px"
                     size="large"
                     shape="circle"
+                    class="dark:ring-2 dark:ring-gray-600"
                 />
             </template>
         </Toolbar>
@@ -103,15 +105,36 @@ const pageTitle = computed(() => {
 
 <style scoped>
 .p-toolbar {
-    padding: 1rem;
-    background: white;
-    border: none;
-    border-radius: 0%;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  background: white;
+  border: none;
+  border-radius: 0%;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode overrides */
+.dark .p-toolbar {
+  background: #1d1d1d;
+  border-bottom: 1px solid #374151; /* Tailwind gray-700 */
+  box-shadow: none;
 }
 
 .text-xl {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+/* InputText dark mode overrides */
+.dark .p-inputtext {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+/* SplitButton dark mode */
+.dark .p-splitbutton {
+  border-color: #4b5563; /* Tailwind gray-600 */
+  color: #e5e7eb;
 }
 </style>
+
