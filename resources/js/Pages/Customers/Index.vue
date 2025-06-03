@@ -24,13 +24,13 @@
             </Breadcrumb>
         </div>
         <!-- <BodyLayout> -->
-        <div class="customers p-4">
+        <div class="customers px-4">
             <div class="flex justify-between items-center pb-4">
                 <div class="flex items-center gap-2">
-                    <img src="/User.png" alt="Item Icon" class="h-8 w-8 ml-4" />
+                    <!-- <img src="/User.png" alt="Item Icon" class="h-8 w-8 ml-4" />
                     <h1 class="text-xl text-green-600">
                         Customers/Organization Name
-                    </h1>
+                    </h1> -->
                 </div>
                 <div class="flex items-center gap-2">
                     <Dropdown
@@ -45,6 +45,13 @@
                         v-model="searchTerm"
                         placeholder="Search"
                         class="w-64"
+                        size="small"
+                    />
+                    <Button
+                        label="Clear"
+                        @click="clearFilters"
+                        class="p-button-secondary w-24"
+                        icon="pi pi-times"
                         size="small"
                     />
                     <Button
@@ -269,7 +276,11 @@ const items = computed(() => [
 const columns = [
     { field: "name", header: "Name", style: { width: "5%" } },
     { field: "code", header: "Code", style: { width: "5%" }, sortable: true },
-    { field: "credit_period", header: "Credit Period", style: { width: "10%" } },
+    {
+        field: "credit_period",
+        header: "Credit Period",
+        style: { width: "10%" },
+    },
     { field: "address", header: "Address", style: { width: "5%" } },
     { field: "website", header: "Website", style: { width: "5%" } },
     { field: "phone_number", header: "Phone", style: { width: "5%" } },
@@ -291,8 +302,16 @@ const searchOptions = [
     { label: "Email", value: "email" },
     { label: "Address", value: "address" },
     { label: "Credit Period", value: "credit_period" },
-    { label: "Category", value: "customer_category_name" }, // Added
+    { label: "Category", value: "customer_category_name" },
 ];
+const clearFilters = () => {
+    // reset search dropdown + text
+    searchType.value = "";
+    searchTerm.value = "";
+    // reset date pickers
+    startDateFilter.value = null;
+    endDateFilter.value = null;
+};
 
 const filteredCustomers = computed(() => {
     const term = searchTerm.value.toLowerCase();

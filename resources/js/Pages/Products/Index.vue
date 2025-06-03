@@ -25,11 +25,11 @@
         </div>
         <!-- <BodyLayout> -->
         <Toast position="top-center" group="tc" />
-        <div class="Items text-sm p-4">
+        <div class="Items text-sm px-4">
             <div class="flex justify-between items-center pb-4">
                 <div class="flex items-center gap-2">
-                    <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
-                    <h1 class="text-xl text-green-600">Manage Items</h1>
+                    <!-- <img src="/Item.png" alt="Item Icon" class="h-8 w-8 ml-4" />
+                    <h1 class="text-xl text-green-600">Manage Items</h1> -->
                 </div>
                 <div class="flex items-center gap-2">
                     <Dropdown
@@ -38,12 +38,20 @@
                         optionLabel="label"
                         optionValue="value"
                         class="w-48 text-sm"
+                        placeholder="Select field to search"
                     />
                     <!-- Search Input -->
                     <InputText
                         v-model="searchTerm"
                         placeholder="Search"
                         class="w-64"
+                        size="small"
+                    />
+                    <Button
+                        label="Clear"
+                        @click="clearFilters"
+                        class="p-button-secondary w-24"
+                        icon="pi pi-times"
                         size="small"
                     />
                     <Button
@@ -1088,8 +1096,15 @@ const toggleStatus = (product) => {
 };
 
 const searchTerm = ref(""); // The search term input
-const searchType = ref("name_kh"); // Default search type is 'name'
-
+const searchType = ref(""); // Default search type is 'name'
+const clearFilters = () => {
+    // reset search dropdown + text
+    searchType.value = "";
+    searchTerm.value = "";
+    // reset date pickers
+    startDateFilter.value = null;
+    endDateFilter.value = null;
+};
 const submitForm = () => {
     console.log("Form data being submitted:", form.data());
     if (

@@ -40,7 +40,7 @@
                     </p>
                     <p>
                         <strong>Amount Paid:</strong>
-                        {{ receipt.paid_amount }}
+                        {{ formatCurrency(receipt.paid_amount) }}
                     </p>
                     <p>
                         <strong>Amount in Words:</strong>
@@ -85,6 +85,18 @@ const back = () => {
 const receipt = reactive({
     ...props.receipt,
 });
+const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === "") return "0.00";
+    const numValue =
+        typeof value === "string"
+            ? parseFloat(value.replace(/,/g, ""))
+            : Number(value);
+
+    return numValue.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
 </script>
 
 <style>

@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceComment;
 use App\Models\PaymentSchedule;
 use App\Models\Receipt;
+use App\Models\Category;
 use App\Models\InvoiceProduct;
 use App\Models\Product;
 use Inertia\Inertia;
@@ -46,6 +47,7 @@ class InvoiceController extends Controller
         $products = Product::all();
         $paymentSchedules = PaymentSchedule::all();
         $receipts = Receipt::all();
+        $productCategories = Category::all();
         $invoices = Invoice::select('id', 'quotation_no', 'paid_amount')->get();
         $usedReceiptNos = DB::table('invoice_receipt')->pluck('receipt_no')->toArray();
 
@@ -58,6 +60,7 @@ class InvoiceController extends Controller
             'paymentSchedules' => $paymentSchedules,
             'receipts'=> $receipts,
             'invoices' => $invoices,
+            'productCategories' => Category::all(),
             'usedReceiptNos' => $usedReceiptNos,
         ]);
     }
@@ -123,7 +126,7 @@ class InvoiceController extends Controller
         //         ->pluck('customer_id')
         //         ->unique()
         //         ->toArray();
-                
+
         //     if (count($scheduleCustomerIds) > 1 || (isset($scheduleCustomerIds[0]) && $scheduleCustomerIds[0] != $data['customer_id'])) {
         //         return redirect()->back()
         //             ->withErrors(['payment_schedules' => 'All payment schedules must belong to the same customer as the invoice.'])
@@ -139,10 +142,10 @@ class InvoiceController extends Controller
         $endDate = !empty($data['end_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['end_date'])
             ? Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d')
             : now()->addDays(14)->format('Y-m-d');
-            
+
         // Calculate grand total from different sources
         $grand_total = 0;
-        
+
         // 1. From quotation if exists
         if (!empty($data['quotation_no'])) {
             $quotation = Quotation::where('quotation_no', $data['quotation_no'])->first();
@@ -169,7 +172,7 @@ class InvoiceController extends Controller
 
         if (!empty($data['receipt_no'])) {
             $receipt = Receipt::where('receipt_no', $data['receipt_no'])->first();
-            
+
             if ($receipt) {
                 $paid_amount = min($receipt->paid_amount, $grand_total);
                 $installment_paid = $grand_total - $paid_amount;
@@ -251,13 +254,13 @@ class InvoiceController extends Controller
         $paymentSchedules = PaymentSchedule::all();
         $usedReceiptNos = DB::table('invoice_receipt')->pluck('receipt_no')->toArray();
         $receipts = Receipt::whereNotIn('receipt_no', $usedReceiptNos)->get();
-        
+
         // Modified receipts query to exclude those already used in invoices from payment schedules
         $receipts = Receipt::whereDoesntHave('invoice', function($query) {
             $query->whereHas('paymentSchedules');
         })->get();
 
-    
+
         // Get full selected schedule details
         $selectedSchedule = PaymentSchedule::with([
             'agreement' => function($query) {
@@ -296,7 +299,7 @@ class InvoiceController extends Controller
     }
 
     public function updateStatus(Request $request, Invoice $invoice)
-    {   
+    {
         // Validate the incoming request
         $validated = $request->validate([
             'status' => 'required|string|in:approved,revise,pending',
@@ -321,7 +324,7 @@ class InvoiceController extends Controller
 
             // Set the invoice date to the current date
             $invoice->invoice_date = now();
-            
+
             // Automatically set the invoice_end_date to 14 days after the invoice_date
             $invoice->invoice_end_date = Carbon::parse($invoice->invoice_date)->addDays(14)->format('Y-m-d'); // 14 days after invoice_date
 
@@ -356,7 +359,7 @@ class InvoiceController extends Controller
         $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments') ->where('status', 'Approved');;
 
         // Apply pagination after all filters
-        $invoices = $query->orderBy('created_at', 'desc')->paginate(); 
+        $invoices = $query->orderBy('created_at', 'desc')->paginate();
 
         // Get the filters for passing them to the view
         $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
@@ -390,7 +393,7 @@ class InvoiceController extends Controller
     {
         // Load the invoice with customer
         $invoice = Invoice::with(['customer','paymentSchedules'])->where('id', $invoice_no)->firstOrFail();
-        
+
         if ($invoice->status === 'Approved') {
             abort(403, 'This invoice has been paid and can no longer be modified.');
         }

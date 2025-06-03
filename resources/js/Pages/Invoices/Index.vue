@@ -18,7 +18,7 @@
             </Breadcrumb>
         </div>
 
-        <div class="invoices space-y-4">
+        <div class="invoices space-y-4 px-4">
             <!-- Search Filters -->
             <div class="flex justify-end w-full gap-4">
                 <Button
@@ -30,7 +30,7 @@
                 />
             </div>
 
-            <div class="w-full mt-6">
+            <div class="w-full">
                 <div
                     class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm pb-3"
                 >
@@ -521,8 +521,4 @@ const statusClass = (status) => {
 };
 </script>
 
-<style scoped>
-.invoices {
-    padding: 1rem;
-}
-</style>
+<style scoped></style>

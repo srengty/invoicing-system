@@ -20,9 +20,9 @@
             <!-- Invoice Form Section -->
             <form @submit.prevent="submitInvoice">
                 <div
-                    class="p-3 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm"
+                    class="px-4 grid grid-cols-1 md:grid-cols-4 gap-4 ml-4 mr-4 text-sm"
                 >
-                    <div>
+                    <!-- <div>
                         <label for="quotation_no" class="block font-medium"
                             >Quotation No</label
                         >
@@ -35,7 +35,7 @@
                             class="w-full"
                             required
                         />
-                    </div>
+                    </div> -->
                     <div>
                         <label for="agreement_no" class="block font-medium"
                             >Agreement No</label
@@ -49,11 +49,11 @@
                             class="w-full"
                         />
                     </div>
-                    <div>
+                    <!--  <div>
                         <label for="payment_schedule" class="block font-medium"
                             >Payment Schedule</label
                         >
-                        <!-- <MultiSelect
+                         <MultiSelect
                             v-model="form.payment_schedules"
                             :options="formattedPaymentSchedules"
                             optionLabel="label"
@@ -61,7 +61,7 @@
                             placeholder="Select Payment Schedule"
                             class="w-full"
                             :disabled="!!selectedPaymentSchedule"
-                        /> -->
+                        />
                         <MultiSelect
                             v-model="form.payment_schedules"
                             :options="formattedPaymentSchedules"
@@ -70,17 +70,19 @@
                             placeholder="Select Payment Schedule"
                             class="w-full"
                         />
-                    </div>
+                    </div>-->
                     <div>
-                        <label for="receipt_no" class="block font-medium">Receipt No (for deposit)</label>
+                        <label for="receipt_no" class="block font-medium"
+                            >Receipt No (for deposit)</label
+                        >
                         <div class="flex w-full gap-3">
                             <Select
-                            v-model="form.receipt_no"
-                            :options="availableReceipts"
-                            optionLabel="receipt_no"
-                            optionValue="receipt_no"
-                            placeholder="Select Receipt"
-                            class="w-full"
+                                v-model="form.receipt_no"
+                                :options="availableReceipts"
+                                optionLabel="receipt_no"
+                                optionValue="receipt_no"
+                                placeholder="Select Receipt"
+                                class="w-full"
                             />
                         </div>
                     </div>
@@ -98,7 +100,7 @@
                             required
                         />
                     </div>
-                    <div>
+                    <!-- <div>
                         <label for="status" class="block font-medium"
                             >Status</label
                         >
@@ -111,7 +113,7 @@
                             class="w-full"
                             required
                         />
-                    </div>
+                    </div> -->
                     <div>
                         <label for="address" class="block font-medium"
                             >Address</label
@@ -136,7 +138,7 @@
                             size="small"
                         />
                     </div>
-                    <div>
+                    <!-- <div>
                         <label for="start_date" class="block font-medium"
                             >Date</label
                         >
@@ -148,9 +150,9 @@
                             size="small"
                             dateFormat="dd/mm/yy"
                         />
-                    </div>
+                    </div> -->
 
-                    <div>
+                    <!-- <div>
                         <label for="end_date" class="block font-medium"
                             >Due Date</label
                         >
@@ -162,7 +164,7 @@
                             size="small"
                             dateFormat="dd/mm/yy"
                         />
-                    </div>
+                    </div> -->
                 </div>
             </form>
 
@@ -175,7 +177,7 @@
                     class="mb-6 p-datatable-sm p-datatable-gridlines"
                     responsiveLayout="scroll"
                 >
-                    <Column field="id" header="ID" />
+                    <!-- <Column field="id" header="ID" /> -->
                     <Column field="due_date" header="Due Date" />
                     <Column field="amount" header="Amount">
                         <template #body="{ data }">
@@ -245,7 +247,7 @@ import {
 } from "primevue";
 import { usePage } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { Head,router } from "@inertiajs/vue3";
+import { Head, router } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import Breadcrumb from "primevue/breadcrumb";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
@@ -291,7 +293,7 @@ const {
     customers,
     paymentSchedules,
     receipts,
-    usedReceiptNos
+    usedReceiptNos,
 } = usePage().props;
 
 const props = defineProps({
@@ -381,43 +383,42 @@ function getOrdinalSuffix(number) {
 }
 
 const selectedPaymentSchedulesTotal = computed(() => {
-  if (!form.payment_schedules || form.payment_schedules.length === 0) return null;
-  return form.payment_schedules.reduce((total, id) => {
-    const schedule = paymentSchedules.find(ps => ps.id === id);
-    return total + (schedule?.amount || 0);
-  }, 0);
+    if (!form.payment_schedules || form.payment_schedules.length === 0)
+        return null;
+    return form.payment_schedules.reduce((total, id) => {
+        const schedule = paymentSchedules.find((ps) => ps.id === id);
+        return total + (schedule?.amount || 0);
+    }, 0);
 });
 
 const availableReceipts = computed(() => {
-  const totalAmount = selectedPaymentSchedulesTotal.value;
+    const totalAmount = selectedPaymentSchedulesTotal.value;
 
-  return receipts.filter(receipt => {
-    // Exclude used receipts
-    if (usedReceiptNosRef.value.includes(receipt.receipt_no)) {
-      return false;
-    }
+    return receipts.filter((receipt) => {
+        // Exclude used receipts
+        if (usedReceiptNosRef.value.includes(receipt.receipt_no)) {
+            return false;
+        }
 
-    // Filter by customer if set
-    if (form.customer_id && receipt.customer_id !== form.customer_id) {
-      return false;
-    }
+        // Filter by customer if set
+        if (form.customer_id && receipt.customer_id !== form.customer_id) {
+            return false;
+        }
 
-    // If no payment schedules selected, maybe show all receipts (or return empty)
-    if (totalAmount === null) {
-      // return true; // show all receipts if you want
-      return false;  // or return false to show none until payment schedules selected
-    }
+        // If no payment schedules selected, maybe show all receipts (or return empty)
+        if (totalAmount === null) {
+            // return true; // show all receipts if you want
+            return false; // or return false to show none until payment schedules selected
+        }
 
-    // Compare numeric values
-    if (Number(receipt.paid_amount) !== Number(totalAmount)) {
-      return false;
-    }
+        // Compare numeric values
+        if (Number(receipt.paid_amount) !== Number(totalAmount)) {
+            return false;
+        }
 
-    return true;
-  });
+        return true;
+    });
 });
-
-
 
 const formattedPaymentSchedules = computed(() => {
     if (selectedPaymentSchedule.value) {

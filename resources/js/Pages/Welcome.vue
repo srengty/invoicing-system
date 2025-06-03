@@ -35,7 +35,7 @@ function handleImageError() {
     <Head title="Welcome" />
     <GuestLayout>
         <NavbarLayout />
-        <BaseLayout/>
+        <BaseLayout />
         <!-- <ProductTable /> -->
     </GuestLayout>
 </template>

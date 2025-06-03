@@ -24,7 +24,7 @@
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
         <form @submit.prevent="submit" class="text-sm">
             <!-- Quotation Info -->
-            <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div class="px-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
@@ -49,7 +49,7 @@
                             fluid
                             iconDisplay="input"
                             inputId="quotation_date"
-                            placeholder="Select"
+                            placeholder="Auto-generated"
                             class="w-full md:w-60"
                             @update:model-value="updateDate"
                             size="small"
@@ -57,7 +57,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Customer & Product Selection -->
             <div class="pl-8 grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div
                     class="flex flex-row gap-4 items-end md:grid-cols-4 w-full"
@@ -98,7 +97,7 @@
                         <InputText
                             id="address"
                             v-model="form.address"
-                            placeholder="Input"
+                            placeholder="Auto-generated"
                             class="w-full md:w-60"
                             readonly
                             size="small"
@@ -118,7 +117,7 @@
                         <InputText
                             id="phone_number"
                             v-model="form.phone_number"
-                            placeholder="Input"
+                            placeholder="Auto-generated"
                             class="w-full md:w-60"
                             readonly
                             size="small"
@@ -160,8 +159,10 @@
             <div class="pl-6 pt-5">
                 <DataTable
                     :value="selectedProductsData"
+                    class="p-datatable-striped"
                     paginator
                     :rows="5"
+                    :rowsPerPageOptions="[5, 10, 20, 50]"
                     striped
                 >
                     <Column header="No.">
@@ -197,11 +198,17 @@
                             <InputText
                                 v-model="slotProps.data.quantity"
                                 @input="updateProductSubtotal(slotProps.data)"
+                                :step="1"
+                                :min="1"
+                                :useGrouping="false"
+                                :maxFractionDigits="0"
+                                @keydown="preventMinus"
                                 class="w-5/4"
                                 size="small"
                             />
                         </template>
                     </Column>
+                    <Column field="unit" header="Unit"></Column>
                     <Column field="price" header="Unit Price">
                         <template #body="slotProps">
                             <InputNumber
@@ -472,9 +479,17 @@
                 <label for="quantity" class="required">Quantity</label>
                 <InputNumber
                     v-model="selectedProduct.quantity"
+                    :step="1"
+                    :min="1"
+                    :useGrouping="false"
+                    :maxFractionDigits="0"
+                    @input="
+                        selectedProduct.quantity = Math.floor(
+                            selectedProduct.quantity || 1
+                        )
+                    "
                     class="w-full text-sm"
                     size="small"
-                    :min="1"
                 />
             </div>
             <!-- View Catalog -->
@@ -596,7 +611,7 @@ const showToast = (
     });
 };
 const preventMinus = (event) => {
-    if (event.key === "-") {
+    if (event.key === "-" || event.key === ".") {
         event.preventDefault();
     }
 };

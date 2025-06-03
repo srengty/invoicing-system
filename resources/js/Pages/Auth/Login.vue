@@ -90,31 +90,14 @@
                             Remember me
                         </span>
                     </div>
-                    <div>
-                        <Link
-                            :href="route('password.request')"
-                            class="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-                        >
-                            Forgot password?
-                        </Link>
-                    </div>
                 </div>
-
-                    <PrimaryButton
-                        class="w-full mt-4 flex justify-center"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
-                    >
-                        Log in
-                    </PrimaryButton>
-                <div class="flex items-center justify-center">
-                    <Link
-                        :href="route('canRegister')"
-                        class="text-sm text-gray-600 underline hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-                    >
-                        Don't have an account?
-                    </Link>
-                </div>
+                <PrimaryButton
+                    class="w-full mt-4 flex justify-center"
+                    :class="{ 'opacity-25': form.processing }"
+                    :disabled="form.processing"
+                >
+                    Log in
+                </PrimaryButton>
             </form>
         </div>
     </div>

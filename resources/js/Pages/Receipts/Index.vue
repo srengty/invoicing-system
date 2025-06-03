@@ -39,6 +39,13 @@
                         size="small"
                     />
                     <Button
+                        label="Clear"
+                        @click="clearFilters"
+                        class="p-button-secondary w-24"
+                        icon="pi pi-times"
+                        size="small"
+                    />
+                    <Button
                         icon="pi pi-plus"
                         label="New"
                         raised
@@ -75,9 +82,12 @@
                 <Column header="Invoice No" style="width: 10%; font-size: 14px">
                     <template #body="slotProps">
                         <ul>
-                        <li v-for="invoice in slotProps.data.invoices" :key="invoice.id">
-                            {{ invoice.invoice_no }}
-                        </li>
+                            <li
+                                v-for="invoice in slotProps.data.invoices"
+                                :key="invoice.id"
+                            >
+                                {{ invoice.invoice_no }}
+                            </li>
                         </ul>
                     </template>
                 </Column>
@@ -333,6 +343,10 @@ const searchOptions = ref([
     { label: "Invoice No", value: "invoice_no" },
     { label: "Customer", value: "customer.name" },
 ]);
+const clearFilters = () => {
+    searchType.value = "";
+    searchTerm.value = "";
+};
 
 // Filter logic for the receipt list
 const filteredReceipts = computed(() => {
@@ -372,7 +386,6 @@ const editReceipt = (receipt) => {
         receiptDialog.value.show();
     }
 };
-
 
 const closeDialog = () => {
     dialogVisible.value = false;
