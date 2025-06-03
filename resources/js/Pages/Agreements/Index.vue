@@ -19,7 +19,7 @@
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
         <!-- Due Soon/Past Due Payments -->
-        <div
+        <!-- <div
             v-if="hasDueSoonOrPastDuePaymentsAlter"
             class="mb-4 p-4 border-round"
             :class="
@@ -46,7 +46,7 @@
                     (within 13 days). Please generate invoices to avoid delays.
                 </span>
             </div>
-        </div>
+        </div> -->
         <div class="agreements pl-4 pr-4">
             <div class="flex justify-end items-center">
                 <div class="flex gap-2">

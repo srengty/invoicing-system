@@ -41,10 +41,14 @@
                             >{{ item.label }}</span
                         >
                     </Link>
+
                     <Badge
-                        v-if="item.badge"
+                        v-if="item.key === 3"
                         class="ml-auto"
-                        :value="item.badge"
+                        :value="
+                            dueAgreementsCount > 0 ? dueAgreementsCount : '0'
+                        "
+                        :severity="dueAgreementsCount > 0 ? 'danger' : 'info'"
                     />
                     <span
                         v-if="item.shortcut"
@@ -58,18 +62,60 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { PanelMenu, Badge } from "primevue";
+import { ref, computed, watch } from "vue";
 import { Link, usePage } from "@inertiajs/vue3";
+import { PanelMenu, Badge } from "primevue";
+import moment from "moment";
+
 const page = usePage();
+const agreementsData = ref(page.props.agreements || []);
+
+watch(
+    () => page.props.agreements,
+    (newAgreements) => {
+        agreementsData.value = newAgreements || [];
+    },
+    { immediate: true }
+);
+
+const getPaymentStatus = (schedule) => {
+    if (schedule.status === "PAID" || schedule.paid_amount >= schedule.amount) {
+        return "PAID";
+    }
+    if (schedule.paid_amount > 0) {
+        return "PARTIALLY_PAID";
+    }
+
+    const today = moment();
+    const dueDate = moment(
+        schedule.due_date,
+        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
+        true
+    );
+    if (!dueDate.isValid()) {
+        return schedule.status || "UPCOMING";
+    }
+    if (dueDate.isBefore(today, "day")) return "PAST DUE";
+    if (dueDate.diff(today, "days") <= 13) return "DUE SOON";
+    return "UPCOMING";
+};
+
+const dueAgreementsCount = computed(() => {
+    return agreementsData.value.filter((agreement) =>
+        (agreement.payment_schedules || []).some((schedule) => {
+            const status = getPaymentStatus(schedule);
+            return status === "DUE SOON" || status === "PAST DUE";
+        })
+    ).length;
+});
+
 const items = ref([
     {
         key: 1,
         label: "Dashboard",
-        href: "/",
+        href: "/dashboard",
         icon: "pi pi-home",
         shortcut: ">",
-        badge: null,
         items: [
             {
                 label: "Compose",
@@ -85,12 +131,12 @@ const items = ref([
         href: "/quotations",
         icon: "pi pi-chart-bar",
         shortcut: "⌘+R",
+
         items: [
             {
                 label: "New quotation",
                 href: "/quotations/create",
                 icon: "pi pi-chart-line",
-                badge: 0,
             },
             // {
             //     label: 'Products',
@@ -157,6 +203,7 @@ const items = ref([
         href: "/settings",
         icon: "pi pi-cog",
         shortcut: "⌘+W",
+
         items: [
             {
                 label: "Customers",
@@ -185,6 +232,18 @@ const items = ref([
         ],
     },
 ]);
+
+watch(
+    dueAgreementsCount,
+    (newCount) => {
+        const agreementsItem = items.value.find((item) => item.key === 3);
+        if (agreementsItem) {
+            agreementsItem.badge = newCount;
+        }
+    },
+    { immediate: true }
+);
+
 const expandedKeys = ref(
     items.value.reduce((acc, item) => {
         if (page.url.startsWith(item.href) && item.href !== "/") {
@@ -194,6 +253,7 @@ const expandedKeys = ref(
     }, {})
 );
 </script>
+
 <style>
 :root {
     --p-panelmenu-panel-background: transparent;
@@ -211,5 +271,35 @@ const expandedKeys = ref(
     top: 0;
     z-index: 10;
     /* Ensure it's above other content */
+}
+.p-badge {
+    font-size: 0.75rem;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    display: inline-flex !important;
+}
+
+.p-badge.p-badge-danger {
+    background: #ef4444;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.p-badge.p-badge-info {
+    background: #3b82f6;
+    color: white;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
 }
 </style>
