@@ -214,4 +214,7 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
+    'driver' => env('SESSION_DRIVER', 'file'), // Should match your setup
+    'secure' => env('SESSION_SECURE_COOKIE', true), // false for local dev
+
 ];

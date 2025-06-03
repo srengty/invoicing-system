@@ -12,28 +12,80 @@ use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\QuotationEmailController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Application;
 use App\Mail\TestMail;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
-
 // Route::get('/', function () {
-//     return Inertia::render('Auth/Login', [ // Adjust to your actual login component path
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
 //         'canRegister' => Route::has('register'),
 //         'laravelVersion' => Application::VERSION,
 //         'phpVersion' => PHP_VERSION,
 //     ]);
 // });
+
+Route::get('/', function () {
+    return Inertia::render('Auth/Login', [
+        'canRegister'   => Route::has('register'),
+        'laravelVersion'=> Application::VERSION,
+        'phpVersion'    => PHP_VERSION,
+    ]);
+});
+
+// Authentication (Login / Logout)
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])
+     ->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+     ->name('logout');
+
+// 1) Dashboard for Directors only
+Route::middleware(['auth', 'check.role:Director'])
+     ->get('/dashboard/director', function () {
+         return Inertia::render('Welcome', [
+             'userRoles' => request()->session()->get('roles', []),
+         ]);
+     })
+     ->name('dashboard.director');
+
+// 2) Dashboard for Division Staff only
+Route::middleware(['auth', 'check.role:Division Staff'])
+     ->get('/dashboard/division-staff', function () {
+         return Inertia::render('Welcome', [
+             'userRoles' => request()->session()->get('roles', []),
+         ]);
+     })
+     ->name('dashboard.division-staff');
+
+// 3) Dashboard for Chef Department only
+Route::middleware(['auth', 'check.role:Chef Department'])
+     ->get('/dashboard/chef-department', function () {
+         return Inertia::render('Welcome', [
+             'userRoles' => request()->session()->get('roles', []),
+         ]);
+     })
+     ->name('dashboard.chef-department');
+
+// 4) Dashboard for Revenue Manager only
+Route::middleware(['auth', 'check.role:Revenue Manager'])
+     ->get('/dashboard/revenue-manager', function () {
+         return Inertia::render('Welcome', [
+             'userRoles' => request()->session()->get('roles', []),
+         ]);
+     })
+     ->name('dashboard.revenue-manager');
+
+// 5) Generic Dashboard (any authenticated & verified user lands here by default)
+Route::middleware(['auth', 'verified'])
+     ->get('/dashboard', function () {
+         return Inertia::render('Welcome');
+     })
+     ->name('dashboard');
+
 
 // Agreements
 Route::get('/agreements', [AgreementController::class, 'index'])->name('agreements.index');
@@ -79,9 +131,6 @@ Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('i
 
 // Receipts
 Route::resource('receipts', ReceiptController::class);
-// Route::put('/receipts/{receipt_no}', [ReceiptController::class, 'update'])
-//     ->where('receipt_no', '[0-9]+')
-//     ->name('receipts.update');
 Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
 
 // PaymentSchedule
@@ -126,9 +175,9 @@ Route::get('/settings/product-categories', [ProductCategoryController::class, 'i
 Route::post('/quotations/send',[QuotationController::class, 'sendQuotation'])->name('quotations.send');
 Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Welcome');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Route::middleware(['auth'])->group(function () {
 //     // Dashboard

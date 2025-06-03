@@ -20,11 +20,13 @@
                 Log In
             </h2>
 
+            <!-- If the backend sets a “status” flash (e.g. “Password reset link sent”), show it -->
             <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
                 {{ status }}
             </div>
 
             <form @submit.prevent="handleSubmit" class="space-y-4">
+                <!-- EMAIL FIELD -->
                 <div>
                     <InputLabel for="email" value="Email" />
                     <TextInput
@@ -52,6 +54,7 @@
                     </Message>
                 </div>
 
+                <!-- PASSWORD FIELD -->
                 <div>
                     <InputLabel for="password" value="Password" />
                     <TextInput
@@ -78,20 +81,17 @@
                     </Message>
                 </div>
 
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <Checkbox
-                            name="remember"
-                            v-model:checked="form.remember"
-                        />
-                        <span
-                            class="ms-2 text-sm text-gray-600 dark:text-gray-400"
-                        >
-                            Remember me
-                        </span>
-                    </div>
+                <!-- REMEMBER ME CHECKBOX -->
+                <div class="flex items-center">
+                    <Checkbox name="remember" v-model:checked="form.remember" />
+                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                        Remember me
+                    </span>
                 </div>
+
+                <!-- SUBMIT BUTTON -->
                 <PrimaryButton
+                    type="submit"
                     class="w-full mt-4 flex justify-center"
                     :class="{ 'opacity-25': form.processing }"
                     :disabled="form.processing"
@@ -104,64 +104,70 @@
 </template>
 
 <script setup>
+import { usePage, useForm } from "@inertiajs/vue3";
+import { computed, onMounted } from "vue";
+import { route } from "ziggy-js";
 import Checkbox from "@/Components/Checkbox.vue";
-import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
-import { Head, Link, useForm } from "@inertiajs/vue3";
-import { route } from "ziggy-js";
-import loginBg from "../../../../public/assets/images/login.jpg";
 import Message from "primevue/message";
+import loginBg from "/public/assets/images/login.jpg";
 
-defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
+const page = usePage();
+const rolesArray = computed(() => page.props.roles);
+const rolesString = computed(() => {
+    return rolesArray.value
+        .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
+        .join(", ");
 });
+const userRoles = computed(() => page.props.userRoles || []);
 
 const form = useForm({
     email: "",
     password: "",
     remember: false,
-    errors: {
-        email: "",
-        password: "",
-    },
 });
 
-const submit = () => {
-    form.post(route("login"), {
-        onFinish: () => form.reset("password"),
-    });
-};
-function validateForm() {
+const validateForm = () => {
     let valid = true;
-
-    // EMAIL
     if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
         form.errors.email = "Please enter a valid email address.";
         valid = false;
     } else {
         form.errors.email = "";
     }
-
-    // PASSWORD (just required check here)
-    if (!form.password || form.password.length < 6) {
-        form.errors.password = "Please enter your password.";
+    if (!form.password || form.password.length < 12) {
+        form.errors.password = "Please enter a password (min 12 characters).";
         valid = false;
     } else {
         form.errors.password = "";
     }
-
     return valid;
-}
-const handleSubmit = () => {
-    if (validateForm()) {
-        submit();
-    }
 };
+
+const handleSubmit = () => {
+    if (!validateForm()) return;
+
+    form.post(route("login"), {
+        preserveScroll: true,
+        onSuccess: (inertiaPage) => {
+            const rolesAfterLogin = inertiaPage.props.roles || [];
+            console.log("Logged‐in user’s roles:", rolesAfterLogin);
+        },
+        onError: (errors) => {
+            form.errors.email = errors.email
+                ? errors.email
+                : "Login failed. Please try again.";
+        },
+    });
+};
+
+onMounted(() => {
+    console.log("Logged‐in user’s roles:", rolesArray.value);
+});
 </script>
+
+<style scoped>
+/* … */
+</style>

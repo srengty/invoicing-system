@@ -13,7 +13,7 @@ import Tooltip from "primevue/tooltip";
 import { createI18n } from "vue-i18n";
 import Message from "primevue/message";
 import Toast from "primevue/toast";
-import InputText from 'primevue/inputtext'; 
+import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import ToastService from "primevue/toastservice";
 import ConfirmationService from "primevue/confirmationservice";
@@ -37,7 +37,7 @@ const i18n = createI18n({
     fallbackLocale: "en",
     messages,
     globalInjection: true, // ✅ Allows `$t()` globally in setup()
-});  
+});
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

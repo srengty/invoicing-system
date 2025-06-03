@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'external_auth' => [
+        'base_url' => env('AUTH_API_URL', 'https://smis.itc.edu.kh/api_v1/auth'),
+    ],
+
+
 ];
