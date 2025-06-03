@@ -79,9 +79,6 @@ Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('i
 
 // Receipts
 Route::resource('receipts', ReceiptController::class);
-// Route::put('/receipts/{receipt_no}', [ReceiptController::class, 'update'])
-//     ->where('receipt_no', '[0-9]+')
-//     ->name('receipts.update');
 Route::get('receipts/{id}/print', [ReceiptController::class, 'print'])->name('receipts.print');
 
 // PaymentSchedule
