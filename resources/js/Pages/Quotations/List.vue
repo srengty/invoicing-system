@@ -1,7 +1,6 @@
 <template>
     <Head title="Quotations" />
     <meta name="_token" content="{{ csrf_token() }}" />
-
     <GuestLayout>
         <NavbarLayout />
         <!-- PrimeVue Breadcrumb -->
@@ -28,7 +27,7 @@
         />
 
         <div class="quotations text-sm p-4">
-            <div class="flex justify-end pb-4 gap-4">
+            <div class="flex justify-end items-center pb-4 gap-2">
                 <!-- <div>
                     <Button
                         label="Download Print"
@@ -45,7 +44,8 @@
                         :options="searchOptions"
                         optionLabel="label"
                         optionValue="value"
-                        class="w-48 text-sm"
+                        class="w-48 h-9 text-sm"
+                        size="small"
                         placeholder="Select field to search"
                     />
                 </div>
@@ -53,7 +53,7 @@
                     <InputText
                         v-model="searchTerm"
                         placeholder="Search"
-                        class="w-64"
+                        class="w-64 h-9 text-sm"
                         size="small"
                     />
                 </div>
@@ -63,6 +63,8 @@
                         @click="clearFilters"
                         class="p-button-secondary w-24"
                         icon="pi pi-times"
+                        severity="success"
+                        variant="outlined"
                         size="small"
                     />
                 </div>
@@ -114,9 +116,13 @@
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
-                        style="width: 15%"
+                        style="width: 15%; font-size: 12px"
                     />
-                    <Column field="total" header="Total" style="width: 10%">
+                    <Column
+                        field="total"
+                        header="Total"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data.total) }}
                             <span class="text-xs text-gray-500 ml-1">
@@ -125,7 +131,11 @@
                         </template>
                     </Column>
                     <!-- Correctly Map the Status Column -->
-                    <Column field="status" header="Status" style="width: 10%">
+                    <Column
+                        field="status"
+                        header="Status"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <div class="flex items-center">
                                 <span
@@ -175,7 +185,7 @@
                     <Column
                         field="customer_status"
                         header="Customer Status"
-                        style="width: 10%"
+                        style="width: 10%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <div class="flex items-center">
@@ -234,7 +244,10 @@
                         </template>
                     </Column>
                     <!-- Action Column -->
-                    <Column header="View / Edit / Print" style="width: 10%">
+                    <Column
+                        header="View / Edit / Print"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <div class="flex gap-2">
                                 <Button
@@ -285,7 +298,7 @@
                             </div>
                         </template>
                     </Column>
-                    <Column header="Active" style="width: 6%">
+                    <Column header="Active" style="width: 10%; font-size: 12px">
                         <template #body="slotProps">
                             <Button
                                 :icon="
@@ -570,13 +583,13 @@
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import { route } from "ziggy-js";
-import html2pdf from "html2pdf.js";
 import { ref, computed, onMounted, reactive, nextTick } from "vue";
 import { Head, Link, usePage, router, useForm } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import { PDFDocument } from "pdf-lib";
+import html2pdf from "html2pdf.js";
 import {
     InputText,
     DataTable,
@@ -619,7 +632,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     { label: page.props.title || "Quotations", to: route("quotations.list") },

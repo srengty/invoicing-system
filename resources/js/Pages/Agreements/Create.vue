@@ -30,12 +30,12 @@
                     <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
-                            <span class="col-span-2 text-xl font-semibold mb-5"
+                            <span class="col-span-2 text-lg font-semibold mb-5"
                                 >Record Agreement</span
                             >
                             <!-- Quotation No Input with Search -->
                             <span class="text-sm">Quotation No. </span>
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 text-sm">
                                 <InputText
                                     v-model="form.quotation_no"
                                     placeholder="Enter Quotation No."
@@ -134,6 +134,7 @@
                             >
                             <span class="text-sm required">Customer</span>
                             <Dropdown
+                                :filter="true"
                                 v-model="form.customer_id"
                                 :options="customers"
                                 optionLabel="name"
@@ -146,6 +147,7 @@
                             <span class="text-sm">Address</span>
                             <Textarea
                                 v-model="form.address"
+                                placeholder="Display Address"
                                 rows="2"
                                 size="small"
                                 readonly
@@ -245,7 +247,7 @@
                     <!-- Middle Column - Agreement Summary -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
                         <div class="grid grid-cols-2 gap-2 items-center">
-                            <span class="col-span-2 font-semibold text-xl mb-5"
+                            <span class="col-span-2 font-semibold text-lg mb-5"
                                 >Agreement summary</span
                             >
                             <span class="text-sm">Start date</span>
@@ -290,6 +292,7 @@
                                 name="short_description"
                                 rows="2"
                                 v-model="form.short_description"
+                                placeholder="Discription of the agreement"
                                 size="small"
                             ></Textarea>
                             <span class="text-sm">Payment schedule</span>
@@ -306,7 +309,7 @@
                     </div>
                     <!-- Right Column - Attachments -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/3">
-                        <h3 class="font-semibold text-xl mb-4">
+                        <h3 class="font-semibold text-lg mb-4">
                             Add Attachments
                         </h3>
 
@@ -408,7 +411,7 @@
                         !isPaymentScheduleValid
                     "
                     severity="error"
-                    class="mt-2"
+                    class="mt-2 text-sm"
                 >
                     Payment schedule must total exactly 100% (Current:
                     {{ totalPercentage }}%) and match agreement amount
@@ -429,20 +432,21 @@
                     <Button
                         label="Save"
                         type="submit"
-                        raised
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
                         :disabled="!isPaymentScheduleValid || !isFormValid"
+                        raised
                     ></Button>
                     <Button
                         label="Cancel"
-                        severity="secondary"
-                        raised
                         class="w-full md:w-28"
                         @click="cancel"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
+                        raised
                     ></Button>
                 </div>
             </Form>
@@ -490,7 +494,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     {

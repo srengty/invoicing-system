@@ -53,6 +53,8 @@
                         class="p-button-secondary w-24"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
                     />
                     <Button
                         icon="pi pi-plus"
@@ -75,14 +77,14 @@
                 striped
                 :showGridlines="true"
             >
-                <Column header="Division">
+                <Column header="Division" style="width: 15%; font-size: 12px">
                     <template #body="{ data }">
                         {{
                             getDivisionDisplay(data.division_id) || "Short Text"
                         }}
                     </template>
                 </Column>
-                <Column header="Category">
+                <Column header="Category" style="width: 10%; font-size: 12px">
                     <template #body="{ data }">
                         {{ getCategoryName(data.category_id) }}
                     </template>
@@ -93,14 +95,19 @@
                     :field="col.field"
                     :header="col.header"
                     sortable
+                    style="width: 10%; font-size: 12px"
                 />
-                <Column header="Price" sortable>
+                <Column
+                    header="Price"
+                    sortable
+                    style="width: 5%; font-size: 12px"
+                >
                     <template #body="{ data }">
                         {{ formatPrice(data.price) }}
                     </template>
                 </Column>
                 <!-- ✅ Status Button Column -->
-                <Column header="Status">
+                <Column header="Status" style="width: 5%; font-size: 12px">
                     <template #body="{ data }">
                         <div class="flex">
                             <Button
@@ -142,7 +149,7 @@
                     </template>
                 </Column>
 
-                <Column header="Actions">
+                <Column header="Actions" style="width: 5%; font-size: 12px">
                     <template #body="slotProps">
                         <div class="flex gap-2">
                             <Button
@@ -150,6 +157,7 @@
                                 icon="pi pi-eye"
                                 severity="info"
                                 size="small"
+                                style="width: 30px; height: 30px"
                                 @click="viewProduct(slotProps.data)"
                                 outlined
                             />
@@ -158,6 +166,7 @@
                                 icon="pi pi-pencil"
                                 severity="warning"
                                 size="small"
+                                style="width: 30px; height: 30px"
                                 @click="openForm(slotProps.data)"
                                 outlined
                             />
@@ -166,6 +175,7 @@
                                 icon="pi pi-trash"
                                 severity="danger"
                                 size="small"
+                                style="width: 30px; height: 30px"
                                 @click="deleteProduct(slotProps.data.id)"
                                 outlined
                             />
@@ -769,7 +779,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     { label: page.props.title || "Items", to: route("products.index") },

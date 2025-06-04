@@ -253,9 +253,7 @@ import { PDFDocument } from "pdf-lib";
 import { useToast } from "primevue/usetoast";
 import { Head } from "@inertiajs/vue3";
 import html2pdf from "html2pdf.js";
-import ToggleSwitch from "primevue/toggleswitch";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
+import { ToggleSwitch, Dialog, Button } from "primevue";
 
 const toast = useToast();
 const sendForm = ref({

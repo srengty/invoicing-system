@@ -4,16 +4,21 @@
         <Head title="Edit Invoice" />
 
         <div class="py-3">
-            <Breadcrumb
-                :model="[
-                    { label: 'Invoices', to: '/invoices' },
-                    { label: 'Edit Invoice' },
-                ]"
-            />
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
+                <template #item="{ item }">
+                    <Link
+                        :href="item.to"
+                        class="text-sm hover:text-primary flex items-start justify-center gap-1"
+                    >
+                        <i v-if="item.icon" :class="item.icon"></i>
+                        {{ item.label }}
+                    </Link>
+                </template>
+            </Breadcrumb>
         </div>
 
         <div class="p-6 text-sm">
-            <div class="flex justify-end items-center mb-4">
+            <!-- <div class="flex justify-end items-center mb-4">
                 <div class="flex gap-4">
                     <Button
                         label="Add Product"
@@ -28,7 +33,7 @@
                         @click="openCreate"
                     />
                 </div>
-            </div>
+            </div> -->
             <!-- Invoice Form Section -->
             <form @submit.prevent="submitInvoice">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
@@ -112,18 +117,30 @@
                         />
                     </div>
                 </div>
+                <div class="flex justify-start items-center mt-4">
+                    <div class="flex gap-4 mt-3">
+                        <Button
+                            label="Add Item"
+                            icon="pi pi-plus"
+                            type="button"
+                            @click="openAddItemDialog"
+                            class="w-36 mr-8 h-9"
+                            size="small"
+                        />
+                    </div>
+                </div>
             </form>
 
             <!-- Product Table -->
             <div class="mt-6">
                 <DataTable :value="productsList" responsiveLayout="scroll">
-                    <Column header="No">
+                    <Column header="No" style="width: 5%; font-size: 12px">
                         <template #body="slotProps">{{
                             slotProps.index + 1
                         }}</template>
                     </Column>
-                    <Column field="product" header="Product" />
-                    <Column field="qty" header="Qty">
+                    <Column field="product" header="Product" style="width: 10%; font-size: 12px" />
+                    <Column field="qty" header="Qty" style="width: 10%; font-size: 12px">
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.qty"
@@ -132,8 +149,8 @@
                             />
                         </template>
                     </Column>
-                    <Column field="unit" header="Unit" />
-                    <Column field="unitPrice" header="Unit Price">
+                    <Column field="unit" header="Unit" style="width: 10%; font-size: 12px" />
+                    <Column field="unitPrice" header="Unit Price" style="width: 10%; font-size: 12px">
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.unitPrice"
@@ -142,12 +159,12 @@
                             />
                         </template>
                     </Column>
-                    <Column field="subTotal" header="Sub Total">
+                    <Column field="subTotal" header="Sub Total" style="width: 10%; font-size: 12px">
                         <template #body="slotProps">
                             {{ slotProps.data.qty * slotProps.data.unitPrice }}
                         </template>
                     </Column>
-                    <Column header="Action">
+                    <Column header="Action" style="width: 10%; font-size: 12px">
                         <template #body="slotProps">
                             <Button
                                 label="Remove"
@@ -242,12 +259,15 @@
                     label="Update"
                     icon="pi pi-check"
                     @click="submitInvoice"
+                    raised
                 />
                 <Button
                     label="Cancel"
                     icon="pi pi-times"
-                    severity="secondary"
+                    severity="success"
+                    variant="outlined"
                     @click="cancel"
+                    raised
                 />
             </div>
         </div>
@@ -256,7 +276,7 @@
             v-model:visible="isAddItemDialogVisible"
             modal
             header="Add Item (Popup)"
-            :style="{ width: '550px' }"
+            :style="{ width: '450px' }"
             class="text-sm"
         >
             <div class="p-fluid grid gap-4 text-sm">
@@ -272,7 +292,8 @@
                         placeholder="Select a Division"
                         :filter="true"
                         filterPlaceholder="Search divisions..."
-                        class="w-full"
+                        class="w-full h-8 text-sm"
+                        size="small"
                         @change="filterProductsByDivision"
                     />
                 </div>
@@ -286,7 +307,8 @@
                         :dropdown="true"
                         optionLabel="name"
                         placeholder="Search Product"
-                        class="w-full text-sm"
+                        class="w-full h-8 text-sm"
+                        size="small"
                         @complete="searchProducts"
                         @change="updateSelectedProductDetails"
                         :input-props="{ id: 'item' }"
@@ -299,8 +321,9 @@
                     >
                     <InputText
                         :value="getCategoryName(selectedProduct.category_id)"
-                        class="w-full text-sm"
+                        class="w-full h-8 text-sm"
                         size="small"
+                        placeholder="Display Category"
                         readonly
                     />
                 </div>
@@ -310,9 +333,12 @@
                     <InputNumber
                         v-model="selectedProduct.price"
                         :min="0"
+                        :minFractionDigits="2"
+                        :maxFractionDigits="2"
                         @keydown="preventMinus"
+                        class="w-full h-8 text-sm"
                         size="small"
-                        class="w-full text-sm"
+                        placeholder="Display Unit Price"
                     />
                 </div>
                 <!-- Account Code (Auto-complete, Read-Only) -->
@@ -322,8 +348,9 @@
                     >
                     <InputText
                         v-model="selectedProduct.acc_code"
-                        class="w-full text-sm"
+                        class="w-full h-8 text-sm"
                         size="small"
+                        placeholder="Display Account Code"
                         readonly
                     />
                 </div>
@@ -332,9 +359,9 @@
                     <label for="quantity" class="required">Quantity</label>
                     <InputNumber
                         v-model="selectedProduct.quantity"
-                        class="w-full text-sm"
+                        class="w-full h-8 text-sm"
                         size="small"
-                        :min="1"
+                        placeholder="Display Quantity"
                     />
                 </div>
                 <!-- View Catalog -->
@@ -356,8 +383,9 @@
                     <label for="additional-remark">Additional Remark</label>
                     <InputText
                         v-model="selectedProduct.remark"
-                        class="w-full text-sm"
+                        class="w-full h-8 text-sm"
                         size="small"
+                        placeholder="Display Remark"
                     />
                 </div>
             </div>
@@ -380,8 +408,14 @@
 </template>
 
 <script setup>
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import Breadcrumb from "primevue/breadcrumb";
+import { getDepartment } from "../../data";
 import { ref, computed, watch, onMounted } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
 import {
     Button,
     InputText,
@@ -394,11 +428,20 @@ import {
     AutoComplete,
     InputNumber,
 } from "primevue";
-import { Inertia } from "@inertiajs/inertia";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { getDepartment } from "../../data";
+
+const page = usePage();
+const items = computed(() => [
+    {
+        label: "",
+        to: "/dashboard",
+        icon: "pi pi-home",
+    },
+    { label: page.props.title || "Invoices", to: route("invoices.index") },
+    {
+        label: page.props.title || "Edit Invoices",
+        to: route("invoices.create"),
+    },
+]);
 
 const props = defineProps({
     invoice: Object,
@@ -448,9 +491,9 @@ const selectedProduct = ref({
     id: null,
     name: "",
     category_id: null,
-    price: 0,
+    price: null,
     acc_code: "",
-    quantity: 1,
+    quantity: "",
     remark: "",
     pdf_url: null,
     unit: "",
@@ -478,7 +521,7 @@ onMounted(async () => {
 
 const getCategoryName = (categoryId) => {
     // You'll need to implement this based on your category data structure
-    return categoryId ? `Category ${categoryId}` : "N/A";
+    return categoryId ? `Category ${categoryId}` : "";
 };
 
 const resetSelectedProduct = () => {
@@ -486,9 +529,9 @@ const resetSelectedProduct = () => {
         id: null,
         name: "",
         category_id: null,
-        price: 0,
+        price: null,
         acc_code: "",
-        quantity: 1,
+        quantity: "",
         remark: "",
         pdf_url: null,
         unit: "",
@@ -658,7 +701,7 @@ onMounted(() => {
 
 const updateProductSubtotal = (product) => {
     product.qty = Number(product.qty) || 0;
-    product.unitPrice = Number(product.unitPrice) || 0;
+    product.unitPrice = Number(product.unitPrice) || null;
     product.subTotal = product.qty * product.unitPrice;
 };
 

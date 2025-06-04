@@ -7,6 +7,7 @@
                 locale="en-US"
                 :minFractionDigits="2"
                 :maxFractionDigits="2"
+                size="small"
                 readonly
                 fluid
             />
@@ -17,11 +18,12 @@
         <FloatLabel variant="on">
             <DatePicker
                 id="due_date"
-                size="30"
+                size="small"
                 v-model="model.due_date"
                 fluid
                 date-format="yy-mm-dd"
                 :min-date="minDate"
+
             />
             <label for="due_date" class="">Due date</label>
         </FloatLabel>
@@ -30,6 +32,7 @@
                 id="short_description"
                 v-model="model.short_description"
                 fluid
+                size="small"
             ></Textarea>
             <label for="short_description" class="">Short description</label>
         </FloatLabel>
@@ -42,6 +45,7 @@
                     :min="0"
                     :max="maxPercentage"
                     :maxFractionDigits="2"
+                    size="small"
                 />
                 <InputGroupAddon append>%</InputGroupAddon>
             </InputGroup>
@@ -62,6 +66,7 @@
                     :max="maxAmount"
                     fluid
                     @input="doAmountChange"
+                    size="small"
                 />
             </InputGroup>
             <label for="amount" class="z-10">Amount</label>
@@ -83,6 +88,7 @@
                 optionLabel="name"
                 optionValue="value"
                 class="w-full"
+                size="small"
                 @change="doCurrencyChange"
                 fluid
                 readonly
@@ -129,11 +135,12 @@
                 label="Save"
                 class="grow"
                 @click="doSave"
+                size="sm"
                 :disabled="!isValid"
             ></Button>
             <Button
                 label="Cancel"
-                severity="secondary"
+                variant="outlined"
                 @click="doCancel"
             ></Button>
         </div>

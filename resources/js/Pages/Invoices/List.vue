@@ -18,14 +18,14 @@
         </div>
         <div class="invoices px-4">
             <div class="flex justify-end items-center">
-                <div class="flex gap-2">
+                <div class="flex items-center gap-2">
                     <Dropdown
                         v-model="filters.status"
                         :options="statusOptions"
                         optionLabel="label"
                         optionValue="value"
                         placeholder="Filter by Status"
-                        class="w-48"
+                        class="w-48 h-9 text-sm"
                         size="small"
                     />
                     <Button
@@ -33,6 +33,8 @@
                         icon="pi pi-times"
                         class="p-button-secondary"
                         size="small"
+                        severity="success"
+                        variant="outlined"
                         @click="filters.status = null"
                     />
 
@@ -41,6 +43,7 @@
                         label="Issue Invoice"
                         size="small"
                         @click="navigateToCreate"
+                        raised
                     />
                     <Link :href="route('quotations.create')"
                         ><Button
@@ -64,11 +67,12 @@
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
+                :showGridlines="true"
                 size="small"
                 class="text-sm mt-8"
                 sortMode="single"
                 sortField="invoice_no"
-                :sortOrder="-1"
+
             >
                 <Column
                     class=""
@@ -77,9 +81,10 @@
                     :field="col.field"
                     :header="col.header"
                     :sortable="col.sortable"
+                     style="width: 10%; font-size: 12px"
                 />
 
-                <Column field="grand_total" header="Amount">
+                <Column field="grand_total" header="Amount" style="width: 10%; font-size: 12px">
                     <template #body="{ data }">
                         <span
                             :class="{ 'text-blue-500': data.grand_total >= 0 }"
@@ -89,7 +94,7 @@
                     </template>
                 </Column>
 
-                <Column field="status" header="Status">
+                <Column field="status" header="Status" style="width: 10%; font-size: 12px">
                     <template #body="slotProps">
                         <div class="flex">
                             <span
@@ -132,7 +137,7 @@
                     </template>
                 </Column>
 
-                <Column field="customer_status" header="Customer Status">
+                <Column field="customer_status" header="Customer Status" style="width: 10%; font-size: 12px">
                     <template #body="slotProps">
                         <span
                             @click="handleStatusClick(slotProps.data)"
@@ -180,6 +185,7 @@
                     header="View / Edit / Print"
                     headerStyle="text-align: center"
                     bodyStyle="text-align: center"
+                     style="width: 10%; font-size: 12px"
                 >
                     <template #body="{ data }">
                         <div class="flex gap-2 justify-center">
@@ -467,10 +473,18 @@
 </template>
 
 <script setup>
+import ChooseColumns from "@/Components/ChooseColumns.vue";
+import Customers from "@/Components/Customers.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
+import moment from "moment";
 import { useForm } from "@inertiajs/vue3";
 import { Head, Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+import { ref, computed } from "vue";
+import { Inertia } from "@inertiajs/inertia";
+import { usePage } from "@inertiajs/vue3";
+import { watch } from "vue";
 import {
     Button,
     DataTable,
@@ -479,17 +493,9 @@ import {
     InputText,
     Dropdown,
     Dialog,
+    KeyFilter,
+    Breadcrumb,
 } from "primevue";
-import KeyFilter from "primevue/keyfilter";
-import ChooseColumns from "@/Components/ChooseColumns.vue";
-import { ref, computed } from "vue";
-import { Inertia } from "@inertiajs/inertia";
-import moment from "moment";
-import Customers from "@/Components/Customers.vue";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import Breadcrumb from "primevue/breadcrumb";
-import { usePage } from "@inertiajs/vue3";
-import { watch } from "vue";
 
 // Props
 const props = defineProps({
@@ -502,12 +508,8 @@ const props = defineProps({
 // The Breadcrumb Quotations
 const page = usePage();
 const items = computed(() => [
-    {
-        label: "",
-        to: "/",
-        icon: "pi pi-home",
-    },
-    { label: page.props.title || "Invoices", to: route("invoices.index") },
+    { label: "", to: "/dashboard", icon: "pi pi-home" },
+    { label: page.props.title || "Invoices", to: route("invoices.list") },
 ]);
 
 const filters = ref({

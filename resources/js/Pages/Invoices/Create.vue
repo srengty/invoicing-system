@@ -51,7 +51,8 @@
                             optionLabel="quotation_no"
                             optionValue="quotation_no"
                             placeholder="Select Quotation"
-                            class="w-full"
+                            class="w-full mr-8 h-9"
+                            size="small"
                         />
                     </div>
 
@@ -65,7 +66,8 @@
                             optionLabel="receipt_no"
                             optionValue="receipt_no"
                             placeholder="Select Receipt"
-                            class="w-full"
+                            class="w-full mr-8 h-9"
+                            size="small"
                         />
                     </div>
 
@@ -79,7 +81,8 @@
                             optionLabel="name"
                             optionValue="id"
                             placeholder="Select Customer"
-                            class="w-full"
+                            class="w-full mr-8 h-9"
+                            size="small"
                             :disabled="isReadOnly"
                             required
                         />
@@ -92,9 +95,9 @@
                         <InputText
                             id="address"
                             v-model="form.address"
-                            class="w-full"
-                            placeholder="Enter address"
+                            class="w-full mr-8 h-9"
                             size="small"
+                            placeholder="Enter address"
                             :readonly="isReadOnly"
                         />
                     </div>
@@ -106,9 +109,9 @@
                         <InputText
                             id="phone"
                             v-model="form.phone"
-                            class="w-full"
-                            placeholder="Enter phone number"
+                            class="w-full mr-8 h-9"
                             size="small"
+                            placeholder="Enter phone number"
                             :readonly="isReadOnly"
                         />
                     </div>
@@ -150,8 +153,8 @@
                             icon="pi pi-plus"
                             type="button"
                             @click="openAddItemDialog"
+                            class="w-36 mr-8 h-9"
                             size="small"
-                            class="w-36"
                         />
                     </div>
                 </div>
@@ -167,13 +170,21 @@
                     :rows="5"
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                 >
-                    <Column header="No.">
+                    <Column header="No." style="width: 5%; font-size: 12px">
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
                         </template>
                     </Column>
-                    <Column field="product" header="Name"></Column>
-                    <Column field="qty" header="Qty">
+                    <Column
+                        field="product"
+                        header="Name"
+                        style="width: 10%; font-size: 12px"
+                    ></Column>
+                    <Column
+                        field="qty"
+                        header="Qty"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.qty"
@@ -189,8 +200,16 @@
                             />
                         </template>
                     </Column>
-                    <Column field="unit" header="Unit"></Column>
-                    <Column field="unitPrice" header="Unit Price">
+                    <Column
+                        field="unit"
+                        header="Unit"
+                        style="width: 10%; font-size: 12px"
+                    ></Column>
+                    <Column
+                        field="unitPrice"
+                        header="Unit Price"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <InputNumber
                                 v-model="slotProps.data.unitPrice"
@@ -205,7 +224,11 @@
                             />
                         </template>
                     </Column>
-                    <Column field="subTotal" header="Subtotal">
+                    <Column
+                        field="subTotal"
+                        header="Subtotal"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <span>
                                 {{ formatCurrency(slotProps.data.subTotal) }}
@@ -226,7 +249,10 @@
                             />
                         </template>
                     </Column> -->
-                    <Column header="Actions">
+                    <Column
+                        header="Actions"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <div class="flex gap-2 items-center">
                                 <Button
@@ -260,7 +286,10 @@
                             </div>
                         </template>
                     </Column>
-                    <Column header="Catalog">
+                    <Column
+                        header="Catalog"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <div class="flex items-center gap-2">
                                 <Checkbox
@@ -403,20 +432,21 @@
                     <Button
                         label="Save"
                         type="submit"
-                        raised
                         class="w-full md:w-28"
                         icon="pi pi-check"
                         size="small"
                         @click="submitInvoice"
+                        raised
                     />
                     <Button
                         label="Cancel"
-                        severity="secondary"
-                        raised
                         class="w-full md:w-28"
                         @click="cancel"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
+                        raised
                     ></Button>
                 </div>
             </div>
@@ -445,7 +475,8 @@
                             placeholder="Select a Division"
                             :filter="true"
                             filterPlaceholder="Search divisions..."
-                            class="w-full"
+                            class="w-full h-8 text-sm"
+                            size="small"
                             @change="filterProductsByDivision"
                         />
                     </div>
@@ -459,7 +490,8 @@
                             :dropdown="true"
                             optionLabel="name"
                             placeholder="Search Product"
-                            class="w-full text-sm"
+                            class="w-full h-8 text-sm"
+                            size="small"
                             @complete="searchProducts"
                             @change="updateSelectedProductDetails"
                             :input-props="{ id: 'item' }"
@@ -474,7 +506,8 @@
                             :value="
                                 getCategoryName(selectedProduct.category_id)
                             "
-                            class="w-full text-sm"
+                            placeholder="Display Category"
+                            class="w-full h-8 text-sm"
                             size="small"
                             readonly
                         />
@@ -490,8 +523,9 @@
                             :minFractionDigits="2"
                             :maxFractionDigits="2"
                             @keydown="preventMinus"
+                            placeholder="Display Unit Price"
+                            class="w-full h-8 text-sm"
                             size="small"
-                            class="w-full text-sm"
                         />
                     </div>
                     <!-- Account Code (Auto-complete, Read-Only) -->
@@ -501,7 +535,8 @@
                         >
                         <InputText
                             v-model="selectedProduct.acc_code"
-                            class="w-full text-sm"
+                            placeholder="Display Account Code"
+                            class="w-full h-8 text-sm"
                             size="small"
                             readonly
                         />
@@ -511,7 +546,8 @@
                         <label for="quantity" class="required">Quantity</label>
                         <InputNumber
                             v-model="selectedProduct.quantity"
-                            class="w-full text-sm"
+                            placeholder="Display Quantity"
+                            class="w-full h-8 text-sm"
                             size="small"
                             :min="1"
                         />
@@ -537,7 +573,8 @@
                         <label for="additional-remark">Additional Remark</label>
                         <InputText
                             v-model="selectedProduct.remark"
-                            class="w-full text-sm"
+                            placeholder="Display Remark"
+                            class="w-full h-8 text-sm"
                             size="small"
                         />
                     </div>
@@ -568,6 +605,15 @@
 </template>
 
 <script setup>
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
+import { getDepartment } from "../../data";
+import { usePage } from "@inertiajs/vue3";
+import { Head } from "@inertiajs/vue3";
+import { Inertia } from "@inertiajs/inertia";
+import { useToast } from "primevue/usetoast";
+import { router } from "@inertiajs/vue3";
 import { ref, computed, watch, onMounted } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import {
@@ -584,20 +630,10 @@ import {
     Dropdown,
     AutoComplete,
     InputNumber,
+    Breadcrumb,
 } from "primevue";
-import { usePage } from "@inertiajs/vue3";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
-import { Head } from "@inertiajs/vue3";
-import { Inertia } from "@inertiajs/inertia";
-import Breadcrumb from "primevue/breadcrumb";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
-import CreateReceiptDialog from "@/Pages/Receipts/Create.vue";
-import { getDepartment } from "../../data";
-import { useToast } from "primevue/usetoast";
-import { router } from "@inertiajs/vue3";
 
 const toast = useToast();
-
 const {
     products,
     agreements,
@@ -649,7 +685,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     { label: page.props.title || "Invoices", to: route("invoices.index") },
@@ -677,9 +713,9 @@ const selectedProduct = ref({
     id: null,
     name: "",
     category_id: null,
-    price: 0,
+    price: null,
     acc_code: "",
-    quantity: 1,
+    quantity: "",
     remark: "",
     pdf_url: null,
     unit: "",
@@ -804,9 +840,9 @@ const resetSelectedProduct = () => {
         id: null,
         name: "",
         category_id: null,
-        price: 0,
+        price: null,
         acc_code: "",
-        quantity: 1,
+        quantity: "",
         remark: "",
         pdf_url: null,
         unit: "",
@@ -1215,7 +1251,7 @@ watch(
                         selectedQuotation.product_quotations.map((pq) => ({
                             id: pq.product.id,
                             product: pq.product.name || "Unknown Product",
-                            qty: pq.quantity || 1,
+                            qty: pq.quantity || null,
                             unit: pq.product.unit || "Unit",
                             unitPrice: pq.price || 0,
                             subTotal: (pq.quantity || 1) * (pq.price || 0),
@@ -1372,7 +1408,7 @@ const submitInvoice = async () => {
     form.products = productsList.value.map((prod) => ({
         id: prod.id,
         quantity: prod.qty ?? 1,
-        price: prod.unitPrice ?? 0,
+        price: prod.unitPrice ?? null,
         acc_code: prod.acc_code ?? "",
         category_id: prod.category_id ?? null,
         remark: prod.remark ?? "",
