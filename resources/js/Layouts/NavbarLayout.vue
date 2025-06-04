@@ -1,6 +1,6 @@
 <template>
-    <div class="card  dark:bg-[#1d1d1d] dark:text-gray-100">
-        <Toolbar class="p-4 dark:bg-[#1d1d1d] dark:border-b dark:border-gray-700">
+    <div class="card">
+        <Toolbar class="p-4">
             <template #start>
                 <div class="flex items-center gap-8">
                     <h1 class="text-xl font-bold m-0">
@@ -124,38 +124,4 @@ const pageTitle = computed(() => {
 });
 </script>
 
-<style scoped>
-.p-toolbar {
-  padding: 1rem;
-  background: white;
-  border: none;
-  border-radius: 0%;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Dark mode overrides */
-.dark .p-toolbar {
-  background: #1d1d1d;
-  border-bottom: 1px solid #374151; /* Tailwind gray-700 */
-  box-shadow: none;
-}
-
-.text-xl {
-  font-size: 1.25rem;
-  line-height: 1.75rem;
-}
-
-/* InputText dark mode overrides */
-.dark .p-inputtext {
-  background-color: #1f2937;
-  border-color: #374151;
-  color: #e5e7eb;
-}
-
-/* SplitButton dark mode */
-.dark .p-splitbutton {
-  border-color: #4b5563; /* Tailwind gray-600 */
-  color: #e5e7eb;
-}
-</style>
 
