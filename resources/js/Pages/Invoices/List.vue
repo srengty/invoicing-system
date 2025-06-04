@@ -582,7 +582,9 @@ const canEditInvoice = (invoice) => {
     const editableStatus =
         invoice.status !== "approved" || invoice.status === "revise";
 
-    return editableStatus && !hasPaymentSchedules;
+    const hasQuotation = invoice.quotation_no;
+
+    return editableStatus && !hasPaymentSchedules && !hasQuotation;
 };
 
 // right after your other consts

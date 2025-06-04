@@ -185,6 +185,7 @@
                                 @keydown="preventMinus"
                                 class="w-5/4"
                                 size="small"
+                                :readonly="isReadOnly"
                             />
                         </template>
                     </Column>
@@ -244,6 +245,7 @@
                                     @click="editProduct(slotProps.data.id)"
                                     size="small"
                                     class="custom-button"
+                                    :disabled="isReadOnly"
                                     raised
                                 />
                                 <Button
