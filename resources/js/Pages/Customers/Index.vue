@@ -39,7 +39,7 @@
                         optionLabel="label"
                         optionValue="value"
                         class="w-48 text-sm"
-                        placeholder="Search by"
+                        placeholder="Select field to search"
                     />
                     <InputText
                         v-model="searchTerm"
@@ -53,6 +53,8 @@
                         class="p-button-secondary w-24"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
                     />
                     <Button
                         icon="pi pi-plus"
@@ -74,7 +76,7 @@
                 <Column
                     field="customer_category_name"
                     header="Category"
-                    style="width: 5%"
+                    style="width: 5%; font-size: 12px"
                 >
                     <template #body="{ data }">
                         {{ getCategoryNameById(data.customer_category_id) }}
@@ -83,13 +85,14 @@
 
                 <Column
                     v-for="col of showColumns"
+                    style="width: 10%; font-size: 12px"
                     :key="col.field"
                     :field="col.field"
                     :header="col.header"
                     :sortable="col.sortable"
                 ></Column>
 
-                <Column header="Actions">
+                <Column header="Actions" style="width: 5%; font-size: 12px">
                     <template #body="slotProps">
                         <div class="flex gap-2">
                             <Button
@@ -97,6 +100,7 @@
                                 class="p-button-info"
                                 aria-label="View"
                                 size="small"
+                                style="width: 30px; height: 30px"
                                 @click="viewCustomer(slotProps.data.id)"
                                 outlined
                             />
@@ -105,6 +109,7 @@
                                 class="p-button-warning"
                                 aria-label="Edit"
                                 size="small"
+                                style="width: 30px; height: 30px"
                                 @click="editCustomer(slotProps.data.id)"
                                 outlined
                             />
@@ -256,7 +261,7 @@ import { route } from "ziggy-js";
 
 const toast = useToast();
 const confirm = useConfirm();
-const searchType = ref("name");
+const searchType = ref("");
 
 const props = defineProps({
     customers: Array,
@@ -267,7 +272,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     { label: page.props.title || "Customers", to: route("customers.index") },

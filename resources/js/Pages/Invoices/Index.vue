@@ -20,19 +20,36 @@
 
         <div class="invoices space-y-4 px-4">
             <!-- Search Filters -->
-            <div class="flex justify-end w-full gap-4">
+            <div class="flex justify-end items-center w-full gap-2">
                 <Button
                     label="Clear"
                     @click="clearFilters"
                     class="p-button-secondary w-24"
                     icon="pi pi-times"
+                    severity="success"
+                    variant="outlined"
                     size="small"
                 />
+                <Link :href="route('invoices.create')">
+                    <Button
+                        icon="pi pi-plus"
+                        label="Issue Invoice"
+                        size="small"
+                        @click="navigateToCreate"
+                        raised
+                /></Link>
+                <Link :href="route('quotations.create')"
+                    ><Button
+                        icon="pi pi-plus"
+                        label="Issue Quotation"
+                        size="small"
+                        raised
+                /></Link>
             </div>
 
             <div class="w-full">
                 <div
-                    class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 text-sm pb-3"
+                    class="grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 pb-3 text-sm"
                 >
                     <!-- Invoice No. Start - Restrict to Numbers -->
                     <div>
@@ -44,7 +61,7 @@
                         <InputText
                             v-model="filters.invoice_no_start"
                             placeholder="Invoice No From"
-                            class="w-full mr-8"
+                            class="w-full mr-8 h-9"
                             showClear
                             size="small"
                         />
@@ -60,7 +77,7 @@
                         <InputText
                             v-model="filters.invoice_no_end"
                             placeholder="Invoice No To"
-                            class="w-full mr-8"
+                            class="w-full mr-8 h-9"
                             showClear
                             size="small"
                         />
@@ -77,8 +94,9 @@
                             optionLabel="label"
                             optionValue="value"
                             placeholder="Select Currency"
-                            class="w-full"
+                            class="w-full mr-8 h-9"
                             showClear
+                            size="small"
                         />
                     </div>
                 </div>
@@ -93,9 +111,10 @@
                         <Calendar
                             v-model="filters.start_date"
                             placeholder="Start Date"
-                            class="w-full mr-8"
-                            icon="pi pi-calendar"
+                            class="w-full mr-8 h-9"
+                            showClear
                             size="small"
+                            icon="pi pi-calendar"
                             :minDate="new Date()"
                             showButtonBar
                             :showIcon="true"
@@ -111,9 +130,10 @@
                         <Calendar
                             v-model="filters.end_date"
                             placeholder="End Date"
-                            class="w-full mr-8"
-                            icon="pi pi-calendar"
+                            class="w-full mr-8 h-9"
+                            showClear
                             size="small"
+                            icon="pi pi-calendar"
                             :minDate="new Date()"
                             showButtonBar
                             :showIcon="true"
@@ -132,8 +152,9 @@
                             optionLabel="label"
                             optionValue="value"
                             placeholder="Payment Status"
-                            class="w-full"
+                            class="w-full mr-8 h-9"
                             showClear
+                            size="small"
                         />
                     </div>
                 </div>
@@ -149,7 +170,9 @@
                         <InputText
                             v-model="filters.customer"
                             placeholder="Customer"
-                            class="w-full mr-8"
+                            c
+                            class="w-full mr-8 h-9"
+                            showClear
                             size="small"
                         />
                     </div>
@@ -167,8 +190,9 @@
                             placeholder="Select Customer Type"
                             optionLabel="label"
                             optionValue="value"
-                            class="w-full mr-8"
+                            class="w-full mr-8 h-9"
                             showClear
+                            size="small"
                         />
                     </div>
 
@@ -189,8 +213,9 @@
                             optionLabel="label"
                             optionValue="value"
                             placeholder="Overdue Status"
-                            class="w-full"
+                            class="w-full mr-8 h-9"
                             showClear
+                            size="small"
                         />
                     </div>
                 </div>
@@ -202,6 +227,7 @@
                 paginator
                 :rows="5"
                 :rowsPerPageOptions="[5, 10, 20, 50]"
+                :showGridlines="true"
                 size="small"
                 class="text-sm pt-6"
             >
@@ -211,8 +237,9 @@
                     :field="col.field"
                     :header="col.header"
                     :sortable="col.sortable"
+                    style="width: 10%; font-size: 12px"
                 />
-                <Column header="Amount">
+                <Column header="Amount" style="width: 10%; font-size: 12px">
                     <template #body="{ data }">
                         <span
                             :class="{
@@ -224,7 +251,10 @@
                     </template>
                 </Column>
 
-                <Column header="Amount Paid">
+                <Column
+                    header="Amount Paid"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="{ data }">
                         <span
                             :class="{
@@ -240,7 +270,7 @@
                     </template>
                 </Column>
 
-                <Column header="Amount Due">
+                <Column header="Amount Due" style="width: 10%; font-size: 12px">
                     <template #body="{ data }">
                         <span
                             :class="{
@@ -251,14 +281,18 @@
                         </span>
                     </template>
                 </Column>
-                <Column header="Overdue">
+                <Column header="Overdue" style="width: 10%; font-size: 12px">
                     <template #body="{ data }">
                         <span :class="over_due(data).class">{{
                             over_due(data).text
                         }}</span>
                     </template>
                 </Column>
-                <Column field="payment_status" header="Payment Status">
+                <Column
+                    field="payment_status"
+                    header="Payment Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="{ data }">
                         <span
                             class="p-2 border rounded w-36 h-8 flex items-center justify-center gap-2 text-sm"
@@ -281,6 +315,8 @@ import ChooseColumns from "@/Components/ChooseColumns.vue";
 import { Head, Link, usePage } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { Inertia } from "@inertiajs/inertia";
+import { route } from "ziggy-js";
+import moment from "moment";
 import {
     Button,
     DataTable,
@@ -288,9 +324,8 @@ import {
     InputText,
     Dropdown,
     Calendar,
+    Breadcrumb,
 } from "primevue";
-import Breadcrumb from "primevue/breadcrumb";
-import moment from "moment";
 
 // Props
 const props = defineProps({
@@ -310,7 +345,7 @@ const formatCurrency = (value) => {
 // Breadcrumb
 const page = usePage();
 const items = computed(() => [
-    { label: "", to: "/", icon: "pi pi-home" },
+    { label: "", to: "/dashboard", icon: "pi pi-home" },
     { label: page.props.title || "Invoices", to: route("invoices.index") },
 ]);
 

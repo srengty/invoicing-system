@@ -44,6 +44,8 @@
                         class="p-button-secondary w-24"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
                     />
                     <Button
                         icon="pi pi-plus"
@@ -68,12 +70,12 @@
                 <Column
                     field="receipt_no"
                     header="Receipt No"
-                    style="width: 5%; font-size: 14px"
+                    style="width: 5%; font-size: 12px"
                 ></Column>
                 <Column
                     field="receipt_date"
                     header="Date"
-                    style="width: 5%; font-size: 14px"
+                    style="width: 5%; font-size: 12px"
                 >
                     <template #body="slotProps">
                         {{ formatDate(slotProps.data.receipt_date) }}
@@ -94,12 +96,12 @@
                 <Column
                     field="customer.name"
                     header="Customer"
-                    style="width: 5%; font-size: 14px"
+                    style="width: 5%; font-size: 12px"
                 ></Column>
                 <Column
                     field="paid_amount"
                     header="Amount Paid"
-                    style="width: 5%; font-size: 14px"
+                    style="width: 5%; font-size: 12px"
                 >
                     <template #body="slotProps">
                         {{ formatCurrency(slotProps.data.paid_amount) }}
@@ -111,14 +113,14 @@
                 <Column
                     field="payment_method"
                     header="Payment Method"
-                    style="width: 5%; font-size: 14px"
+                    style="width: 5%; font-size: 12px"
                 ></Column>
                 <Column
                     field="payment_reference_no"
                     header="Payment Reference No"
-                    style="width: 5%; font-size: 14px"
+                    style="width: 5%; font-size: 12px"
                 ></Column>
-                <Column header="Actions" style="width: 10%; font-size: 14px">
+                <Column header="Actions" style="width: 10%; font-size: 12px">
                     <template #body="slotProps">
                         <Button
                             severity="info"
@@ -128,12 +130,14 @@
                             @click="viewReceipt(slotProps.data)"
                             outlined
                             class="mr-2"
+                            style="width: 30px; height: 30px"
                         />
                         <Button
                             severity=""
                             aria-label="Print"
                             icon="pi pi-print"
                             size="small"
+                            style="width: 30px; height: 30px"
                             @click="
                                 router.get(
                                     route('receipts.print', {
@@ -323,7 +327,7 @@ const props = defineProps({
 const breadcrumbItems = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     { label: "Receipts", to: route("receipts.index") },

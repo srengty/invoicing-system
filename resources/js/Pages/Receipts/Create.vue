@@ -329,6 +329,7 @@ import { ref, computed, onMounted, defineExpose, watch } from "vue";
 import { router } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import { route } from "ziggy-js";
+import { useToast } from "primevue/usetoast";
 import axios from "axios";
 import {
     Dialog,
@@ -340,7 +341,6 @@ import {
     Select,
     Toast,
 } from "primevue";
-import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const dialogVisible = ref(false);

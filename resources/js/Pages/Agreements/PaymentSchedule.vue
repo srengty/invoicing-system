@@ -3,25 +3,25 @@
         <!-- Due Soon/Past Due Payments -->
         <div
             v-if="hasDueSoonOrPastDuePayments"
-            class="mb-4 p-4 border-round"
+            class="mb-2 p-2 border-round"
             :class="
                 hasPastDuePayments
                     ? 'bg-red-100 border-red-300 border-1'
                     : 'bg-orange-100 border-orange-300 border-1'
             "
         >
-            <div class="flex align-items-center gap-3">
+            <div class="flex items-center gap-3">
                 <i
                     class="pi pi-exclamation-triangle text-xl"
                     :class="
                         hasPastDuePayments ? 'text-red-500' : 'text-orange-500'
                     "
                 ></i>
-                <span v-if="hasPastDuePayments" class="text-red-800">
+                <span v-if="hasPastDuePayments" class="text-red-800 text-sm">
                     You have {{ pastDuePaymentsCount }} past due payment(s).
                     Please generate invoices immediately!
                 </span>
-                <span v-else class="text-orange-800">
+                <span v-else class="text-orange-800 text-sm">
                     You have {{ dueSoonPaymentsCount }} payment(s) due soon
                     (within 13 days). Please generate invoices to avoid delays.
                 </span>
@@ -38,12 +38,23 @@
             :show-gridlines="true"
             :rowClass="paymentRowClass"
         >
-            <Column field="index" header="No." sortable class="text-sm">
+            <Column
+                field="index"
+                header="No."
+                sortable
+                class="text-sm"
+                style="width: 5%; font-size: 12px"
+            >
                 <template #body="slotProps">
                     {{ slotProps.index + 1 }}
                 </template>
             </Column>
-            <Column field="due_date" header="Due Date" sortable>
+            <Column
+                field="due_date"
+                header="Due Date"
+                sortable
+                style="width: 10%; font-size: 12px"
+            >
                 <template #body="slotProps">
                     <span
                         :class="{
@@ -69,6 +80,7 @@
                 header="Short Description"
                 sortable
                 class="text-sm"
+                style="width: 15%; font-size: 12px"
             >
                 <template #editor="{ data, field }">
                     <DatePicker
@@ -83,6 +95,7 @@
                 header="Percentage"
                 sortable
                 class="text-sm"
+                style="width: 10%; font-size: 12px"
             >
                 <template #body="slotProps">
                     {{ slotProps.data["percentage"] }} %
@@ -104,9 +117,9 @@
             <Column
                 field="amount"
                 header="Amount"
-                style="text-align: right"
                 sortable
                 class="text-sm"
+                style="width: 10%; font-size: 12px"
             >
                 <template #body="slotProps">
                     <span>
@@ -130,12 +143,16 @@
                     </InputGroup>
                 </template>
             </Column>
-            <Column header="Status" sortable>
+            <Column
+                header="Status"
+                sortable
+                style="width: 10%; font-size: 12px"
+            >
                 <template #body="slotProps">
                     <Tag
                         :value="getPaymentStatus(slotProps.data)"
                         :severity="getStatusSeverity(slotProps.data)"
-                        class="text-transform: uppercase"
+                        class="text-transform: uppercase "
                     />
                 </template>
             </Column>
@@ -145,32 +162,45 @@
                 v-if="!readonly"
                 sortable
                 class="text-sm"
+                style="width: 15%; font-size: 12px"
             >
                 <template #body="slotProps">
                     <div class="flex items-center gap-2">
                         <Button
                             icon="pi pi-pencil"
                             class="p-button-success p-button-outlined"
-                            label="Edit"
+                            size="small"
                             @click="
                                 doEditPaymentSchedule({ ...slotProps.data })
                             "
-                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
-
+                            :disabled="
+                                getPaymentStatus(slotProps.data) === 'PAID'
+                            "
                         />
                         <Button
                             icon="pi pi-trash"
                             class="p-button-danger p-button-outlined"
-                            label="Remove"
+                            size="small"
                             @click="
                                 doDeletePaymentSchedule({ ...slotProps.data })
                             "
-                            :disabled="getPaymentStatus(slotProps.data) === 'PAID'"
+                            :disabled="
+                                getPaymentStatus(slotProps.data) === 'PAID'
+                            "
                         />
                         <Button
-                            :icon="slotProps.data.invoice_generated ? 'pi pi-check' : 'pi pi-file-pdf'"
-                            :label="slotProps.data.invoice_generated ? 'Invoice Generated' : 'Generate Invoice'"
+                            :icon="
+                                slotProps.data.invoice_generated
+                                    ? 'pi pi-check'
+                                    : 'pi pi-file-pdf'
+                            "
+                            :label="
+                                slotProps.data.invoice_generated
+                                    ? 'Invoice Generated'
+                                    : 'Generate Invoice'
+                            "
                             class="p-button-success p-button-outlined"
+                            size="small"
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
                             :disabled="
@@ -187,15 +217,15 @@
                         footer="Total:"
                         footerStyle="text-align:right"
                         :colspan="4"
-                        style="text-align: right"
+                        style="text-align: right; width: 10%; font-size: 14px"
                     ></Column>
                     <Column
                         :footer="`${currencySign} ${formattedTotal}`"
-                        style="text-align: right"
+                        style="text-align: right; width: 10%; font-size: 14px"
                     ></Column>
                     <Column
                         footer=""
-                        style="text-align: right"
+                        style="text-align: right; width: 10%; font-size: 14px"
                         v-if="!readonly"
                     ></Column>
                 </Row>

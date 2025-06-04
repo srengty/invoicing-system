@@ -434,7 +434,7 @@ const props = defineProps({
 });
 // Breadcrumb items
 const items = computed(() => [
-    { label: "", to: "/", icon: "pi pi-home" },
+    { label: "", to: "/dashboard", icon: "pi pi-home" },
     { label: "Agreements", to: route("agreements.index") },
     {
         label: `Edit Agreement`,

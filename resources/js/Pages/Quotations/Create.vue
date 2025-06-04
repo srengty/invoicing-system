@@ -22,9 +22,11 @@
         <Toast position="top-right" group="tr" />
 
         <!-- Use the PrimeVue Form wrapper (with @submit.prevent) -->
-        <form @submit.prevent="submit" class="text-sm">
+        <form @submit.prevent="submit">
             <!-- Quotation Info -->
-            <div class="px-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div
+                class="px-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full text-xs"
+            >
                 <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="flex flex-col gap-2">
                         <label for="quotation_no">Quotation No:</label>
@@ -57,7 +59,7 @@
                     </div>
                 </div>
             </div>
-            <div class="pl-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="pl-8 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
                 <div
                     class="flex flex-row gap-4 items-end md:grid-cols-4 w-full"
                 >
@@ -84,7 +86,7 @@
                             label="Add Customer"
                             raised
                             @click="isCreateCustomerVisible = true"
-                            class="w-36 start"
+                            class="w-36 h-8 start"
                             size="small"
                         />
                     </div>
@@ -98,7 +100,7 @@
                             id="address"
                             v-model="form.address"
                             placeholder="Auto-generated"
-                            class="w-full md:w-60"
+                            class="w-full md:w-60 md:h-9"
                             readonly
                             size="small"
                         />
@@ -118,7 +120,7 @@
                             id="phone_number"
                             v-model="form.phone_number"
                             placeholder="Auto-generated"
-                            class="w-full md:w-60"
+                            class="w-full md:w-60 md:h-9"
                             readonly
                             size="small"
                         />
@@ -131,7 +133,9 @@
                 <!-- </div> -->
             </div>
             <!-- AddItem & Language -->
-            <div class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div
+                class="pl-8 pt-10 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs"
+            >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2 w-full">
                     <div class="flex gap-32 items-center">
                         <div class="w-10">
@@ -140,11 +144,13 @@
                                 label="Add Item"
                                 raised
                                 @click="isAddItemDialogVisible = true"
-                                class="w-36"
+                                class="w-36 h-8"
                                 size="small"
                             />
                         </div>
-                        <div class="flex flex-row gap-2 w-full md:w-80">
+                        <div
+                            class="flex flex-row gap-2 w-full md:w-80 items-center"
+                        >
                             <label for="p_name">English/Khmer</label>
                             <ToggleSwitch
                                 v-model="isKhmer"
@@ -165,14 +171,18 @@
                     :rowsPerPageOptions="[5, 10, 20, 50]"
                     striped
                 >
-                    <Column header="No.">
+                    <Column header="No." style="width: 5%; font-size: 12px">
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
                         </template>
                     </Column>
-                    <Column field="name" header="Name">
+                    <Column
+                        field="name"
+                        header="Name"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
-                            <span class="text-base">
+                            <span>
                                 {{
                                     isKhmer
                                         ? slotProps.data.name_kh
@@ -180,7 +190,7 @@
                                 }}
                             </span>
                             <br />
-                            <span class="text-base">
+                            <span>
                                 {{
                                     isKhmer
                                         ? slotProps.data.desc_kh
@@ -188,12 +198,16 @@
                                 }}
                             </span>
                             <br />
-                            <span class="text-sm font-bold">
+                            <span class="font-bold">
                                 {{ getRemarkSnippet(slotProps.data.remark) }}
                             </span>
                         </template>
                     </Column>
-                    <Column field="quantity" header="Qty">
+                    <Column
+                        field="quantity"
+                        header="Qty"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.quantity"
@@ -208,8 +222,16 @@
                             />
                         </template>
                     </Column>
-                    <Column field="unit" header="Unit"></Column>
-                    <Column field="price" header="Unit Price">
+                    <Column
+                        field="unit"
+                        header="Unit"
+                        style="width: 10%; font-size: 12px"
+                    ></Column>
+                    <Column
+                        field="price"
+                        header="Unit Price"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <InputNumber
                                 v-model="slotProps.data.price"
@@ -219,12 +241,16 @@
                                 :min="0"
                                 @keydown="preventMinus"
                                 placeholder="Enter amount"
-                                class="w-5/6"
+                                class="w-5/4"
                                 size="small"
                             />
                         </template>
                     </Column>
-                    <Column field="subTotal" header="Subtotal">
+                    <Column
+                        field="subTotal"
+                        header="Subtotal"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <span>
                                 {{ formatCurrency(slotProps.data.subTotal) }}
@@ -234,7 +260,10 @@
                             </span>
                         </template>
                     </Column>
-                    <Column header="Actions">
+                    <Column
+                        header="Actions"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <div class="flex gap-2 items-center">
                                 <Button
@@ -243,6 +272,7 @@
                                     title="remove"
                                     @click="removeProduct(slotProps.data.id)"
                                     size="small"
+                                    style="width: 30px; height: 30px"
                                     raised
                                 />
                                 <Button
@@ -252,6 +282,7 @@
                                     @click="editProduct(slotProps.data.id)"
                                     size="small"
                                     class="custom-button"
+                                    style="width: 30px; height: 30px"
                                     raised
                                 />
                                 <Button
@@ -261,12 +292,16 @@
                                     :disabled="!slotProps.data.pdf_url"
                                     @click="printCatalog(slotProps.data)"
                                     size="small"
+                                    style="width: 30px; height: 30px"
                                     raised
                                 />
                             </div>
                         </template>
                     </Column>
-                    <Column header="Catalog">
+                    <Column
+                        header="Catalog"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <Checkbox
                                 v-model="slotProps.data.include_catalog"
@@ -289,23 +324,25 @@
 
                 <!-- Totals Summary -->
                 <div class="pl-2 pr-6">
-                    <div class="total-container mt-4 flex justify-between">
+                    <div
+                        class="total-container mt-4 flex justify-between text-sm"
+                    >
                         <p class="font-bold">Total KHR</p>
-                        <p class="font-bold">
+                        <p class="font-bold text-md">
                             ៛{{ formatCurrency(calculateTotalKHR) }}
                         </p>
                     </div>
-                    <div class="total-container mt-4 flex justify-between">
+                    <div
+                        class="total-container mt-4 flex justify-between text-sm"
+                    >
                         <p class="font-bold">Total USD</p>
                         <p class="font-bold">
-                            <!-- The v-model binding automatically updates calculateTotalUSD -->
                             <input
                                 type="number"
                                 v-model.number="form.total_usd"
                                 placeholder="Enter USD"
-                                :minFractionDigits="2"
-                                :maxFractionDigits="2"
-                                class="w-1/7 h-9 text-sm"
+                                step="0.01"
+                                class="h-9 text-sm border border-gray-300 rounded px-2 text-right w-40"
                             />
 
                             <!-- <InputNumber
@@ -318,7 +355,9 @@
                             /> -->
                         </p>
                     </div>
-                    <div class="grand-total-container flex justify-between">
+                    <div
+                        class="grand-total-container flex justify-between text-sm"
+                    >
                         <p class="font-bold">Exchange rate</p>
                         <p class="font-bold text-">
                             {{ calculateExchangeRate }}
@@ -347,19 +386,21 @@
                     :label="isEditing ? 'Update' : 'Create'"
                     type="submit"
                     class="w-full md:w-28"
+                    severity=""
                     size="small"
-                    raised
                     icon="pi pi-check"
+                    raised
                 />
                 <Button
                     v-ripple
-                    label="Cancel"
-                    severity="secondary"
                     class="w-full md:w-28"
+                    label="Cancel"
                     size="small"
-                    raised
                     icon="pi pi-times"
                     @click="cancelOperation"
+                    severity="success"
+                    variant="outlined"
+                    raised
                 />
             </div>
         </form>
@@ -419,7 +460,8 @@
                     placeholder="Select a Division"
                     :filter="true"
                     filterPlaceholder="Search divisions..."
-                    class="w-full"
+                    class="w-full h-8 text-sm"
+                    size="small"
                     @change="filterProductsByDivision"
                 />
             </div>
@@ -433,10 +475,11 @@
                     :dropdown="true"
                     optionLabel="name"
                     placeholder="Search Product"
-                    class="w-full text-sm"
+                    class="w-full h-8 text-sm"
                     @complete="searchProducts"
                     @change="updateSelectedProductDetails"
                     :input-props="{ id: 'item' }"
+                    size="small"
                 />
             </div>
             <!-- Item Category (Auto-complete, Read-Only) -->
@@ -446,8 +489,9 @@
                 >
                 <InputText
                     :value="getCategoryName(selectedProduct.category_id)"
-                    class="w-full text-sm"
+                    class="w-full h-8 text-sm"
                     size="small"
+                    placeholder="Display Category"
                     readonly
                 />
             </div>
@@ -461,7 +505,8 @@
                     :maxFractionDigits="2"
                     @keydown="preventMinus"
                     size="small"
-                    class="w-full text-sm"
+                    placeholder="Display Unit Price"
+                    class="w-full h-8 text-sm"
                 />
             </div>
             <!-- Account Code (Auto-complete, Read-Only) -->
@@ -469,8 +514,9 @@
                 <label for="account-code" class="required">Account Code</label>
                 <InputText
                     v-model="selectedProduct.acc_code"
-                    class="w-full text-sm"
+                    class="w-full h-8 text-sm"
                     size="small"
+                    placeholder="Display Account Code"
                     readonly
                 />
             </div>
@@ -483,12 +529,13 @@
                     :min="1"
                     :useGrouping="false"
                     :maxFractionDigits="0"
+                    placeholder="Display Quantity"
                     @input="
                         selectedProduct.quantity = Math.floor(
                             selectedProduct.quantity || 1
                         )
                     "
-                    class="w-full text-sm"
+                    class="w-full h-8 text-sm"
                     size="small"
                 />
             </div>
@@ -509,8 +556,9 @@
                 <label for="additional-remark">Additional Remark</label>
                 <InputText
                     v-model="selectedProduct.remark"
-                    class="w-full text-sm"
+                    class="w-full h-8 text-sm"
                     size="small"
+                    placeholder="Enter Remark"
                 />
             </div>
         </div>
@@ -520,12 +568,14 @@
                 label="Cancel"
                 icon="pi pi-times"
                 class="p-button-text"
+                size="small"
                 raised
                 @click="closeAddItemDialog()"
             />
             <Button
                 :label="editingProduct ? 'Update Item' : 'Add Item'"
                 icon="pi pi-check"
+                size="small"
                 raised
                 @click="addItemToTable"
             />
@@ -534,6 +584,10 @@
 </template>
 
 <script setup>
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import Customers from "@/Components/Customers.vue";
+import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { getDepartment } from "../../data";
 import { ref, computed, watch, onMounted } from "vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useForm } from "@inertiajs/vue3";
@@ -542,34 +596,36 @@ import { router } from "@inertiajs/vue3";
 import { usePage } from "@inertiajs/vue3";
 import { Form } from "@primevue/forms";
 import { useToast } from "primevue/usetoast";
-import { Dialog, ToggleSwitch, Select, AutoComplete, Checkbox } from "primevue";
-import GuestLayout from "@/Layouts/GuestLayout.vue";
-import MultiSelect from "primevue/multiselect";
-import InputNumber from "primevue/inputnumber";
-import DatePicker from "primevue/datepicker";
-import InputText from "primevue/inputtext";
-import IconField from "primevue/iconfield";
-import InputIcon from "primevue/inputicon";
-import Button from "primevue/button";
-import Dropdown from "primevue/dropdown";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Toast from "primevue/toast";
-import Customers from "@/Components/Customers.vue";
-import { getDepartment } from "../../data";
-import Breadcrumb from "primevue/breadcrumb";
-import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import {
+    Dialog,
+    ToggleSwitch,
+    Select,
+    AutoComplete,
+    Checkbox,
+    MultiSelect,
+    InputNumber,
+    DatePicker,
+    InputText,
+    IconField,
+    InputIcon,
+    Button,
+    Dropdown,
+    DataTable,
+    Column,
+    Toast,
+    Breadcrumb,
+} from "primevue";
 
 const props = defineProps({
     customers: {
         type: Array,
-        default: () => [], // Ensure default is empty array if not provided
+        default: () => [],
         required: true,
     },
     products: Array,
     customerCategories: Array,
     productCategories: Array,
-    quotation: Object, // Accept quotation data when editing
+    quotation: Object,
     divisions: Array,
 });
 // Toast for notifications
@@ -582,7 +638,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     {
@@ -1284,6 +1340,7 @@ const getRemarkSnippet = (remark) => {
     return remark.length > 15 ? remark.slice(0, 15) + "..." : remark;
 };
 </script>
+
 <style>
 .custom-button {
     padding: 7px 7px !important; /* Smaller padding */

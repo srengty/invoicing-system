@@ -30,7 +30,7 @@
                         optionLabel="label"
                         optionValue="value"
                         class="w-48 text-sm"
-                        placeholder="Search by"
+                        placeholder="Select field to search"
                     />
                     <InputText
                         v-model="searchTerm"
@@ -44,6 +44,8 @@
                         class="p-button-secondary w-24"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
                     />
                     <Button
                         icon="pi pi-plus"
@@ -61,20 +63,31 @@
                     :rowsPerPageOptions="[5, 10, 20]"
                     :showGridlines="true"
                 >
-                    <Column field="category_name_khmer" header="Name"></Column>
+                    <Column
+                        field="category_name_khmer"
+                        header="Name"
+                        style="width: 10%; font-size: 12px"
+                    ></Column>
                     <Column
                         field="category_name_english"
                         header="Name En"
+                        style="width: 10%; font-size: 12px"
                     ></Column>
                     <Column
                         field="description_khmer"
                         header="Description"
+                        style="width: 15%; font-size: 12px"
                     ></Column>
                     <Column
                         field="description_english"
                         header="Description En"
+                        style="width: 15%; font-size: 12px"
                     ></Column>
-                    <Column field="created_at" header="Created At">
+                    <Column
+                        field="created_at"
+                        header="Created At"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             {{
                                 new Date(
@@ -83,18 +96,24 @@
                             }}
                         </template>
                     </Column>
-                    <Column header="Actions" class="flex gap-2">
+                    <Column
+                        header="Actions"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <Button
                                 icon="pi pi-eye"
                                 size="small"
                                 severity="info"
+                                style="width: 30px; height: 30px"
                                 @click="openDetailModal(slotProps.data)"
                                 outlined
                             />
                             <Button
                                 icon="pi pi-pencil"
                                 size="small"
+                                class="ml-2"
+                                style="width: 30px; height: 30px"
                                 @click="openEditModal(slotProps.data)"
                                 outlined
                             />
@@ -229,7 +248,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     {

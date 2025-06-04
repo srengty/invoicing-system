@@ -49,19 +49,20 @@
         </div> -->
         <div class="agreements pl-4 pr-4">
             <div class="flex justify-end items-center">
-                <div class="flex gap-2">
+                <div class="flex items-center gap-2">
                     <Dropdown
                         v-model="searchType"
                         :options="searchOptions"
                         optionLabel="label"
                         optionValue="value"
-                        class="w-48 text-sm"
+                        class="w-48 h-9 text-sm"
+                        size="small"
                         placeholder="Select field to search"
                     />
                     <InputText
                         v-model="searchTerm"
                         placeholder="Search"
-                        class="w-64"
+                        class="w-64 h-9"
                         size="small"
                     />
                     <!-- Start Date Filter -->
@@ -70,7 +71,8 @@
                         v-model="startDateFilter"
                         dateFormat="yy-mm-dd"
                         showIcon
-                        class="w-40 text-xs"
+                        class="w-40 h-9 text-xs"
+                        size="small"
                     />
                     <!-- End Date Filter -->
                     <Calendar
@@ -78,7 +80,8 @@
                         v-model="endDateFilter"
                         dateFormat="yy-mm-dd"
                         showIcon
-                        class="w-40 text-xs"
+                        class="w-40 h-9 text-xs"
+                        size="small"
                     />
                     <Button
                         label="Clear"
@@ -86,13 +89,15 @@
                         class="p-button-secondary w-24"
                         icon="pi pi-times"
                         size="small"
+                        severity="success"
+                        variant="outlined"
                     />
                     <Button
                         icon="pi pi-plus"
                         label="Issue Agreement"
                         @click="openCreate"
-                        raised
                         size="small"
+                        raised
                     ></Button>
                     <Link :href="route('quotations.create')"
                         ><Button
@@ -110,6 +115,7 @@
                     /> -->
                 </div>
             </div>
+
             <DataTable
                 :value="filteredAgreements"
                 :rowStyle="rowStyle"
@@ -122,7 +128,7 @@
                 :showGridlines="true"
                 resizableColumns
                 columnResizeMode="fit"
-                class="mt-5"
+                class="mt-10 border-t-2"
             >
                 <template v-for="col of showColumns" :key="col.field">
                     <Column
@@ -144,8 +150,8 @@
                         "
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        :sortable="col.sortable"
+                        style="width: 5%; font-size: 12px"
                     ></Column>
                     <!-- column for agreement date -->
                     <Column
@@ -153,7 +159,7 @@
                         :field="col.field"
                         :header="col.header"
                         sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             {{ formatDate(slotProps.data[col.field]) }}
@@ -165,7 +171,7 @@
                         :field="col.field"
                         :header="col.header"
                         sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <a
@@ -181,8 +187,7 @@
                         v-if="col.field === 'customer.name'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <div class="flex flex-col">
@@ -201,7 +206,7 @@
                                 <!-- Show days until due for DUE SOON payments -->
                                 <div
                                     v-if="hasDueSoonPayments(slotProps.data)"
-                                    class="text-xs text-orange-500 mt-1"
+                                    class="text-[10px] text-orange-500 mt-1 font-semibold"
                                 >
                                     Due in
                                     {{ getNearestDueDays(slotProps.data) }} days
@@ -209,7 +214,7 @@
                                 <!-- Show overdue days for PAST DUE payments -->
                                 <div
                                     v-if="hasPastDuePayments(slotProps.data)"
-                                    class="text-xs text-red-500 mt-1"
+                                    class="text-[10px] text-red-500 mt-1 font-semibold"
                                 >
                                     Overdue by
                                     {{ getOverdueDays(slotProps.data) }} days
@@ -223,8 +228,7 @@
                         v-if="col.field === 'status'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <div class="flex flex-col">
@@ -235,11 +239,15 @@
                                     :severity="
                                         getStatusSeverity(slotProps.data.status)
                                     "
-                                    style="text-transform: uppercase"
+                                    style="
+                                        text-transform: uppercase;
+                                        font-size: 12px;
+                                        font-weight: 600;
+                                    "
                                 />
                                 <span
                                     v-if="isExpiringSoon(slotProps.data)"
-                                    class="ml-2 text-xs text-yellow-600"
+                                    class="ml-2 text-yellow-600 font-semibold text-[10px]"
                                 >
                                     (Expires in
                                     {{ daysUntilExpiration(slotProps.data) }}
@@ -253,8 +261,7 @@
                         v-if="col.field === 'amount'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data[col.field]) }}
@@ -268,8 +275,7 @@
                         v-if="col.field === 'due_payment'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <span>
@@ -291,8 +297,7 @@
                         v-if="col.field === 'payment_schedules'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <div class="flex items-center">
@@ -335,8 +340,7 @@
                         v-if="col.field === 'total_progress_payment_percentage'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <div class="progress-bar-wrapper flex items-center">
@@ -354,7 +358,12 @@
                                                 0
                                         )
                                     "
-                                    style="flex-grow: 1"
+                                    style="
+                                        flex-grow: 1;
+                                        border: gray 1px solid;
+                                        border-radius: 5px;
+                                        background-color: white;
+                                    "
                                 />
                                 <span class="progress-bar-text ml-2">
                                     {{
@@ -373,8 +382,7 @@
                         v-if="col.field === 'start_date'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template>
                             <div class="flex flex-col gap-1">
@@ -396,8 +404,7 @@
                         v-else-if="col.field === 'end_date'"
                         :field="col.field"
                         :header="col.header"
-                        sortable
-                        style="width: 5%; font-size: 14px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template>
                             <div class="flex flex-col gap-1">
@@ -421,7 +428,7 @@
                         :header="col.header"
                         frozen
                         alignFrozen="right"
-                        style="width: 5%; font-size: 14px; z-index: 2"
+                        style="width: 5%; font-size: 12px; z-index: 2"
                     >
                         <template #body="slotProps">
                             <Button
@@ -429,7 +436,7 @@
                                 size="small"
                                 icon="pi pi-eye"
                                 outlined
-                                class="mr-2"
+                                style="width: 30px; height: 30px"
                                 :disabled="slotProps.data.status === 'Closed'"
                                 @click="viewAgreementDetails(slotProps.data)"
                             />
@@ -439,6 +446,7 @@
                                 icon="pi pi-pencil"
                                 outlined
                                 class="ml-2"
+                                style="width: 30px; height: 30px"
                                 :disabled="slotProps.data.status === 'Closed'"
                                 @click="
                                     router.get(
@@ -469,6 +477,7 @@
                     </Column>
                 </template>
             </DataTable>
+
             <!-- Total Progress Payment Dialog (View) -->
             <Dialog
                 v-model:visible="progressPaymentsDialog"
@@ -548,11 +557,8 @@
                         </div>
                     </div>
                 </div>
-
                 <Divider class="my-4" />
-
                 <div class="text-md font-bold mb-3">Progress Payments</div>
-
                 <DataTable
                     :value="paidProgressPayments"
                     :paginator="true"
@@ -563,12 +569,20 @@
                     class="mt-3 text-sm"
                     size="small"
                 >
-                    <Column field="id" header="No." sortable>
+                    <Column
+                        field="id"
+                        header="No."
+                        style="width: 5%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             {{ slotProps.index + 1 }}
                         </template>
                     </Column>
-                    <Column field="due_date" header="Due Date" sortable>
+                    <Column
+                        field="due_date"
+                        header="Due Date"
+                        style="width: 15%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <span
                                 :class="{
@@ -586,25 +600,33 @@
                     <Column
                         field="short_description"
                         header="Description"
-                        sortable
+                        style="width: 15%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             {{ slotProps.data.short_description || "N/A" }}
                         </template>
                     </Column>
-                    <Column field="percentage" header="Percentage" sortable>
+                    <Column
+                        field="percentage"
+                        header="Percentage"
+                        style="width: 15%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             {{ Math.trunc(slotProps.data.percentage) }}%
                         </template>
                     </Column>
-                    <Column field="amount" header="Amount" sortable>
+                    <Column
+                        field="amount"
+                        header="Amount"
+                        style="width: 15%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             {{ formatCurrency(slotProps.data.amount) }} ({{
                                 slotProps.data.currency
                             }})
                         </template>
                     </Column>
-                    <Column header="Status" sortable>
+                    <Column header="Status" style="width: 10%; font-size: 12px">
                         <template #body="slotProps">
                             <Tag
                                 :value="getPaymentStatus(slotProps.data)"
@@ -644,11 +666,11 @@
                         <!-- Agreement Information Section -->
                         <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Agreement No:</label
                                     >
-                                    <div class="text-sm">
+                                    <div class="text-xs">
                                         {{
                                             selectedAgreementDetails?.agreement_no
                                         }}
@@ -656,11 +678,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Quotation No:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             selectedAgreementDetails?.quotation_no ||
                                             "N/A"
@@ -669,11 +691,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Agreement Ref No:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             selectedAgreementDetails?.agreement_ref_no ||
                                             "N/A"
@@ -682,11 +704,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Customer:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             selectedAgreementDetails?.customer
                                                 ?.name
@@ -695,11 +717,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Total Amount:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             formatCurrency(
                                                 selectedAgreementDetails?.amount
@@ -712,11 +734,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Agreement Date:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             formatDate(
                                                 selectedAgreementDetails?.agreement_date
@@ -726,11 +748,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Start Date:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             formatDate(
                                                 selectedAgreementDetails?.start_date
@@ -740,11 +762,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-4">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold tetxt-sm"
                                         >End Date:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             formatDate(
                                                 selectedAgreementDetails?.end_date
@@ -754,11 +776,11 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-8">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold"
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
                                         >Description:</label
                                     >
-                                    <div>
+                                    <div class="text-xs">
                                         {{
                                             selectedAgreementDetails?.short_description ||
                                             "N/A"
@@ -767,8 +789,10 @@
                                 </div>
                             </div>
                             <div class="col-12 md:col-6 lg:col-3">
-                                <div class="field flex gap-2">
-                                    <label class="font-semibold">Status:</label>
+                                <div class="field flex items-center gap-2">
+                                    <label class="font-semibold text-sm"
+                                        >Status:</label
+                                    >
                                     <Tag
                                         :value="
                                             getStatusLabel(
@@ -786,7 +810,8 @@
                             <!-- Agreement Documents -->
                             <div class="col-12">
                                 <div class="field">
-                                    <label class="font-semibold block mb-1"
+                                    <label
+                                        class="font-semibold block mb-1 text-sm"
                                         >Agreement Documents:</label
                                     >
                                     <ul class="ml-1 space-y-1">
@@ -818,7 +843,8 @@
                             <!-- Attachments -->
                             <div class="col-12">
                                 <div class="field">
-                                    <label class="font-semibold block mb-1"
+                                    <label
+                                        class="font-semibold block mb-1 text-sm"
                                         >Attachments:</label
                                     >
                                     <ul class="ml-1 space-y-1">
@@ -866,12 +892,20 @@
                             class="mt-3"
                             size="small"
                         >
-                            <Column field="id" header="No" sortable>
+                            <Column
+                                field="id"
+                                header="No"
+                                style="width: 5%; font-size: 12px"
+                            >
                                 <template #body="slotProps">
                                     {{ slotProps.index + 1 }}
                                 </template>
                             </Column>
-                            <Column field="due_date" header="Due Date" sortable>
+                            <Column
+                                field="due_date"
+                                header="Due Date"
+                                style="width: 15%; font-size: 12px"
+                            >
                                 <template #body="slotProps">
                                     <span
                                         :class="{
@@ -900,7 +934,7 @@
                             <Column
                                 field="short_description"
                                 header="Description"
-                                sortable
+                                style="width: 15%; font-size: 12px"
                             >
                                 <template #body="slotProps">
                                     {{
@@ -912,19 +946,26 @@
                             <Column
                                 field="percentage"
                                 header="Percentage"
-                                sortable
+                                style="width: 5%; font-size: 12px"
                             >
                                 <template #body="slotProps">
                                     {{ Math.trunc(slotProps.data.percentage) }}%
                                 </template>
                             </Column>
-                            <Column field="amount" header="Amount" sortable>
+                            <Column
+                                field="amount"
+                                header="Amount"
+                                style="width: 15%; font-size: 12px"
+                            >
                                 <template #body="slotProps">
                                     {{ formatCurrency(slotProps.data.amount) }}
                                     ({{ slotProps.data.currency }})
                                 </template>
                             </Column>
-                            <Column header="Status" sortable>
+                            <Column
+                                header="Status"
+                                style="width: 15%; font-size: 12px"
+                            >
                                 <template #body="slotProps">
                                     <Tag
                                         :value="
@@ -965,9 +1006,9 @@ import { Head, Link, router } from "@inertiajs/vue3";
 import { debounce } from "lodash";
 import { usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
+import { route } from "ziggy-js";
 import moment from "moment";
 import axios from "axios";
-import { route } from "ziggy-js";
 import {
     DataTable,
     Column,
@@ -1002,7 +1043,7 @@ const page = usePage();
 const items = computed(() => [
     {
         label: "",
-        to: "/",
+        to: "/dashboard",
         icon: "pi pi-home",
     },
     { label: page.props.title || "Agreements", to: route("agreements.index") },

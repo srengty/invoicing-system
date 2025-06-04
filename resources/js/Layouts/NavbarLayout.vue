@@ -6,69 +6,119 @@
                     <h1 class="text-xl font-bold m-0">
                         {{ pageTitle }}
                     </h1>
-                    <!-- <IconField>
-                        <InputIcon>
-                            <i class="pi pi-search" />
-                        </InputIcon>
-                        <InputText
-                            size="small"
-                            class="w-80"
-                            placeholder="Find invoices, clients, and more"
-                        />
-                    </IconField> -->
                 </div>
             </template>
+
             <template #end>
                 <SplitButton
                     :label="userName"
-                    :model="items"
-                    class="mr-3"
+                    :model="menuItems"
+                    class="p-button-rounded"
                     size="small"
-                    outlined=""
-                ></SplitButton>
-                <Avatar
-                    :image="userAvatar"
-                    style="width: 32px; height: 32px"
-                    size="large"
-                    shape="circle"
-                />
+                    outlined
+                >
+                    <template #icon>
+                        <Avatar
+                            :image="userAvatar"
+                            style="width: 30px; height: 30px"
+                            shape="circle"
+                        />
+                    </template>
+                </SplitButton>
             </template>
         </Toolbar>
     </div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
-import IconField from "primevue/iconfield";
-import InputText from "primevue/inputtext";
-import InputIcon from "primevue/inputicon";
 import Toolbar from "primevue/toolbar";
 import SplitButton from "primevue/splitbutton";
 import Avatar from "primevue/avatar";
 
 const page = usePage();
+const rolesArray = computed(() => page.props.roles || []);
+const rolesString = computed(() =>
+    rolesArray.value
+        .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
+        .join(", ")
+);
 const userName = computed(() => rolesString.value || "No role assigned");
 const userAvatar =
     "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
 
-// 1) Read the raw roles array (lowercased) from Inertia props
-const rolesArray = computed(() => page.props.roles || []);
+const theme = ref(localStorage.getItem("theme") || "system");
 
-// 2) Turn ["revenue manager"] → "Revenue Manager"
-const rolesString = computed(() => {
-    return rolesArray.value
-        .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
-        .join(", ");
+const applyTheme = (pref) => {
+    if (pref === "light") {
+        document.documentElement.classList.remove("dark");
+        localStorage.setItem("theme", "light");
+    } else if (pref === "dark") {
+        document.documentElement.classList.add("dark");
+        localStorage.setItem("theme", "dark");
+    } else {
+        localStorage.removeItem("theme");
+        const isDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        ).matches;
+        if (isDark) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+    }
+    theme.value = pref;
+};
+
+onMounted(() => {
+    applyTheme(theme.value);
+
+    window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) => {
+            if (!localStorage.getItem("theme")) {
+                if (e.matches) {
+                    document.documentElement.classList.add("dark");
+                } else {
+                    document.documentElement.classList.remove("dark");
+                }
+            }
+        });
 });
 
-const items = [
+const menuItems = [
     {
-        label: "Accounts",
+        label: rolesString.value || "No role assigned",
         icon: "pi pi-user",
-        // add whatever logic you need here
+        command: () => {
+            Inertia.get(route("profile.show"));
+        },
     },
+    { separator: true },
+    {
+        label: "Light Theme",
+        icon: "pi pi-sun",
+        command: () => {
+            applyTheme("light");
+        },
+    },
+    {
+        label: "Dark Theme",
+        icon: "pi pi-moon",
+        command: () => {
+            applyTheme("dark");
+        },
+    },
+    {
+        label: "System Theme",
+        icon: "pi pi-desktop",
+        command: () => {
+            applyTheme("system");
+        },
+    },
+    { separator: true },
     {
         label: "Logout",
         icon: "pi pi-sign-out",
@@ -76,20 +126,11 @@ const items = [
             Inertia.post(route("logout"));
         },
     },
-    // {
-    //     // Show the capitalized roles right under “Logout”
-    //     label: rolesString.value || "No role assigned",
-    //     icon: "pi pi-tag",
-    //     disabled: true,
-    //     style: "cursor: default; opacity: 0.6; font-style: italic;",
-    // },
 ];
 
-// Computed property for page title
 const pageTitle = computed(() => {
     const routePath = page.url;
 
-    // Map of static routes
     const routeTitles = {
         "/dashboard": "Dashboard",
         "/quotations": "Quotations",
@@ -98,6 +139,8 @@ const pageTitle = computed(() => {
         "/agreements/create": "Create Agreement",
         "/invoices": "Invoices",
         "/invoices/create": "Create Invoice",
+        "/invoices/list": "List Invoices",
+        "/invoices/{invoices}/edit": "Edit Invoice",
         "/receipts": "Receipts",
         "/settings": "Settings",
         "/settings/customers": "Customers",
@@ -106,7 +149,9 @@ const pageTitle = computed(() => {
         "/settings/customer-categories": "Customer Categories",
     };
 
-    // Dynamic checks (Edit Agreement, Edit Quotation, Generate Invoice)
+    if (routePath.match(/^\/invoices\/\d+\/edit$/)) {
+        return "Edit Invoices";
+    }
     if (routePath.match(/^\/agreements\/\d+\/edit$/)) {
         return "Edit Agreement";
     }
