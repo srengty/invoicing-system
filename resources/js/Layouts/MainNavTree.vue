@@ -118,12 +118,12 @@ const items = ref([
         icon: "pi pi-home",
         shortcut: ">",
         items: [
-            // {
-            //     label: "Compose",
-            //     href: "/compose",
-            //     icon: "pi pi-file-edit",
-            //     shortcut: "⌘+N",
-            // },
+            {
+                label: "Compose",
+                href: "/compose",
+                icon: "pi pi-file-edit",
+                shortcut: "⌘+N",
+            },
         ],
     },
     {
