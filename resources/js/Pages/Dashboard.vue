@@ -191,7 +191,7 @@
 
             <div class="mt-6">
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="customers.slice(0, 5)"
                             scrollable
@@ -235,7 +235,7 @@
                     </div>
 
                     <!-- Items Table -->
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="products.slice(0, 5)"
                             scrollable
@@ -279,7 +279,7 @@
                 </div>
 
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="quotations.slice(0, 5)"
                             scrollable
@@ -336,7 +336,7 @@
                         </DataTable>
                     </div>
 
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="receipts.slice(0, 5)"
                             scrollable
@@ -406,7 +406,7 @@
 
                 <div class="flex mb-6 gap-4">
                     <!-- Agreements Table -->
-                    <div class="card-style shadow-md border-2 w-full p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-full p-4">
                         <DataTable
                             :value="agreements.slice(0, 5)"
                             scrollable
@@ -465,7 +465,7 @@
                 </div>
 
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style shadow-md border-2 w-full p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-full p-4">
                         <DataTable
                             :value="sortedInvoices"
                             scrollable
