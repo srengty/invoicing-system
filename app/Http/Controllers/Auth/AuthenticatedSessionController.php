@@ -24,6 +24,7 @@ class AuthenticatedSessionController extends Controller
         return Inertia::render('Auth/Login', [
             'status'    => session('status'),
             'userRoles' => session('roles', []),
+            'expires_in' => config('session.lifetime'),
         ]);
     }
 
@@ -32,84 +33,61 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(Request $request)
     {
-        // 1) Validate the request data
-        $validated = $request->validate([
+        $credentials = $request->validate([
             'email'    => ['required', 'email'],
-            'password' => ['required', 'string', 'min:6'],
+            'password' => ['required', 'string', 'min:12'],
         ]);
 
-        // 2) Build the external API login URL
-        $apiBase  = config('services.external_auth.base_url');
-        $loginUrl = rtrim($apiBase, '/') . '/login';
+        $apiBase  = rtrim(config('services.external_auth.base_url'), '/');
+        $loginUrl = "{$apiBase}/login";
 
         try {
-            // 3) Actually POST to the external authentication server
             $response = Http::withOptions(['verify' => false])
                 ->timeout(15)
-                ->post($loginUrl, [
-                    'email'    => $validated['email'],
-                    'password' => $validated['password'],
-                ]);
+                ->post($loginUrl, $credentials);
 
-            // 4) If the HTTP status is 400–599, treat it as a “failed” response
             if ($response->failed()) {
-                // Note: parseApiError() expects $response to be defined
                 $errorMessage = $this->parseApiError($response);
-                return back()
-                    ->withInput()
-                    ->withErrors(['email' => $errorMessage]);
+                return back()->withInput()->withErrors(['email' => $errorMessage]);
             }
 
-            // 5) Decode JSON payload
             $payload = $response->json();
-
-            // 6) Make sure the payload actually has the pieces we expect
-            if (! isset($payload['access_token'], $payload['user'], $payload['user']['roles'])) {
+            if (!isset($payload['access_token'], $payload['user']['roles'])) {
                 return back()
                     ->withInput()
-                    ->withErrors(['email' => 'Invalid response from authentication server.']);
+                    ->withErrors(['email' => 'Invalid response from auth server.']);
             }
 
-            // 7) Upsert (create or update) the local user record by email
-            $extUserData = $payload['user'];
+            // Upsert local user record
+            $extUser = $payload['user'];
             $user = User::updateOrCreate(
-                ['email' => $extUserData['email']],
+                ['email' => $extUser['email']],
                 [
-                    'name'     => $extUserData['name'] ?? $extUserData['email'],
-                    // We store a random password locally, since actual auth is handled externally
-                    'password' => Hash::make(Str::random(16)),
+                    'name'     => $extUser['name'] ?? $extUser['email'],
+                    'password' => Hash::make(Str::random(16)), // random local password
                 ]
             );
 
-            // 8) Log in the Laravel “web” guard
             Auth::login($user);
 
-            // 9) Grab just the “name” field from each role in the external payload
-            //    and normalize to lowercase. E.g. ["revenue manager", "director", …]
-            $rawRoles = $extUserData['roles'];
-            $normalizedRoles = collect($rawRoles)
-                ->pluck('name')             // ["Revenue Manager", …]
-                ->map(fn($r) => strtolower($r))
-                ->toArray();                // ["revenue manager", …]
+            // Normalize roles
+            $normalizedRoles = collect($extUser['roles'])
+                ->pluck('name')
+                ->map(fn($role) => strtolower($role))
+                ->toArray();
 
-            // 10) Store the external API token & the normalized roles array in session
+            // Store token and roles in session
             $request->session()->put('api_token', $payload['access_token']);
             $request->session()->put('roles', $normalizedRoles);
-
-            // 11) Regenerate session ID for security
             $request->session()->regenerate();
 
-            // 12) Redirect to “dashboard” (or whatever route you’ve named)
             return redirect()->route('dashboard');
-        }
-        catch (\Illuminate\Http\Client\ConnectionException $e) {
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return back()
                 ->withInput()
                 ->withErrors(['email' => 'Could not connect to authentication server.']);
-        }
-        catch (\Exception $e) {
-            // If you want to inspect $e->getMessage() for debugging, you can log it here:
-            // \Log::error('Login exception: ' . $e->getMessage());
+        } catch (\Exception $e) {
+
             return back()
                 ->withInput()
                 ->withErrors(['email' => 'An unexpected error occurred during login.']);
@@ -120,10 +98,9 @@ class AuthenticatedSessionController extends Controller
     protected function parseApiError($response): string
     {
         if ($response->status() === 422 && $response->json('errors')) {
-            return collect($response->json('errors'))
-                ->flatten()
-                ->join(' ');
+            return collect($response->json('errors'))->flatten()->join(' ');
         }
+
         return match ($response->status()) {
             401 => 'Invalid credentials.',
             403 => 'Account not authorized.',
@@ -138,17 +115,11 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request)
     {
-        // 1) Log out of Laravel’s “web” guard
         Auth::guard('web')->logout();
-
-        // 2) Forget any external‐API token and roles stored in session
         $request->session()->forget(['api_token', 'roles']);
-
-        // 3) Invalidate & regenerate CSRF token for safety
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // 4) Redirect back to login
         return redirect()->route('login');
     }
 }

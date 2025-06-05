@@ -107,12 +107,12 @@
 import { usePage, useForm } from "@inertiajs/vue3";
 import { computed, onMounted } from "vue";
 import { route } from "ziggy-js";
+import loginBg from "/public/assets/images/login.jpg";
 import Checkbox from "@/Components/Checkbox.vue";
 import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import Message from "primevue/message";
-import loginBg from "/public/assets/images/login.jpg";
 
 const page = usePage();
 const rolesArray = computed(() => page.props.roles);

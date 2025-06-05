@@ -70,9 +70,6 @@
                 :showGridlines="true"
                 size="small"
                 class="text-sm mt-8"
-                sortMode="single"
-                sortField="invoice_no"
-
             >
                 <Column
                     class=""
@@ -81,10 +78,14 @@
                     :field="col.field"
                     :header="col.header"
                     :sortable="col.sortable"
-                     style="width: 10%; font-size: 12px"
+                    style="width: 10%; font-size: 12px"
                 />
 
-                <Column field="grand_total" header="Amount" style="width: 10%; font-size: 12px">
+                <Column
+                    field="grand_total"
+                    header="Amount"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="{ data }">
                         <span
                             :class="{ 'text-blue-500': data.grand_total >= 0 }"
@@ -94,7 +95,11 @@
                     </template>
                 </Column>
 
-                <Column field="status" header="Status" style="width: 10%; font-size: 12px">
+                <Column
+                    field="status"
+                    header="Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <div class="flex">
                             <span
@@ -137,7 +142,11 @@
                     </template>
                 </Column>
 
-                <Column field="customer_status" header="Customer Status" style="width: 10%; font-size: 12px">
+                <Column
+                    field="customer_status"
+                    header="Customer Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <span
                             @click="handleStatusClick(slotProps.data)"
@@ -185,7 +194,7 @@
                     header="View / Edit / Print"
                     headerStyle="text-align: center"
                     bodyStyle="text-align: center"
-                     style="width: 10%; font-size: 12px"
+                    style="width: 10%; font-size: 12px"
                 >
                     <template #body="{ data }">
                         <div class="flex gap-2 justify-center">
@@ -544,10 +553,17 @@ const statusOptions = ref([
 
 const columns = [
     { field: "invoice_no", header: "Invoice No", sortable: true },
-    { field: "start_date", header: "Date", sortable: true },
-    { field: "end_date", header: "Due Date", sortable: true },
+    //{ field: "start_date", header: "Date", sortable: true },
+    //{ field: "end_date", header: "Due Date", sortable: true },
     { field: "customer.name", header: "Customer", sortable: true },
-    { field: "agreement_no", header: "Agreement No" },
+    {
+        field: "agreement_no",
+        header: "Agreement No",
+    },
+    {
+        field: "quotation_no",
+        header: "Quotation No",
+    },
 ];
 
 const filteredInvoices = computed(() => {
