@@ -1,9 +1,9 @@
 <template>
     <Head :title="`Edit Agreement`"></Head>
     <GuestLayout>
-        <NavbarLayout />
+        <NavbarLayout  class="fixed top-0 z-50 w-5/6 pr-3"/>
         <!-- PrimeVue Breadcrumb -->
-        <div class="py-3">
+        <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link

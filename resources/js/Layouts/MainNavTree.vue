@@ -38,14 +38,58 @@
 
                     <div class="ml-auto flex items-center gap-2">
                         <Badge
-                            v-if="item.key === 3"
+                            v-if="item.key === 2"
                             :value="
-                                dueAgreementsCount > 0
-                                    ? dueAgreementsCount
+                                page.props.pendingQuotationsCount > 0
+                                    ? page.props.pendingQuotationsCount
                                     : '0'
                             "
                             :severity="
-                                dueAgreementsCount > 0 ? 'danger' : 'info'
+                                page.props.pendingQuotationsCount > 0
+                                    ? 'danger'
+                                    : 'info'
+                            "
+                            class="ml-auto"
+                        />
+                        <Badge
+                            v-if="item.key === 3"
+                            :value="
+                                page.props.dueAgreementsCount > 0
+                                    ? page.props.dueAgreementsCount
+                                    : '0'
+                            "
+                            :severity="
+                                page.props.dueAgreementsCount > 0
+                                    ? 'danger'
+                                    : 'info'
+                            "
+                            class="ml-auto"
+                        />
+                        <Badge
+                            v-if="item.href === '/invoices/list'"
+                            :value="
+                                page.props.pendingInvoicesCount > 0
+                                    ? page.props.pendingInvoicesCount
+                                    : '0'
+                            "
+                            :severity="
+                                page.props.pendingInvoicesCount > 0
+                                    ? 'danger'
+                                    : 'info'
+                            "
+                            class="ml-auto"
+                        />
+                        <Badge
+                            v-if="item.href === '/settings/products'"
+                            :value="
+                                page.props.pendingItemsCount > 0
+                                    ? page.props.pendingItemsCount
+                                    : '0'
+                            "
+                            :severity="
+                                page.props.pendingItemsCount > 0
+                                    ? 'danger'
+                                    : 'info'
                             "
                             class="ml-auto"
                         />
@@ -220,7 +264,6 @@ const items = ref([
     },
 ]);
 
-// Update badge count reactively on dueAgreementsCount changes
 watch(
     dueAgreementsCount,
     (newCount) => {
@@ -276,6 +319,11 @@ const expandedKeys = ref(
 
 .p-badge.p-badge-info {
     background: #3b82f6;
+    color: white;
+}
+
+.p-badge.p-badge-warning {
+    background: #f59e0b;
     color: white;
 }
 

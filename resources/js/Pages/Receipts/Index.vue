@@ -1,10 +1,10 @@
 <template>
     <Head title="Receipts" />
     <GuestLayout>
-        <NavbarLayout />
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
-        <div class="py-3">
+        <div class="py-3 mt-16">
             <Breadcrumb
                 :model="breadcrumbItems"
                 class="border-none bg-transparent p-0"

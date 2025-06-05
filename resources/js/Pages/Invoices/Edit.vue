@@ -1,9 +1,8 @@
 <template>
     <GuestLayout>
-        <NavbarLayout />
         <Head title="Edit Invoice" />
-
-        <div class="py-3">
+        <NavbarLayout class="fixed top-0 z-50 w-5/6 pr-3" />
+        <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link
@@ -139,8 +138,16 @@
                             slotProps.index + 1
                         }}</template>
                     </Column>
-                    <Column field="product" header="Product" style="width: 10%; font-size: 12px" />
-                    <Column field="qty" header="Qty" style="width: 10%; font-size: 12px">
+                    <Column
+                        field="product"
+                        header="Product"
+                        style="width: 10%; font-size: 12px"
+                    />
+                    <Column
+                        field="qty"
+                        header="Qty"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.qty"
@@ -149,8 +156,16 @@
                             />
                         </template>
                     </Column>
-                    <Column field="unit" header="Unit" style="width: 10%; font-size: 12px" />
-                    <Column field="unitPrice" header="Unit Price" style="width: 10%; font-size: 12px">
+                    <Column
+                        field="unit"
+                        header="Unit"
+                        style="width: 10%; font-size: 12px"
+                    />
+                    <Column
+                        field="unitPrice"
+                        header="Unit Price"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             <InputText
                                 v-model="slotProps.data.unitPrice"
@@ -159,7 +174,11 @@
                             />
                         </template>
                     </Column>
-                    <Column field="subTotal" header="Sub Total" style="width: 10%; font-size: 12px">
+                    <Column
+                        field="subTotal"
+                        header="Sub Total"
+                        style="width: 10%; font-size: 12px"
+                    >
                         <template #body="slotProps">
                             {{ slotProps.data.qty * slotProps.data.unitPrice }}
                         </template>

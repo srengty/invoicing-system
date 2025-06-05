@@ -1,32 +1,46 @@
 <template>
     <Head title="Dashboard" />
     <GuestLayout>
-        <NavbarLayout />
-        <div class="surface-ground min-h-screen p-5">
+        <NavbarLayout class="fixed top-0 z-50 w-5/6 pr-3" />
+        <div class="surface-ground min-h-screen p-5 mt-16">
             <div class="mb-6">
-                <h1 class="text-xl font-semibold text-gray-900">Welcome to your Dashboard</h1>
-                <p class="text-sm text-gray-500 mt-2">Overview of your key metrics.</p>
+                <h1 class="text-xl font-semibold text-gray-900">
+                    Welcome to your Dashboard
+                </h1>
+                <p class="text-sm text-gray-500 mt-2">
+                    Overview of your key metrics.
+                </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- New Quotations Card -->
-                <div class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between">
-                    <h2 class="text-sm font-medium text-gray-500">New Quotations</h2>
+                <div
+                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                >
+                    <h2 class="text-sm font-medium text-gray-500">
+                        New Quotations
+                    </h2>
                     <div class="text-2xl font-semibold text-gray-900 mt-2">
                         {{ quotations?.length || 0 }} Quotations
                     </div>
                 </div>
 
                 <!-- New Agreements Card -->
-                <div class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between">
-                    <h2 class="text-sm font-medium text-gray-500">New Agreements</h2>
+                <div
+                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                >
+                    <h2 class="text-sm font-medium text-gray-500">
+                        New Agreements
+                    </h2>
                     <div class="text-2xl font-semibold text-gray-900 mt-2">
                         {{ agreements?.length || 0 }} Agreements
                     </div>
                 </div>
 
                 <!-- Customers Card -->
-                <div class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between">
+                <div
+                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                >
                     <h2 class="text-sm font-medium text-gray-500">Customers</h2>
                     <div class="text-2xl font-semibold text-gray-900 mt-2">
                         {{ customers?.length || 0 }} Customers
@@ -34,7 +48,9 @@
                 </div>
 
                 <!-- Items Card -->
-                <div class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between">
+                <div
+                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                >
                     <h2 class="text-sm font-medium text-gray-500">Items</h2>
                     <div class="text-2xl font-semibold text-gray-900 mt-2">
                         {{ products?.length || 0 }} Items
@@ -42,7 +58,9 @@
                 </div>
 
                 <!-- Invoices Card -->
-                <div class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between col-span-2 lg:col-span-1">
+                <div
+                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between col-span-2 lg:col-span-1"
+                >
                     <h2 class="text-sm font-medium text-gray-500">Invoices</h2>
                     <div class="text-2xl font-semibold text-gray-900 mt-2">
                         {{ invoices?.length || 0 }} Invoices
@@ -56,7 +74,9 @@
                         <!-- Header Section with Filters -->
                         <div class="flex justify-between items-center mb-5">
                             <div>
-                                <h1 class="text-md font-medium text-gray-400">Dashboard</h1>
+                                <h1 class="text-md font-medium text-gray-400">
+                                    Dashboard
+                                </h1>
                             </div>
                             <div class="flex gap-4">
                                 <!-- Currency Selector -->
@@ -89,11 +109,18 @@
                                     size="small"
                                 >
                                     <template #value="slotProps">
-                                        <div v-if="slotProps.value" class="flex items-center text-sm">
+                                        <div
+                                            v-if="slotProps.value"
+                                            class="flex items-center text-sm"
+                                        >
                                             <i class="pi pi-calendar mr-2"></i>
-                                            <span>{{ slotProps.value.label }}</span>
+                                            <span>{{
+                                                slotProps.value.label
+                                            }}</span>
                                         </div>
-                                        <span v-else>{{ slotProps.placeholder }}</span>
+                                        <span v-else>{{
+                                            slotProps.placeholder
+                                        }}</span>
                                     </template>
                                 </Select>
                             </div>
@@ -103,20 +130,45 @@
                         <div class="flex gap-6 w-full mt-6">
                             <!-- Recent Transactions Section -->
                             <div class="col-12 md:w-1/3 shadow-md">
-                                <div class="text-lg font-semibold border-b-4 p-4">
+                                <div
+                                    class="text-lg font-semibold border-b-4 p-4"
+                                >
                                     Recent Transactions
                                 </div>
                                 <div class="p-4">
                                     <div class="grid gap-6 mb-4">
-                                        <div v-for="transaction in transactions" :key="transaction.label" class="flex justify-between text-gray-500 items-center p-2 border-b-2 border-b-gray-200">
-                                            <span class="text-600 font-medium">{{ transaction.label }}</span>
-                                            <span class="text-900 font-semibold">៛ {{ formatNumber(transaction.value) }}</span>
+                                        <div
+                                            v-for="transaction in transactions"
+                                            :key="transaction.label"
+                                            class="flex justify-between text-gray-500 items-center p-2 border-b-2 border-b-gray-200"
+                                        >
+                                            <span
+                                                class="text-600 font-medium"
+                                                >{{ transaction.label }}</span
+                                            >
+                                            <span class="text-900 font-semibold"
+                                                >៛
+                                                {{
+                                                    formatNumber(
+                                                        transaction.value
+                                                    )
+                                                }}</span
+                                            >
                                         </div>
                                     </div>
                                     <!-- Total Outstanding Section -->
-                                    <div class="flex justify-between items-center p-3 bg-gray-50 border-round">
-                                        <span class="text-600 font-medium">Total Invoices Outstanding</span>
-                                        <span class="text-900 font-bold">៛ {{ totalOutstanding.toFixed(2) }}</span>
+                                    <div
+                                        class="flex justify-between items-center p-3 bg-gray-50 border-round"
+                                    >
+                                        <span class="text-600 font-medium"
+                                            >Total Invoices Outstanding</span
+                                        >
+                                        <span class="text-900 font-bold"
+                                            >៛
+                                            {{
+                                                totalOutstanding.toFixed(2)
+                                            }}</span
+                                        >
                                     </div>
                                 </div>
                             </div>
@@ -124,7 +176,7 @@
                             <!-- Chart Section -->
                             <div class="md:w-2/3">
                                 <div class="shadow-md">
-                                   <Chart
+                                    <Chart
                                         type="bar"
                                         :data="chartData"
                                         :options="chartOptions"
@@ -143,7 +195,7 @@
                         <DataTable
                             :value="customers.slice(0, 5)"
                             scrollable
-                            stripedRows 
+                            stripedRows
                             scrollHeight="350px"
                             class="p-datatable-sm"
                             :loading="loading"
@@ -151,13 +203,34 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-users text-[#10B981]"></i>
-                                    <span class="text-lg font-bold">Recent Customers ({{ customers.length }})</span>
+                                    <span class="text-lg font-bold"
+                                        >Recent Customers ({{
+                                            customers.length
+                                        }})</span
+                                    >
                                 </div>
                             </template>
-                            <Column field="code" header="Code" sortable class="m-2"></Column>
-                            <Column field="name" header="Name" sortable></Column>
-                            <Column field="credit_period" header="Credit Period" sortable></Column>
-                            <Column field="customer_category_id" header="Category" sortable></Column>
+                            <Column
+                                field="code"
+                                header="Code"
+                                sortable
+                                class="m-2"
+                            ></Column>
+                            <Column
+                                field="name"
+                                header="Name"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="credit_period"
+                                header="Credit Period"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="customer_category_id"
+                                header="Category"
+                                sortable
+                            ></Column>
                         </DataTable>
                     </div>
 
@@ -169,17 +242,33 @@
                             scrollHeight="350px"
                             class="p-datatable-sm"
                             :loading="loading"
-                            stripedRows 
+                            stripedRows
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-box text-[#10B981]"></i>
-                                    <span class="text-lg font-bold">Recent Items ({{ products.length }})</span>
+                                    <span class="text-lg font-bold"
+                                        >Recent Items ({{
+                                            products.length
+                                        }})</span
+                                    >
                                 </div>
                             </template>
-                            <Column field="code" header="Code" sortable></Column>
-                            <Column field="name" header="Name" sortable></Column>
-                            <Column field="unit" header="Unit" sortable></Column>
+                            <Column
+                                field="code"
+                                header="Code"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="name"
+                                header="Name"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="unit"
+                                header="Unit"
+                                sortable
+                            ></Column>
                             <Column field="price" header="Price" sortable>
                                 <template #body="{ data }">
                                     {{ formatCurrency(data.price) }}
@@ -188,7 +277,7 @@
                         </DataTable>
                     </div>
                 </div>
-                
+
                 <div class="flex mb-6 gap-4">
                     <div class="card-style shadow-md border-2 w-1/2 p-4">
                         <DataTable
@@ -197,32 +286,51 @@
                             scrollHeight="350px"
                             class="p-datatable-sm"
                             :loading="loading"
-                            stripedRows 
+                            stripedRows
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-file text-[#10B981]"></i>
-                                    <span class="text-lg font-bold">Recent Quotations ({{ quotations.length }})</span>
+                                    <span class="text-lg font-bold"
+                                        >Recent Quotations ({{
+                                            quotations.length
+                                        }})</span
+                                    >
                                 </div>
                             </template>
-                            <Column field="quotation_no" header="Quotation No" sortable></Column>
-                            <Column field="customer.name" header="Customer" sortable>
+                            <Column
+                                field="quotation_no"
+                                header="Quotation No"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="customer.name"
+                                header="Customer"
+                                sortable
+                            >
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
                             <Column field="amount" header="Amount" sortable>
                                 <template #body="{ data }">
-                                    <span :class="{
-                                        'text-blue-600': (data.total) > 0,
-                                    }">
+                                    <span
+                                        :class="{
+                                            'text-blue-600': data.total > 0,
+                                        }"
+                                    >
                                         {{ formatCurrency(data.total) }}
                                     </span>
                                 </template>
                             </Column>
                             <Column field="status" header="Status" sortable>
                                 <template #body="{ data }">
-                                    <Tag :value="data.status" :severity="getStatusSeverity(data.status)" />
+                                    <Tag
+                                        :value="data.status"
+                                        :severity="
+                                            getStatusSeverity(data.status)
+                                        "
+                                    />
                                 </template>
                             </Column>
                         </DataTable>
@@ -235,33 +343,63 @@
                             scrollHeight="350px"
                             class="p-datatable-sm"
                             :loading="loading"
-                            stripedRows 
+                            stripedRows
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-receipt text-[#10B981]"></i>
-                                    <span class="text-lg font-bold">Recent Receipts ({{ receipts.length }})</span>
+                                    <span class="text-lg font-bold"
+                                        >Recent Receipts ({{
+                                            receipts.length
+                                        }})</span
+                                    >
                                 </div>
                             </template>
-                            <Column field="receipt_no" header="Receipt No" sortable></Column>
-                            <Column field="customer.name" header="Customer" sortable>
+                            <Column
+                                field="receipt_no"
+                                header="Receipt No"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="customer.name"
+                                header="Customer"
+                                sortable
+                            >
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
-                            <Column field="paid_amount" header="Amount Paid" sortable>
+                            <Column
+                                field="paid_amount"
+                                header="Amount Paid"
+                                sortable
+                            >
                                 <template #body="{ data }">
-                                    <span :class="{
-                                        'text-green-600': (data.paid_amount) > 0,
-                                    }">
+                                    <span
+                                        :class="{
+                                            'text-green-600':
+                                                data.paid_amount > 0,
+                                        }"
+                                    >
                                         {{ formatCurrency(data.paid_amount) }}
                                     </span>
                                 </template>
                             </Column>
-                            <Column field="payment_method" header="Payment Method" sortable>
+                            <Column
+                                field="payment_method"
+                                header="Payment Method"
+                                sortable
+                            >
                                 <template #body="{ data }">
-                                    <Tag :value="data.payment_method" :severity="getStatusSeverity(data.payment_method)" />
-                                </template></Column>
+                                    <Tag
+                                        :value="data.payment_method"
+                                        :severity="
+                                            getStatusSeverity(
+                                                data.payment_method
+                                            )
+                                        "
+                                    /> </template
+                            ></Column>
                         </DataTable>
                     </div>
                 </div>
@@ -275,28 +413,51 @@
                             scrollHeight="350px"
                             class="p-datatable-sm"
                             :loading="loading"
-                            stripedRows 
+                            stripedRows
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
-                                    <i class="pi pi-file-edit text-[#10B981]"></i>
-                                    <span class="text-lg font-bold">Recent Agreements ({{ agreements.length }})</span>
+                                    <i
+                                        class="pi pi-file-edit text-[#10B981]"
+                                    ></i>
+                                    <span class="text-lg font-bold"
+                                        >Recent Agreements ({{
+                                            agreements.length
+                                        }})</span
+                                    >
                                 </div>
                             </template>
-                            <Column field="agreement_no" header="Agreement No" sortable></Column>
-                            <Column field="customer.name" header="Customer" sortable>
+                            <Column
+                                field="agreement_no"
+                                header="Agreement No"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="customer.name"
+                                header="Customer"
+                                sortable
+                            >
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
-                            <Column field="amount" header="Total Amount" sortable>
+                            <Column
+                                field="amount"
+                                header="Total Amount"
+                                sortable
+                            >
                                 <template #body="{ data }">
                                     {{ formatCurrency(data.amount) }}
                                 </template>
                             </Column>
                             <Column field="status" header="Status" sortable>
                                 <template #body="{ data }">
-                                    <Tag :value="data.status" :severity="getStatusSeverity(data.status)" />
+                                    <Tag
+                                        :value="data.status"
+                                        :severity="
+                                            getStatusSeverity(data.status)
+                                        "
+                                    />
                                 </template>
                             </Column>
                         </DataTable>
@@ -316,52 +477,103 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-file text-[#10B981]"></i>
-                                    <span class="text-lg font-bold">Recent Invoices ({{ invoices.length }})</span>
+                                    <span class="text-lg font-bold"
+                                        >Recent Invoices ({{
+                                            invoices.length
+                                        }})</span
+                                    >
                                 </div>
                             </template>
-                            <Column field="invoice_no" header="Invoice No" sortable></Column>
-                            <Column field="customer.name" header="Customer" sortable>
+                            <Column
+                                field="invoice_no"
+                                header="Invoice No"
+                                sortable
+                            ></Column>
+                            <Column
+                                field="customer.name"
+                                header="Customer"
+                                sortable
+                            >
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
                             <Column field="amount" header="Amount" sortable>
                                 <template #body="{ data }">
-                                    <span :class="{
-                                        'text-blue-600': (data.grand_total) > 0,
-                                    }">
+                                    <span
+                                        :class="{
+                                            'text-blue-600':
+                                                data.grand_total > 0,
+                                        }"
+                                    >
                                         {{ formatCurrency(data.grand_total) }}
                                     </span>
                                 </template>
                             </Column>
                             <Column header="Paid Amount" sortable>
                                 <template #body="{ data }">
-                                    <span :class="{
-                                        'text-green-600': (data.paid_amount) > 0,
-                                        'text-red-500': (data.paid_amount) <= 0
-                                    }">
+                                    <span
+                                        :class="{
+                                            'text-green-600':
+                                                data.paid_amount > 0,
+                                            'text-red-500':
+                                                data.paid_amount <= 0,
+                                        }"
+                                    >
                                         {{ formatCurrency(data.paid_amount) }}
                                     </span>
                                 </template>
                             </Column>
                             <Column header="Due Amount" sortable>
                                 <template #body="{ data }">
-                                    <span :class="{
-                                        'text-red-500': (data.grand_total - data.paid_amount) > 0,
-                                        'text': (data.grand_total - data.paid_amount) <= 0
-                                    }">
-                                        {{ formatCurrency(data.grand_total - data.paid_amount) }}
+                                    <span
+                                        :class="{
+                                            'text-red-500':
+                                                data.grand_total -
+                                                    data.paid_amount >
+                                                0,
+                                            text:
+                                                data.grand_total -
+                                                    data.paid_amount <=
+                                                0,
+                                        }"
+                                    >
+                                        {{
+                                            formatCurrency(
+                                                data.grand_total -
+                                                    data.paid_amount
+                                            )
+                                        }}
                                     </span>
                                 </template>
                             </Column>
                             <Column header="Payment Status" sortable>
                                 <template #body="{ data }">
-                                    <Tag :class="{
-                                        'text-green-600': getStatusSeverity(getPaymentStatus(data)) === 'success',
-                                        'text-yellow-600': getStatusSeverity(getPaymentStatus(data)) === 'warn',
-                                        'text-red-600': getStatusSeverity(getPaymentStatus(data)) === 'danger',
-                                        'text-blue-600': getStatusSeverity(getPaymentStatus(data)) === 'info'
-                                    }" :severity="getStatusSeverity(getPaymentStatus(data))">
+                                    <Tag
+                                        :class="{
+                                            'text-green-600':
+                                                getStatusSeverity(
+                                                    getPaymentStatus(data)
+                                                ) === 'success',
+                                            'text-yellow-600':
+                                                getStatusSeverity(
+                                                    getPaymentStatus(data)
+                                                ) === 'warn',
+                                            'text-red-600':
+                                                getStatusSeverity(
+                                                    getPaymentStatus(data)
+                                                ) === 'danger',
+                                            'text-blue-600':
+                                                getStatusSeverity(
+                                                    getPaymentStatus(data)
+                                                ) === 'info',
+                                        }"
+                                        :severity="
+                                            getStatusSeverity(
+                                                getPaymentStatus(data)
+                                            )
+                                        "
+                                    >
                                         {{ getPaymentStatus(data) }}
                                     </Tag>
                                 </template>
@@ -375,8 +587,8 @@
 </template>
 
 <script setup>
-import { ref, computed , onMounted, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { ref, computed, onMounted, watch } from "vue";
+import { usePage } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
 import { Head } from "@inertiajs/vue3";
@@ -384,13 +596,13 @@ import { SelectButton, Select } from "primevue";
 import Chart from "primevue/chart";
 import DataTable from "primevue/datatable";
 import Column from "primevue/column";
-import 'primeicons/primeicons.css';
+import "primeicons/primeicons.css";
 import Tag from "primevue/tag";
 
 // Functions declared before usage to avoid the "before initialization" error
 const formatNumber = (value) => {
     const number = Number(value);
-    return isNaN(number) ? '0.00' : number.toFixed(2);
+    return isNaN(number) ? "0.00" : number.toFixed(2);
 };
 
 const formatCurrency = (value) => {
@@ -399,7 +611,20 @@ const formatCurrency = (value) => {
 
 // Fetch data from Inertia page props
 const page = usePage();
-const { customers, products, quotations, agreements, invoices, receipts, transactions, totalOutstanding, quotationDates, agreementDates, invoiceDates, receiptDates } = page.props;
+const {
+    customers,
+    products,
+    quotations,
+    agreements,
+    invoices,
+    receipts,
+    transactions,
+    totalOutstanding,
+    quotationDates,
+    agreementDates,
+    invoiceDates,
+    receiptDates,
+} = page.props;
 
 // Selected Period Options
 const selectedPeriod = ref({ name: "Day", value: "Day" });
@@ -428,39 +653,53 @@ const timeRanges = ref([
 ]);
 
 const getPaymentStatus = (invoice) => {
-    const status = 
-        invoice.grand_total === invoice.paid_amount ? "Fully Paid" :
-        invoice.paid_amount > 0 && invoice.paid_amount < invoice.grand_total ? "Partially Paid" :
-        invoice.grand_total - invoice.paid_amount > 0 ? "Not Paid" :
-        invoice.due_date && new Date(invoice.due_date) < new Date() && invoice.paid_amount === 0 ? "Overdue" :
-        "Pending";
+    const status =
+        invoice.grand_total === invoice.paid_amount
+            ? "Fully Paid"
+            : invoice.paid_amount > 0 &&
+              invoice.paid_amount < invoice.grand_total
+            ? "Partially Paid"
+            : invoice.grand_total - invoice.paid_amount > 0
+            ? "Not Paid"
+            : invoice.due_date &&
+              new Date(invoice.due_date) < new Date() &&
+              invoice.paid_amount === 0
+            ? "Overdue"
+            : "Pending";
 
     return status;
 };
 
 const getStatusSeverity = (status) => {
     switch (status.toLowerCase()) {
-        case 'approved': return 'success';
-        case 'fully paid': return 'success';
-        case 'partially paid': return 'info';
-        case 'not paid': return 'warn';
-        case 'Overdue': return 'danger';
-        case 'Pending': return 'warn';
-        default: return 'info'; // Default in case no status is matched
+        case "approved":
+            return "success";
+        case "fully paid":
+            return "success";
+        case "partially paid":
+            return "info";
+        case "not paid":
+            return "warn";
+        case "Overdue":
+            return "danger";
+        case "Pending":
+            return "warn";
+        default:
+            return "info"; // Default in case no status is matched
     }
 };
 
 const sortedInvoices = computed(() => {
     // Filter invoices that have an invoice_no and sort by status
     return invoices
-        .filter(invoice => invoice.invoice_no) // Ensure the invoice has an invoice_no
+        .filter((invoice) => invoice.invoice_no) // Ensure the invoice has an invoice_no
         .sort((a, b) => {
             const statusOrder = {
-                'Overdue': 1,
-                'Not Paid': 2,
-                'Partially Paid': 3,
-                'Fully Paid': 5,
-                'Pending': 4
+                Overdue: 1,
+                "Not Paid": 2,
+                "Partially Paid": 3,
+                "Fully Paid": 5,
+                Pending: 4,
             };
 
             // Get the status of each invoice
@@ -473,9 +712,9 @@ const sortedInvoices = computed(() => {
 
             // If statuses are the same, compare by invoice_no (ascending order)
             // Handle cases where invoice_no might be null/undefined or not a string
-            const invoiceNoA = a.invoice_no?.toString() || '';
-            const invoiceNoB = b.invoice_no?.toString() || '';
-            
+            const invoiceNoA = a.invoice_no?.toString() || "";
+            const invoiceNoB = b.invoice_no?.toString() || "";
+
             return invoiceNoA.localeCompare(invoiceNoB);
         });
 });
@@ -488,15 +727,15 @@ const chartOptions = ref({
     plugins: {
         legend: {
             display: true,
-            position: 'top',
+            position: "top",
             labels: {
-                color: '#000'
-            }
+                color: "#000",
+            },
         },
         tooltip: {
-            mode: 'index',
-            intersect: false
-        }
+            mode: "index",
+            intersect: false,
+        },
     },
     scales: {
         x: {
@@ -521,10 +760,10 @@ const isDataLoaded = ref(false);
 const setChartData = () => {
     // Get the current date
     const currentDate = new Date();
-    
+
     // Get the last 6 months (from current date)
     const last6Months = [];
-    const months = new Set();  // To store unique months
+    const months = new Set(); // To store unique months
     const agreementsData = {};
     const quotationsData = {};
     const invoicesData = {};
@@ -532,13 +771,16 @@ const setChartData = () => {
 
     // Helper function to format date as "Month Year" (e.g., "Jan 2025")
     const formatMonthYear = (date) => {
-        return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+        return date.toLocaleString("default", {
+            month: "short",
+            year: "numeric",
+        });
     };
 
     // Generate the last 6 months dynamically
     for (let i = 0; i < 12; i++) {
         const monthDate = new Date();
-        monthDate.setMonth(currentDate.getMonth() - i);  // Move back one month at a time
+        monthDate.setMonth(currentDate.getMonth() - i); // Move back one month at a time
         last6Months.push(formatMonthYear(monthDate)); // Store month in "Month Year" format
     }
 
@@ -549,9 +791,9 @@ const setChartData = () => {
 
         // Only include the last 6 months
         if (last6Months.includes(monthYear)) {
-            months.add(monthYear);  // Add the month to the set to ensure it's unique
+            months.add(monthYear); // Add the month to the set to ensure it's unique
             if (!agreementsData[monthYear]) agreementsData[monthYear] = 0;
-            agreementsData[monthYear] += 1;  // Increment the count for agreements
+            agreementsData[monthYear] += 1; // Increment the count for agreements
         }
     });
 
@@ -560,10 +802,11 @@ const setChartData = () => {
         const date = new Date(quotation.created_at);
         const monthYear = formatMonthYear(date);
 
-        if (last6Months.includes(monthYear)) {  // Within last 6 months
-            months.add(monthYear);  // Add the month to the set to ensure it's unique
+        if (last6Months.includes(monthYear)) {
+            // Within last 6 months
+            months.add(monthYear); // Add the month to the set to ensure it's unique
             if (!quotationsData[monthYear]) quotationsData[monthYear] = 0;
-            quotationsData[monthYear] += 1;  // Increment the count for quotations
+            quotationsData[monthYear] += 1; // Increment the count for quotations
         }
     });
 
@@ -571,10 +814,11 @@ const setChartData = () => {
         const date = new Date(receipt.created_at);
         const monthYear = formatMonthYear(date);
 
-        if (last6Months.includes(monthYear)) {  // Within last 6 months
-            months.add(monthYear);  // Add the month to the set to ensure it's unique
+        if (last6Months.includes(monthYear)) {
+            // Within last 6 months
+            months.add(monthYear); // Add the month to the set to ensure it's unique
             if (!receiptDate[monthYear]) receiptDate[monthYear] = 0;
-            receiptDate[monthYear] += 1;  // Increment the count for quotations
+            receiptDate[monthYear] += 1; // Increment the count for quotations
         }
     });
 
@@ -583,10 +827,11 @@ const setChartData = () => {
         const date = new Date(invoice.created_at);
         const monthYear = formatMonthYear(date);
 
-        if (last6Months.includes(monthYear)) {  // Within last 6 months
-            months.add(monthYear);  // Add the month to the set to ensure it's unique
+        if (last6Months.includes(monthYear)) {
+            // Within last 6 months
+            months.add(monthYear); // Add the month to the set to ensure it's unique
             if (!invoicesData[monthYear]) invoicesData[monthYear] = 0;
-            invoicesData[monthYear] += 1;  // Increment the count for invoices
+            invoicesData[monthYear] += 1; // Increment the count for invoices
         }
     });
 
@@ -594,7 +839,7 @@ const setChartData = () => {
     const sortedMonths = last6Months.sort((a, b) => {
         const dateA = new Date(a);
         const dateB = new Date(b);
-        return dateA - dateB;  // Sort by date
+        return dateA - dateB; // Sort by date
     });
 
     // Ensure each dataset has data for each of the last 6 months, even if it's missing some
@@ -602,19 +847,19 @@ const setChartData = () => {
 
     // Fill missing months with 0 if no data for that month
     const fillMissingData = (data, months) => {
-        return months.map(month => {
-            return data[month] || 0;  // If the month is missing, return 0
+        return months.map((month) => {
+            return data[month] || 0; // If the month is missing, return 0
         });
     };
 
     return {
-        labels: monthLabels,  // Dynamic labels (months)
+        labels: monthLabels, // Dynamic labels (months)
         datasets: [
             {
                 type: "bar",
                 label: "Agreements",
                 backgroundColor: "#10b981",
-                data: fillMissingData(agreementsData, monthLabels),  // Fill missing months with 0
+                data: fillMissingData(agreementsData, monthLabels), // Fill missing months with 0
             },
             {
                 type: "bar",
@@ -647,11 +892,14 @@ onMounted(() => {
     }
 });
 
-watch(() => [...transactions], (newVal) => {
-    chartData.value = setChartData();
-}, { deep: true });
+watch(
+    () => [...transactions],
+    (newVal) => {
+        chartData.value = setChartData();
+    },
+    { deep: true }
+);
 </script>
-
 
 <style scoped>
 .grid {
@@ -662,12 +910,12 @@ watch(() => [...transactions], (newVal) => {
 .card-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #4A4A4A;
+    color: #4a4a4a;
 }
 .card-value {
     font-size: 2rem;
     font-weight: 700;
-    color: #2D3748;
+    color: #2d3748;
 }
 ::v-deep(.p-dropdown-item) {
     position: relative;

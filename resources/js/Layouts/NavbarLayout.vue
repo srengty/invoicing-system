@@ -39,12 +39,21 @@ import SplitButton from "primevue/splitbutton";
 import Avatar from "primevue/avatar";
 
 const page = usePage();
+
 const rolesArray = computed(() => page.props.roles || []);
-const rolesString = computed(() =>
-    rolesArray.value
-        .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
-        .join(", ")
-);
+const rolesString = computed(() => {
+    if (rolesArray.value.length === 0) return "No role assigned";
+
+    return rolesArray.value
+        .map((role) => {
+            return role
+                .replace(/[-_]/g, " ")
+                .split(" ")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ");
+        })
+        .join(", ");
+});
 const userName = computed(() => rolesString.value || "No role assigned");
 const userAvatar =
     "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
@@ -90,7 +99,7 @@ onMounted(() => {
 
 const menuItems = [
     {
-        label: rolesString.value || "No role assigned",
+        label: page.props.user?.name || rolesString.value,
         icon: "pi pi-user",
         command: () => {
             Inertia.get(route("profile.show"));

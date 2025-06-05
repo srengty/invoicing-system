@@ -95,9 +95,14 @@ class AuthenticatedSessionController extends Controller
             // 10) Store the external API token & the normalized roles array in session
             $request->session()->put('api_token', $payload['access_token']);
             $request->session()->put('roles', $normalizedRoles);
-
+            $request->session()->get("roles");
             // 11) Regenerate session ID for security
             $request->session()->regenerate();
+
+            $request->session()->put('user', [
+                'name' => $extUserData['name'] ?? $extUserData['email'],
+                'email' => $extUserData['email'],
+            ]);
 
             // 12) Redirect to “dashboard” (or whatever route you’ve named)
             return redirect()->route('dashboard');

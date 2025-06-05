@@ -1,11 +1,10 @@
 <template>
     <Head title="Invoices" />
     <GuestLayout>
-        <NavbarLayout />
-
+        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
         <!-- Breadcrumb -->
-        <div class="py-0 dark:bg-[#1d1d1d]">
-            <Breadcrumb :model="items" class="border-none bg-transparent p-0 ">
+        <div class="py-0 dark:bg-[#1d1d1d] mt-16">
+            <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link
                         :href="item.to"

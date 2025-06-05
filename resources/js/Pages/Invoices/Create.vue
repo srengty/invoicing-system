@@ -2,8 +2,8 @@
     <meta name="_token" content="{{ csrf_token() }}" />
     <Head title="Create Invoice" />
     <GuestLayout>
-        <NavbarLayout />
-        <div class="py-3">
+        <NavbarLayout  class="fixed top-0 z-50 w-5/6 pr-3"/>
+        <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link

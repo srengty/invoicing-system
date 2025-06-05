@@ -2,9 +2,9 @@
     <Head title="Quotations" />
     <meta name="_token" content="{{ csrf_token() }}" />
     <GuestLayout>
-        <NavbarLayout />
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
-        <div class="px-4 py-3 mt-4">
+        <div class="px-4 py-3 mt-8">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link
@@ -629,6 +629,7 @@ const clearFilters = () => {
 
 // The Breadcrumb Quotations
 const page = usePage();
+console.log(page.props.userRoles);
 const items = computed(() => [
     {
         label: "",

@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
 use App\Models\Agreement;
+use App\Models\Quotation;
+use App\Models\Invoice;
+use App\Models\Product;
 use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,10 +36,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Inertia::share([
+            "userRoles"=> session()->get("roles",[]),
             'dueAgreementsCount' => function () {
-                if (auth()->check()) { // Only calculate if user is logged in
+                if (auth()->check()) {
                     $today = Carbon::now()->startOfDay();
-                    $thresholdDays = 13;
+                    $thresholdDays = 14;
 
                     return Agreement::with('paymentSchedules')
                         ->whereHas('paymentSchedules', function ($query) use ($today, $thresholdDays) {
@@ -61,7 +65,25 @@ class AppServiceProvider extends ServiceProvider
                         ->count();
                 }
                 return 0;
-            }
+            },
+            'pendingQuotationsCount' => function () {
+                if (auth()->check()) {
+                    return Quotation::where('status', 'Pending')->count();
+                }
+                return 0;
+            },
+            'pendingInvoicesCount' => function () {
+                if (auth()->check()) {
+                    return Invoice::where('status', 'Pending')->count();
+                }
+                return 0;
+            },
+            'pendingItemsCount' => function () {
+                if (auth()->check()) {
+                    return Product::where('status', 'Pending')->count();
+                }
+                return 0;
+            },
         ]);
     }
 }

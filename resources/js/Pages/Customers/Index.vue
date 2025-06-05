@@ -8,9 +8,9 @@
     />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
-        <NavbarLayout />
+        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
         <!-- PrimeVue Breadcrumb -->
-        <div class="py-3">
+        <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link

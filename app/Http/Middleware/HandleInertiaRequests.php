@@ -39,10 +39,8 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         return array_merge(parent::share($request), [
-            // Other “shared” props you already had…
-
-            // Now share the “roles” from session, so every Inertia page can see it:
-            'roles' => fn () => $request->session()->get('roles', []),
+            'user' => $request->session()->get('user'),
+            'roles' => $request->session()->get('roles', []),
         ]);
     }
 }
