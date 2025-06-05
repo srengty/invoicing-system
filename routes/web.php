@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerCategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceCommentController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
@@ -46,7 +47,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
 // 1) Dashboard for Directors only
 Route::middleware(['auth', 'check.role:Director'])
      ->get('/dashboard/director', function () {
-         return Inertia::render('Welcome', [
+         return Inertia::render('Dashboard', [
              'userRoles' => request()->session()->get('roles', []),
          ]);
      })
@@ -55,7 +56,7 @@ Route::middleware(['auth', 'check.role:Director'])
 // 2) Dashboard for Division Staff only
 Route::middleware(['auth', 'check.role:Division Staff'])
      ->get('/dashboard/division-staff', function () {
-         return Inertia::render('Welcome', [
+         return Inertia::render('Dashboard', [
              'userRoles' => request()->session()->get('roles', []),
          ]);
      })
@@ -64,7 +65,7 @@ Route::middleware(['auth', 'check.role:Division Staff'])
 // 3) Dashboard for Chef Department only
 Route::middleware(['auth', 'check.role:Chef Department'])
      ->get('/dashboard/chef-department', function () {
-         return Inertia::render('Welcome', [
+         return Inertia::render('Dashboard', [
              'userRoles' => request()->session()->get('roles', []),
          ]);
      })
@@ -73,7 +74,7 @@ Route::middleware(['auth', 'check.role:Chef Department'])
 // 4) Dashboard for Revenue Manager only
 Route::middleware(['auth', 'check.role:Revenue Manager'])
      ->get('/dashboard/revenue-manager', function () {
-         return Inertia::render('Welcome', [
+         return Inertia::render('Dashboard', [
              'userRoles' => request()->session()->get('roles', []),
          ]);
      })
@@ -82,7 +83,7 @@ Route::middleware(['auth', 'check.role:Revenue Manager'])
 // 5) Generic Dashboard (any authenticated & verified user lands here by default)
 Route::middleware(['auth', 'verified'])
      ->get('/dashboard', function () {
-         return Inertia::render('Welcome');
+         return Inertia::render('Dashboard');
      })
      ->name('dashboard');
 
@@ -174,6 +175,8 @@ Route::get('/settings/product-categories', [ProductCategoryController::class, 'i
 // routes/api.php
 Route::post('/quotations/send',[QuotationController::class, 'sendQuotation'])->name('quotations.send');
 Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // Route::get('/dashboard', function () {
 //     return Inertia::render('Welcome');

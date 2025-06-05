@@ -1,13 +1,13 @@
 <template>
     <div class="surface-ground">
         <div class="grid">
-            <div class="flex justify-between items-center">
+            <!-- Header Section with Filters -->
+            <div class="flex justify-between items-center mb-5">
                 <div>
-                    <h1 class="text-md font-medium text-gray-400 mb-5">
-                       
-                    </h1>
+                    <h1 class="text-md font-medium text-gray-400">Dashboard</h1>
                 </div>
-                <div class="flex">
+                <div class="flex gap-4">
+                    <!-- Currency Selector -->
                     <Select
                         v-model="selectedLanguage"
                         :options="languageOptions"
@@ -16,6 +16,8 @@
                         class="w-full md:w-30 h-9"
                         size="small"
                     />
+
+                    <!-- Period Selector -->
                     <SelectButton
                         v-model="selectedPeriod"
                         :options="periodOptions"
@@ -24,6 +26,8 @@
                         class="w-full md:w-30 h-9"
                         size="small"
                     />
+
+                    <!-- Time Range Selector -->
                     <Select
                         v-model="selectedTimeRange"
                         :options="timeRanges"
@@ -33,26 +37,20 @@
                         size="small"
                     >
                         <template #value="slotProps">
-                            <div
-                                v-if="slotProps.value"
-                                class="flex item-center w-full md:w-44 text-sm"
-                            >
-                                <div>
-                                    <i class="pi pi-calendar mr-2 text-sm"></i>
-                                </div>
-                                <div class="text-sm">
-                                    {{ slotProps.value.label }}
-                                </div>
+                            <div v-if="slotProps.value" class="flex items-center text-sm">
+                                <i class="pi pi-calendar mr-2"></i>
+                                <span>{{ slotProps.value.label }}</span>
                             </div>
-                            <span v-else>
-                                {{ slotProps.placeholder }}
-                            </span>
+                            <span v-else>{{ slotProps.placeholder }}</span>
                         </template>
                     </Select>
                 </div>
             </div>
+
+            <!-- Main Content Layout -->
             <div class="flex gap-6 w-full mt-6">
-                <div class="col-12 w-1/3 shadow-md">
+                <!-- Recent Transactions Section -->
+                <div class="col-12 md:w-1/3 shadow-md">
                     <div class="text-lg font-semibold border-b-4 p-4">
                         Recent Transactions
                     </div>
@@ -61,28 +59,23 @@
                             <div
                                 v-for="transaction in transactions"
                                 :key="transaction.label"
-                                class="flex justify-between text-gray-500 align-items-center p-2 border-bottom-1 surface-border border-b-2"
+                                class="flex justify-between text-gray-500 items-center p-2 border-b-2 border-b-gray-200"
                             >
-                                <span class="text-600 font-medium">{{
-                                    transaction.label
-                                }}</span>
-                                <span class="text-900 font-semibold"
-                                    >៛ {{ transaction.value }}</span
-                                >
+                                <span class="text-600 font-medium">{{ transaction.label }}</span>
+                                <span class="text-900 font-semibold">៛ {{ transaction.value }}</span>
                             </div>
                         </div>
-                        <div
-                            class="flex justify-between align-items-center p-3 surface-100 border-round"
-                        >
-                            <span class="text-600 font-medium"
-                                >Total Invoices Outstanding</span
-                            >
-                            <span class="text-900 font-bold">៛0</span>
+                        <!-- Total Outstanding Section -->
+                        <div class="flex justify-between items-center p-3 bg-gray-50 border-round">
+                            <span class="text-600 font-medium">Total Invoices Outstanding</span>
+                            <span class="text-900 font-bold">៛ {{ totalOutstanding }}</span>
                         </div>
                     </div>
                 </div>
-                <div class="w-2/3">
-                    <!-- <VerticalBar /> -->
+
+                <!-- Chart Section -->
+                <div class="md:w-2/3">
+                    <!-- Replace with your actual chart component -->
                     <StackedBar />
                 </div>
             </div>
@@ -91,20 +84,25 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { Head, Link } from "@inertiajs/vue3";
-import { Card, Button, SelectButton, Select } from "primevue";
-import VerticalBar from "../../Layouts/Charts/VerticalBar.vue";
-import StackedBar from "../../Layouts/Charts/StackedBar.vue";
+import { ref, onMounted } from "vue";
 import { usePage } from "@inertiajs/vue3";
+import { Select, SelectButton } from "primevue";
+import StackedBar from "../../Layouts/Charts/StackedBar.vue";
 
-const transactions = ref([
-    { label: "Invoices", value: "0.00" },
-    { label: "Payments", value: "0.00" },
-    { label: "Expenses", value: "0.00" },
-    { label: "Outstanding", value: "0.00" },
-]);
+// Fetch data from Inertia page props
+const { dashboardData } = usePage().props;
 
+// Transactions Data
+const transactions = ref([]);
+const totalOutstanding = ref("0.00");
+
+// Populate data when component is mounted
+onMounted(() => {
+    transactions.value = dashboardData.transactions;
+    totalOutstanding.value = dashboardData.totalOutstanding;
+});
+
+// Selected Period Options
 const selectedPeriod = ref({ name: "Day", value: "Day" });
 const periodOptions = ref([
     { name: "Day", value: "Day" },
@@ -112,12 +110,14 @@ const periodOptions = ref([
     { name: "Month", value: "Month" },
 ]);
 
+// Language Options (Currency)
 const selectedLanguage = ref({ name: "KHR", code: "KHR" });
 const languageOptions = ref([
     { name: "USD", code: "USD" },
     { name: "KHR", code: "KHR" },
 ]);
 
+// Time Range Selector Options
 const selectedTimeRange = ref();
 const timeRanges = ref([
     { label: "Last 7 Days", value: "7days", count: 6 },
@@ -128,7 +128,9 @@ const timeRanges = ref([
     { label: "Last Year", value: "lastyear" },
 ]);
 </script>
+
 <style scoped>
+/* Custom dropdown item styling for badge */
 ::v-deep(.p-dropdown-item) {
     position: relative;
 }
@@ -144,5 +146,28 @@ const timeRanges = ref([
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
+}
+
+/* Additional custom styling for the grid */
+.grid {
+    display: grid;
+    gap: 16px;
+}
+
+.flex {
+    display: flex;
+    gap: 16px;
+}
+
+.text-600 {
+    color: #4a4a4a;
+}
+
+.text-900 {
+    color: #1e293b;
+}
+
+.bg-gray-50 {
+    background-color: #f9fafb;
 }
 </style>

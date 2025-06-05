@@ -8,56 +8,93 @@ use App\Models\Quotation;
 use App\Models\Agreement;
 use App\Models\Invoice;
 use App\Models\Receipt;
-use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
+use App\Models\PaymentSchedule;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index(): JsonResponse
+    public function index()
     {
-        try {
-            $data = [
-                'customers' => Customer::select(['id', 'code', 'name', 'credit_period', 'customer_category_id', 'created_at'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
+        // Fetching related data: customers, products, quotations, agreements, invoices, and receipts
+        $data = [
+            'customers' => Customer::orderBy('created_at', 'desc')->get(),
+            'products' => Product::orderBy('created_at', 'desc')->get(),
+            'quotations' => Quotation::with(['customer', 'products','comments','latestComment'])->orderBy('created_at', 'desc')->get(),
+            'agreements' => Agreement::with(['customer'])->orderBy('created_at', 'desc')->get(),
+            'invoices' => Invoice::with(['customer',])->orderBy('created_at', 'desc')->get(),
+            'receipts' => Receipt::with(['customer',])->orderBy('created_at', 'desc')->get(),
+        ];
 
-                'items' => Product::select(['id', 'code', 'name', 'unit', 'price', 'created_at'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
+        // Get the created_at dates for the respective models to use in charts
+        $quotationDates = $data['quotations']->pluck('created_at')->map(function ($date) {
+            return Carbon::parse($date)->format('Y-m-d');
+        });
 
-                'quotations' => Quotation::with(['customer:id,name'])
-                    ->select(['id', 'quotation_no', 'customer_id', 'total as amount', 'status', 'created_at'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
+        $agreementDates = $data['agreements']->pluck('created_at')->map(function ($date) {
+            return Carbon::parse($date)->format('Y-m-d');
+        });
 
-                'agreements' => Agreement::with(['customer:id,name'])
-                    ->select(['agreement_no', 'customer_id', 'amount', 'status', 'created_at'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
+        $invoiceDates = $data['invoices']->pluck('created_at')->map(function ($date) {
+            return Carbon::parse($date)->format('Y-m-d');
+        });
 
-                'invoices' => Invoice::with(['customer:id,name'])
-                    ->select(['id', 'invoice_no', 'customer_id', 'grand_total as amount', 'status', 'created_at'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
+        $receiptDates = $data['receipts']->pluck('created_at')->map(function ($date) {
+            return Carbon::parse($date)->format('Y-m-d');
+        });
 
-                'receipts' => Receipt::with(['customer:id,name'])
-                    ->select(['receipt_no', 'customer_id', 'paid_amount', 'payment_method', 'created_at'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(10)
-                    ->get(),
-            ];
+        // Calculate the total paid amounts for invoices, receipts, and payment schedules
+        $invoicePaidAmount = Invoice::sum('paid_amount');
+        $receiptPaidAmount = Receipt::sum('paid_amount');
+        $paymentSchedulePaidAmount = PaymentSchedule::sum('paid_amount');
 
-            return response()->json($data);
+        // Calculate the total outstanding amount (grand total minus paid amount)
+        $totalOutstanding = $this->getTotalOutstanding();
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Failed to load dashboard data',
-                'message' => $e->getMessage()
-            ], 500);
-        }
+        // Prepare transactions data to show on the dashboard
+        $transactions = [
+            ['label' => 'Invoices', 'value' => $invoicePaidAmount],
+            ['label' => 'Receipts', 'value' => $receiptPaidAmount],
+            ['label' => 'Payment Schedules', 'value' => $paymentSchedulePaidAmount],
+        ];
+
+        // Pass all the required data to the Inertia view (Dashboard.vue)
+        return Inertia::render('Dashboard', [
+            ...$data, // Spread the data array to include customers, products, quotations, etc.
+            'transactions' => $transactions, // Pass the transaction summary for display
+            'totalOutstanding' => $totalOutstanding, // Pass the total outstanding invoices
+            'quotationDates' => $quotationDates, // Pass quotation created_at dates for chart
+            'agreementDates' => $agreementDates, // Pass agreement created_at dates for chart
+            'invoiceDates' => $invoiceDates, // Pass invoice created_at dates for chart
+            'receiptDates' => $receiptDates, // Pass receipt created_at dates for chart
+        ]);
+    }
+
+    /**
+     * Method to calculate the total outstanding invoices
+     *
+     * @return float Total outstanding invoices
+     */
+    private function getTotalOutstanding()
+    {
+        // Calculate total outstanding amount: sum of grand_total minus sum of paid_amount
+        return Invoice::sum('grand_total') - Invoice::sum('paid_amount');
+    }
+
+
+    /**
+     * Optionally, you can add more methods for fetching aggregated data by month, quarter, etc.
+     * Example: Fetch the count of new invoices, agreements, or quotations for each month
+     */
+    private function getMonthlyData()
+    {
+        // Example: Fetch count of new invoices by month
+        $monthlyInvoices = Invoice::selectRaw('MONTH(created_at) as month, count(*) as total')
+            ->groupBy('month')
+            ->get()
+            ->pluck('total', 'month')
+            ->toArray();
+        
+        return $monthlyInvoices;
     }
 }
