@@ -3,7 +3,7 @@
         <Toolbar class="p-4">
             <template #start>
                 <div class="flex items-center gap-8">
-                    <h1 class="text-xl font-bold m-0">
+                    <h1 class="text-lg font-bold m-0">
                         {{ pageTitle }}
                     </h1>
                 </div>
@@ -13,14 +13,15 @@
                 <SplitButton
                     :label="userName"
                     :model="menuItems"
-                    class="p-button-rounded"
+                    dropdownIcon="pi pi-cog"
+                    class="p-button-rounded font-bold text-xs"
                     size="small"
                     outlined
                 >
                     <template #icon>
                         <Avatar
                             :image="userAvatar"
-                            style="width: 30px; height: 30px"
+                            style="width: 24px; height: 24px"
                             shape="circle"
                         />
                     </template>
@@ -92,6 +93,7 @@ const menuItems = [
     {
         label: rolesString.value || "No role assigned",
         icon: "pi pi-user",
+        class: "font-bold text-sm ",
         command: () => {
             Inertia.get(route("profile.show"));
         },
@@ -100,6 +102,7 @@ const menuItems = [
     {
         label: "Light Theme",
         icon: "pi pi-sun",
+        class: "font-bold text-sm",
         command: () => {
             applyTheme("light");
         },
@@ -107,6 +110,7 @@ const menuItems = [
     {
         label: "Dark Theme",
         icon: "pi pi-moon",
+        class: "font-bold text-sm",
         command: () => {
             applyTheme("dark");
         },
@@ -114,14 +118,16 @@ const menuItems = [
     {
         label: "System Theme",
         icon: "pi pi-desktop",
+        class: "font-bold text-sm",
         command: () => {
             applyTheme("system");
         },
     },
     { separator: true },
     {
-        label: "Logout",
+        label: "Sign Out",
         icon: "pi pi-sign-out",
+        class: "font-bold text-sm",
         command: () => {
             Inertia.post(route("logout"));
         },

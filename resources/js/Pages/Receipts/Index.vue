@@ -167,104 +167,114 @@
                 class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 m-4 mt-0"
             >
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="invoice_no">Invoice No</label>
                         <input
                             v-model="selectedReceipt.invoice_no"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="receipt_no">Receipt No</label>
                         <input
                             v-model="selectedReceipt.receipt_no"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="receipt_date">Date</label>
                         <!-- Format date using a computed property or method, but bind to the raw value -->
                         <input
                             :value="formatDate(selectedReceipt.receipt_date)"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="customer_code">Customer Code</label>
                         <input
                             v-model="selectedReceipt.customer.code"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="customer_name">Customer Name</label>
                         <input
                             v-model="selectedReceipt.customer.name"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="purpose">Purpose</label>
                         <input
                             v-model="selectedReceipt.purpose"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="paid_amount">Amount Paid</label>
                         <input
                             :value="formatCurrency(selectedReceipt.paid_amount)"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="amount_in_words">Amount in Words</label>
                         <input
                             v-model="selectedReceipt.amount_in_words"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="payment_method">Payment Method</label>
                         <input
                             v-model="selectedReceipt.payment_method"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>
                 </div>
                 <div class="">
-                    <div class="grid">
+                    <div class="grid text-sm">
                         <label for="payment_reference_no"
                             >Payment Reference No</label
                         >
                         <input
                             v-model="selectedReceipt.payment_reference_no"
-                            class="p-inputtext p-component"
+                            class="p-inputtext p-component w-50 max-h-8"
+                            size="small"
                             disabled
                         />
                     </div>

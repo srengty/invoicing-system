@@ -17,7 +17,7 @@ import MainNavTree from "./MainNavTree.vue";
                 <div
                     class="flex flex-col items-center justify-center py-2 pb-5 mb-3"
                 >
-                    <Link href="/">
+                    <Link href="/dashboard">
                         <img src="/logo.png" alt="Logo" class="h-20 w-20" />
                     </Link>
                     <div class="text-sm">

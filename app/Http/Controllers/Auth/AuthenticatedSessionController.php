@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
     {
         $credentials = $request->validate([
             'email'    => ['required', 'email'],
-            'password' => ['required', 'string', 'min:12'],
+            'password' => ['required', 'string', 'min:6'],
         ]);
 
         $apiBase  = rtrim(config('services.external_auth.base_url'), '/');

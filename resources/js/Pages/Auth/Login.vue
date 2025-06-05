@@ -137,8 +137,8 @@ const validateForm = () => {
     } else {
         form.errors.email = "";
     }
-    if (!form.password || form.password.length < 12) {
-        form.errors.password = "Please enter a password (min 12 characters).";
+    if (!form.password || form.password.length < 6) {
+        form.errors.password = "Please enter a password (min 6 characters).";
         valid = false;
     } else {
         form.errors.password = "";
