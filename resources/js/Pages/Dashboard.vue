@@ -102,7 +102,7 @@
                         <!-- Main Content Layout -->
                         <div class="flex gap-6 w-full mt-6">
                             <!-- Recent Transactions Section -->
-                            <div class="col-12 md:w-1/3 shadow-md">
+                            <div class="col-12 md:w-1/3 border rounded-lg shadow-lg">
                                 <div class="text-lg font-semibold border-b-4 p-4">
                                     Recent Transactions
                                 </div>
@@ -123,7 +123,7 @@
 
                             <!-- Chart Section -->
                             <div class="md:w-2/3">
-                                <div class="shadow-md">
+                                <div class="border rounded-lg shadow-lg p-6">
                                    <Chart
                                         type="bar"
                                         :data="chartData"
@@ -139,7 +139,7 @@
 
             <div class="mt-6">
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="customers.slice(0, 5)"
                             scrollable
@@ -162,7 +162,7 @@
                     </div>
 
                     <!-- Items Table -->
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="products.slice(0, 5)"
                             scrollable
@@ -190,7 +190,7 @@
                 </div>
                 
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="quotations.slice(0, 5)"
                             scrollable
@@ -228,7 +228,7 @@
                         </DataTable>
                     </div>
 
-                    <div class="card-style shadow-md border-2 w-1/2 p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
                         <DataTable
                             :value="receipts.slice(0, 5)"
                             scrollable
@@ -268,7 +268,7 @@
 
                 <div class="flex mb-6 gap-4">
                     <!-- Agreements Table -->
-                    <div class="card-style shadow-md border-2 w-full p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-full p-4">
                         <DataTable
                             :value="agreements.slice(0, 5)"
                             scrollable
@@ -304,7 +304,7 @@
                 </div>
 
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style shadow-md border-2 w-full p-4">
+                    <div class="card-style border rounded-lg shadow-lg w-full p-4">
                         <DataTable
                             :value="sortedInvoices"
                             scrollable
