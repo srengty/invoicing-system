@@ -20,6 +20,8 @@ use Carbon\Carbon;  // Import Carbon for date manipulation
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\InvoiceEmail;
+use App\Models\InvoiceHdComment;
+use App\Models\InvoiceRmComment;
 use Illuminate\Support\Facades\DB;
 
 use Exception;
@@ -70,6 +72,8 @@ class InvoiceController extends Controller
         $validated = Validator::make($request->all(), [
             'invoice_no' => 'nullable|unique:invoices,invoice_no',
             'status' => 'required|string|in:Pending,Approved,Revise',
+            'hdStatus' => 'required|string|in:Pending,Approved,Revise',
+            'rmStatus' => 'required|string|in:Pending,Approved,Revise',
             'agreement_no' => 'nullable|integer|exists:agreements,agreement_no',
             'quotation_no' => 'nullable|integer|exists:quotations,quotation_no',
             'customer_id' => 'required|exists:customers,id',
@@ -119,20 +123,6 @@ class InvoiceController extends Controller
         }
 
         $data = $validated->validated();
-
-        // Validate payment schedules belong to same customer
-        // if (!empty($data['payment_schedules'])) {
-        //     $scheduleCustomerIds = PaymentSchedule::whereIn('id', collect($data['payment_schedules'])->pluck('id'))
-        //         ->pluck('customer_id')
-        //         ->unique()
-        //         ->toArray();
-
-        //     if (count($scheduleCustomerIds) > 1 || (isset($scheduleCustomerIds[0]) && $scheduleCustomerIds[0] != $data['customer_id'])) {
-        //         return redirect()->back()
-        //             ->withErrors(['payment_schedules' => 'All payment schedules must belong to the same customer as the invoice.'])
-        //             ->withInput();
-        //     }
-        // }
 
         // Format dates
         $startDate = !empty($data['start_date']) && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $data['start_date'])
@@ -209,6 +199,8 @@ class InvoiceController extends Controller
             'currency' => $data['currency'] ?? 'KHR',
             'invoice_date' => $data['status'] === 'Approved' ? now() : null,
             'status' => $data['status'],
+            'hdStatus' => $data['hdStatus'],
+            'rmStatus' => $data['rmStatus'],
             'paid_amount' => $paid_amount,
             'installment_paid' => $installment_paid,
             'receipt_no' => $data['receipt_no'] ?? null,
@@ -298,6 +290,77 @@ class InvoiceController extends Controller
         ]);
     }
 
+    public function updateStatusHD(Request $request, Invoice $invoice)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'status' => 'required|string|in:approved,revise,pending',
+            'comment' => 'nullable|string|max:1000',
+            'role' => 'nullable|string', // optional
+        ]);
+
+        // If there is a comment, create an invoice comment for HD
+        if (!empty($validated['comment'])) {
+            \App\Models\InvoiceHdComment::create([
+                'invoice_id' => $invoice->id,
+                'status' => $validated['status'],
+                'comment' => $validated['comment'],
+            ]);
+        }
+
+        // Update the invoice with the new HD status
+        if ($invoice) {
+            $invoice->update([
+                'hdStatus' => $validated['status'],  // Update the hdStatus column
+            ]);
+        }
+
+        // If HD is approved, proceed without dialog for RM
+        if ($validated['status'] === 'approved') {
+            return redirect()->route('invoices.list')->with('success', 'Invoice HD status updated successfully. RM approval can proceed.');
+        }
+
+        return redirect()->route('invoices.list')->with('success', 'Invoice HD status updated successfully.');
+    }
+
+    public function updateStatusRM(Request $request, Invoice $invoice)
+    {
+        // Validate the incoming request
+        $validated = $request->validate([
+            'status' => 'required|string|in:approved,revise,pending',
+            'comment' => 'nullable|string|max:1000',
+            'role' => 'nullable|string', // optional
+        ]);
+
+        // Check if the HD status is approved (only proceed if HD is approved)
+        $hdComment = \App\Models\InvoiceHdComment::where('invoice_id', $invoice->id)
+            ->orderBy('created_at', 'desc') // Get the latest comment
+            ->first();
+
+        // If HD status is not approved, show an error message
+        if ($hdComment && $hdComment->status !== 'approved') {
+            return redirect()->route('invoices.list')->with('error', 'Cannot update RM status. HD status must be approved first.');
+        }
+
+        // If the status is 'approved', handle the RM comment
+        if ($validated['status'] === 'approved' && !empty($validated['comment'])) {
+            \App\Models\InvoiceRmComment::create([
+                'invoice_id' => $invoice->id,
+                'status' => $validated['status'],
+                'comment' => $validated['comment'],
+            ]);
+        }
+
+        // Update the invoice with the new RM status
+        if ($invoice) {
+            $invoice->update([
+                'rmStatus' => $validated['status'],  // Update the rmStatus column
+            ]);
+        }
+
+        return redirect()->route('invoices.list')->with('success', 'Invoice RM status updated successfully.');
+    }
+
     public function updateStatus(Request $request, Invoice $invoice)
     {
         // Validate the incoming request
@@ -310,8 +373,9 @@ class InvoiceController extends Controller
         // Update the status of the invoice
         $invoice->status = $validated['status'];
 
-        // When the invoice status is approved
+        // Check if the invoice status is 'approved'
         if ($invoice->status === 'approved') {
+
             // Generate the invoice number if it doesn't exist
             if (!$invoice->invoice_no) {
                 $year = date('Y');
@@ -330,26 +394,46 @@ class InvoiceController extends Controller
 
             // Set the customer status to 'Sent'
             $invoice->customer_status = 'Sent';
-
         }
 
-        // Save the updated invoice to the database
+        // Check if RM status is 'approved' before making the last step
+        if ($invoice->status === 'approved') {
+            // Get the latest InvoiceRmComment to check its status
+            $rmComment = \App\Models\InvoiceRmComment::where('invoice_id', $invoice->id)
+                ->orderBy('created_at', 'desc') // Get the latest comment
+                ->first();
+
+            if ($rmComment && $rmComment->status === 'approved') {
+                // Only proceed with the invoice update if RM status is approved
+                // Save the updated invoice to the database
+                $invoice->save();
+
+                // If there is a related receipt, update the receipt with the new invoice number
+                if ($invoice->receipt_no && $invoice->invoice_no) {
+                    Receipt::where('receipt_no', $invoice->receipt_no)
+                        ->update(['invoice_no' => $invoice->invoice_no]);
+                }
+
+                // If there is a comment, create a generic invoice comment
+                if (!empty($validated['comment'])) {
+                    \App\Models\InvoiceComment::create([
+                        'invoice_id' => $invoice->id,
+                        'status' => $validated['status'],
+                        'comment' => $validated['comment'],
+                    ]);
+                }
+
+                return redirect()->route('invoices.index')->with('success', 'Invoice status updated successfully.');
+            } else {
+                // If RM status is not 'approved', return an error message
+                return redirect()->route('invoices.index')->with('error', 'Cannot update invoice status. RM status must be approved first.');
+            }
+        }
+
+        // If the status isn't approved, just save without making any additional changes
         $invoice->save();
-        if ($invoice->receipt_no && $invoice->invoice_no) {
-            Receipt::where('receipt_no', $invoice->receipt_no)
-                ->update(['invoice_no' => $invoice->invoice_no]);
-        }
 
-        // If there is a comment, create an invoice comment
-        if (!empty($validated['comment'])) {
-            \App\Models\InvoiceComment::create([
-                'invoice_id' => $invoice->id,
-                'status' => $validated['status'],
-                'comment' => $validated['comment'],
-            ]);
-        }
-
-         return redirect()->route('invoices.index')->with('success', 'Invoice status updated successfully.');
+        return redirect()->route('invoices.index')->with('success', 'Invoice status updated successfully.');
     }
 
     // Show the list of invoices
@@ -374,10 +458,12 @@ class InvoiceController extends Controller
     public function list(Request $request)
     {
         // Initialize the query builder for the invoices
-        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments', 'paymentSchedules');
+        $query = Invoice::with('customer', 'agreement', 'quotation', 'products', 'customer_category', 'invoiceComments', 'paymentSchedules', 'hdComments', 'rmComments');
 
         // Apply pagination after all filters
         $invoices = $query->orderBy('created_at', 'desc')->paginate();
+        $hdComments = InvoiceHdComment::orderBy('created_at')->get();
+        $rmComments = InvoiceRmComment::orderBy('created_at')->get();
 
         // Get the filters for passing them to the view
         $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
@@ -386,6 +472,8 @@ class InvoiceController extends Controller
         return Inertia::render('Invoices/List', [
             'invoices' => $invoices,
             'filters' => $filters,
+            'hdComments' => $hdComments,
+            'rmComments' => $rmComments,
         ]);
     }
 
@@ -613,14 +701,12 @@ class InvoiceController extends Controller
         }
     }
 
-
     private function parseDate(?string $date, Carbon $fallback): string
     {
         return $date && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $date)
             ? Carbon::createFromFormat('d/m/Y', $date)->format('Y-m-d')
             : $fallback->format('Y-m-d');
     }
-
 
     // Delete an invoice
     public function destroy($id)

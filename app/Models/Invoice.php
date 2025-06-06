@@ -28,6 +28,8 @@ class Invoice extends Model
         'exchange_rate',
         'terms',
         'status',
+        'hdStatus',
+        'rmStatus',
         'installment_paid',
         'paid_amount',
         'receipt_no',
@@ -73,6 +75,16 @@ class Invoice extends Model
     public function invoiceComments()
     {
         return $this->hasMany(InvoiceComment::class);
+    }
+
+    public function hdComments()
+    {
+        return $this->hasMany(InvoiceHdComment::class);
+    }
+
+    public function rmComments()
+    {
+        return $this->hasMany(InvoiceRmComment::class);
     }
 
     public function invoices_product():HasMany
@@ -137,17 +149,6 @@ class Invoice extends Model
     {
         return $this->belongsToMany(Receipt::class, 'invoice_receipt', 'invoice_id', 'receipt_id');
     }
-
-
-    // In Invoice model
-    // public function updatePaidAmount()
-    // {
-    //     $this->paid_amount = $this->receipts()->sum('paid_amount');
-    //     $this->save();
-
-    //     // You might also want to update invoice status here
-    //     $this->updateStatus();
-    // }
 
 }
 

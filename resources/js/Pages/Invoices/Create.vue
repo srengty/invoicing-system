@@ -317,18 +317,6 @@
                 </DataTable>
 
                 <div class="pl-2 pr-6">
-                    <!-- <div
-                        v-if="form.installment_paid > 0"
-                        class="total-container mt-4 flex justify-between items-center"
-                    >
-                        <p class="font-bold">Installment Paid:</p>
-                        <p class="font-bold text-right">
-                            ៛{{ formatCurrency(form.installment_paid) }}
-                        </p>
-                    </div> -->
-
-                    <!-- Total KHR from all products -->
-
                     <div
                         class="total-container mt-4 flex justify-between items-center"
                     >
@@ -417,15 +405,6 @@
                     </div>
                 </div>
 
-                <!-- <div class="terms mt-4">
-          <h3 class="text-lg">Terms and Conditions</h3>
-          <p>Full payment is required upon quote acceptance.</p>
-          <p>This quote is negotiable for one (1) week from the date stated above.</p>
-        </div>
-        <div class="buttons mt-4 flex justify-end">
-          <Button label="Submit request for approval" icon="pi pi-check" class="p-button-success" @click="submitInvoice" />
-          <Button label="Cancel" class="p-button-secondary ml-2" @click="cancel" />
-        </div> -->
             </div>
             <div class="flex justify-end items-center p-3 mr-4">
                 <div class="flex gap-4">
@@ -674,6 +653,8 @@ const form = useForm({
     exchange_rate: "",
     invoice_date: new Date().toISOString(), // Send in ISO format
     status: "Pending",
+    hdStatus: "Pending",
+    rmStatus: "Pending",
     installment_paid: 0,
     paid_amount: 0,
     products: [],

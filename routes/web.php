@@ -128,6 +128,10 @@ Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invo
 Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
 Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'updateStatus'])
     ->name('invoices.updateStatus');
+Route::put('/invoices/{invoice}/update-status-hd', [InvoiceController::class, 'updateStatusHD'])
+    ->name('invoices.updateStatusHD');
+Route::put('/invoices/{invoice}/update-status-rm', [InvoiceController::class, 'updateStatusRM'])
+    ->name('invoices.updateStatusRM');
 Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
 
 // Receipts
