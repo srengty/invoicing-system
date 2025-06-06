@@ -90,7 +90,7 @@ class AuthenticatedSessionController extends Controller
             $normalizedRoles = collect($rawRoles)
                 ->pluck('name')             // ["Revenue Manager", …]
                 ->map(fn($r) => strtolower($r))
-                ->toArray();                // ["revenue manager", …]
+                ->toArray();          // ["revenue manager", …]
 
             // 10) Store the external API token & the normalized roles array in session
             $request->session()->put('api_token', $payload['access_token']);

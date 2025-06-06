@@ -1,7 +1,7 @@
 <template>
     <Head title="Invoices" />
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -39,6 +39,7 @@
                     />
 
                     <Button
+                        v-if="userPermissions.canIssueInvoices"
                         icon="pi pi-plus"
                         label="Issue Invoice"
                         size="small"
@@ -47,6 +48,7 @@
                     />
                     <Link :href="route('quotations.create')"
                         ><Button
+                            v-if="userPermissions.canIssueQuotation"
                             icon="pi pi-plus"
                             label="Issue Quotation"
                             size="small"
@@ -72,7 +74,6 @@
                 class="text-sm mt-8"
                 sortMode="single"
                 sortField="invoice_no"
-
             >
                 <Column
                     class=""
@@ -81,10 +82,14 @@
                     :field="col.field"
                     :header="col.header"
                     :sortable="col.sortable"
-                     style="width: 10%; font-size: 12px"
+                    style="width: 10%; font-size: 12px"
                 />
 
-                <Column field="grand_total" header="Amount" style="width: 10%; font-size: 12px">
+                <Column
+                    field="grand_total"
+                    header="Amount"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="{ data }">
                         <span
                             :class="{ 'text-blue-500': data.grand_total >= 0 }"
@@ -94,7 +99,11 @@
                     </template>
                 </Column>
 
-                <Column field="status" header="Status" style="width: 10%; font-size: 12px">
+                <Column
+                    field="status"
+                    header="Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <div class="flex">
                             <span
@@ -137,7 +146,12 @@
                     </template>
                 </Column>
 
-                <Column field="customer_status" header="Customer Status" style="width: 10%; font-size: 12px">
+                <Column
+                    v-if="userPermissions.canCustomerStatus"
+                    field="customer_status"
+                    header="Customer Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <span
                             @click="handleStatusClick(slotProps.data)"
@@ -182,10 +196,10 @@
 
                 <!-- Actions -->
                 <Column
-                    header="View / Edit / Print"
+                    header="Actions"
                     headerStyle="text-align: center"
                     bodyStyle="text-align: center"
-                     style="width: 10%; font-size: 12px"
+                    style="width: 5%; font-size: 12px"
                 >
                     <template #body="{ data }">
                         <div class="flex gap-2 justify-center">
@@ -198,17 +212,20 @@
                                 size="small"
                                 outlined
                             />
+                            <div v-if="userPermissions.canEditInvoices">
+                                <Button
+                                    v-if="canEditInvoice(data)"
+                                    icon="pi pi-pencil"
+                                    aria-label="Edit"
+                                    severity="warning"
+                                    class="custom-button"
+                                    @click="editInvoice(data)"
+                                    size="small"
+                                    outlined
+                                />
+                            </div>
                             <Button
-                                v-if="canEditInvoice(data)"
-                                icon="pi pi-pencil"
-                                aria-label="Edit"
-                                severity="warning"
-                                class="custom-button"
-                                @click="editInvoice(data)"
-                                size="small"
-                                outlined
-                            />
-                            <Button
+                                v-if="userPermissions.canPrintInvoices"
                                 icon="pi pi-print"
                                 aria-label="Print"
                                 @click="printInvoice(data.id)"
@@ -507,6 +524,30 @@ const props = defineProps({
 
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canIssueInvoices: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canIssueQuotation: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canCustomerStatus: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canEditInvoices: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+        canPrintInvoices: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     { label: "", to: "/dashboard", icon: "pi pi-home" },
     { label: page.props.title || "Invoices", to: route("invoices.list") },
@@ -544,10 +585,11 @@ const statusOptions = ref([
 
 const columns = [
     { field: "invoice_no", header: "Invoice No", sortable: true },
-    { field: "start_date", header: "Date", sortable: true },
-    { field: "end_date", header: "Due Date", sortable: true },
+    //{ field: "start_date", header: "Date", sortable: true },
+    //{ field: "end_date", header: "Due Date", sortable: true },
     { field: "customer.name", header: "Customer", sortable: true },
     { field: "agreement_no", header: "Agreement No" },
+    { field: "quotation_no", header: "Quotation No" },
 ];
 
 const filteredInvoices = computed(() => {

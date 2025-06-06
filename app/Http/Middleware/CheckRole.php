@@ -25,6 +25,9 @@ class CheckRole
         if (count(array_intersect($allowedList, $userRoles)) === 0) {
             abort(403, 'Unauthorized');
         }
+        if (!in_array('chef department', $userRoles) && !in_array('director', $userRoles)) {
+            abort(403, 'Unauthorized action.');
+        }
 
         return $next($request);
     }

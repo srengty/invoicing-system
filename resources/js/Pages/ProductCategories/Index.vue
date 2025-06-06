@@ -1,7 +1,7 @@
 <template>
     <Head title="Create Agreement" />
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -48,6 +48,7 @@
                         variant="outlined"
                     />
                     <Button
+                        v-if="userPermissions.canCreateItemCategory"
                         icon="pi pi-plus"
                         label="New Item Categories"
                         @click="openModal"
@@ -98,7 +99,7 @@
                     </Column>
                     <Column
                         header="Actions"
-                        style="width: 10%; font-size: 12px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <Button
@@ -110,6 +111,7 @@
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canAction"
                                 icon="pi pi-pencil"
                                 size="small"
                                 class="ml-2"
@@ -245,6 +247,19 @@ import { usePage } from "@inertiajs/vue3";
 
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canCreateItemsCategory: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canAction: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     {
         label: "",

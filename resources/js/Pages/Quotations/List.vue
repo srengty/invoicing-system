@@ -4,7 +4,7 @@
     <GuestLayout>
         <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
-        <div class="px-4 py-3 mt-8">
+        <div class="px-4 py-3 mt-20">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
                     <Link
@@ -26,19 +26,9 @@
             :closeOnEscape="false"
         />
 
-        <div class="quotations text-sm p-4">
-            <div class="flex justify-end items-center pb-4 gap-2">
-                <!-- <div>
-                    <Button
-                        label="Download Print"
-                        icon="pi pi-download"
-                        :loading="isDownloading"
-                        :disabled="selectedIds.length < 2 || isDownloading"
-                        @click="downloadPrintWithCatalog"
-                        size="small"
-                    />
-                </div> -->
-                <div>
+        <div class="quotations px-4">
+            <div class="flex justify-end items-center mb-6">
+                <div class="flex gap-2">
                     <Dropdown
                         v-model="searchType"
                         :options="searchOptions"
@@ -48,16 +38,12 @@
                         size="small"
                         placeholder="Select field to search"
                     />
-                </div>
-                <div>
                     <InputText
                         v-model="searchTerm"
                         placeholder="Search"
                         class="w-64 h-9 text-sm"
                         size="small"
                     />
-                </div>
-                <div>
                     <Button
                         label="Clear"
                         @click="clearFilters"
@@ -67,30 +53,31 @@
                         variant="outlined"
                         size="small"
                     />
-                </div>
-                <div>
                     <Link :href="route('quotations.create')"
                         ><Button
+                            v-if="userPermissions.canIssueQuotation"
                             icon="pi pi-plus"
                             label="Issue Quotation"
                             size="small"
                             raised
                     /></Link>
+                    <Link :href="route('invoices.create')"
+                        ><Button
+                            v-if="userPermissions.canIssueInvoices"
+                            icon="pi pi-plus"
+                            label="Issue Invoice"
+                            size="small"
+                            raised
+                    /></Link>
+                    <Link :href="route('agreements.create')"
+                        ><Button
+                            v-if="userPermissions.canIssueAgreement"
+                            icon="pi pi-plus"
+                            label="Record Agreement"
+                            size="small"
+                            raised
+                    /></Link>
                 </div>
-                <Link :href="route('invoices.create')"
-                    ><Button
-                        icon="pi pi-plus"
-                        label="Issue Invoice"
-                        size="small"
-                        raised
-                /></Link>
-                <Link :href="route('agreements.create')"
-                    ><Button
-                        icon="pi pi-plus"
-                        label="Record Agreement"
-                        size="small"
-                        raised
-                /></Link>
             </div>
             <div>
                 <DataTable
@@ -183,6 +170,7 @@
                     </Column>
                     <!-- Correctly Map the Customer Status Column -->
                     <Column
+                        v-if="userPermissions.canCustomerStatus"
                         field="customer_status"
                         header="Customer Status"
                         style="width: 10%; font-size: 12px"
@@ -245,7 +233,7 @@
                     </Column>
                     <!-- Action Column -->
                     <Column
-                        header="View / Edit / Print"
+                        header="Actions"
                         style="width: 10%; font-size: 12px"
                     >
                         <template #body="slotProps">
@@ -261,6 +249,7 @@
                                     :disabled="!slotProps.data.active"
                                 />
                                 <Button
+                                    v-if="userPermissions.canEditQuotation"
                                     icon="pi pi-pencil"
                                     size="small"
                                     outlined
@@ -273,6 +262,7 @@
                                 />
                                 <div>
                                     <Button
+                                        v-if="userPermissions.canEditQuotation"
                                         icon="pi pi-print"
                                         :label="
                                             slotProps.data.printed_at
@@ -298,7 +288,11 @@
                             </div>
                         </template>
                     </Column>
-                    <Column header="Active" style="width: 10%; font-size: 12px">
+                    <Column
+                        header="Active"
+                        style="width: 10%; font-size: 12px"
+                        v-if="userPermissions.canDeactivateQuotation"
+                    >
                         <template #body="slotProps">
                             <Button
                                 :icon="
@@ -459,17 +453,16 @@
                     </div>
 
                     <template #footer>
+                        <!-- Only show to Chef Department: -->
                         <Button
+                            v-if="userPermissions.canApprove"
                             label="Approve"
-                            :class="{
-                                'custom-approved':
-                                    selectedQuotation.status === 'Approved',
-                            }"
                             severity="success"
                             @click="approveQuotation"
                             :disabled="selectedQuotation.status === 'Approved'"
                         />
                         <Button
+                            v-if="userPermissions.canRevise"
                             label="Revise"
                             severity="danger"
                             @click="reviseQuotation"
@@ -478,13 +471,7 @@
                                 selectedQuotation.status === 'Revise'
                             "
                         />
-                        <!-- <Button
-                            label="Edit"
-                            severity="info"
-                            @click="editQuotation"
-                            :disabled="selectedQuotation.status === 'Approved'"
-                        /> -->
-
+                        <!-- Always show “Close”: -->
                         <Button
                             label="Close"
                             severity="secondary"
@@ -630,6 +617,47 @@ const clearFilters = () => {
 // The Breadcrumb Quotations
 const page = usePage();
 console.log(page.props.userRoles);
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canApprove: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+        canRevise: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+        canCustomerStatus: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canIssueQuotation: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canIssueInvoices: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canIssueAgreement: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+        canDeactivateQuotation: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+        canEditQuotation: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+    };
+});
+onMounted(() => {
+    console.log("User Roles:", page.props.userRoles);
+    console.log("Permissions:", userPermissions.value);
+});
 const items = computed(() => [
     {
         label: "",

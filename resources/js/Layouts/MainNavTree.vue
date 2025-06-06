@@ -37,7 +37,7 @@
                     </Link>
 
                     <div class="ml-auto flex items-center gap-2">
-                        <Badge
+                        <!-- <Badge
                             v-if="item.key === 2"
                             :value="
                                 page.props.pendingQuotationsCount > 0
@@ -47,50 +47,44 @@
                             :severity="
                                 page.props.pendingQuotationsCount > 0
                                     ? 'danger'
-                                    : 'info'
+                                    : ''
                             "
+                            class="ml-auto"
+                        /> -->
+                        <Badge
+                            v-if="
+                                item.key === 2 &&
+                                page.props.pendingQuotationsCount > 0
+                            "
+                            :value="page.props.pendingQuotationsCount"
+                            severity="danger"
                             class="ml-auto"
                         />
                         <Badge
-                            v-if="item.key === 3"
-                            :value="
+                            v-if="
+                                item.key === 3 &&
                                 page.props.dueAgreementsCount > 0
-                                    ? page.props.dueAgreementsCount
-                                    : '0'
                             "
-                            :severity="
-                                page.props.dueAgreementsCount > 0
-                                    ? 'danger'
-                                    : 'info'
-                            "
+                            :value="page.props.dueAgreementsCount"
+                            severity="danger"
                             class="ml-auto"
                         />
                         <Badge
-                            v-if="item.href === '/invoices/list'"
-                            :value="
+                            v-if="
+                                item.href === '/invoices/list' &&
                                 page.props.pendingInvoicesCount > 0
-                                    ? page.props.pendingInvoicesCount
-                                    : '0'
                             "
-                            :severity="
-                                page.props.pendingInvoicesCount > 0
-                                    ? 'danger'
-                                    : 'info'
-                            "
+                            :value="page.props.pendingInvoicesCount"
+                            severity="danger"
                             class="ml-auto"
                         />
                         <Badge
-                            v-if="item.href === '/settings/products'"
-                            :value="
+                            v-if="
+                                item.href === '/settings/products' &&
                                 page.props.pendingItemsCount > 0
-                                    ? page.props.pendingItemsCount
-                                    : '0'
                             "
-                            :severity="
-                                page.props.pendingItemsCount > 0
-                                    ? 'danger'
-                                    : 'info'
-                            "
+                            :value="page.props.pendingItemsCount"
+                            severity="danger"
                             class="ml-auto"
                         />
                         <span
@@ -113,45 +107,19 @@ import { PanelMenu, Badge } from "primevue";
 import moment from "moment";
 
 const page = usePage();
-const agreementsData = ref(page.props.agreements || []);
-
-watch(
-    () => page.props.agreements,
-    (newAgreements) => {
-        agreementsData.value = newAgreements || [];
-    },
-    { immediate: true }
-);
-
-const getPaymentStatus = (schedule) => {
-    if (schedule.status === "PAID" || schedule.paid_amount >= schedule.amount) {
-        return "PAID";
-    }
-    if (schedule.paid_amount > 0) {
-        return "PARTIALLY_PAID";
-    }
-
-    const today = moment();
-    const dueDate = moment(
-        schedule.due_date,
-        ["YYYY-MM-DD", "DD/MM/YYYY", moment.ISO_8601],
-        true
-    );
-    if (!dueDate.isValid()) {
-        return schedule.status || "UPCOMING";
-    }
-    if (dueDate.isBefore(today, "day")) return "PAST DUE";
-    if (dueDate.diff(today, "days") <= 13) return "DUE SOON";
-    return "UPCOMING";
-};
-
-const dueAgreementsCount = computed(() => {
-    return agreementsData.value.filter((agreement) =>
-        (agreement.payment_schedules || []).some((schedule) => {
-            const status = getPaymentStatus(schedule);
-            return status === "DUE SOON" || status === "PAST DUE";
-        })
-    ).length;
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canCreateQuotations: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canCreateAgreements: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+        canCreateInvoices: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+    };
 });
 
 const items = ref([
@@ -177,11 +145,16 @@ const items = ref([
         icon: "pi pi-chart-bar",
         shortcut: "⌘+R",
         items: [
-            {
-                label: "New quotation",
-                href: "/quotations/create",
-                icon: "pi pi-chart-line",
-            },
+            ...(userPermissions.value.canCreateQuotations
+                ? [
+                      {
+                          label: "New quotation",
+                          href: "/quotations/create",
+                          icon: "pi pi-chart-line",
+                          shortcut: "⌘+O",
+                      },
+                  ]
+                : []),
         ],
     },
     {
@@ -191,13 +164,25 @@ const items = ref([
         icon: "pi pi-user",
         shortcut: ">",
         items: [
-            {
-                label: "Create Agreement",
-                href: "/agreements/create",
-                icon: "pi pi-plus",
-                shortcut: "⌘+O",
-            },
+            ...(userPermissions.value.canCreateAgreements
+                ? [
+                      {
+                          label: "Create Agreement",
+                          href: "/agreements/create",
+                          icon: "pi pi-plus",
+                          shortcut: "⌘+O",
+                      },
+                  ]
+                : []),
         ],
+        // items: [
+        //     {
+        //         label: "Create Agreement",
+        //         href: "/agreements/create",
+        //         icon: "pi pi-plus",
+        //         shortcut: "⌘+O",
+        //     },
+        // ],
     },
     {
         key: 4,
@@ -212,14 +197,32 @@ const items = ref([
                 icon: "pi pi-list",
                 shortcut: "⌘+O",
             },
-            {
-                label: "Create Invoice",
-                href: "/invoices/create",
-
-                icon: "pi pi-cog",
-                shortcut: "⌘+O",
-            },
+            ...(userPermissions.value.canCreateInvoices
+                ? [
+                      {
+                          label: "Create Invoice",
+                          href: "/invoices/create",
+                          icon: "pi pi-cog",
+                          shortcut: "⌘+O",
+                      },
+                  ]
+                : []),
         ],
+        // items: [
+        //     {
+        //         label: "List Invoice",
+        //         href: "/invoices/list",
+        //         icon: "pi pi-list",
+        //         shortcut: "⌘+O",
+        //     },
+        //     {
+        //         label: "Create Invoice",
+        //         href: "/invoices/create",
+
+        //         icon: "pi pi-cog",
+        //         shortcut: "⌘+O",
+        //     },
+        // ],
     },
     {
         key: 5,
@@ -263,17 +266,6 @@ const items = ref([
         ],
     },
 ]);
-
-watch(
-    dueAgreementsCount,
-    (newCount) => {
-        const agreementsItem = items.value.find((item) => item.key === 3);
-        if (agreementsItem) {
-            agreementsItem.badge = newCount;
-        }
-    },
-    { immediate: true }
-);
 
 const expandedKeys = ref(
     items.value.reduce((acc, item) => {

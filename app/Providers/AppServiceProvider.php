@@ -74,13 +74,18 @@ class AppServiceProvider extends ServiceProvider
             },
             'pendingInvoicesCount' => function () {
                 if (auth()->check()) {
-                    return Invoice::where('status', 'Pending')->count();
+                    $pendinInvoices = Invoice::where('status', 'Pending')->count();
+                    $reviseInvoices = Invoice::where('status', 'Revise')->count();
+                    return $pendinInvoices + $reviseInvoices;
+
                 }
                 return 0;
             },
             'pendingItemsCount' => function () {
                 if (auth()->check()) {
-                    return Product::where('status', 'Pending')->count();
+                    $pendinItems = Product::where('status', 'Pending')->count();
+                    $reviseItems  = Product::where('status', 'Rejected')->count();
+                    return $pendinItems + $reviseItems;
                 }
                 return 0;
             },
