@@ -48,6 +48,7 @@
                         variant="outlined"
                     />
                     <Button
+                        v-if="userPermissions.canCreateReceipt"
                         icon="pi pi-plus"
                         label="New"
                         raised
@@ -120,7 +121,7 @@
                     header="Payment Reference No"
                     style="width: 5%; font-size: 12px"
                 ></Column>
-                <Column header="Actions" style="width: 10%; font-size: 12px">
+                <Column header="Actions" style="width: 5%; font-size: 12px">
                     <template #body="slotProps">
                         <Button
                             severity="info"
@@ -133,6 +134,7 @@
                             style="width: 30px; height: 30px"
                         />
                         <Button
+                            v-if="userPermissions.canEditReceipt"
                             severity=""
                             aria-label="Print"
                             icon="pi pi-print"
@@ -298,6 +300,7 @@ import { useToast } from "primevue/usetoast";
 import { ref, computed } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+import { usePage } from "@inertiajs/vue3";
 import moment from "moment";
 import {
     Dropdown,
@@ -322,7 +325,18 @@ const props = defineProps({
         default: () => [],
     },
 });
-
+const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canCreateReceipt: roles.some((role) =>
+            role.toLowerCase().includes("revenue manager")
+        ),
+        canEditReceipt: roles.some((role) =>
+            role.toLowerCase().includes("revenue manager")
+        ),
+    };
+});
 // Breadcrumb items for navigation
 const breadcrumbItems = computed(() => [
     {

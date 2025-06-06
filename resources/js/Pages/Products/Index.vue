@@ -8,7 +8,7 @@
     />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -57,6 +57,7 @@
                         variant="outlined"
                     />
                     <Button
+                        v-if="userPermissions.canCreateItem"
                         icon="pi pi-plus"
                         raised
                         label="New Item"
@@ -130,7 +131,7 @@
                                         ? 'p-button-success'
                                         : data.status === 'rejected'
                                         ? 'p-button-danger'
-                                        : 'p-button-warning'
+                                        : 'p-button-warn'
                                 "
                                 size="small"
                                 @click="toggleStatus(data)"
@@ -162,21 +163,25 @@
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canAction"
                                 class="custom-button"
                                 icon="pi pi-pencil"
                                 severity="warning"
                                 size="small"
                                 style="width: 30px; height: 30px"
                                 @click="openForm(slotProps.data)"
+                                :disabled="slotProps.data.status === 'approved'"
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canAction"
                                 class="custom-button"
                                 icon="pi pi-trash"
                                 severity="danger"
                                 size="small"
                                 style="width: 30px; height: 30px"
                                 @click="deleteProduct(slotProps.data.id)"
+                                :disabled="slotProps.data.status === 'approved'"
                                 outlined
                             />
                         </div>
@@ -387,15 +392,48 @@
 
                     <!-- PDF Catalog -->
                 </div>
+                <div class="p-2 pt-0">
+                    <textarea
+                        v-if="userPermissions.canApprove"
+                        v-model="commentText"
+                        placeholder="Enter your comment..."
+                        class="w-full p-2 border rounded"
+                    ></textarea>
 
+                    <div class="flex justify-end gap-2 mt-4 text-sm">
+                        <Button
+                            v-if="userPermissions.canApprove"
+                            label="Reject"
+                            icon="pi pi-times"
+                            class="p-button-danger text-sm"
+                            @click="changeStatus('rejected')"
+                            size="small"
+                            :disabled="selectedProduct.status === 'approved'"
+                        />
+                        <Button
+                            v-if="userPermissions.canApprove"
+                            label="Approve"
+                            icon="pi pi-check"
+                            class="p-button-success text-sm"
+                            @click="changeStatus('approved')"
+                            size="small"
+                            :disabled="selectedProduct.status === 'approved'"
+                        />
+                        <Button
+                            label="Close"
+                            class="p-button-secondary"
+                            @click="closeViewDialog"
+                        />
+                    </div>
+                </div>
                 <!-- Close Button -->
-                <div class="flex justify-end gap-2 mr-4 mb-2">
+                <!-- <div class="flex justify-end gap-2 mr-4 mb-2">
                     <Button
                         label="Close"
                         class="p-button-secondary"
                         @click="closeViewDialog"
                     />
-                </div>
+                </div> -->
             </Dialog>
             <!-- Product Form Dialog -->
             <Dialog
@@ -674,47 +712,6 @@
                     </div>
                 </form>
             </Dialog>
-            <!-- Change Product Status -->
-            <Dialog
-                v-model:visible="isStatusDialogVisible"
-                header="Change Product Status"
-                :modal="true"
-                class="w-80"
-                :draggable="false"
-                :resizable="false"
-                :position="'center'"
-                :closeOnEscape="false"
-            >
-                <div class="p-2 pt-0">
-                    <p class="text-lg text-center pb-2">
-                        Do you want to approve or reject this product?
-                    </p>
-                    <textarea
-                        v-model="commentText"
-                        placeholder="Enter your comment..."
-                        class="w-full p-2 border rounded"
-                    ></textarea>
-
-                    <div class="flex justify-center gap-4 mt-4 text-sm">
-                        <Button
-                            label="Reject"
-                            icon="pi pi-times"
-                            class="p-button-danger text-sm"
-                            @click="changeStatus('rejected')"
-                            size="small"
-                            outlined
-                        />
-                        <Button
-                            label="Approve"
-                            icon="pi pi-check"
-                            class="p-button-success text-sm"
-                            @click="changeStatus('approved')"
-                            size="small"
-                            outlined
-                        />
-                    </div>
-                </div>
-            </Dialog>
             <!--Display Comment Dialog -->
             <Dialog
                 v-model:visible="isCommentDialogVisible"
@@ -776,6 +773,24 @@ const divisionOptions = ref([]);
 
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canApprove: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+        canCreateItem: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canAction: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     {
         label: "",
@@ -1048,7 +1063,7 @@ const handleFileUpload = (event) => {
 
 const viewProduct = (product) => {
     selectedProduct.value = { ...product };
-
+    selectedProductForStatus.value = { ...product };
     // ✅ Always use the correct new PDF URL
     selectedProduct.value.pdf_url = product.pdf_url || null;
 

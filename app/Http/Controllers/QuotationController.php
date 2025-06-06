@@ -72,6 +72,17 @@ class QuotationController extends Controller
     {
         $quotation = Quotation::findOrFail($id);
 
+         // Get user roles from session
+        // $userRoles = $request->session()->get('roles', []);
+
+        // $canApprove = in_array('chef department', $userRoles) || in_array('director', $userRoles);
+
+        // if (!$canApprove) {
+        //     return response()->json([
+        //         'message' => 'Unauthorized - You do not have permission to approve/revise quotations'
+        //     ], 403);
+        // }
+
         $validated = $request->validate([
             'status' => 'required|string',
         ]);

@@ -1,7 +1,7 @@
 <template>
     <Head title="Invoices" />
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- Breadcrumb -->
         <div class="py-0 dark:bg-[#1d1d1d] mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -31,6 +31,7 @@
                 />
                 <Link :href="route('invoices.create')">
                     <Button
+                    v-if="userPermissions.canIssueInvoices"
                         icon="pi pi-plus"
                         label="Issue Invoice"
                         size="small"
@@ -39,6 +40,7 @@
                 /></Link>
                 <Link :href="route('quotations.create')"
                     ><Button
+                    v-if="userPermissions.canIssueQuotation"
                         icon="pi pi-plus"
                         label="Issue Quotation"
                         size="small"
@@ -343,6 +345,17 @@ const formatCurrency = (value) => {
 
 // Breadcrumb
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canIssueInvoices: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canIssueQuotation: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+    };
+});
 const items = computed(() => [
     { label: "", to: "/dashboard", icon: "pi pi-home" },
     { label: page.props.title || "Invoices", to: route("invoices.index") },

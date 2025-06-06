@@ -40,21 +40,27 @@ import Avatar from "primevue/avatar";
 
 const page = usePage();
 
-const rolesArray = computed(() => page.props.roles || []);
+const rolesArray = computed(() => page.props.userRoles || []);
 const rolesString = computed(() => {
-    if (rolesArray.value.length === 0) return "No role assigned";
+    if (rolesArray.value.length === 0) {
+        return "No role assigned";
+    }
 
     return rolesArray.value
         .map((role) => {
             return role
                 .replace(/[-_]/g, " ")
                 .split(" ")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .map(
+                    (word) =>
+                        word.charAt(0).toUpperCase() +
+                        word.slice(1).toLowerCase()
+                )
                 .join(" ");
         })
         .join(", ");
 });
-const userName = computed(() => rolesString.value || "No role assigned");
+const userName = computed(() => rolesString.value);
 const userAvatar =
     "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
 

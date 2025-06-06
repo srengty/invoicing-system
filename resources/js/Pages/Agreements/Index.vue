@@ -1,7 +1,7 @@
 <template>
     <Head title="Agreements"></Head>
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -93,6 +93,7 @@
                         variant="outlined"
                     />
                     <Button
+                        v-if="userPermissions.canCreateAgreements"
                         icon="pi pi-plus"
                         label="Issue Agreement"
                         @click="openCreate"
@@ -101,6 +102,7 @@
                     ></Button>
                     <Link :href="route('quotations.create')"
                         ><Button
+                            v-if="userPermissions.canCreateQuotations"
                             icon="pi pi-plus"
                             label="Issue Quotation"
                             size="small"
@@ -436,16 +438,17 @@
                                 size="small"
                                 icon="pi pi-eye"
                                 outlined
+                                class="mr-2"
                                 style="width: 30px; height: 30px"
                                 :disabled="slotProps.data.status === 'Closed'"
                                 @click="viewAgreementDetails(slotProps.data)"
                             />
                             <Button
+                                v-if="userPermissions.canEditAgreements"
                                 severity="info"
                                 size="small"
                                 icon="pi pi-pencil"
                                 outlined
-                                class="ml-2"
                                 style="width: 30px; height: 30px"
                                 :disabled="slotProps.data.status === 'Closed'"
                                 @click="
@@ -1040,6 +1043,17 @@ const props = defineProps({
 });
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canCreateAgreements: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+        canEditAgreements: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     {
         label: "",
@@ -1066,7 +1080,7 @@ const columns = [
     { field: "short_description", header: "Short description" },
     {
         field: "actions",
-        header: "  View / Edit",
+        header: "  Actions",
     },
 ];
 

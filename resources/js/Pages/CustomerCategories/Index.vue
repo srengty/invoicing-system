@@ -48,6 +48,7 @@
                         variant="outlined"
                     />
                     <Button
+                        v-if="userPermissions.canCreateCustomerCategory"
                         icon="pi pi-plus"
                         label="New Customer Categories"
                         @click="openModal"
@@ -99,11 +100,20 @@
                     <Column
                         field="action"
                         header="Action"
-                        style="width: 15%; font-size: 12px"
+                        style="width: 5%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <!-- <Button severity="warn" size="small" @click="router.get(route('categories.edit',{'id':slotProps.data.id}))">Edit</Button> -->
                             <Button
+                                icon="pi pi-eye"
+                                class="p-button-info"
+                                aria-label="View"
+                                size="small"
+                                style="width: 30px; height: 30px"
+                                outlined
+                            />
+                            <Button
+                                v-if="userPermissions.canAction"
                                 class="custom-button"
                                 icon="pi pi-pencil"
                                 severity="warning"
@@ -230,6 +240,19 @@ import { usePage } from "@inertiajs/vue3";
 
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canCreateCustomerCategory: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canAction: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     {
         label: "",

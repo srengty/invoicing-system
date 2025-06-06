@@ -8,7 +8,7 @@
     />
     <Toast position="top-center" group="tc" />
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -57,6 +57,7 @@
                         variant="outlined"
                     />
                     <Button
+                        v-if="userPermissions.canCreateCustomer"
                         icon="pi pi-plus"
                         label="New Customer"
                         @click="isCreateCustomerVisible = true"
@@ -105,6 +106,7 @@
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canAction"
                                 icon="pi pi-pencil"
                                 class="p-button-warning"
                                 aria-label="Edit"
@@ -114,6 +116,7 @@
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canAction"
                                 :icon="
                                     slotProps.data.active
                                         ? 'pi pi-unlock'
@@ -269,6 +272,19 @@ const props = defineProps({
 });
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canCreateCustomer: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canAction: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     {
         label: "",
