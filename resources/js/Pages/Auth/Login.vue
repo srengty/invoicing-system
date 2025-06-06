@@ -57,14 +57,15 @@
                 <!-- PASSWORD FIELD -->
                 <div>
                     <InputLabel for="password" value="Password" />
-                    <TextInput
+                    <Password
                         id="password"
-                        type="password"
-                        class="mt-1 block w-full"
                         v-model="form.password"
-                        autocomplete="current-password"
+                        class="mt-1 w-full"
+                        :feedback="false"
+                        toggleMask
                         placeholder="Enter Password"
-                        :class="{
+                        :inputClass="{
+                            'w-full': true,
                             'border-red-500 focus:border-red-500':
                                 form.errors.password,
                         }"
@@ -112,6 +113,7 @@ import InputLabel from "@/Components/InputLabel.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
 import TextInput from "@/Components/TextInput.vue";
 import Message from "primevue/message";
+import Password from "primevue/password";
 import loginBg from "/public/assets/images/login.jpg";
 
 const page = usePage();

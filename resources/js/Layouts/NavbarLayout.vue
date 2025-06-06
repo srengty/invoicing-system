@@ -40,9 +40,23 @@ import Avatar from "primevue/avatar";
 
 const page = usePage();
 
+const roleAvatars = {
+    'division staff': 'https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png',
+    'chef department': 'https://primefaces.org/cdn/primevue/images/avatar/onyamalimba.png',
+    'revenue manager': 'https://primefaces.org/cdn/primevue/images/avatar/stephenshaw.png',
+    'director': 'https://primefaces.org/cdn/primevue/images/avatar/bernardodominic.png',
+};
+const primaryRole = computed(() => {
+    return rolesArray.value.length > 0 ? rolesArray.value[0].toLowerCase() : 'guest';
+});
+const userAvatar = computed(() => {
+    return roleAvatars[primaryRole.value] || roleAvatars['guest'];
+});
+
 const rolesArray = computed(() => page.props.userRoles || []);
 const rolesString = computed(() => {
     if (rolesArray.value.length === 0) {
+        Inertia.visit(route("login"));
         return "No role assigned";
     }
 
@@ -61,11 +75,8 @@ const rolesString = computed(() => {
         .join(", ");
 });
 const userName = computed(() => rolesString.value);
-const userAvatar =
-    "https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png";
 
 const theme = ref(localStorage.getItem("theme") || "system");
-
 const applyTheme = (pref) => {
     if (pref === "light") {
         document.documentElement.classList.remove("dark");
@@ -107,6 +118,7 @@ const menuItems = [
     {
         label: page.props.user?.name || rolesString.value,
         icon: "pi pi-user",
+        class: "font-bold text-sm",
         command: () => {
             Inertia.get(route("profile.show"));
         },
@@ -115,6 +127,7 @@ const menuItems = [
     {
         label: "Light Theme",
         icon: "pi pi-sun",
+        class: "text-sm",
         command: () => {
             applyTheme("light");
         },
@@ -122,6 +135,7 @@ const menuItems = [
     {
         label: "Dark Theme",
         icon: "pi pi-moon",
+        class: "text-sm",
         command: () => {
             applyTheme("dark");
         },
@@ -129,6 +143,7 @@ const menuItems = [
     {
         label: "System Theme",
         icon: "pi pi-desktop",
+        class: "text-sm",
         command: () => {
             applyTheme("system");
         },
@@ -137,6 +152,7 @@ const menuItems = [
     {
         label: "Logout",
         icon: "pi pi-sign-out",
+        class: "font-bold text-sm",
         command: () => {
             Inertia.post(route("logout"));
         },

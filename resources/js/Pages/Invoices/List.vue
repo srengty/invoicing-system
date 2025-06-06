@@ -98,8 +98,13 @@
                         </span>
                     </template>
                 </Column>
-                
-                <Column field="hdStatus" header="HD Status" style="width: 10%; font-size: 12px">
+                <!-- Approve for division head -->
+                <Column
+                    v-if="userPermissions.canApproveDivivsionHead"
+                    field="hdStatus"
+                    header="HD Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <div class="flex">
                             <span
@@ -116,27 +121,41 @@
                                 <i
                                     :class="{
                                         'pi pi-clock':
-                                            slotProps.data.hdStatus === 'Pending',
+                                            slotProps.data.hdStatus ===
+                                            'Pending',
                                         'pi pi-times':
-                                            slotProps.data.hdStatus === 'revise',
+                                            slotProps.data.hdStatus ===
+                                            'revise',
                                         'pi pi-check':
-                                            slotProps.data.hdStatus === 'approved',
+                                            slotProps.data.hdStatus ===
+                                            'approved',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.hdStatus) }}
                             </span>
                             <Button
-                                v-if="getHdComments(slotProps.data.id).length > 0"
+                                v-if="
+                                    getHdComments(slotProps.data.id).length > 0
+                                "
                                 icon="pi pi-comment"
                                 class="p-button-info ml-2"
-                                @click="viewHdComment(getHdComments(slotProps.data.id))"
+                                @click="
+                                    viewHdComment(
+                                        getHdComments(slotProps.data.id)
+                                    )
+                                "
                                 outlined
                             />
                         </div>
                     </template>
                 </Column>
-
-                <Column field="rmStatus" header="RM Status" style="width: 10%; font-size: 12px">
+                <!-- Approve for revenue manager -->
+                <Column
+                    v-if="userPermissions.canApproveRevenueManager"
+                    field="rmStatus"
+                    header="RM Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <div class="flex">
                             <span
@@ -153,27 +172,41 @@
                                 <i
                                     :class="{
                                         'pi pi-clock':
-                                            slotProps.data.rmStatus === 'Pending',
+                                            slotProps.data.rmStatus ===
+                                            'Pending',
                                         'pi pi-times':
-                                            slotProps.data.rmStatus === 'revise',
+                                            slotProps.data.rmStatus ===
+                                            'revise',
                                         'pi pi-check':
-                                            slotProps.data.rmStatus === 'approved',
+                                            slotProps.data.rmStatus ===
+                                            'approved',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.rmStatus) }}
                             </span>
                             <Button
-                                v-if="getRmComments(slotProps.data.id).length > 0"
+                                v-if="
+                                    getRmComments(slotProps.data.id).length > 0
+                                "
                                 icon="pi pi-comment"
                                 class="p-button-info ml-2"
-                                @click="viewRmComment(getRmComments(slotProps.data.id))"
+                                @click="
+                                    viewRmComment(
+                                        getRmComments(slotProps.data.id)
+                                    )
+                                "
                                 outlined
                             />
                         </div>
                     </template>
                 </Column>
-
-                <Column field="status" header="Status" style="width: 10%; font-size: 12px">
+                <!-- Approve for director -->
+                <Column
+                    v-if="userPermissions.canApproveDirector"
+                    field="status"
+                    header="Status"
+                    style="width: 10%; font-size: 12px"
+                >
                     <template #body="slotProps">
                         <div class="flex">
                             <span
@@ -194,22 +227,27 @@
                                         'pi pi-times':
                                             slotProps.data.status === 'revise',
                                         'pi pi-check':
-                                            slotProps.data.status === 'approved',
+                                            slotProps.data.status ===
+                                            'approved',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.status) }}
                             </span>
                             <Button
-                                v-if="slotProps.data.invoice_comments && slotProps.data.invoice_comments.length > 0"
+                                v-if="
+                                    slotProps.data.invoice_comments &&
+                                    slotProps.data.invoice_comments.length > 0
+                                "
                                 icon="pi pi-comment"
                                 class="p-button-info ml-2"
-                                @click="viewComment(slotProps.data.invoice_comments)"
+                                @click="
+                                    viewComment(slotProps.data.invoice_comments)
+                                "
                                 outlined
                             />
                         </div>
                     </template>
                 </Column>
-
                 <!-- Actions -->
                 <Column
                     header="Actions"
@@ -220,6 +258,7 @@
                     <template #body="{ data }">
                         <div class="flex gap-2 justify-center">
                             <Button
+                                v-if="userPermissions.canViewDivivsionHead"
                                 icon="pi pi-eye"
                                 aria-label="View"
                                 severity="info"
@@ -229,6 +268,7 @@
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canViewRevenueManager"
                                 icon="pi pi-eye"
                                 aria-label="View"
                                 severity="info"
@@ -238,6 +278,7 @@
                                 outlined
                             />
                             <Button
+                                v-if="userPermissions.canViewDirector"
                                 icon="pi pi-eye"
                                 aria-label="View"
                                 severity="info"
@@ -860,10 +901,16 @@
                         class="text-border mb-4 p-2 border-b"
                     >
                         <div class="flex justify-between items-center mb-1">
-                            <span class="font-semibold">{{ capitalize(item.status) }}</span>
-                            <small class="text-gray-500">{{ formatDate(item.created_at) }}</small>
+                            <span class="font-semibold">{{
+                                capitalize(item.status)
+                            }}</span>
+                            <small class="text-gray-500">{{
+                                formatDate(item.created_at)
+                            }}</small>
                         </div>
-                        <p class="text-sm">{{ item.comment || "No comment text" }}</p>
+                        <p class="text-sm">
+                            {{ item.comment || "No comment text" }}
+                        </p>
                     </div>
                 </div>
                 <div v-else>
@@ -908,24 +955,14 @@ import {
 
 // Props
 const props = defineProps({
-    invoices: {
-        type: Object,
-        required: true,
-    },
-    hdComments: {
-        type: Object,
-        required: true,
-    },
-    rmComments: {
-        type: Object,
-        required: true,
-    },
+    invoices: { type: Object, required: true },
+    hdComments: { type: Array, default: () => [] },
+    rmComments: { type: Array, default: () => [] },
 });
-
 onMounted(() => {
-    console.log('Invoices:', props.invoices);
-    console.log('HD Comments:', props.hdComments);
-    console.log('RM Comments:', props.rmComments);
+    console.log("Invoices:", props.invoices);
+    console.log("HD Comments:", props.hdComments);
+    console.log("RM Comments:", props.rmComments);
 });
 
 // The Breadcrumb Quotations
@@ -951,6 +988,30 @@ const userPermissions = computed(() => {
             (role) =>
                 role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("chef department")
+        ),
+        canApproveDivivsionHead: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("division staff")
+        ),
+        canViewDivivsionHead: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+        canApproveRevenueManager: roles.some(
+            (role) =>
+                role.toLowerCase().includes("revenue manager") ||
+                role.toLowerCase().includes("division staff")
+        ),
+        canViewRevenueManager: roles.some((role) =>
+            role.toLowerCase().includes("revenue manager")
+        ),
+        canApproveDirector: roles.some(
+            (role) =>
+                role.toLowerCase().includes("director") ||
+                role.toLowerCase().includes("division staff")
+        ),
+        canViewDirector: roles.some((role) =>
+            role.toLowerCase().includes("director")
         ),
     };
 });
@@ -1015,7 +1076,6 @@ const columns = [
 
 const filteredInvoices = computed(() => {
     if (!filters.value.status) return props.invoices.data;
-
     return props.invoices.data.filter((invoice) => {
         return invoice.status === filters.value.status;
     });
@@ -1064,11 +1124,15 @@ const editInvoice = (invoice) => {
 
 // Add these computed properties to filter comments by invoice ID
 const getHdComments = (invoiceId) => {
-    return props.hdComments.filter(comment => comment.invoice_id === invoiceId);
+    return (Array.isArray(props.hdComments) ? props.hdComments : []).filter(
+        (c) => c.invoice_id === invoiceId
+    );
 };
 
 const getRmComments = (invoiceId) => {
-    return props.rmComments.filter(comment => comment.invoice_id === invoiceId);
+    return (Array.isArray(props.rmComments) ? props.rmComments : []).filter(
+        (c) => c.invoice_id === invoiceId
+    );
 };
 
 const changeHdStatus = (status) => {
@@ -1176,10 +1240,10 @@ const viewHdComment = (hdComments) => {
     commentDialogTitle.value = "HD Approval Comments";
     if (hdComments && Array.isArray(hdComments)) {
         selectedComment.value = hdComments;
-        isCommentDialogVisible.value = true;  // Ensure the dialog is visible
+        isCommentDialogVisible.value = true; // Ensure the dialog is visible
     } else {
         selectedComment.value = [];
-        isCommentDialogVisible.value = true;  // Ensure the dialog is visible
+        isCommentDialogVisible.value = true; // Ensure the dialog is visible
     }
 };
 
@@ -1187,10 +1251,10 @@ const viewRmComment = (rmComments) => {
     commentDialogTitle.value = "RM Approval Comments";
     if (rmComments && Array.isArray(rmComments)) {
         selectedComment.value = rmComments;
-        isCommentDialogVisible.value = true;  // Ensure the dialog is visible
+        isCommentDialogVisible.value = true; // Ensure the dialog is visible
     } else {
         selectedComment.value = [];
-        isCommentDialogVisible.value = true;  // Ensure the dialog is visible
+        isCommentDialogVisible.value = true; // Ensure the dialog is visible
     }
 };
 

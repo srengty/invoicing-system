@@ -43,7 +43,7 @@ function updateDarkClass() {
         class="row-span-2 bg-slate-100 dark:bg-[#0a0a0a] sticky top-0 h-screen overflow-auto flex flex-col"
       >
         <div class="flex flex-col items-center justify-center py-2 pb-5 mb-3">
-          <Link href="/">
+          <Link href="/dashboard">
             <img src="/logo.png" alt="Logo" class="h-20 w-20" />
           </Link>
           <div class="text-sm mb-2 text-gray-700 dark:text-gray-300 font-bold">
