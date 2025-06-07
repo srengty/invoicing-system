@@ -40,7 +40,7 @@ function updateDarkClass() {
       class="w-full h-screen overflow-y-auto bg-white shadow-md sm:rounded-lg  dark:bg-[#1d1d1d]  grid grid-cols-1 md:grid-cols-6"
     >
       <div
-        class="row-span-2 bg-slate-100 dark:bg-[#0a0a0a] sticky top-0 h-screen overflow-auto flex flex-col"
+        class="row-span-2 bg-slate-200 dark:bg-[#0a0a0a] sticky top-0 h-screen overflow-auto flex flex-col"
       >
         <div class="flex flex-col items-center justify-center py-2 pb-5 mb-3">
           <Link href="/dashboard">

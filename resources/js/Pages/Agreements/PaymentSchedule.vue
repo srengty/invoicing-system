@@ -193,12 +193,12 @@
                         />
                         <Button
                             :icon="
-                                slotProps.data.invoice_generated
+                                hasInvoice(slotProps.data)
                                     ? 'pi pi-check'
                                     : 'pi pi-file-pdf'
                             "
                             :label="
-                                slotProps.data.invoice_generated
+                                hasInvoice(slotProps.data)
                                     ? 'Invoice Generated'
                                     : 'Generate Invoice'
                             "
@@ -207,8 +207,8 @@
                             :loading="generatingInvoice"
                             @click="generateInvoice(slotProps.data)"
                             :disabled="
-                                getPaymentStatus(slotProps.data) === 'PAID' ||
-                                slotProps.data.invoice_generated === true
+                                hasInvoice(slotProps.data) ||
+                                getPaymentStatus(slotProps.data) === 'PAID'
                             "
                         />
                     </div>
@@ -348,6 +348,21 @@ const onRowEditSave = (event) => {
         life: 3000,
     });
 };
+
+const hasInvoice = (paymentSchedule) => {
+    // Check if invoices are loaded as a relationship
+    if (paymentSchedule.invoices) {
+        return paymentSchedule.invoices.length > 0;
+    }
+    // Or if using withCount
+    if (paymentSchedule.invoices_count !== undefined) {
+        return paymentSchedule.invoices_count > 0;
+    }
+    // Fallback to existing invoice_generated flag
+    return !!paymentSchedule.invoice_generated;
+};
+
+
 
 const updatePaymentSchedule = async (schedule) => {
     try {

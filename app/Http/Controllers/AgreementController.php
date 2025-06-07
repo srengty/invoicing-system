@@ -23,6 +23,7 @@ class AgreementController extends Controller
             'customer',
             'paymentSchedules.invoices.receipts',
             'paymentSchedules.receipts',
+            'paymentSchedules.invoices',
             'paymentSchedules'
         ])
         ->orderBy('created_at', 'desc')
@@ -134,6 +135,7 @@ class AgreementController extends Controller
                 'short_description' => $value['short_description'],
                 'currency' => $value['currency'],
                 'exchange_rate' => $value['exchange_rate'] ?? ($value['currency'] === 'KHR' ? $exchangeRate : 1),
+                'invoice_generated' => false, 
             ]);
             $schedule->updateStatus();
             $schedule->save();

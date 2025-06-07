@@ -1076,11 +1076,43 @@ const columns = [
 ];
 
 const filteredInvoices = computed(() => {
-    if (!filters.value.status) return props.invoices.data;
-    return props.invoices.data.filter((invoice) => {
-        return invoice.status === filters.value.status;
-    });
+    let invoices = props.invoices.data;
+
+    // Filter by selected status
+    if (filters.value.status) {
+        invoices = invoices.filter(invoice => invoice.status === filters.value.status);
+    }
+
+    // Normalize roles for comparison
+    const roles = (page.props.userRoles || []).map(r => r.toLowerCase());
+
+    const isChefDeptOnly = roles.includes("chef department") &&
+        !roles.includes("revenue manager") &&
+        !roles.includes("director");
+
+    const isDirectorOnly = roles.includes("director") &&
+        !roles.includes("revenue manager") &&
+        !roles.includes("chef department");
+
+    const isRMOnly = !roles.includes("director") &&
+        roles.includes("revenue manager") &&
+        !roles.includes("chef department");
+
+    if (isRMOnly) {
+        invoices = invoices.filter(invoice => {
+            return invoice.hdStatus === 'approved';
+        });
+    }
+
+    if (isDirectorOnly) {
+        invoices = invoices.filter(invoice => {
+            return invoice.rmStatus === 'approved';
+        });
+    }
+
+    return invoices;
 });
+
 
 const selectedComment = ref("");
 const commentText = ref("");
