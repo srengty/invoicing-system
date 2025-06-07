@@ -152,7 +152,7 @@
                     <Tag
                         :value="getPaymentStatus(slotProps.data)"
                         :severity="getStatusSeverity(slotProps.data)"
-                        class="text-transform: uppercase "
+                        class="text-transform: uppercase"
                     />
                 </template>
             </Column>
@@ -164,7 +164,10 @@
                 class="text-sm"
                 style="width: 15%; font-size: 12px"
             >
-                <template #body="slotProps">
+                <template
+                    #body="slotProps"
+                    v-if="userPermissions.canGenerateInvoice"
+                >
                     <div class="flex items-center gap-2">
                         <Button
                             icon="pi pi-pencil"
@@ -258,6 +261,7 @@ import { ref, defineModel, computed, onMounted } from "vue";
 import { currencies } from "@/constants";
 import { useToast } from "primevue/usetoast";
 import moment from "moment";
+import { usePage } from "@inertiajs/vue3";
 import { router } from "@inertiajs/vue3";
 import { Inertia } from "@inertiajs/inertia";
 import {
@@ -306,6 +310,15 @@ const items = defineModel({
         amount: 3000,
     }, */
     ],
+});
+const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        canGenerateInvoice: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+    };
 });
 const props = defineProps({
     currency: String,

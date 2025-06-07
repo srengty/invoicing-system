@@ -986,8 +986,9 @@ const userPermissions = computed(() => {
         ),
         canPrintInvoices: roles.some(
             (role) =>
-                role.toLowerCase().includes("division staff") ||
-                role.toLowerCase().includes("chef department")
+                role.toLowerCase().includes("director") ||
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("revenue manager")
         ),
         canApproveDivivsionHead: roles.some(
             (role) =>
