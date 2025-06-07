@@ -491,6 +491,14 @@ const minDate = new Date();
 const toast = useToast();
 // The Breadcrumb Quotations
 const page = usePage();
+const userPermissions = computed(() => {
+    const roles = page.props.userRoles || [];
+    return {
+        cancreateAgreement: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+    };
+});
 const items = computed(() => [
     {
         label: "",

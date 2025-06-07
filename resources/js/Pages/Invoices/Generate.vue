@@ -329,6 +329,8 @@ const form = useForm({
     exchange_rate: "",
     invoice_date: new Date().toISOString(),
     status: "Pending",
+    hdStatus: "Pending",
+    rmStatus: "Pending",
     installment_paid: 0,
     paid_amount: selectedPaymentSchedule.value?.amount || 0,
     products: [],
