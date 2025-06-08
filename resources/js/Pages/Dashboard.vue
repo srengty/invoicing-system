@@ -13,57 +13,94 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- New Quotations Card -->
                 <div
-                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                    class="p-6 bg-blue-50 border-l-4 border-blue-400 rounded-lg shadow flex items-center justify-between"
                 >
-                    <h2 class="text-sm font-medium text-gray-500">
-                        New Quotations
-                    </h2>
-                    <div class="text-2xl font-semibold text-gray-900 mt-2">
-                        {{ quotations?.length || 0 }} Quotations
+                    <div>
+                        <p class="text-xs font-medium text-blue-600 uppercase">
+                            All Quotations
+                        </p>
+                        <p class="text-2xl font-semibold text-blue-900 mt-1">
+                            {{ quotations?.length || 0 }} Quotations
+                        </p>
+                    </div>
+                    <div class="p-2 bg-blue-100 rounded-md">
+                        <i class="pi pi-chart-bar text-blue-500 text-2xl"></i>
                     </div>
                 </div>
 
-                <!-- New Agreements Card -->
                 <div
-                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                    class="p-6 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg shadow flex items-center justify-between"
                 >
-                    <h2 class="text-sm font-medium text-gray-500">
-                        New Agreements
-                    </h2>
-                    <div class="text-2xl font-semibold text-gray-900 mt-2">
-                        {{ agreements?.length || 0 }} Agreements
+                    <div>
+                        <p
+                            class="text-xs font-medium text-yellow-600 uppercase"
+                        >
+                            All Agreements
+                        </p>
+                        <p class="text-2xl font-semibold text-yellow-900 mt-1">
+                            {{ agreements?.length || 0 }} Agreements
+                        </p>
+                    </div>
+                    <div class="p-2 bg-yellow-100 rounded-md">
+                        <i
+                            class="pi pi-chart-scatter text-yellow-500 text-2xl"
+                        ></i>
                     </div>
                 </div>
 
-                <!-- Customers Card -->
                 <div
-                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                    class="p-6 bg-purple-50 border-l-4 border-purple-400 rounded-lg shadow flex items-center justify-between"
                 >
-                    <h2 class="text-sm font-medium text-gray-500">Customers</h2>
-                    <div class="text-2xl font-semibold text-gray-900 mt-2">
-                        {{ customers?.length || 0 }} Customers
+                    <div>
+                        <p
+                            class="text-xs font-medium text-purple-600 uppercase"
+                        >
+                            All Customers
+                        </p>
+                        <p class="text-2xl font-semibold text-purple-900 mt-1">
+                            {{ customers?.length || 0 }} Customers
+                        </p>
+                    </div>
+                    <div class="p-2 bg-purple-100 rounded-md">
+                        <i class="pi pi-users text-purple-500 text-2xl"></i>
                     </div>
                 </div>
 
-                <!-- Items Card -->
                 <div
-                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between"
+                    class="p-6 bg-green-50 border-l-4 border-green-400 rounded-lg shadow flex items-center justify-between"
                 >
-                    <h2 class="text-sm font-medium text-gray-500">Items</h2>
-                    <div class="text-2xl font-semibold text-gray-900 mt-2">
-                        {{ products?.length || 0 }} Items
+                    <div>
+                        <p class="text-xs font-medium text-green-600 uppercase">
+                            All Items
+                        </p>
+                        <p class="text-2xl font-semibold text-green-900 mt-1">
+                            {{ products?.length || 0 }} Items
+                        </p>
+                    </div>
+                    <div class="p-2 bg-green-100 rounded-md">
+                        <i class="pi pi-box text-green-500 text-2xl"></i>
                     </div>
                 </div>
 
-                <!-- Invoices Card -->
                 <div
-                    class="p-6 bg-white border rounded-lg shadow-lg flex flex-col justify-between col-span-2 lg:col-span-1"
+                    class="p-6 bg-orange-50 border-l-4 border-orange-400 rounded-lg shadow flex items-center justify-between"
                 >
-                    <h2 class="text-sm font-medium text-gray-500">Invoices</h2>
-                    <div class="text-2xl font-semibold text-gray-900 mt-2">
-                        {{ invoices?.length || 0 }} Invoices
+                    <div>
+                        <p
+                            class="text-xs font-medium text-orange-600 uppercase"
+                        >
+                            All Invoices
+                        </p>
+                        <p class="text-2xl font-semibold text-orange-900 mt-1">
+                            {{ invoices?.length || 0 }} Invoices
+                        </p>
+                    </div>
+
+                    <div class="p-2 bg-orange-100 rounded-md">
+                        <i
+                            class="pi pi-chart-line text-orange-500 text-2xl"
+                        ></i>
                     </div>
                 </div>
             </div>
@@ -75,7 +112,7 @@
                         <div class="flex justify-between items-center mb-5">
                             <div>
                                 <h1 class="text-md font-medium text-gray-400">
-                                    Dashboard
+                                    <!-- Dashboard -->
                                 </h1>
                             </div>
                             <div class="flex gap-4">
@@ -191,7 +228,10 @@
 
             <div class="mt-6">
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
+                    <!-- Recent Customers -->
+                    <div
+                        class="card-style border rounded-lg shadow-lg w-1/2 p-4"
+                    >
                         <DataTable
                             :value="customers.slice(0, 5)"
                             scrollable
@@ -199,6 +239,7 @@
                             scrollHeight="350px"
                             class="p-datatable-sm"
                             :loading="loading"
+                            style="width: 100%; font-size: 14px"
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
@@ -213,29 +254,23 @@
                             <Column
                                 field="code"
                                 header="Code"
-                                sortable
                                 class="m-2"
                             ></Column>
-                            <Column
-                                field="name"
-                                header="Name"
-                                sortable
-                            ></Column>
+                            <Column field="name" header="Name"></Column>
                             <Column
                                 field="credit_period"
                                 header="Credit Period"
-                                sortable
                             ></Column>
                             <Column
                                 field="customer_category_id"
                                 header="Category"
-                                sortable
                             ></Column>
                         </DataTable>
                     </div>
-
                     <!-- Items Table -->
-                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
+                    <div
+                        class="card-style border rounded-lg shadow-lg w-1/2 p-4"
+                    >
                         <DataTable
                             :value="products.slice(0, 5)"
                             scrollable
@@ -243,6 +278,7 @@
                             class="p-datatable-sm"
                             :loading="loading"
                             stripedRows
+                            style="width: 100%; font-size: 14px"
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
@@ -254,22 +290,10 @@
                                     >
                                 </div>
                             </template>
-                            <Column
-                                field="code"
-                                header="Code"
-                                sortable
-                            ></Column>
-                            <Column
-                                field="name"
-                                header="Name"
-                                sortable
-                            ></Column>
-                            <Column
-                                field="unit"
-                                header="Unit"
-                                sortable
-                            ></Column>
-                            <Column field="price" header="Price" sortable>
+                            <Column field="code" header="Code"></Column>
+                            <Column field="name" header="Name"></Column>
+                            <Column field="unit" header="Unit"></Column>
+                            <Column field="price" header="Price">
                                 <template #body="{ data }">
                                     {{ formatCurrency(data.price) }}
                                 </template>
@@ -277,9 +301,11 @@
                         </DataTable>
                     </div>
                 </div>
-
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
+                    <!-- Recent Quotations -->
+                    <div
+                        class="card-style border rounded-lg shadow-lg w-1/2 p-4"
+                    >
                         <DataTable
                             :value="quotations.slice(0, 5)"
                             scrollable
@@ -287,6 +313,7 @@
                             class="p-datatable-sm"
                             :loading="loading"
                             stripedRows
+                            style="width: 100%; font-size: 14px"
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
@@ -301,18 +328,13 @@
                             <Column
                                 field="quotation_no"
                                 header="Quotation No"
-                                sortable
                             ></Column>
-                            <Column
-                                field="customer.name"
-                                header="Customer"
-                                sortable
-                            >
+                            <Column field="customer.name" header="Customer">
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
-                            <Column field="amount" header="Amount" sortable>
+                            <Column field="amount" header="Amount">
                                 <template #body="{ data }">
                                     <span
                                         :class="{
@@ -323,7 +345,7 @@
                                     </span>
                                 </template>
                             </Column>
-                            <Column field="status" header="Status" sortable>
+                            <Column field="status" header="Status">
                                 <template #body="{ data }">
                                     <Tag
                                         :value="data.status"
@@ -335,8 +357,10 @@
                             </Column>
                         </DataTable>
                     </div>
-
-                    <div class="card-style border rounded-lg shadow-lg w-1/2 p-4">
+                    <!-- Recent Receipts -->
+                    <div
+                        class="card-style border rounded-lg shadow-lg w-1/2 p-4"
+                    >
                         <DataTable
                             :value="receipts.slice(0, 5)"
                             scrollable
@@ -344,6 +368,7 @@
                             class="p-datatable-sm"
                             :loading="loading"
                             stripedRows
+                            style="width: 100%; font-size: 14px"
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
@@ -358,22 +383,13 @@
                             <Column
                                 field="receipt_no"
                                 header="Receipt No"
-                                sortable
                             ></Column>
-                            <Column
-                                field="customer.name"
-                                header="Customer"
-                                sortable
-                            >
+                            <Column field="customer.name" header="Customer">
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
-                            <Column
-                                field="paid_amount"
-                                header="Amount Paid"
-                                sortable
-                            >
+                            <Column field="paid_amount" header="Amount Paid">
                                 <template #body="{ data }">
                                     <span
                                         :class="{
@@ -388,25 +404,17 @@
                             <Column
                                 field="payment_method"
                                 header="Payment Method"
-                                sortable
+                                class="font-bold"
                             >
-                                <template #body="{ data }">
-                                    <Tag
-                                        :value="data.payment_method"
-                                        :severity="
-                                            getStatusSeverity(
-                                                data.payment_method
-                                            )
-                                        "
-                                    /> </template
-                            ></Column>
+                            </Column>
                         </DataTable>
                     </div>
                 </div>
-
                 <div class="flex mb-6 gap-4">
-                    <!-- Agreements Table -->
-                    <div class="card-style border rounded-lg shadow-lg w-full p-4">
+                    <!-- Recent Agreements -->
+                    <div
+                        class="card-style border rounded-lg shadow-lg w-full p-4"
+                    >
                         <DataTable
                             :value="agreements.slice(0, 5)"
                             scrollable
@@ -414,6 +422,7 @@
                             class="p-datatable-sm"
                             :loading="loading"
                             stripedRows
+                            style="width: 100%; font-size: 14px"
                         >
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
@@ -430,27 +439,18 @@
                             <Column
                                 field="agreement_no"
                                 header="Agreement No"
-                                sortable
                             ></Column>
-                            <Column
-                                field="customer.name"
-                                header="Customer"
-                                sortable
-                            >
+                            <Column field="customer.name" header="Customer">
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
-                            <Column
-                                field="amount"
-                                header="Total Amount"
-                                sortable
-                            >
+                            <Column field="amount" header="Total Amount">
                                 <template #body="{ data }">
                                     {{ formatCurrency(data.amount) }}
                                 </template>
                             </Column>
-                            <Column field="status" header="Status" sortable>
+                            <Column field="status" header="Status">
                                 <template #body="{ data }">
                                     <Tag
                                         :value="data.status"
@@ -463,9 +463,10 @@
                         </DataTable>
                     </div>
                 </div>
-
                 <div class="flex mb-6 gap-4">
-                    <div class="card-style border rounded-lg shadow-lg w-full p-4">
+                    <div
+                        class="card-style border rounded-lg shadow-lg w-full p-4"
+                    >
                         <DataTable
                             :value="sortedInvoices"
                             scrollable
@@ -487,18 +488,13 @@
                             <Column
                                 field="invoice_no"
                                 header="Invoice No"
-                                sortable
                             ></Column>
-                            <Column
-                                field="customer.name"
-                                header="Customer"
-                                sortable
-                            >
+                            <Column field="customer.name" header="Customer">
                                 <template #body="{ data }">
                                     {{ data.customer?.name || "N/A" }}
                                 </template>
                             </Column>
-                            <Column field="amount" header="Amount" sortable>
+                            <Column field="amount" header="Amount">
                                 <template #body="{ data }">
                                     <span
                                         :class="{
@@ -510,7 +506,7 @@
                                     </span>
                                 </template>
                             </Column>
-                            <Column header="Paid Amount" sortable>
+                            <Column header="Paid Amount">
                                 <template #body="{ data }">
                                     <span
                                         :class="{
@@ -524,7 +520,7 @@
                                     </span>
                                 </template>
                             </Column>
-                            <Column header="Due Amount" sortable>
+                            <Column header="Due Amount">
                                 <template #body="{ data }">
                                     <span
                                         :class="{
@@ -547,7 +543,7 @@
                                     </span>
                                 </template>
                             </Column>
-                            <Column header="Payment Status" sortable>
+                            <Column header="Payment Status">
                                 <template #body="{ data }">
                                     <Tag
                                         :class="{
@@ -587,19 +583,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
-import { usePage } from "@inertiajs/vue3";
 import GuestLayout from "@/Layouts/GuestLayout.vue";
 import NavbarLayout from "@/Layouts/NavbarLayout.vue";
+import { ref, computed, onMounted, watch } from "vue";
+import { usePage } from "@inertiajs/vue3";
 import { Head } from "@inertiajs/vue3";
-import { SelectButton, Select } from "primevue";
-import Chart from "primevue/chart";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
 import "primeicons/primeicons.css";
-import Tag from "primevue/tag";
+import { SelectButton, Select, DataTable, Column, Tag } from "primevue";
+import Chart from "primevue/chart";
 
-// Functions declared before usage to avoid the "before initialization" error
 const formatNumber = (value) => {
     const number = Number(value);
     return isNaN(number) ? "0.00" : number.toFixed(2);
@@ -609,7 +601,6 @@ const formatCurrency = (value) => {
     return `៛ ${formatNumber(value)}`;
 };
 
-// Fetch data from Inertia page props
 const page = usePage();
 const {
     customers,
@@ -626,7 +617,6 @@ const {
     receiptDates,
 } = page.props;
 
-// Selected Period Options
 const selectedPeriod = ref({ name: "Day", value: "Day" });
 const periodOptions = ref([
     { name: "Day", value: "Day" },
@@ -634,14 +624,12 @@ const periodOptions = ref([
     { name: "Month", value: "Month" },
 ]);
 
-// Selected Language Options
 const selectedLanguage = ref({ name: "KHR", code: "KHR" });
 const languageOptions = ref([
     { name: "USD", code: "USD" },
     { name: "KHR", code: "KHR" },
 ]);
 
-// Time Range Selector Options
 const selectedTimeRange = ref();
 const timeRanges = ref([
     { label: "Last 7 Days", value: "7days" },
@@ -671,22 +659,17 @@ const getPaymentStatus = (invoice) => {
 };
 
 const getStatusSeverity = (status) => {
-    switch (status.toLowerCase()) {
-        case "approved":
-            return "success";
-        case "fully paid":
-            return "success";
-        case "partially paid":
-            return "info";
-        case "not paid":
-            return "warn";
-        case "Overdue":
-            return "danger";
-        case "Pending":
-            return "warn";
-        default:
-            return "info"; // Default in case no status is matched
-    }
+    const s = String(status).toLowerCase();
+    if (s === "pending") return "warn";
+    if (s === "approve" || s === "approved") return "success";
+    if (s === "revise") return "danger";
+    if (s === "fully paid") return "success";
+    if (s === "partially paid") return "info";
+    if (s === "not paid") return "warn";
+    if (s === "overdue") return "danger";
+    if (s === "open") return "success";
+    if (s === "closed") return "danger";
+    return "info";
 };
 
 const sortedInvoices = computed(() => {
@@ -753,23 +736,17 @@ const chartOptions = ref({
 });
 
 const loading = ref(false);
-
-// Check if data is loaded
 const isDataLoaded = ref(false);
 
 const setChartData = () => {
-    // Get the current date
     const currentDate = new Date();
-
-    // Get the last 6 months (from current date)
     const last6Months = [];
-    const months = new Set(); // To store unique months
+    const months = new Set();
     const agreementsData = {};
     const quotationsData = {};
     const invoicesData = {};
     const receiptDate = {};
 
-    // Helper function to format date as "Month Year" (e.g., "Jan 2025")
     const formatMonthYear = (date) => {
         return date.toLocaleString("default", {
             month: "short",

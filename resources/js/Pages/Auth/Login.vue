@@ -83,12 +83,12 @@
                 </div>
 
                 <!-- REMEMBER ME CHECKBOX -->
-                <div class="flex items-center">
+                <!-- <div class="flex items-center">
                     <Checkbox name="remember" v-model:checked="form.remember" />
                     <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
                         Remember me
                     </span>
-                </div>
+                </div> -->
 
                 <!-- SUBMIT BUTTON -->
                 <PrimaryButton

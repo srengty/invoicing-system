@@ -312,6 +312,7 @@
                 </Column>
             </DataTable>
 
+            <!-- Comments Dialog -->
             <Dialog
                 v-model:visible="isCommentDialogVisible"
                 header="Comments"
@@ -343,6 +344,7 @@
                 </div>
             </Dialog>
 
+            <!-- Comments Dialog -->
             <Dialog
                 v-model:visible="isFeedbackDialogVisible"
                 header="Customer Feedback"
@@ -386,17 +388,19 @@
                             label="Approve"
                             severity="success"
                             @click="handleApprove"
+                            :disabled="selectedInvoice?.status === 'approved'"
                         />
                         <Button
                             label="Reject"
                             severity="danger"
                             @click="handleReject"
+                            :disabled="selectedInvoice?.status === 'approved'"
                         />
                     </div>
                 </div>
             </Dialog>
 
-            <!-- View Detail Invoices -->
+            <!-- View Detail Invoices for RM -->
             <Dialog
                 v-model:visible="isViewRmDialogVisible"
                 header="Invoice Details for RM"
@@ -552,11 +556,12 @@
                     <Button
                         label="Close"
                         severity="secondary"
-                        @click="isViewDialogVisible = false"
+                        @click="isViewRmDialogVisible = false"
                     />
                 </template>
             </Dialog>
 
+            <!-- View Detail Invoices for HD -->
             <Dialog
                 v-model:visible="isViewHdDialogVisible"
                 header="Invoice Details for HD"
@@ -700,7 +705,9 @@
                         size="small"
                         @click="changeHdStatus('approved')"
                         :disabled="
-                            statusForm.processing || !statusForm.comment.trim()
+                            statusForm.processing ||
+                            !statusForm.comment.trim() ||
+                            selectedInvoice?.status === 'approved'
                         "
                     />
                     <Button
@@ -710,17 +717,20 @@
                         size="small"
                         @click="changeHdStatus('revise')"
                         :disabled="
-                            statusForm.processing || !statusForm.comment.trim()
+                            statusForm.processing ||
+                            !statusForm.comment.trim() ||
+                            selectedInvoice?.status === 'approved'
                         "
                     />
                     <Button
                         label="Close"
                         severity="secondary"
-                        @click="isViewDialogVisible = false"
+                        @click="isViewHdDialogVisible = false"
                     />
                 </template>
             </Dialog>
 
+            <!-- View Detail Invoices for Director -->
             <Dialog
                 v-model:visible="isViewDialogVisible"
                 header="Invoice Details"
@@ -864,7 +874,9 @@
                         size="small"
                         @click="changeStatus('approved')"
                         :disabled="
-                            statusForm.processing || !statusForm.comment.trim()
+                            statusForm.processing ||
+                            !statusForm.comment.trim() ||
+                            selectedInvoice?.status === 'approved'
                         "
                     />
                     <Button
@@ -874,7 +886,9 @@
                         size="small"
                         @click="changeStatus('revise')"
                         :disabled="
-                            statusForm.processing || !statusForm.comment.trim()
+                            statusForm.processing ||
+                            !statusForm.comment.trim() ||
+                            selectedInvoice?.status === 'approved'
                         "
                     />
                     <Button
@@ -885,6 +899,7 @@
                 </template>
             </Dialog>
 
+            <!-- Comment Dialog -->
             <Dialog
                 v-model:visible="isCommentDialogVisible"
                 :header="commentDialogTitle"
@@ -1080,39 +1095,43 @@ const filteredInvoices = computed(() => {
 
     // Filter by selected status
     if (filters.value.status) {
-        invoices = invoices.filter(invoice => invoice.status === filters.value.status);
+        invoices = invoices.filter(
+            (invoice) => invoice.status === filters.value.status
+        );
     }
 
     // Normalize roles for comparison
-    const roles = (page.props.userRoles || []).map(r => r.toLowerCase());
+    const roles = (page.props.userRoles || []).map((r) => r.toLowerCase());
 
-    const isChefDeptOnly = roles.includes("chef department") &&
+    const isChefDeptOnly =
+        roles.includes("chef department") &&
         !roles.includes("revenue manager") &&
         !roles.includes("director");
 
-    const isDirectorOnly = roles.includes("director") &&
+    const isDirectorOnly =
+        roles.includes("director") &&
         !roles.includes("revenue manager") &&
         !roles.includes("chef department");
 
-    const isRMOnly = !roles.includes("director") &&
+    const isRMOnly =
+        !roles.includes("director") &&
         roles.includes("revenue manager") &&
         !roles.includes("chef department");
 
     if (isRMOnly) {
-        invoices = invoices.filter(invoice => {
-            return invoice.hdStatus === 'approved';
+        invoices = invoices.filter((invoice) => {
+            return invoice.hdStatus === "approved";
         });
     }
 
     if (isDirectorOnly) {
-        invoices = invoices.filter(invoice => {
-            return invoice.rmStatus === 'approved';
+        invoices = invoices.filter((invoice) => {
+            return invoice.rmStatus === "approved";
         });
     }
 
     return invoices;
 });
-
 
 const selectedComment = ref("");
 const commentText = ref("");
