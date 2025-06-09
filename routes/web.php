@@ -73,35 +73,8 @@ Route::middleware(['auth'])->group(function () {
                 'userRoles' => request()->session()->get('roles', []),
             ]);
         })->name('dashboard.revenue-manager');
-});
-    /*
-    |--------------------------------------------------------------------------
-    | Role-Specific Routes
-    |--------------------------------------------------------------------------
-    */
-    // Division Staff Routes
-    Route::middleware([ CheckRole::class . ':division staff' ])->group(function () {
-        // Quotations
-        Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-        Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
-        // Invoices
-        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
-    });
-    // Chef Department Routes
-    Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
-        // Agreements
-        Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
-    });
 
-    Route::middleware(['auth'])
-        ->get('/dashboard', function () {
-            return Inertia::render('Dashboard');
-        })
-        ->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Agreement Routes
     |--------------------------------------------------------------------------
@@ -183,7 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/settings/customers/show/{customer}', [CustomerController::class, 'show'])->name('customers.show');
     Route::put('/settings/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
     Route::get('/settings/customers/{customer}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
-    Route::delete('/settings/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy'); 
+    Route::delete('/settings/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::put('/settings/customers/{customer}/toggle-active', [CustomerController::class, 'toggleActive'])->name('customers.toggleActive');
     Route::get('/activate-all-customers', function() {
         \App\Models\Customer::query()->update(['active' => true]);
@@ -217,5 +190,32 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::post('/quotations/send',[QuotationController::class, 'sendQuotation'])->name('quotations.send');
     Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
+
+});
+    /*
+    |--------------------------------------------------------------------------
+    | Role-Specific Routes
+    |--------------------------------------------------------------------------
+    */
+    // Division Staff Routes
+    Route::middleware([ CheckRole::class . ':division staff' ])->group(function () {
+        // Quotations
+        Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
+        Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
+        // Invoices
+        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+    });
+    // Chef Department Routes
+    Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
+        // Agreements
+        Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
+    });
+
+    Route::middleware(['auth'])
+        ->get('/dashboard', function () {
+            return Inertia::render('Dashboard');
+        })
+        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 require __DIR__.'/auth.php';
