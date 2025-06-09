@@ -54,6 +54,7 @@
                         <Badge
                             v-if="
                                 item.key === 2 &&
+                                userPermissions.canAlterQuotations &&
                                 page.props.pendingQuotationsCount > 0
                             "
                             :value="page.props.pendingQuotationsCount"
@@ -63,6 +64,7 @@
                         <Badge
                             v-if="
                                 item.key === 3 &&
+                                userPermissions.canAlterAgreements &&
                                 page.props.dueAgreementsCount > 0
                             "
                             :value="page.props.dueAgreementsCount"
@@ -70,17 +72,15 @@
                             class="ml-auto"
                         />
                         <Badge
-                            v-if="
-                                item.href === '/invoices/list' &&
-                                page.props.pendingInvoicesCount > 0
-                            "
-                            :value="page.props.pendingInvoicesCount"
+                            v-if="item.key === 4 && invoiceBadgeCount > 0"
+                            :value="invoiceBadgeCount"
                             severity="danger"
                             class="ml-auto"
                         />
                         <Badge
                             v-if="
                                 item.href === '/settings/products' &&
+                                userPermissions.canAlterItems &&
                                 page.props.pendingItemsCount > 0
                             "
                             :value="page.props.pendingItemsCount"
@@ -113,13 +113,50 @@ const userPermissions = computed(() => {
         canCreateQuotations: roles.some((role) =>
             role.toLowerCase().includes("division staff")
         ),
+        canAlterQuotations: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
+        ),
         canCreateAgreements: roles.some((role) =>
             role.toLowerCase().includes("chef department")
+        ),
+        canAlterAgreements: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("division staff")
+        ),
+        canAlterItems: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("division staff")
         ),
         canCreateInvoices: roles.some((role) =>
             role.toLowerCase().includes("division staff")
         ),
+        canAlterHDStatus: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+        canAlterRMStatus: roles.some((role) =>
+            role.toLowerCase().includes("revenue manager")
+        ),
+        canAlterDirectorStatus: roles.some((role) =>
+            role.toLowerCase().includes("director")
+        ),
     };
+});
+
+const invoiceBadgeCount = computed(() => {
+    if (userPermissions.value.canAlterHDStatus) {
+        return page.props.hdPendingCount;
+    }
+    if (userPermissions.value.canAlterRMStatus) {
+        return page.props.rmPendingCount;
+    }
+    if (userPermissions.value.canAlterDirectorStatus) {
+        return page.props.directorPendingCount;
+    }
+    return 0;
 });
 
 const items = ref([
@@ -145,7 +182,8 @@ const items = ref([
         icon: "pi pi-chart-bar",
         shortcut: "⌘+R",
         items: [
-            ...(userPermissions.value.canCreateQuotations
+            ...(userPermissions.value.canCreateQuotations &&
+            userPermissions.value.canAlterQuotations
                 ? [
                       {
                           label: "New quotation",
@@ -164,7 +202,8 @@ const items = ref([
         icon: "pi pi-user",
         shortcut: ">",
         items: [
-            ...(userPermissions.value.canCreateAgreements
+            ...(userPermissions.value.canCreateAgreements &&
+            userPermissions.value.canAlterAgreements
                 ? [
                       {
                           label: "Create Agreement",

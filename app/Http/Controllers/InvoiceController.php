@@ -470,10 +470,13 @@ class InvoiceController extends Controller
 
         // Return the filtered invoices to the view
         return Inertia::render('Invoices/List', [
-            'invoices' => $invoices,
-            'filters' => $filters,
-            'hdComments' => $hdComments,
-            'rmComments' => $rmComments,
+            'invoices'             => $invoices,
+            'filters'              => $filters,
+            'hdComments'           => $hdComments,
+            'rmComments'           => $rmComments,
+            'hdPendingCount'       => Invoice::whereIn('hdStatus', ['Pending','Revise'])->count(),
+            'rmPendingCount'       => Invoice::whereIn('rmStatus', ['Pending','Revise'])->count(),
+            'dirPendingCount'      => Invoice::whereIn('status',   ['Pending','Revise'])->count(),
         ]);
     }
 

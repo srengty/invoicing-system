@@ -50,7 +50,7 @@ class QuotationEmail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'test-mail', // Ensure this matches your Blade template
+            view: 'emails.quotation', // Ensure this matches your Blade template
             with: [
                 'quotation' => $this->quotation,
             ],

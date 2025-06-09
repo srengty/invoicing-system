@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\Agreement;
 use App\Models\Quotation;
@@ -68,7 +69,9 @@ class AppServiceProvider extends ServiceProvider
             },
             'pendingQuotationsCount' => function () {
                 if (auth()->check()) {
-                    return Quotation::where('status', 'Pending')->count();
+                    $pendinQuotation = Quotation::where('status', 'Pending')->count();
+                    $reviseQuotation = Quotation::where('status', 'Revise')->count();
+                    return $pendinQuotation + $reviseQuotation;
                 }
                 return 0;
             },
@@ -80,6 +83,27 @@ class AppServiceProvider extends ServiceProvider
 
                 }
                 return 0;
+            },
+            'hdPendingCount' => function () {
+                return Auth::check()
+                    ? Invoice::whereIn('hdStatus', ['Pending','Revise'])->count()
+                    : 0;
+            },
+
+            'rmPendingCount' => function () {
+                return Auth::check()
+                    ? Invoice::where('hdStatus', 'approved')
+                            ->whereIn('rmStatus', ['Pending','Revise'])
+                            ->count()
+                    : 0;
+            },
+
+            'directorPendingCount' => function () {
+                return Auth::check()
+                    ? Invoice::where('rmStatus', 'approved')
+                            ->whereIn('status', ['Pending','Revise'])
+                            ->count()
+                    : 0;
             },
             'pendingItemsCount' => function () {
                 if (auth()->check()) {

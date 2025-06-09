@@ -684,7 +684,7 @@ const form = useForm({
     address: props.quotation?.address || "",
     phone_number: props.quotation?.phone_number || "",
     total: props.quotation?.total || 0,
-    total_usd: props.quotation?.total_usd || 0,
+    total_usd: props.quotation?.total_usd || "",
     exchange_rate: props.quotation?.exchange_rate || 0,
     products: props.quotation?.products || [],
     terms: props.quotation?.terms || "",
