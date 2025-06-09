@@ -21,9 +21,9 @@
             </h2>
 
             <!-- If the backend sets a “status” flash (e.g. “Password reset link sent”), show it -->
-            <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+            <!-- <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
                 {{ status }}
-            </div>
+            </div> -->
 
             <form @submit.prevent="handleSubmit" class="space-y-4">
                 <!-- EMAIL FIELD -->
@@ -117,7 +117,7 @@ import Password from "primevue/password";
 import loginBg from "/public/assets/images/login.jpg";
 
 const page = usePage();
-const rolesArray = computed(() => page.props.roles);
+const rolesArray = computed(() => page.props.userRoles || []);
 const rolesString = computed(() => {
     return rolesArray.value
         .map((r) => r.charAt(0).toUpperCase() + r.slice(1))
@@ -152,10 +152,10 @@ const handleSubmit = () => {
     if (!validateForm()) return;
 
     form.post(route("login"), {
-        preserveScroll: true,
+        // preserveScroll: true,
         onSuccess: (inertiaPage) => {
             const rolesAfterLogin = inertiaPage.props.roles || [];
-            console.log("Logged‐in user’s roles:", rolesAfterLogin);
+            console.log("Logged-in user’s roles:", rolesAfterLogin);
         },
         onError: (errors) => {
             form.errors.email = errors.email
@@ -169,6 +169,10 @@ onMounted(() => {
     console.log("Logged‐in user’s roles:", rolesArray.value);
 });
 </script>
+
+<style scoped>
+/* … */
+</style>
 
 <style scoped>
 /* … */

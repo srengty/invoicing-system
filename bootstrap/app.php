@@ -16,7 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        $middleware->group('check.role',[
+        \App\Http\Middleware\CheckRole::class,
+
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

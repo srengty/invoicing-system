@@ -156,6 +156,8 @@ jobs:
 
         VITE_APP_NAME="${APP_NAME}"
 
+        AUTH_API_URL=https://smis.itc.edu.kh/api_v1/auth
+
         EOF
     - name: Generate APP_KEY
       run: php artisan key:generate
