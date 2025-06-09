@@ -23,6 +23,7 @@ use App\Mail\InvoiceEmail;
 use App\Models\InvoiceHdComment;
 use App\Models\InvoiceRmComment;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 use Exception;
 
@@ -563,7 +564,6 @@ class InvoiceController extends Controller
         ]);
     }
 
-
     // Show the edit page for an existing invoice
     public function update(Request $request, $id)
     {
@@ -818,5 +818,59 @@ class InvoiceController extends Controller
         return response()->json($invoice);
     }
 
+    public function sendTelegramToMultiple(Request $request)
+    {
+        $validated = $request->validate([
+            'message' => 'required|string|max:1000',
+            'customer_ids' => 'required|array',
+            'customer_ids.*' => 'integer|exists:customers,id',
+        ]);
+
+        $botToken = env('TELEGRAM_BOT_TOKEN');
+        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+
+        $customers = Customer::whereIn('id', $validated['customer_ids'])
+            ->whereNotNull('telegram_chat_id')
+            ->get();
+
+        $results = [];
+
+        foreach ($customers as $customer) {
+            try {
+                $response = Http::post($url, [
+                    'chat_id' => $customer->telegram_chat_id,
+                    'text' => $validated['message'],
+                ]);
+
+                $results[] = [
+                    'customer_id' => $customer->id,
+                    'chat_id' => $customer->telegram_chat_id,
+                    'success' => $response->successful(),
+                    'response' => $response->json(),
+                ];
+            } catch (\Exception $e) {
+                Log::error('Telegram message send failed', [
+                    'customer_id' => $customer->id,
+                    'chat_id' => $customer->telegram_chat_id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                $results[] = [
+                    'customer_id' => $customer->id,
+                    'chat_id' => $customer->telegram_chat_id,
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'summary' => [
+                'total' => count($customers),
+                'sent' => count(array_filter($results, fn ($r) => $r['success'])),
+            ],
+            'details' => $results,
+        ]);
+    }
 
 }

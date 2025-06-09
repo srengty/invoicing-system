@@ -292,9 +292,15 @@
                         v-model="sendForm.telegramChecked"
                         class="mr-2"
                     />
-                    <label for="telegramCheckbox" class="font-bold"
-                        >Telegram: {{ invoice.phone_number || "N/A" }}</label
-                    >
+                    <label for="telegramCheckbox" class="font-bold">
+                        Telegram: {{
+                            invoice.telegram_chat_id
+                                ? "Linked"
+                                : invoice.phone_number
+                                    ? invoice.phone_number + " (not linked)"
+                                    : "Not available"
+                        }}
+                    </label>
                 </div>
             </div>
 
@@ -638,28 +644,64 @@ const sendPDFViaEmail = async (pdfBlob, filename) => {
     isSending.value = true;
 
     try {
+        const sendEmail = sendForm.value.emailChecked;
+        const sendTelegram = sendForm.value.telegramChecked;
+
         const formData = new FormData();
         formData.append("invoice_id", invoice.value.id);
-        formData.append("send_email", sendForm.value.emailChecked);
-        formData.append("send_telegram", sendForm.value.telegramChecked);
+        formData.append("send_email", sendEmail);
         formData.append("pdf_file", pdfBlob, filename);
 
-        await axios.post("/invoices/send", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
-        });
+        // Send Email
+        if (sendEmail) {
+            await axios.post("/invoices/send", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+        }
 
-        // Redirect after success (optional)
-        window.location.href = route("invoices.list");
+        // Send Telegram
+        if (sendTelegram && invoice.value.customer_id) {
+            const res = await axios.post("/invoices/send-telegram", {
+                message: `Invoice #${invoice.value.invoice_no} is ready.`,
+                customer_ids: [invoice.value.customer_id],
+            });
+
+            const data = res.data;
+
+            if (data.summary.sent > 0) {
+                toast.add({
+                    severity: "success",
+                    summary: "Telegram Sent",
+                    detail: `${data.summary.sent} of ${data.summary.total} messages sent successfully.`,
+                    life: 5000,
+                    group: "tr",
+                });
+            } else {
+                toast.add({
+                    severity: "error",
+                    summary: "Telegram Failed",
+                    detail: "Message could not be delivered. Please check customer's Telegram setup.",
+                    life: 5000,
+                    group: "tr",
+                });
+            }
+
+            // Optional: Log full details
+            console.table(data.details);
+        }
+
+        isSendDialogVisible.value = false;
+        // window.location.href = route("invoices.list");
     } catch (error) {
-        console.error("Unexpected error:", error);
+        console.error("Send failed:", error);
         toast.add({
             severity: "error",
-            summary: "Error",
-            detail: "Failed to send the invoice.",
-            group: "tr",
+            summary: "Send Error",
+            detail: "Invoice could not be sent.",
             life: 5000,
+            group: "tr",
         });
     } finally {
         isSending.value = false;
