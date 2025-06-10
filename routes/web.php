@@ -39,6 +39,33 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role-Specific Routes
+    |--------------------------------------------------------------------------
+    */
+    // Division Staff Routes
+    Route::middleware([ CheckRole::class . ':division staff' ])->group(function () {
+        // Quotations
+        Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
+        Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
+        // Invoices
+        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+    });
+    // Chef Department Routes
+    Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
+        // Agreements
+        Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
+    });
+
+    Route::middleware(['auth'])
+        ->get('/dashboard', function () {
+            return Inertia::render('Dashboard');
+        })
+        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
 Route::middleware(['auth'])->group(function () {
 
     /*
@@ -192,30 +219,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/send-quotation-email', [QuotationEmailController::class, 'sendEmail']);
 
 });
-    /*
-    |--------------------------------------------------------------------------
-    | Role-Specific Routes
-    |--------------------------------------------------------------------------
-    */
-    // Division Staff Routes
-    Route::middleware([ CheckRole::class . ':division staff' ])->group(function () {
-        // Quotations
-        Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-        Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
-        // Invoices
-        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
-    });
-    // Chef Department Routes
-    Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
-        // Agreements
-        Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
-    });
 
-    Route::middleware(['auth'])
-        ->get('/dashboard', function () {
-            return Inertia::render('Dashboard');
-        })
-        ->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 require __DIR__.'/auth.php';
