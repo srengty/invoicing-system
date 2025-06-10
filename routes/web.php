@@ -11,6 +11,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\QuotationEmailController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -119,6 +120,7 @@ Route::put('/invoices/{invoice}/update-status-hd', [InvoiceController::class, 'u
 Route::put('/invoices/{invoice}/update-status-rm', [InvoiceController::class, 'updateStatusRM'])
     ->name('invoices.updateStatusRM');
 Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
+Route::get('/telegram/webhook', [TelegramController::class, 'webhook']);
 
 // Receipts
 Route::resource('receipts', ReceiptController::class);
