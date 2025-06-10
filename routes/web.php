@@ -53,6 +53,7 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
         Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
         // Invoices
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
     });
     // Chef Department Routes
     Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
