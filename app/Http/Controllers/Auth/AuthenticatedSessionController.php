@@ -37,7 +37,6 @@ class AuthenticatedSessionController extends Controller
             'email'    => ['required', 'email'],
             'password' => ['required', 'string', 'min:6'],
         ]);
-        dd("server");
         // 2) Build the external API login URL
         $apiBase  = config('services.external_auth.base_url');
         $loginUrl = rtrim($apiBase, '/') . '/login';
