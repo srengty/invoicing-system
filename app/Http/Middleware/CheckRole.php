@@ -18,7 +18,6 @@ class CheckRole
 
         // Normalize role names for comparison
         $userRoles = array_map('strtolower', $userRoles);
-
         $allowedList = array_map('strtolower', $rolesAllowed);
         // dd($userRoles, $allowedList);
 

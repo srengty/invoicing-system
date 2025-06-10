@@ -11,6 +11,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\QuotationEmailController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;

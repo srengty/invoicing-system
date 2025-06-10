@@ -13,6 +13,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Mail\Mailer;
+use Illuminate\Support\Facades\Http;
 
 class InvoiceEmail extends Mailable
 {
@@ -28,7 +29,8 @@ class InvoiceEmail extends Mailable
     }
 
     public function envelope(): Envelope
-    {
+    {  
+  
         return new Envelope(
             subject: 'ITC Finance - Invoice Details',  // Update subject for invoice
             from: new Address('itcfinance168@gmail.com', 'ITC Finance'),
@@ -37,6 +39,7 @@ class InvoiceEmail extends Mailable
 
     public function content(): Content
     {
+       
         return new Content(
             view: 'invoice-mail',  // Ensure this matches your Blade template
             with: [
