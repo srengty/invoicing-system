@@ -12,46 +12,54 @@ class TelegramController extends Controller
     public function webhook(Request $request)
     {
         $data = $request->all();
-        Log::info('Telegram webhook received:', $data); // Debug
+        \Log::info('Telegram Webhook Payload:', $request->all());
 
-        $chatId = $data['message']['chat']['id'] ?? null;
-        $username = $data['message']['from']['username'] ?? null;
-        $text = $data['message']['text'] ?? null;
-        
-        // OPTIONAL: If customer sends phone number via contact
-        $phone = $data['message']['contact']['phone_number'] ?? null;
+        $message = $data['message'] ?? null;
+
+        if (!$message) {
+            return response()->json(['ok' => true]);
+        }
+
+        $chatId = $message['chat']['id'] ?? null;
+        $username = $message['from']['username'] ?? null;
+        $text = $message['text'] ?? '';
+        $phone = $message['contact']['phone_number'] ?? null;
 
         if ($chatId) {
-            // Handle /start command
             if ($text === '/start') {
                 $this->handleStartCommand($chatId, $username, $phone);
                 return response()->json(['ok' => true]);
             }
 
+            $customer = null;
+
+            // Try phone if sent
             if ($phone) {
-                // Match by phone number
                 $cleanPhone = ltrim($phone, '+');
                 $customer = Customer::where('phone_number', 'like', "%$cleanPhone")->first();
-            } elseif ($username) {
-                // Match by Telegram username
+            }
+
+            // Fallback to username if no phone or no match
+            if (!$customer && $username) {
                 $customer = Customer::where('username', $username)->first();
             }
 
-            if (!empty($customer)) {
+            if ($customer) {
                 $customer->telegram_chat_id = $chatId;
                 $customer->save();
 
-                Http::post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+                Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
                     'chat_id' => $chatId,
                     'text' => "Hi @$username, your Telegram is now linked.",
                 ]);
+            } else {
+                // Send fallback message if customer is not found
+                Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => "Sorry @$username, we couldn't find your account. Please use /start or contact support.",
+                ]);
             }
         }
-        Log::info('Chat ID:', ['chatId' => $chatId]);
-        Log::info('Username:', ['username' => $username]);
-        Log::info('Phone:', ['phone' => $phone]);
-        Log::info('Text:', ['text' => $text]);
-
 
         return response()->json(['ok' => true]);
     }
@@ -59,24 +67,21 @@ class TelegramController extends Controller
     protected function handleStartCommand($chatId, $username, $phone = null)
     {
         $customer = null;
-        
+
         if ($phone) {
-            // Try to find by phone number first
             $cleanPhone = ltrim($phone, '+');
             $customer = Customer::where('phone_number', 'like', "%$cleanPhone")->first();
         }
-        
+
         if (!$customer && $username) {
-            // Fall back to username if phone not found or not provided
             $customer = Customer::where('username', $username)->first();
         }
 
         if ($customer) {
-            // Update chat ID if customer found
             $customer->telegram_chat_id = $chatId;
             $customer->save();
 
-            Http::post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+            Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => "Hi @$username! Please share your phone number to link your account.",
                 'reply_markup' => json_encode([
@@ -93,8 +98,7 @@ class TelegramController extends Controller
                 ])
             ]);
         } else {
-            // Customer not found in database
-            Http::post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+            Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => "Hi @$username! We couldn't find your account. Please contact support.",
             ]);

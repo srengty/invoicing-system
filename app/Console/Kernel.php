@@ -28,6 +28,5 @@ class Kernel extends ConsoleKernel
     }
 
     protected $routeMiddleware = [
-        'check.role' => \App\Http\Middleware\CheckRole::class,
     ];
 }

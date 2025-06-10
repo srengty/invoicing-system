@@ -468,6 +468,10 @@ class InvoiceController extends Controller
 
         // Get the filters for passing them to the view
         $filters = $request->only(['invoice_no_start', 'invoice_no_end', 'category_name_english', 'currency', 'status', 'start_date', 'end_date', 'customer']);
+            //   $response=Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+            //         'chat_id' =>"1166075692",
+            //         'text' => "Hi , your Telegram is now linked.",
+            //     ]);
 
         // Return the filtered invoices to the view
         return Inertia::render('Invoices/List', [
