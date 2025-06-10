@@ -25,14 +25,14 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Set php for running laravel
-      run: |
-          echo "$PASSWORD_SERVER" | sudo -S add-apt-repository ppa:ondrej/php
-          echo "$PASSWORD_SERVER" | sudo -S apt install software-properties-common -y
-          echo "$PASSWORD_SERVER" | sudo -S apt update
-          echo "$PASSWORD_SERVER" | sudo -S apt install -y php8.4 php8.4-mysql php8.4-cli php8.4-mbstring php8.4-xml php8.4-bcmath php8.4-curl php8.4-zip php8.4-tokenizer php8.4-common php8.4-mysql php8.4-sqlite3 php8.4-gd unzip php8.4-fpm
-          echo "$PASSWORD_SERVER" | sudo -S update-alternatives --set php /usr/bin/php8.4
-          echo "$PASSWORD_SERVER" | sudo -S systemctl restart php8.4-fpm
+    # - name: Set php for running laravel
+    #   run: |
+    #       echo "$PASSWORD_SERVER" | sudo -S add-apt-repository ppa:ondrej/php
+    #       echo "$PASSWORD_SERVER" | sudo -S apt install software-properties-common -y
+    #       echo "$PASSWORD_SERVER" | sudo -S apt update
+    #       echo "$PASSWORD_SERVER" | sudo -S apt install -y php8.4 php8.4-mysql php8.4-cli php8.4-mbstring php8.4-xml php8.4-bcmath php8.4-curl php8.4-zip php8.4-tokenizer php8.4-common php8.4-mysql php8.4-sqlite3 php8.4-gd unzip php8.4-fpm
+    #       echo "$PASSWORD_SERVER" | sudo -S update-alternatives --set php /usr/bin/php8.4
+    #       echo "$PASSWORD_SERVER" | sudo -S systemctl restart php8.4-fpm
     - name: Install dependencies
       run: |
         composer install --no-dev --optimize-autoloader

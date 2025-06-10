@@ -151,7 +151,7 @@ const validateForm = () => {
 const handleSubmit = () => {
     if (!validateForm()) return;
 
-    form.post(route("login"), {
+    form.post("https://finance.itc.edu.kh/login", {
         // preserveScroll: true,
         onSuccess: (inertiaPage) => {
             const rolesAfterLogin = inertiaPage.props.roles || [];
