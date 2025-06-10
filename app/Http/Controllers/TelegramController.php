@@ -45,13 +45,13 @@ class TelegramController extends Controller
                 $customer->save();
 
                 // Send confirmation message to the user
-                Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+                Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('8027813195:AAHqmIIoVxNNRYweBtPJQeX5Ziz79NsQRL4') . "/sendMessage", [
                     'chat_id' => $chatId,
                     'text' => "Hi @$username, your Telegram is now linked.",
                 ]);
             } else {
                 // Send fallback message if customer is not found
-                Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+                Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('8027813195:AAHqmIIoVxNNRYweBtPJQeX5Ziz79NsQRL4') . "/sendMessage", [
                     'chat_id' => $chatId,
                     'text' => "Sorry @$username, we couldn't find your account. Please use /start or contact support.",
                 ]);
@@ -76,13 +76,13 @@ class TelegramController extends Controller
             $customer->save();
 
             // Send message asking for phone number (if needed)
-            Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+            Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('8027813195:AAHqmIIoVxNNRYweBtPJQeX5Ziz79NsQRL4') . "/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => "Hi @$username! Your Telegram is now linked. Please contact support if you need further assistance.",
             ]);
         } else {
             // Send message if no matching user found
-            Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+            Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('8027813195:AAHqmIIoVxNNRYweBtPJQeX5Ziz79NsQRL4') . "/sendMessage", [
                 'chat_id' => $chatId,
                 'text' => "Hi @$username! We couldn't find your account. Please contact support.",
             ]);
