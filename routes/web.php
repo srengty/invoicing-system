@@ -52,12 +52,13 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
         Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
         Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
         // Invoices
-        // Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
-        // Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
-        // Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+        Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
+        Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
     });
     // Chef Department Routes
     Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
+        Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
         // Agreements
         Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
     });
@@ -134,7 +135,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/quotations', [QuotationController::class, 'list']);
     Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
     // Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-    // Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
+    Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
     Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updateStatus']);
     Route::post('/quotations/{quotationId}/comments', [QuotationController::class, 'storeComment']);
     Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
@@ -150,9 +151,9 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
-    Route::resource('invoices', InvoiceController::class);
+    Route::resource('invoices', InvoiceController::class)->except(['create','list','store']);
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
-    Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+    // Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
     Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
     Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'updateStatus'])->name('invoices.updateStatus');
     Route::put('/invoices/{invoice}/update-status-hd', [InvoiceController::class, 'updateStatusHD'])->name('invoices.updateStatusHD');
