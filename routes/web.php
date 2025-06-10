@@ -11,6 +11,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\PaymentScheduleController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TelegramController;
 use App\Http\Controllers\ProductCommentController;
 use App\Http\Controllers\QuotationEmailController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -32,7 +33,7 @@ Route::get('/', function () {
 // Authentication (Login / Logout)
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+// Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
@@ -100,6 +101,8 @@ Route::middleware(['auth'])->group(function () {
                 'userRoles' => request()->session()->get('roles', []),
             ]);
         })->name('dashboard.revenue-manager');
+
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
         /*
     |--------------------------------------------------------------------------
