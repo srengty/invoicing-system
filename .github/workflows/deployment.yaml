@@ -141,11 +141,11 @@ jobs:
 
         MAIL_MAILER=log
         MAIL_SCHEME=null
-        MAIL_HOST=127.0.0.1
-        MAIL_PORT=2525
-        MAIL_USERNAME=null
-        MAIL_PASSWORD="rvle ineh zvpa dutt"
-        MAIL_FROM_ADDRESS="hello@example.com"
+        MAIL_HOST=smtp.gmail.com
+        MAIL_PORT=465
+        MAIL_USERNAME="itcfinance168@gmail.com"
+        MAIL_ENCRYPTION=tls
+        MAIL_FROM_ADDRESS="itcfinance168@gmail.com"
         MAIL_FROM_NAME="ITC Finance"
 
         AWS_ACCESS_KEY_ID=
@@ -157,6 +157,8 @@ jobs:
         VITE_APP_NAME="${APP_NAME}"
 
         AUTH_API_URL=https://smis.itc.edu.kh/api_v1/auth
+
+        TELEGRAM_BOT_TOKEN="8027813195:AAHqmIIoVxNNRYweBtPJQeX5Ziz79NsQRL4"
 
         EOF
     - name: Generate APP_KEY
