@@ -52,8 +52,8 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
         Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
         Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
         // Invoices
-        Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
+        Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
     });
     // Chef Department Routes
     Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
@@ -149,7 +149,7 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
-    Route::resource('invoices', InvoiceController::class)->except(['create']);
+    Route::resource('invoices', InvoiceController::class)->except(['create','list']);
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     // Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
     Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);
