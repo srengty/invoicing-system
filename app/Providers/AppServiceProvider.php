@@ -12,6 +12,7 @@ use App\Models\Quotation;
 use App\Models\Invoice;
 use App\Models\Product;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -36,6 +37,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        if(App::environment("production")){
+            URL::forceScheme('https');
+        }
         Inertia::share([
             "userRoles"=> session()->get("roles",[]),
             'dueAgreementsCount' => function () {

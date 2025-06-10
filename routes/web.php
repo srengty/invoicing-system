@@ -32,7 +32,7 @@ Route::get('/', function () {
 // Authentication (Login / Logout)
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+// Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +73,8 @@ Route::middleware(['auth'])->group(function () {
                 'userRoles' => request()->session()->get('roles', []),
             ]);
         })->name('dashboard.revenue-manager');
+
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
         /*
     |--------------------------------------------------------------------------
