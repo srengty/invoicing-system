@@ -52,6 +52,7 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
         Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
         Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
         // Invoices
+        Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
     });
