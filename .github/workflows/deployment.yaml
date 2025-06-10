@@ -158,8 +158,6 @@ jobs:
 
         AUTH_API_URL=https://smis.itc.edu.kh/api_v1/auth
 
-        TELEGRAM_BOT_TOKEN="8027813195:AAHqmIIoVxNNRYweBtPJQeX5Ziz79NsQRL4"
-
         EOF
     - name: Generate APP_KEY
       run: php artisan key:generate
