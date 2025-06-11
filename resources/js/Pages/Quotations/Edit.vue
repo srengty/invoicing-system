@@ -1,8 +1,8 @@
 <template>
-    <Head title="Create Quotation" />
+    <Head title="Edit Quotation" />
     <GuestLayout>
         <NavbarLayout
-            title="Create Quotation"
+            title="Edit Quotation"
             class="fixed top-0 z-50 w-5/6 pr-3"
         />
         <!-- PrimeVue Breadcrumb -->
@@ -21,7 +21,6 @@
         </div>
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
-
         <form @submit.prevent="submit">
             <div
                 class="px-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full text-xs"
@@ -371,7 +370,7 @@
             <!-- Form Buttons -->
             <div class="buttons mt-4 mr-4 mb-10 flex justify-end gap-2">
                 <Button
-                    label="Create"
+                    label="Update"
                     type="submit"
                     class="w-full md:w-28"
                     severity=""
@@ -413,7 +412,7 @@
         </template>
         <Customers
             :customerCategories="customerCategories"
-            redirect_route="quotations.create"
+            redirect_route="quotations.edit"
             :mode="'create'"
         />
     </Dialog>
@@ -563,7 +562,6 @@
             />
         </template>
     </Dialog>
-
 </template>
 
 <script setup>
@@ -600,11 +598,8 @@ import {
 } from "primevue";
 
 const props = defineProps({
-    customers: {
-        type: Array,
-        default: () => [],
-        required: true,
-    },
+    quotation: Object,
+    customers: Array,
     products: Array,
     customerCategories: Array,
     productCategories: Array,
@@ -613,7 +608,6 @@ const props = defineProps({
 
 const toast = useToast();
 const selectedProductIds = ref([]);
-const selectedProductsData = ref([]);
 
 // The Breadcrumb Quotations
 const page = usePage();
@@ -628,8 +622,8 @@ const items = computed(() => [
         to: route("quotations.list"),
     },
     {
-        label: "Create Quotation",
-        to: route("quotations.create"),
+        label: `Edit Quotation`,
+        to: route("quotations.edit", { id: props.quotation.id }),
     },
 ]);
 
@@ -653,18 +647,45 @@ const preventMinus = (event) => {
     }
 };
 
+// Define the Inertia form
 const form = useForm({
-    quotation_no: "",
-    quotation_date: "",
-    customer_id: "",
-    address: "",
-    phone_number: "",
-    total: 0,
-    total_usd: "",
-    exchange_rate: 0,
-    products: [],
-    terms: "",
+    id: props.quotation?.id || null,
+    quotation_no: props.quotation?.quotation_no || "",
+    quotation_date: props.quotation?.quotation_date || "",
+    customer_id: props.quotation?.customer_id || "",
+    address: props.quotation?.address || "",
+    phone_number: props.quotation?.phone_number || "",
+    total: props.quotation?.total || 0,
+    total_usd: props.quotation?.total_usd || "",
+    exchange_rate: props.quotation?.exchange_rate || 0,
+    products: props.quotation?.products || [],
+    terms: props.quotation?.terms || "",
 });
+
+// Initialize selected products
+const selectedProductsData = ref(
+    props.quotation?.products?.map((product) => ({
+        ...product,
+        quantity: product.pivot?.quantity || 1,
+        price: product.pivot?.price || product.price,
+        subTotal:
+            (product.pivot?.quantity || 1) *
+            (product.pivot?.price || product.price),
+        remark: product.pivot?.remark || "",
+        include_catalog: Boolean(product.pivot?.include_catalog),
+    })) || []
+);
+// Update customer details when customer_id changes
+watch(
+    () => form.customer_id,
+    (newVal) => {
+        const selectedCustomer = props.customers.find((c) => c.id == newVal);
+        if (selectedCustomer) {
+            form.address = selectedCustomer.address || "";
+            form.phone_number = selectedCustomer.phone_number || "";
+        }
+    }
+);
 
 const isKhmer = ref(false);
 const isAddItemDialogVisible = ref(false);
@@ -681,10 +702,40 @@ const selectedItem = ref(null);
 const customerCategories = ref(props.customerCategories);
 const isCreateCustomerVisible = ref(false);
 
+// Remove this line (the problematic JSON.parse):
+// const newProps = JSON.parse(props.quotation || null);
+
+// Replace with direct object access:
+onMounted(() => {
+    if (props.quotation) {
+        form.id = props.quotation.id || null;
+        form.quotation_no = props.quotation.quotation_no || "";
+        form.quotation_date = props.quotation.quotation_date || "";
+        form.customer_id = String(props.quotation.customer_id) || "";
+        form.address = props.quotation.address || "";
+        form.phone_number = props.quotation.phone_number || "";
+        form.total = props.quotation.total || 0;
+        form.total_usd = props.quotation.total_usd || 0;
+        form.exchange_rate = props.quotation.exchange_rate || 0;
+
+        // Initialize products
+        selectedProductsData.value =
+            props.quotation.products?.map((product) => ({
+                ...product,
+                quantity: product.pivot?.quantity ?? 1,
+                subTotal:
+                    (product.pivot?.quantity ?? 1) * Number(product.price || 0),
+                remark: product.remark || "",
+                include_catalog: Boolean(product.pivot?.include_catalog),
+            })) || [];
+    }
+});
+
 onMounted(async () => {
     const response = await getDepartment();
     const data = response.data;
-    
+
+    // Filter departments with status === "service"
     const serviceDepartments = data.filter((dept) => dept.status === "service");
 
     if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
@@ -699,7 +750,22 @@ onMounted(async () => {
         divisionOptions.value = [];
     }
 });
-
+// Initialize customer details
+onMounted(() => {
+    if (props.quotation?.customer_id) {
+        const selectedCustomer = props.customers.find(
+            (c) => c.id == props.quotation.customer_id
+        );
+        if (selectedCustomer) {
+            form.address =
+                selectedCustomer.address || props.quotation.address || "";
+            form.phone_number =
+                selectedCustomer.phone_number ||
+                props.quotation.phone_number ||
+                "";
+        }
+    }
+});
 const updateCustomerDetails = () => {
     const selectedCustomer = formattedCustomers.value.find(
         (customer) => customer.id == form.customer_id
@@ -1061,31 +1127,27 @@ const submit = async (event) => {
     }
 
     try {
-        await form.post(route("quotations.store"), {
+        await form.put(route("quotations.update", { id: form.id }), {
             onSuccess: () => {
                 showToast(
                     "success",
-                    "Created",
-                    "Quotation created successfully!"
+                    "Updated",
+                    "Quotation updated successfully!"
                 );
                 router.get(route("quotations.list"));
             },
             onError: (errors) => {
-                console.error("Creation Error:", errors);
+                console.error("Update Error:", errors);
                 showToast(
                     "error",
-                    "Creation Failed",
-                    "Could not create quotation."
+                    "Update Failed",
+                    "Could not update quotation."
                 );
             },
         });
     } catch (error) {
-        console.error("Unexpected Error in Create:", error);
-        showToast(
-            "error",
-            "Unexpected Error",
-            "Could not create quotation."
-        );
+        console.error("Unexpected Error in Update:", error);
+        showToast("error", "Unexpected Error", "Could not update quotation.");
     }
 };
 

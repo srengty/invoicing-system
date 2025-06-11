@@ -166,6 +166,7 @@ const pageTitle = computed(() => {
         "/dashboard": "Dashboard",
         "/quotations": "Quotations",
         "/quotations/create": "Create Quotation",
+        "/quotations/{quotation}/edit": "Edit Quotation",
         "/agreements": "Agreements",
         "/agreements/create": "Create Agreement",
         "/invoices": "Invoices",
@@ -188,7 +189,7 @@ const pageTitle = computed(() => {
     }
     if (routePath.match(/^\/quotations\/\d+\/update$/)) {
         const quotationNo = routePath.split("/")[2];
-        return `Edit Quotation - ${quotationNo}`;
+        return ` Quotation - ${quotationNo}`;
     }
     if (routePath.match(/^\/invoices\/generate\/\d+$/)) {
         return "Generate Invoice";

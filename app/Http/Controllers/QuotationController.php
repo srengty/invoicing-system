@@ -343,8 +343,9 @@ class QuotationController extends Controller
         $products = $quotation->products;
         // Render a form for editing an existing quotation
         return Inertia::render('Quotations/Edit', [
-            'quotation' => $quotation,
-            'products' => $products,
+            'quotation' => $quotation->load(['customer', 'products']),
+            'customers' => Customer::all(),
+            'products' => Product::where('status', 'approved')->get(),
             // dd("Hello")
         ]);
     }

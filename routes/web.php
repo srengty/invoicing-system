@@ -48,18 +48,13 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
     */
     // Division Staff Routes
     Route::middleware([ CheckRole::class . ':division staff' ])->group(function () {
-        // Quotations
         Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-        Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
-        // Invoices
         Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
         Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
         Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
     });
     // Chef Department Routes
     Route::middleware([ CheckRole::class . ':chef department' ])->group(function () {
-        Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
-        // Agreements
         Route::get('/agreements/create', [AgreementController::class, 'create'])->name('agreements.create');
     });
 
@@ -71,7 +66,6 @@ Route::post('/login', [AuthenticatedSessionController::class, 'store']);
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
-
     /*
     |--------------------------------------------------------------------------
     | Dashboard Routes (Role-based)
@@ -131,14 +125,14 @@ Route::middleware(['auth'])->group(function () {
     | Quotation Routes
     |--------------------------------------------------------------------------
     */
-    Route::resource('quotations', QuotationController::class)->except(['create','store']);
+    Route::resource('quotations', QuotationController::class)->except(['create']);
     Route::get('/quotations', [QuotationController::class, 'list']);
     Route::get('/quotations', [QuotationController::class, 'list'])->name('quotations.list');
     // Route::get('/quotations/create', [QuotationController::class, 'create'])->name('quotations.create');
+    Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
     Route::post('/quotations', [QuotationController::class, 'store'])->name('quotations.store');
     Route::put('/quotations/{id}/update-status', [QuotationController::class, 'updateStatus']);
     Route::post('/quotations/{quotationId}/comments', [QuotationController::class, 'storeComment']);
-    Route::get('/quotations/{quotation}/edit', [QuotationController::class, 'edit'])->name('quotations.edit');
     Route::put('/quotations/{id}/toggle-active', [QuotationController::class, 'toggleActive']);
     Route::put('/quotations/{id}/mark-printed', [QuotationController::class, 'markPrinted']);
     Route::get('/quotations/{quotation}', [QuotationController::class, 'show'])->name('quotations.show');

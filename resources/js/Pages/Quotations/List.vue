@@ -25,7 +25,6 @@
             :position="'center'"
             :closeOnEscape="false"
         />
-
         <div class="quotations px-4">
             <div class="flex justify-end items-center mb-6">
                 <div class="flex gap-2">
@@ -88,18 +87,6 @@
                     :showGridlines="true"
                     tableStyle="min-width: 50rem"
                 >
-                    <!-- <Column headerStyle="width: 5%" header="Select">
-                        <template #body="slotProps">
-                            <Checkbox
-                                :value="slotProps.data.id"
-                                v-model="selectedIds"
-                                :disabled="
-                                    !slotProps.data.active ||
-                                    !slotProps.data.quotation_no
-                                "
-                            />
-                        </template>
-                    </Column> -->
                     <Column
                         field="customer.name"
                         header="Customer/Organization Name"
@@ -117,7 +104,6 @@
                             </span>
                         </template>
                     </Column>
-                    <!-- Correctly Map the Status Column -->
                     <Column
                         field="status"
                         header="Status"
@@ -152,7 +138,6 @@
                                     ></i>
                                     {{ slotProps.data.status }}
                                 </span>
-                                <!-- Button to view comment on status -->
                                 <Button
                                     v-if="
                                         slotProps.data.comments &&
@@ -168,7 +153,6 @@
                             </div>
                         </template>
                     </Column>
-                    <!-- Correctly Map the Customer Status Column -->
                     <Column
                         v-if="userPermissions.canCustomerStatus"
                         field="customer_status"
@@ -217,7 +201,6 @@
                                     ></i>
                                     {{ slotProps.data.customer_status }}
                                 </span>
-                                <!-- Button to view comment on customer status -->
                                 <Button
                                     v-if="
                                         slotProps.data.comments &&
@@ -231,7 +214,6 @@
                             </div>
                         </template>
                     </Column>
-                    <!-- Action Column -->
                     <Column
                         header="Actions"
                         style="width: 10%; font-size: 12px"
@@ -256,7 +238,8 @@
                                     severity="info"
                                     class="custom-button"
                                     :disabled="
-                                        slotProps.data.status === 'Approved'
+                                        slotProps.data.status === 'Approved' ||
+                                        !slotProps.data.active
                                     "
                                     @click="editQuotation(slotProps.data)"
                                 />
@@ -392,7 +375,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <!-- Items Section -->
                         <span class="font-bold block mb-2 text-center"
                             >Items</span
@@ -420,7 +402,6 @@
                                 </Column>
                             </DataTable>
                         </div>
-
                         <br />
                         <p>
                             <strong>Total:</strong>
@@ -437,8 +418,6 @@
                             <strong>Role:</strong> {{ selectedQuotation.role }}
                         </p>
                     </div>
-
-                    <!-- Comment input area for approving/revising -->
                     <div class="mt-4 p-6">
                         <label for="comment" class="block font-bold mb-2"
                             >Comment:</label
@@ -453,7 +432,6 @@
                     </div>
 
                     <template #footer>
-                        <!-- Only show to Chef Department: -->
                         <Button
                             v-if="userPermissions.canApprove"
                             label="Approve"
@@ -471,7 +449,6 @@
                                 selectedQuotation.status === 'Revise'
                             "
                         />
-                        <!-- Always show “Close”: -->
                         <Button
                             label="Close"
                             severity="secondary"
@@ -505,7 +482,6 @@
                             <strong>Total:</strong>
                             {{ selectedQuotation.total }}
                         </p>
-
                         <!-- Comment Input -->
                         <div class="flex flex-col gap-2">
                             <label for="feedbackComment" class="block font-bold"
@@ -519,7 +495,6 @@
                                 placeholder="Enter your feedback here..."
                             ></textarea>
                         </div>
-
                         <!-- Approve/Reject Buttons -->
                         <div class="flex justify-end gap-2">
                             <Button
@@ -593,7 +568,6 @@ import {
 const toast = useToast();
 const confirm = useConfirm();
 
-// Reactive properties
 const isViewDialogVisible = ref(false);
 const isFeedbackDialogVisible = ref(false);
 const selectedQuotation = ref(null);
@@ -616,7 +590,7 @@ const clearFilters = () => {
 
 // The Breadcrumb Quotations
 const page = usePage();
-console.log(page.props.userRoles);
+// console.log(page.props.userRoles);
 const userPermissions = computed(() => {
     const roles = page.props.userRoles || [];
     return {
@@ -654,6 +628,21 @@ const userPermissions = computed(() => {
         ),
     };
 });
+
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isDownload = urlParams.get("download") === "1";
+
+    if (isDownload) {
+        downloading.value = true;
+        setTimeout(() => {
+            generateAndDownloadPDF().finally(() => {
+                downloading.value = false;
+            });
+        }, 1000);
+    }
+});
+
 onMounted(() => {
     console.log("User Roles:", page.props.userRoles);
     console.log("Permissions:", userPermissions.value);
@@ -701,20 +690,6 @@ const form = useForm({
 });
 const downloading = ref(false);
 
-onMounted(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isDownload = urlParams.get("download") === "1";
-
-    if (isDownload) {
-        downloading.value = true;
-        setTimeout(() => {
-            generateAndDownloadPDF().finally(() => {
-                downloading.value = false;
-            });
-        }, 1000);
-    }
-});
-
 const filteredQuotations = computed(() => {
     if (!searchTerm.value || !searchType.value) {
         return props.quotations;
@@ -737,36 +712,28 @@ const getFieldValue = (obj, path) => {
     return path.split(".").reduce((acc, part) => acc && acc[part], obj) || "";
 };
 
-// const editQuotation = () => {
-//     if (selectedQuotation.value.status !== "Approved") {
-//         console.log(selectedQuotation.value);
-//         router.visit(route("quotations.create"), {
-//             method: "get",
-//             data: {
-//                 quotation: JSON.stringify(selectedQuotation.value),
-//             },
-//             preserveState: true,
-//             preserveScroll: true,
-//         });
-
-//         isViewDialogVisible.value = false;
-//     } else {
-//         showToast(
-//             "error",
-//             "Edit Disabled",
-//             "You cannot edit an approved quotation!",
-//             3000
-//         );
-//     }
-// };
 const editQuotation = (quotation) => {
-    selectedQuotation.value = quotation;
+    if (quotation.status === "Approved") {
+        showToast(
+            "error",
+            "Edit Disabled",
+            "You cannot edit an approved quotation!",
+            3000
+        );
+        return;
+    }
 
-    router.visit(route("quotations.create"), {
-        method: "get",
-        data: {
-            quotation: JSON.stringify(quotation),
-        },
+    if (!quotation.active) {
+        showToast(
+            "error",
+            "Edit Disabled",
+            "You cannot edit an inactive quotation!",
+            3000
+        );
+        return;
+    }
+
+    router.visit(route("quotations.edit", { quotation: quotation.id }), {
         preserveState: true,
         preserveScroll: true,
     });
@@ -794,10 +761,10 @@ const formatDate = (dateString) => {
     return `${year}-${month}-${day}`;
 };
 
+// Mark as printed
 const printQuotation = async (quotationId) => {
     try {
         window.open(`/quotations/${quotationId}?include_catelog=0`, "_self");
-        // Mark as printed
         const response = await fetch(
             `/quotations/${quotationId}/mark-printed`,
             {
@@ -994,7 +961,7 @@ const formatCurrency = (value) => {
         maximumFractionDigits: 2,
     }).format(value || 0);
 };
-// To add an Activate/Deactivate button
+
 const toggleActive = (quotation) => {
     confirm.require({
         message: `Are you sure you want to ${
@@ -1040,6 +1007,10 @@ const toggleActive = (quotation) => {
 };
 const selectedComment = ref("");
 const isCommentDialogVisible = ref(false);
+const selectedIds = ref([]);
+const selectedQuotations = ref([]);
+const isDownloading = ref(false);
+
 const viewComment = (comments) => {
     const latestComment = comments[comments.length - 1].comment;
     selectedComment.value = latestComment;
@@ -1058,10 +1029,7 @@ const viewCommentCustomer = (customerStatusData) => {
         isCommentDialogVisible.value = true;
     }
 };
-const selectedIds = ref([]);
-const selectedQuotations = ref([]);
 
-const isDownloading = ref(false);
 const downloadPrintWithCatalog = async () => {
     if (selectedIds.value.length < 2) {
         showToast(
@@ -1097,8 +1065,6 @@ const downloadPrintWithCatalog = async () => {
                         );
                     }
                     const html = await response.text();
-
-                    // Create a temporary element to render the HTML
                     const tempDiv = document.createElement("div");
                     tempDiv.innerHTML = html;
                     document.body.appendChild(tempDiv);
@@ -1131,17 +1097,14 @@ const downloadPrintWithCatalog = async () => {
                 }
             })
         );
-
         // Filter out any failed PDF generations
         const validPdfBlobs = pdfBlobs.filter((blob) => blob !== null);
 
         if (validPdfBlobs.length === 0) {
             throw new Error("No valid PDFs were generated");
         }
-
         // Merge all PDFs
         const mergedPdf = await mergePDFs(validPdfBlobs);
-
         // Download the merged PDF
         const blob = new Blob([mergedPdf], { type: "application/pdf" });
         const link = document.createElement("a");
@@ -1171,6 +1134,7 @@ const downloadPrintWithCatalog = async () => {
         isDownloading.value = false;
     }
 };
+
 const generateCatalogPDFs = async (products) => {
     const pdfs = await Promise.all(
         products
@@ -1200,80 +1164,4 @@ const mergePDFs = async (pdfBlobs) => {
 };
 </script>
 
-<style scoped>
-.custom-button {
-    padding: 7px 7px;
-    font-size: 12px;
-    min-width: 30px;
-}
-.custom-approved {
-    border: 1px solid green;
-    background-color: #d4edda;
-    color: green;
-}
-.p-dialog-header {
-    pointer-events: none;
-}
-:deep(.p-breadcrumb) {
-    background: transparent;
-    border: none;
-    padding-left: 0;
-    padding-right: 0;
-}
-
-:deep(.p-menuitem-text) {
-    font-size: 0.875rem;
-}
-.comment-container {
-    padding: 0.5rem;
-}
-
-.latest-comment {
-    background-color: #f8f9fa;
-    border-left: 3px solid #007ad9;
-    padding: 0.5rem;
-    border-radius: 0 4px 4px 0;
-}
-
-.comment-text {
-    margin: 0;
-    word-break: break-word;
-}
-
-.no-comment {
-    color: #6c757d;
-    font-style: italic;
-}
-.breadcrumb-container {
-    background-color: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 0.75rem 1rem;
-}
-
-/* For PrimeVue Breadcrumb customization */
-:deep(.p-breadcrumb) {
-    background: transparent;
-    border: none;
-    padding: 0;
-}
-
-:deep(.p-menuitem-text) {
-    font-size: 0.875rem;
-}
-.custom-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-/* Add this to your styles */
-:deep(.p-checkbox) {
-    margin-right: 0.5rem;
-}
-
-.print-selected-btn {
-    margin-left: auto;
-}
-.custom-button .p-button-label {
-    margin-left: 0.25rem;
-    font-size: 11px;
-}
-</style>
+<style scoped></style>
