@@ -1,7 +1,7 @@
 <template>
     <Head title="Create Agreements"></Head>
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6 pr-3"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6 pr-3" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -24,6 +24,11 @@
                 :initial-values="form"
                 class="mt-6"
             >
+                <input
+                    type="hidden"
+                    name="_token"
+                    :value="page.props.csrf_token"
+                />
                 <div
                     class="create-agreement flex flex-row justify-between gap-2"
                 >
@@ -784,6 +789,7 @@ const submit = ({ states, valid }) => {
     form.agreement_amount = schedule.value.agreement_amount;
     const data = {
         ...form,
+         _token: page.props.csrf_token,
         agreement_date: form.agreement_date
             ? moment(form.agreement_date).format("DD/MM/YYYY")
             : null,

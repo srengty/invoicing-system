@@ -34,7 +34,8 @@ return [
 
     'lifetime' => env('SESSION_LIFETIME', 120),
 
-    'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
+    // 'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
+    'expire_on_close' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -169,7 +170,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    // 'secure' => env('SESSION_SECURE_COOKIE'),
 
     /*
     |--------------------------------------------------------------------------
@@ -215,6 +216,6 @@ return [
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
     'driver' => env('SESSION_DRIVER', 'file'), // Should match your setup
-    'secure' => env('SESSION_SECURE_COOKIE', true), // false for local dev
+    'secure' => env('SESSION_SECURE_COOKIE', false), // false for local dev
 
 ];

@@ -1,7 +1,7 @@
 <template>
     <Head :title="`Edit Agreement`"></Head>
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6 pr-3"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6 pr-3" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -19,6 +19,11 @@
         <div class="edit-agreement pl-4 pr-4">
             <Toast />
             <Form @submit="submitForm" :initial-values="form" class="mt-6">
+                <input
+                    type="hidden"
+                    name="_token"
+                    :value="page.props.csrf_token"
+                />
                 <div class="flex flex-row justify-between gap-2">
                     <!-- Left Column - Record Agreement -->
                     <div class="border border-gray-200 rounded-lg p-4 w-1/2">
@@ -767,6 +772,7 @@ const submitForm = () => {
     };
     const data = {
         ...form.data(),
+        _token: page.props.csrf_token,
         agreement_doc:
             agreementDocs.value.length > 0
                 ? JSON.stringify(agreementDocs.value)
@@ -798,6 +804,10 @@ const submitForm = () => {
         _method: "PUT",
     })).post(
         route("agreements.update", {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             agreement_no: props.agreement.agreement_no,
         }),
         {
