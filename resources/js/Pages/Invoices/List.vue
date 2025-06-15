@@ -1,5 +1,6 @@
 <template>
     <Head title="Invoices" />
+    <input type="hidden" name="_token" :value="page.props.csrf_token" />
     <GuestLayout>
         <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
@@ -1093,14 +1094,12 @@ const columns = [
 const filteredInvoices = computed(() => {
     let invoices = props.invoices.data;
 
-    // Filter by selected status
     if (filters.value.status) {
         invoices = invoices.filter(
             (invoice) => invoice.status === filters.value.status
         );
     }
 
-    // Normalize roles for comparison
     const roles = (page.props.userRoles || []).map((r) => r.toLowerCase());
 
     const isChefDeptOnly =
@@ -1143,12 +1142,9 @@ const statusForm = useForm({
     comment: "",
 });
 
-// Open the status dialog for a selected invoice
 const toggleStatus = (invoice) => {
     selectedInvoice.value = invoice;
     isStatusDialogVisible.value = true;
-
-    // Reset form fields before showing the dialog
     statusForm.reset();
 };
 
@@ -1203,6 +1199,10 @@ const changeHdStatus = (status) => {
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatusHD", selectedInvoice.value.id), {
+        headers: {
+            "X-CSRF-TOKEN": page.props.csrf_token,
+            "X-Requested-With": "XMLHttpRequest",
+        },
         onSuccess: () => {
             // close the details dialog
             isViewHdDialogVisible.value = false;
@@ -1233,6 +1233,10 @@ const changeRmStatus = (status) => {
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatusRM", selectedInvoice.value.id), {
+        headers: {
+            "X-CSRF-TOKEN": page.props.csrf_token,
+            "X-Requested-With": "XMLHttpRequest",
+        },
         onSuccess: () => {
             // close the details dialog
             isViewRmDialogVisible.value = false;
@@ -1250,24 +1254,23 @@ const changeRmStatus = (status) => {
 const changeStatus = (status) => {
     if (!selectedInvoice.value) return;
 
-    // Ensure the status you're sending is valid
-    const validStatuses = ["approved", "rejected", "pending", "revise"]; // Include 'revise'
+    const validStatuses = ["approved", "rejected", "pending", "revise"];
     if (!validStatuses.includes(status)) {
         console.error(`Invalid status: ${status}`);
-        return; // Prevent the API call with invalid status
+        return;
     }
 
-    // Set the status and comment from the form
     statusForm.status = status;
-    statusForm.comment = statusForm.comment.trim(); // Ensure no leading/trailing spaces
+    statusForm.comment = statusForm.comment.trim();
 
-    // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatus", selectedInvoice.value.id), {
+        headers: {
+            "X-CSRF-TOKEN": page.props.csrf_token,
+            "X-Requested-With": "XMLHttpRequest",
+        },
         onSuccess: () => {
-            // close the details dialog
             isViewDialogVisible.value = false;
 
-            // reset for next time
             statusForm.reset();
             selectedInvoice.value = null;
         },
@@ -1292,10 +1295,10 @@ const viewHdComment = (hdComments) => {
     commentDialogTitle.value = "HD Approval Comments";
     if (hdComments && Array.isArray(hdComments)) {
         selectedComment.value = hdComments;
-        isCommentDialogVisible.value = true; // Ensure the dialog is visible
+        isCommentDialogVisible.value = true;
     } else {
         selectedComment.value = [];
-        isCommentDialogVisible.value = true; // Ensure the dialog is visible
+        isCommentDialogVisible.value = true;
     }
 };
 
@@ -1303,10 +1306,10 @@ const viewRmComment = (rmComments) => {
     commentDialogTitle.value = "RM Approval Comments";
     if (rmComments && Array.isArray(rmComments)) {
         selectedComment.value = rmComments;
-        isCommentDialogVisible.value = true; // Ensure the dialog is visible
+        isCommentDialogVisible.value = true;
     } else {
         selectedComment.value = [];
-        isCommentDialogVisible.value = true; // Ensure the dialog is visible
+        isCommentDialogVisible.value = true;
     }
 };
 
@@ -1342,13 +1345,12 @@ const deleteInvoice = (id) => {
 };
 
 const over_due = (rowData) => {
-    if (!rowData.end_date) return "-"; // If there's no end date, return "-"
+    if (!rowData.end_date) return "-";
 
     const dueDate = moment(rowData.end_date);
     const currentDate = moment();
     const overdue = currentDate.diff(dueDate, "days");
 
-    // If overdue is 0, return "Not Past Due", otherwise return the number of overdue days
     return overdue > 0 ? `${overdue} days ago` : "Not Past Due";
 };
 

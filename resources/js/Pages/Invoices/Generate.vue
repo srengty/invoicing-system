@@ -1,6 +1,7 @@
 <template>
     <meta name="_token" content="{{ csrf_token() }}" />
     <Head title="Create Invoice" />
+    <input type="hidden" name="_token" :value="page.props.csrf_token" />
     <GuestLayout>
         <NavbarLayout />
         <div class="py-3">
@@ -506,43 +507,85 @@ const calculateGrandTotal = computed(() => {
     return calculateTotal.value - form.installment_paid;
 });
 
+const showToast = (
+    type = "success",
+    title = "Success",
+    message = "Operation completed",
+    duration = 3000
+) => {
+    toast.add({
+        severity: type,
+        detail: message,
+        life: duration,
+        group: "tr",
+    });
+};
+
 const submitInvoice = async () => {
+    // Ensure that necessary form values are populated
     form.invoice_no = form.invoice_no || "";
     form.start_date = form.start_date || "";
     form.end_date = form.end_date || "";
+
+    // Correctly map the payment schedules to include amount and id
     form.payment_schedules = form.payment_schedules.map((id) => {
         const schedule = paymentSchedules.find((ps) => ps.id === id);
         return {
             id: id,
-            amount: schedule?.amount || 0,
+            amount: Number(schedule?.amount || 0), // Convert amount to number
         };
     });
 
-    // Ensure numeric values
+    // Ensure numeric values are correctly handled
     form.installment_paid = Number(form.installment_paid) || 0;
     form.paid_amount = Number(form.paid_amount) || 0;
 
+    // Calculating totals
     form.total = calculateTotal.value;
     form.grand_total = calculateGrandTotal.value;
     form.total_usd = form.total_usd || 0;
     form.total = calculateTotalKHR.value;
     form.exchange_rate = calculateExchangeRate.value;
     form.receipt_no = form.receipt_no || "";
-    console.log(form.installment_paid);
+
+    // Handle USD conversion if necessary
     if (!form.total_usd && form.exchange_rate > 0) {
         form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
             2
         );
     }
 
-    console.log(form.installment_paid);
+    // CSRF Token for headers
+    const csrfToken = page.props.csrf_token;
+
     try {
-        form.post("/invoices");
+        // Post the form data to the server with CSRF token in headers
+        await form.get("/invoices/list", {
+            headers: {
+                "X-CSRF-TOKEN": csrfToken, // CSRF Token in headers
+                "X-Requested-With": "XMLHttpRequest", // Ensure it is recognized as an Ajax request
+            },
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Success",
+                    "Invoice created successfully!"
+                );
+                setTimeout(() => {
+                    router.visit(route("invoices.list"));
+                }, 500);
+            },
+            onError: (errors) => {
+                console.error("Error creating invoice:", errors);
+                showToast("error", "Error", "Failed to create invoice.");
+            },
+        });
     } catch (error) {
         console.error("Error submitting invoice:", error);
         alert("An error occurred while submitting the invoice.");
     }
 };
+
 const cancel = () => {
     toast.add({
         severity: "secondary",

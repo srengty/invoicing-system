@@ -1,6 +1,7 @@
 <template>
     <Head title="Quotations" />
     <meta name="_token" content="{{ csrf_token() }}" />
+    <input type="hidden" name="_token" :value="page.props.csrf_token" />
     <GuestLayout>
         <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
@@ -797,6 +798,10 @@ const updateQuotationStatus = (quotation, message) => {
             role: quotation.role,
         },
         {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             preserveScroll: true,
             onSuccess: (response) => {
                 showToast("success", "Success", message, 3000);

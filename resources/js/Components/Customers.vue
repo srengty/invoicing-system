@@ -1,6 +1,7 @@
 <template>
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
+            <input type="hidden" name="_token" :value="page.props.csrf_token" />
             <div
                 class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
             >
@@ -346,9 +347,11 @@ import { Inertia } from "@inertiajs/inertia";
 import { router, useForm } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useConfirm } from "primevue/useconfirm";
+import { usePage } from "@inertiajs/vue3";
 
 const confirm = useConfirm();
 const toast = useToast();
+const page = usePage();
 
 const props = defineProps({
     mode: {
@@ -432,7 +435,7 @@ const validateForm = () => {
     }
     return isValid;
 };
-
+const csrfToken = page.props.csrf_token;
 const submit = () => {
     if (!form) {
         toast.add({
@@ -449,7 +452,6 @@ const submit = () => {
         return;
     }
 
-    // Check if the credit period is greater than 30 and prompt the user for confirmation
     if (parseInt(form.credit_period) > 30) {
         confirm.require({
             message:
@@ -457,11 +459,9 @@ const submit = () => {
             header: "Credit Period Confirmation",
             icon: "pi pi-exclamation-triangle",
             accept: () => {
-                // Proceed with form submission if the user accepts
                 handleFormSubmission();
             },
             reject: () => {
-                // Don't submit the form if the user rejects
                 toast.add({
                     severity: "info",
                     summary: "Action Cancelled",
@@ -471,15 +471,17 @@ const submit = () => {
             },
         });
     } else {
-        // Proceed with form submission if the credit period is 30 or less
         handleFormSubmission();
     }
 };
 
-// Function to handle the form submission logic
 const handleFormSubmission = () => {
     if (props.mode === "create") {
         form.post(route("customers.store"), {
+            headers: {
+                "X-CSRF-TOKEN": csrfToken,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             onSuccess: () => {
                 toast.add({
                     severity: "success",
