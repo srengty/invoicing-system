@@ -145,7 +145,8 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('/invoices/list', [InvoiceController::class, 'list'])->name('invoices.list');
-    Route::resource('invoices', InvoiceController::class)->except(['create','list','store']);
+    Route::resource('invoices', InvoiceController::class);
+    // Route::resource('invoices', InvoiceController::class)->except(['create','list','store']);
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
     // Route::get('/invoices/create', [InvoiceController::class, 'create'])->name('invoices.create');
     Route::get('/quotations/{quotation_no}/invoices', [InvoiceController::class, 'getInvoicesByQuotation']);

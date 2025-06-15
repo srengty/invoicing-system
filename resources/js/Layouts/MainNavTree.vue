@@ -113,13 +113,20 @@ const userPermissions = computed(() => {
         canCreateQuotations: roles.some((role) =>
             role.toLowerCase().includes("division staff")
         ),
+        canCreateAgreements: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
+        ),
+        canCreateInvoices: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canSeenReceipts: roles.some(
+            (role) =>
+                role.toLowerCase().includes("revenue manager")
+        ),
         canAlterQuotations: roles.some(
             (role) =>
                 role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("chef department")
-        ),
-        canCreateAgreements: roles.some((role) =>
-            role.toLowerCase().includes("chef department")
         ),
         canAlterAgreements: roles.some(
             (role) =>
@@ -130,9 +137,6 @@ const userPermissions = computed(() => {
             (role) =>
                 role.toLowerCase().includes("chef department") ||
                 role.toLowerCase().includes("division staff")
-        ),
-        canCreateInvoices: roles.some((role) =>
-            role.toLowerCase().includes("division staff")
         ),
         canAlterHDStatus: roles.some((role) =>
             role.toLowerCase().includes("chef department")
@@ -263,14 +267,26 @@ const items = ref([
         //     },
         // ],
     },
-    {
-        key: 5,
-        label: "Receipts",
-        href: "/receipts",
-        icon: "pi pi-receipt",
-        shortcut: "⌘+W",
-        items: [],
-    },
+    ...(userPermissions.value.canSeenReceipts
+        ? [
+              {
+                  key: 5,
+                  label: "Receipts",
+                  href: "/receipts",
+                  icon: "pi pi-receipt",
+                  shortcut: "⌘+W",
+                  items: [],
+              },
+          ]
+        : []),
+    // {
+    //     key: 5,
+    //     label: "Receipts",
+    //     href: "/receipts",
+    //     icon: "pi pi-receipt",
+    //     shortcut: "⌘+W",
+    //     items: [],
+    // },
     {
         key: 6,
         label: "Settings",

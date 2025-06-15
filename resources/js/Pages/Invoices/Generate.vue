@@ -1,6 +1,7 @@
 <template>
     <meta name="_token" content="{{ csrf_token() }}" />
     <Head title="Create Invoice" />
+    <input type="hidden" name="_token" :value="page.props.csrf_token" />
     <GuestLayout>
         <NavbarLayout />
         <div class="py-3">
@@ -535,9 +536,29 @@ const submitInvoice = async () => {
         );
     }
 
-    console.log(form.installment_paid);
+    const csrfToken = page.props.csrf_token;
     try {
-        form.post("/invoices");
+        // Post the form data to the server with CSRF token in headers
+        await form.post("/invoices", {
+            headers: {
+                "X-CSRF-TOKEN": csrfToken, // CSRF Token in headers
+                "X-Requested-With": "XMLHttpRequest", // Ensure it is recognized as an Ajax request
+            },
+            onSuccess: () => {
+                showToast(
+                    "success",
+                    "Success",
+                    "Invoice created successfully!"
+                );
+                setTimeout(() => {
+                    router.visit(route("invoices.list"));
+                }, 500);
+            },
+            onError: (errors) => {
+                console.error("Error creating invoice:", errors);
+                showToast("error", "Error", "Failed to create invoice.");
+            },
+        });
     } catch (error) {
         console.error("Error submitting invoice:", error);
         alert("An error occurred while submitting the invoice.");
