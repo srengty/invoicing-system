@@ -1,6 +1,7 @@
 <template>
     <div class="create-customer text-sm">
         <form @submit.prevent="submit" class="">
+            <input type="hidden" name="_token" :value="page.props.csrf_token" />
             <div
                 class="p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ml-4 mr-4"
             >
@@ -346,9 +347,12 @@ import { Inertia } from "@inertiajs/inertia";
 import { router, useForm } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useConfirm } from "primevue/useconfirm";
+import { usePage } from "@inertiajs/vue3";
 
 const confirm = useConfirm();
 const toast = useToast();
+const page = usePage();
+const csrfToken = page.props.csrf_token;
 
 const props = defineProps({
     mode: {
@@ -480,6 +484,10 @@ const submit = () => {
 const handleFormSubmission = () => {
     if (props.mode === "create") {
         form.post(route("customers.store"), {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             onSuccess: () => {
                 toast.add({
                     severity: "success",

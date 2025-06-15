@@ -23,6 +23,7 @@
         <Toast position="top-right" group="tr" />
 
         <form @submit.prevent="submit">
+            <input type="hidden" name="_token" :value="page.props.csrf_token" />
             <div
                 class="px-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full text-xs"
             >
@@ -563,7 +564,6 @@
             />
         </template>
     </Dialog>
-
 </template>
 
 <script setup>
@@ -684,7 +684,7 @@ const isCreateCustomerVisible = ref(false);
 onMounted(async () => {
     const response = await getDepartment();
     const data = response.data;
-    
+
     const serviceDepartments = data.filter((dept) => dept.status === "service");
 
     if (Array.isArray(serviceDepartments) && serviceDepartments.length > 0) {
@@ -1042,6 +1042,7 @@ const submit = async (event) => {
 
     // Prepare the payload
     form.products = selectedProductsData.value.map((prod) => ({
+        _token: page.props.csrf_token,
         id: prod.id,
         quantity: prod.quantity ?? 1,
         price: prod.price ?? 0,
@@ -1062,6 +1063,10 @@ const submit = async (event) => {
 
     try {
         await form.post(route("quotations.store"), {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             onSuccess: () => {
                 showToast(
                     "success",
@@ -1081,11 +1086,7 @@ const submit = async (event) => {
         });
     } catch (error) {
         console.error("Unexpected Error in Create:", error);
-        showToast(
-            "error",
-            "Unexpected Error",
-            "Could not create quotation."
-        );
+        showToast("error", "Unexpected Error", "Could not create quotation.");
     }
 };
 

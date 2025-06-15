@@ -1,5 +1,6 @@
 <template>
     <Head title="Invoices" />
+    <input type="hidden" name="_token" :value="page.props.csrf_token" />
     <GuestLayout>
         <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
@@ -1203,6 +1204,10 @@ const changeHdStatus = (status) => {
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatusHD", selectedInvoice.value.id), {
+        headers: {
+            "X-CSRF-TOKEN": page.props.csrf_token,
+            "X-Requested-With": "XMLHttpRequest",
+        },
         onSuccess: () => {
             // close the details dialog
             isViewHdDialogVisible.value = false;
@@ -1233,6 +1238,10 @@ const changeRmStatus = (status) => {
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatusRM", selectedInvoice.value.id), {
+        headers: {
+            "X-CSRF-TOKEN": page.props.csrf_token,
+            "X-Requested-With": "XMLHttpRequest",
+        },
         onSuccess: () => {
             // close the details dialog
             isViewRmDialogVisible.value = false;
@@ -1263,6 +1272,10 @@ const changeStatus = (status) => {
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatus", selectedInvoice.value.id), {
+        headers: {
+            "X-CSRF-TOKEN": page.props.csrf_token,
+            "X-Requested-With": "XMLHttpRequest",
+        },
         onSuccess: () => {
             // close the details dialog
             isViewDialogVisible.value = false;

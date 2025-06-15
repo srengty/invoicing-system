@@ -22,6 +22,7 @@
         <Toast position="top-center" group="tc" />
         <Toast position="top-right" group="tr" />
         <form @submit.prevent="submit">
+            <input type="hidden" name="_token" :value="page.props.csrf_token" />
             <div
                 class="px-4 grid grid-cols-1 md:grid-cols-2 gap-4 w-full text-xs"
             >
@@ -1114,6 +1115,7 @@ const submit = async (event) => {
         remark: prod.remark ?? "",
         include_catalog: Boolean(prod.include_catalog),
         pdf_url: prod.pdf_url ?? null,
+        _token: page.props.csrf_token,
     }));
 
     form.total = calculateTotalKHR.value;
@@ -1128,6 +1130,10 @@ const submit = async (event) => {
 
     try {
         await form.put(route("quotations.update", { id: form.id }), {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },  
             onSuccess: () => {
                 showToast(
                     "success",

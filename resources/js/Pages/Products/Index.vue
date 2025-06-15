@@ -1,5 +1,6 @@
 <template>
     <Head title="Products" />
+    <input type="hidden" name="_token" :value="page.props.csrf_token" />
     <ConfirmDialog
         :draggable="false"
         :resizable="false"
@@ -1089,6 +1090,10 @@ const changeStatus = (newStatus) => {
         }),
         { status: newStatus, comment: commentText.value.trim() },
         {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             onSuccess: () => {
                 toast.add({
                     group: "tc",
