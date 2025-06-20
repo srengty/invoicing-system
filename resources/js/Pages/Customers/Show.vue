@@ -12,7 +12,7 @@
                 </div>
             </div>
 
-            <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4">
+            <div class="p-3 grid grid-cols-1 md:grid-cols-3 gap-4 ml-4 mr-4 mb-4">
                 <div>
                     <label class="block text-lg font-medium">Category</label>
                     <div class="p-inputtext p-component w-full border p-2 rounded">{{
@@ -91,7 +91,7 @@
                         customer.bank_account_number
                     }}</div>
                 </div>
-                <div>
+                <div class="mb-4">
                     <label for="bank_swift" class="block text-lg font-medium">Bank Swift</label>
                     <div class="p-inputtext p-component w-full border p-2 rounded">{{
                         customer.bank_swift

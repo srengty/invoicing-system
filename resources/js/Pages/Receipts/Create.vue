@@ -197,7 +197,7 @@
                     <div class="flex w-full gap-6">
                         <div class="field w-1/2">
                             <div class="field">
-                                <label>Paid Amount</label>
+                                <label class="required">Paid Amount</label>
                                 <InputNumber
                                     v-model="formData.paid_amount"
                                     class="w-full"
@@ -233,7 +233,7 @@
                     <div class="flex w-full gap-6">
                         <div class="field w-1/2">
                             <div class="field">
-                                <label for="payment_method"
+                                <label for="payment_method" class="required"
                                     >Payment Method</label
                                 >
                                 <Dropdown
