@@ -122,6 +122,8 @@
                                         'bg-green-100 text-green-800 border-green-400':
                                             slotProps.data.status ===
                                             'Approved',
+                                        'bg-blue-100 text-blue-800 border-blue-400':
+                                            slotProps.data.status === 'Updated',
                                     }"
                                 >
                                     <i
@@ -135,6 +137,9 @@
                                             'pi pi-check':
                                                 slotProps.data.status ===
                                                 'Approved',
+                                            'pi pi-refresh':
+                                                slotProps.data.status ===
+                                                'Updated',
                                         }"
                                     ></i>
                                     {{ slotProps.data.status }}
@@ -154,6 +159,7 @@
                             </div>
                         </template>
                     </Column>
+
                     <Column
                         v-if="userPermissions.canCustomerStatus"
                         field="customer_status"
@@ -217,7 +223,7 @@
                     </Column>
                     <Column
                         header="Actions"
-                        style="width: 10%; font-size: 12px"
+                        style="width: 15%; font-size: 12px"
                     >
                         <template #body="slotProps">
                             <div class="flex gap-2">
@@ -239,14 +245,16 @@
                                     severity="info"
                                     class="custom-button"
                                     :disabled="
-                                        slotProps.data.status === 'Approved' ||
+                                        (slotProps.data.status === 'Approved' &&
+                                            slotProps.data.status !==
+                                                'Revise') ||
                                         !slotProps.data.active
                                     "
                                     @click="editQuotation(slotProps.data)"
                                 />
                                 <div>
                                     <Button
-                                        v-if="userPermissions.canEditQuotation"
+                                        v-if="userPermissions.canPrintQuotation"
                                         icon="pi pi-print"
                                         :label="
                                             slotProps.data.printed_at
@@ -622,7 +630,10 @@ const userPermissions = computed(() => {
                 role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("chef department")
         ),
-        canEditQuotation: roles.some(
+        canEditQuotation: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
+        ),
+        canPrintQuotation: roles.some(
             (role) =>
                 role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("chef department")
@@ -734,6 +745,7 @@ const editQuotation = (quotation) => {
         return;
     }
 
+    // Allow editing if status is "Revise"
     router.visit(route("quotations.edit", { quotation: quotation.id }), {
         preserveState: true,
         preserveScroll: true,

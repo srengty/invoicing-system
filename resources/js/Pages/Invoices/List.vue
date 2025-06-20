@@ -103,7 +103,7 @@
                 <Column
                     v-if="userPermissions.canApproveDivivsionHead"
                     field="hdStatus"
-                    header="HD Status"
+                    header="Division Head Status"
                     style="width: 10%; font-size: 12px"
                 >
                     <template #body="slotProps">
@@ -154,7 +154,7 @@
                 <Column
                     v-if="userPermissions.canApproveRevenueManager"
                     field="rmStatus"
-                    header="RM Status"
+                    header="Revenue Manager Status"
                     style="width: 10%; font-size: 12px"
                 >
                     <template #body="slotProps">
@@ -205,7 +205,7 @@
                 <Column
                     v-if="userPermissions.canApproveDirector"
                     field="status"
-                    header="Status"
+                    header="Deputy-Director Status"
                     style="width: 10%; font-size: 12px"
                 >
                     <template #body="slotProps">
@@ -995,10 +995,8 @@ const userPermissions = computed(() => {
         canCustomerStatus: roles.some((role) =>
             role.toLowerCase().includes("division staff")
         ),
-        canEditInvoices: roles.some(
-            (role) =>
-                role.toLowerCase().includes("division staff") ||
-                role.toLowerCase().includes("chef department")
+        canEditInvoices: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
         ),
         canPrintInvoices: roles.some(
             (role) =>
@@ -1017,7 +1015,8 @@ const userPermissions = computed(() => {
         canApproveRevenueManager: roles.some(
             (role) =>
                 role.toLowerCase().includes("revenue manager") ||
-                role.toLowerCase().includes("division staff")
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department")
         ),
         canViewRevenueManager: roles.some((role) =>
             role.toLowerCase().includes("revenue manager")
@@ -1025,7 +1024,9 @@ const userPermissions = computed(() => {
         canApproveDirector: roles.some(
             (role) =>
                 role.toLowerCase().includes("director") ||
-                role.toLowerCase().includes("division staff")
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("revenue manager")
         ),
         canViewDirector: roles.some((role) =>
             role.toLowerCase().includes("director")

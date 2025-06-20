@@ -387,7 +387,22 @@ class QuotationController extends Controller
             $validated['total_usd'] = $validated['total'] / $validated['exchange_rate'];
         }
 
-        $quotation->update($validated);
+        // Automatically update status if it was previously 'Revise'
+        if ($quotation->status === 'Revise') {
+            $quotation->status = 'Updated';
+            $quotation->customer_status = 'Pending';
+
+            // Add comment for tracking
+            $quotation->comments()->create([
+                'user_id' => $request->user()->id ?? null,
+                'status' => 'Updated',
+                'comment' => 'Quotation updated after revision.',
+            ]);
+        }
+
+        // Update quotation with validated data
+        $quotation->fill($validated);
+        $quotation->save();
 
         // Update associated products
         foreach ($validated['products'] as $product) {

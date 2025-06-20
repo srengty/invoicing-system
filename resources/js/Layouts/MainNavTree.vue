@@ -119,8 +119,27 @@ const userPermissions = computed(() => {
         canCreateInvoices: roles.some((role) =>
             role.toLowerCase().includes("division staff")
         ),
-        canSeenReceipts: roles.some(
+        canSeenReceipts: roles.some((role) =>
+            role.toLowerCase().includes("revenue manager")
+        ),
+        canSeenQuotations: roles.some(
             (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("division staff")
+        ),
+        canSeenAgreements: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+        canSeenManagements: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+        canSeenCustomers: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("revenue manager")
         ),
         canAlterQuotations: roles.some(
@@ -179,54 +198,55 @@ const items = ref([
             // },
         ],
     },
-    {
-        key: 2,
-        label: "Quotations",
-        href: "/quotations",
-        icon: "pi pi-chart-bar",
-        shortcut: "⌘+R",
-        items: [
-            ...(userPermissions.value.canCreateQuotations &&
-            userPermissions.value.canAlterQuotations
-                ? [
-                      {
-                          label: "New quotation",
-                          href: "/quotations/create",
-                          icon: "pi pi-chart-line",
-                          shortcut: "⌘+O",
-                      },
-                  ]
-                : []),
-        ],
-    },
-    {
-        key: 3,
-        label: "Agreements",
-        href: "/agreements",
-        icon: "pi pi-user",
-        shortcut: ">",
-        items: [
-            ...(userPermissions.value.canCreateAgreements &&
-            userPermissions.value.canAlterAgreements
-                ? [
-                      {
-                          label: "Create Agreement",
-                          href: "/agreements/create",
-                          icon: "pi pi-plus",
-                          shortcut: "⌘+O",
-                      },
-                  ]
-                : []),
-        ],
-        // items: [
-        //     {
-        //         label: "Create Agreement",
-        //         href: "/agreements/create",
-        //         icon: "pi pi-plus",
-        //         shortcut: "⌘+O",
-        //     },
-        // ],
-    },
+    ...(userPermissions.value.canSeenQuotations
+        ? [
+              {
+                  key: 2,
+                  label: "Quotations",
+                  href: "/quotations",
+                  icon: "pi pi-chart-bar",
+                  shortcut: "⌘+R",
+                  items: [
+                      ...(userPermissions.value.canCreateQuotations &&
+                      userPermissions.value.canAlterQuotations
+                          ? [
+                                {
+                                    label: "New quotation",
+                                    href: "/quotations/create",
+                                    icon: "pi pi-chart-line",
+                                    shortcut: "⌘+O",
+                                },
+                            ]
+                          : []),
+                  ],
+              },
+          ]
+        : []),
+    ...(userPermissions.value.canSeenAgreements
+        ? [
+              {
+                  key: 3,
+                  label: "Agreements",
+                  href: "/agreements",
+                  icon: "pi pi-user",
+                  shortcut: ">",
+                  items: [
+                      ...(userPermissions.value.canCreateAgreements &&
+                      userPermissions.value.canAlterAgreements
+                          ? [
+                                {
+                                    label: "Create Agreement",
+                                    href: "/agreements/create",
+                                    icon: "pi pi-plus",
+                                    shortcut: "⌘+O",
+                                },
+                            ]
+                          : []),
+                  ],
+              },
+          ]
+        : []),
+
     {
         key: 4,
         label: "Invoices",
@@ -251,21 +271,6 @@ const items = ref([
                   ]
                 : []),
         ],
-        // items: [
-        //     {
-        //         label: "List Invoice",
-        //         href: "/invoices/list",
-        //         icon: "pi pi-list",
-        //         shortcut: "⌘+O",
-        //     },
-        //     {
-        //         label: "Create Invoice",
-        //         href: "/invoices/create",
-
-        //         icon: "pi pi-cog",
-        //         shortcut: "⌘+O",
-        //     },
-        // ],
     },
     ...(userPermissions.value.canSeenReceipts
         ? [
@@ -279,47 +284,55 @@ const items = ref([
               },
           ]
         : []),
-    // {
-    //     key: 5,
-    //     label: "Receipts",
-    //     href: "/receipts",
-    //     icon: "pi pi-receipt",
-    //     shortcut: "⌘+W",
-    //     items: [],
-    // },
-    {
-        key: 6,
-        label: "Settings",
-        href: "/settings",
-        icon: "pi pi-cog",
-        shortcut: "⌘+W",
-        items: [
-            {
-                label: "Customers",
-                href: "/settings/customers",
-                icon: "pi pi-user",
-                shortcut: "⌘+W",
-            },
-            {
-                label: "Items",
-                href: "/settings/products",
-                icon: "pi pi-box",
-                shortcut: "⌘+P",
-            },
-            {
-                label: "Customer Categories",
-                href: "/settings/customer-categories",
-                icon: "pi pi-box",
-                shortcut: "⌘+P",
-            },
-            {
-                label: "Product Categories",
-                href: "/settings/product-categories",
-                icon: "pi pi-box",
-                shortcut: "⌘+P",
-            },
-        ],
-    },
+    ...(userPermissions.value.canSeenCustomers
+        ? [
+              {
+                  key: 6,
+                  label: "Customers",
+                  href: "/settings/customers",
+                  icon: "pi pi-user",
+                  shortcut: "⌘+W",
+              },
+          ]
+        : []),
+
+    ...(userPermissions.value.canSeenManagements
+        ? [
+              {
+                  key: 7,
+                  label: "Management",
+                  href: "/settings",
+                  icon: "pi pi-cog",
+                  shortcut: "⌘+W",
+                  items: [
+                      {
+                          label: "Customers",
+                          href: "/settings/customers",
+                          icon: "pi pi-user",
+                          shortcut: "⌘+W",
+                      },
+                      {
+                          label: "Items",
+                          href: "/settings/products",
+                          icon: "pi pi-box",
+                          shortcut: "⌘+P",
+                      },
+                      {
+                          label: "Customer Categories",
+                          href: "/settings/customer-categories",
+                          icon: "pi pi-box",
+                          shortcut: "⌘+P",
+                      },
+                      {
+                          label: "Product Categories",
+                          href: "/settings/product-categories",
+                          icon: "pi pi-box",
+                          shortcut: "⌘+P",
+                      },
+                  ],
+              },
+          ]
+        : []),
 ]);
 
 const expandedKeys = ref(

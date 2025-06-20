@@ -779,15 +779,13 @@ const userPermissions = computed(() => {
     return {
         canApprove: roles.some(
             (role) =>
-                role.toLowerCase().includes("chef department") ||
                 role.toLowerCase().includes("director")
         ),
         canCreateItem: roles.some((role) =>
-            role.toLowerCase().includes("division staff")
+            role.toLowerCase().includes("chef department")
         ),
         canAction: roles.some(
             (role) =>
-                role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("chef department")
         ),
     };

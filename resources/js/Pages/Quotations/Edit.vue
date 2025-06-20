@@ -661,6 +661,7 @@ const form = useForm({
     exchange_rate: props.quotation?.exchange_rate || 0,
     products: props.quotation?.products || [],
     terms: props.quotation?.terms || "",
+    status: props.quotation?.status || "Pending", // Add status field
 });
 
 // Initialize selected products
@@ -1122,6 +1123,11 @@ const submit = async (event) => {
     form.total_usd = form.total_usd || 0;
     form.exchange_rate = calculateExchangeRate.value;
 
+    // If the quotation was in "Revise" status, change it to "Updated"
+    if (props.quotation.status === "Revise") {
+        form.status = "Updated"; // Or "Pending" if you prefer
+    }
+
     if (!form.total_usd && form.exchange_rate > 0) {
         form.total_usd = (calculateTotalKHR.value / form.exchange_rate).toFixed(
             2
@@ -1133,7 +1139,7 @@ const submit = async (event) => {
             headers: {
                 "X-CSRF-TOKEN": page.props.csrf_token,
                 "X-Requested-With": "XMLHttpRequest",
-            },  
+            },
             onSuccess: () => {
                 showToast(
                     "success",
