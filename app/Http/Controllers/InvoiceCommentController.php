@@ -24,7 +24,6 @@ class InvoiceCommentController extends Controller
             // Step 1: Pre-approval in invoice_hd_comments
             $hdComment = InvoiceHdComment::create([
                 'invoice_id' => $invoice->id,
-                'role' => 'HD Approval', // Role can be 'HD Approval' or something else as needed
                 'status' => 'pending',
                 'comment' => $validated['comment'],
             ]);
@@ -32,7 +31,6 @@ class InvoiceCommentController extends Controller
             // Step 2: Pre-approval in invoice_rm_comments
             $rmComment = InvoiceRmComment::create([
                 'invoice_id' => $invoice->id,
-                'role' => 'RM Approval', // Role can be 'RM Approval' or something else as needed
                 'status' => 'pending',
                 'comment' => $validated['comment'],
             ]);
@@ -42,7 +40,6 @@ class InvoiceCommentController extends Controller
                 // Final approval step: Save the final comment in invoice_comments
                 InvoiceComment::create([
                     'invoice_id' => $invoice->id,
-                    'role' => 'Final Approval', // Role can be 'Final Approval'
                     'status' => 'approved',
                     'comment' => $validated['comment'],
                 ]);
@@ -74,7 +71,6 @@ class InvoiceCommentController extends Controller
         // Save the comment if status is pending or rejected
         InvoiceComment::create([
             'invoice_id' => $invoice->id,
-            'role' => 'Initial Comment',
             'status' => $validated['status'],
             'comment' => $validated['comment'],
         ]);

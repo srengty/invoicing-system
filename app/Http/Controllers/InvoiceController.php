@@ -333,34 +333,52 @@ class InvoiceController extends Controller
             'role' => 'nullable|string', // optional
         ]);
 
-        // Check if the HD status is approved (only proceed if HD is approved)
+        $status = $validated['status'];
+
+        // === If status is 'revise', downgrade RM and HD ===
+        if ($status === 'revise') {
+            $invoice->rmStatus = 'revise';
+            $invoice->hdStatus = 'revise';
+
+            // Save revise comment
+            \App\Models\InvoiceRmComment::create([
+                'invoice_id' => $invoice->id,
+                'status' => 'revise',
+                'comment' => $validated['comment'] ?? '',
+            ]);
+
+            $invoice->save();
+
+            return redirect()->route('invoices.list')->with('success', 'Invoice set for revision.');
+        }
+
+        // === For 'approved' or 'pending' ===
+
+        // Check if HD is approved before allowing RM approval
         $hdComment = \App\Models\InvoiceHdComment::where('invoice_id', $invoice->id)
-            ->orderBy('created_at', 'desc') // Get the latest comment
+            ->orderBy('created_at', 'desc')
             ->first();
 
-        // If HD status is not approved, show an error message
-        if ($hdComment && $hdComment->status !== 'approved') {
+        if ($status === 'approved' && (!$hdComment || $hdComment->status !== 'approved')) {
             return redirect()->route('invoices.list')->with('error', 'Cannot update RM status. HD status must be approved first.');
         }
 
-        // If the status is 'approved', handle the RM comment
-        if ($validated['status'] === 'approved' && !empty($validated['comment'])) {
+        // Save RM comment if provided
+        if (!empty($validated['comment'])) {
             \App\Models\InvoiceRmComment::create([
                 'invoice_id' => $invoice->id,
-                'status' => $validated['status'],
+                'status' => $status,
                 'comment' => $validated['comment'],
             ]);
         }
 
-        // Update the invoice with the new RM status
-        if ($invoice) {
-            $invoice->update([
-                'rmStatus' => $validated['status'],  // Update the rmStatus column
-            ]);
-        }
+        // Update RM status on the invoice
+        $invoice->rmStatus = $status;
+        $invoice->save();
 
         return redirect()->route('invoices.list')->with('success', 'Invoice RM status updated successfully.');
     }
+
 
     public function updateStatus(Request $request, Invoice $invoice)
     {
@@ -372,7 +390,40 @@ class InvoiceController extends Controller
         ]);
 
         // Update the status of the invoice
-        $invoice->status = $validated['status'];
+        $status = $validated['status'];
+
+        if ($invoice->rmStatus === 'revise') {
+            $invoice->rmStatus = 'revise';
+            $invoice->hdStatus = 'revise';
+
+            // Save revision comment
+            \App\Models\InvoiceComment::create([
+                'invoice_id' => $invoice->id,
+                'rmStatus' => 'revise',
+                'comment' => $validated['comment'] ?? '',
+            ]);
+
+            $invoice->save();
+
+
+        } elseif ($status === 'revise') {
+            // Downgrade all: RM, HD, and main status
+            $invoice->rmStatus = 'revise';
+            $invoice->hdStatus = 'revise';
+            $invoice->status = 'revise';
+
+            // Save revision comment
+            \App\Models\InvoiceComment::create([
+                'invoice_id' => $invoice->id,
+                'status' => 'revise',
+                'comment' => $validated['comment'] ?? '',
+            ]);
+
+            $invoice->save();
+
+        
+        }
+
 
         // Check if the invoice status is 'approved'
         if ($invoice->status === 'approved') {
@@ -606,9 +657,11 @@ class InvoiceController extends Controller
 
             $grand_total = 0;
 
-            // Calculate grand_total
+            // Calculate grand total
             if (!empty($data['payment_schedules'])) {
-                $grand_total = collect($data['payment_schedules'])->sum(fn ($s) => PaymentSchedule::find($s['id'])?->amount ?? 0);
+                $grand_total = collect($data['payment_schedules'])->sum(fn ($s) =>
+                    PaymentSchedule::find($s['id'])?->amount ?? 0
+                );
             } elseif (!empty($data['quotation_no'])) {
                 $quotation = Quotation::where('quotation_no', $data['quotation_no'])->first();
                 $grand_total = $quotation?->total ?? 0;
@@ -621,7 +674,7 @@ class InvoiceController extends Controller
                 }
             }
 
-            // Handle receipt logic
+            // Receipt handling
             $receipt = !empty($data['receipt_no'])
                 ? Receipt::where('receipt_no', $data['receipt_no'])->first()
                 : null;
@@ -646,10 +699,16 @@ class InvoiceController extends Controller
                 $installment_paid = 0;
             }
 
+            // USD calculation
             $exchangeRate = $data['exchange_rate'] ?? null;
             $total_usd = $exchangeRate && $exchangeRate > 0
-                ? $grand_total / $exchangeRate
-                : $data['total_usd'] ?? null;
+                ? round($grand_total / $exchangeRate, 2)
+                : ($data['total_usd'] ?? null);
+
+            // === Normalize statuses ===
+            $invoice->status = $invoice->status === 'revise' ? 'Update' : 'Pending';
+            $invoice->rmStatus = $invoice->rmStatus === 'revise' ? 'Update' : 'Pending';
+            $invoice->hdStatus = $invoice->hdStatus === 'revise' ? 'Update' : 'Pending';
 
             // Update invoice
             $invoice->update([
@@ -665,7 +724,9 @@ class InvoiceController extends Controller
                 'total_usd' => $total_usd,
                 'exchange_rate' => $exchangeRate,
                 'currency' => $data['currency'] ?? 'KHR',
-                'status' => $data['status'] ?? 'Pending',
+                'status' => $invoice->status,         // normalized
+                'rmStatus' => $invoice->rmStatus,     // normalized
+                'hdStatus' => $invoice->hdStatus,     // normalized
                 'paid_amount' => $paid_amount,
                 'installment_paid' => $installment_paid,
                 'receipt_no' => $data['receipt_no'] ?? null,

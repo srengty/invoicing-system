@@ -117,6 +117,7 @@
                                         slotProps.data.hdStatus === 'revise',
                                     'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.hdStatus === 'approved',
+                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.hdStatus === 'Update',
                                 }"
                             >
                                 <i
@@ -130,6 +131,7 @@
                                         'pi pi-check':
                                             slotProps.data.hdStatus ===
                                             'approved',
+                                        'pi pi-refresh': slotProps.data.hdStatus === 'Update',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.hdStatus) }}
@@ -168,6 +170,7 @@
                                         slotProps.data.rmStatus === 'revise',
                                     'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.rmStatus === 'approved',
+                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.rmStatus === 'Update',
                                 }"
                             >
                                 <i
@@ -181,6 +184,7 @@
                                         'pi pi-check':
                                             slotProps.data.rmStatus ===
                                             'approved',
+                                        'pi pi-refresh': slotProps.data.rmStatus === 'Update',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.rmStatus) }}
@@ -219,6 +223,7 @@
                                         slotProps.data.status === 'revise',
                                     'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.status === 'approved',
+                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.status === 'Update',
                                 }"
                             >
                                 <i
@@ -230,6 +235,7 @@
                                         'pi pi-check':
                                             slotProps.data.status ===
                                             'approved',
+                                        'pi pi-refresh': slotProps.data.status === 'Update',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.status) }}
@@ -290,7 +296,7 @@
                             />
                             <div v-if="userPermissions.canEditInvoices">
                                 <Button
-                                    v-if="canEditInvoice(data)"
+                                    :disabled="!canEditInvoice(data)"
                                     icon="pi pi-pencil"
                                     aria-label="Edit"
                                     severity="warning"
@@ -1080,6 +1086,7 @@ const statusOptions = ref([
     { label: "Approved", value: "Approved" },
     { label: "Revise", value: "Revise" },
     { label: "Rejected", value: "Rejected" },
+    { label: "Update", value: "Update" },
 ]);
 
 const columns = [
@@ -1142,6 +1149,7 @@ const isStatusDialogVisible = ref(false);
 const statusForm = useForm({
     status: "",
     comment: "",
+    role: "",
 });
 
 // Open the status dialog for a selected invoice
@@ -1201,6 +1209,7 @@ const changeHdStatus = (status) => {
     // Set the status and comment from the form
     statusForm.status = status;
     statusForm.comment = statusForm.comment.trim(); // Ensure no leading/trailing spaces
+    statusForm.role = page.props.userRoles?.[0]?.toLowerCase() || "";
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatusHD", selectedInvoice.value.id), {
@@ -1235,6 +1244,7 @@ const changeRmStatus = (status) => {
     // Set the status and comment from the form
     statusForm.status = status;
     statusForm.comment = statusForm.comment.trim(); // Ensure no leading/trailing spaces
+    statusForm.role = page.props.userRoles?.[0]?.toLowerCase() || "";
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatusRM", selectedInvoice.value.id), {
@@ -1269,6 +1279,7 @@ const changeStatus = (status) => {
     // Set the status and comment from the form
     statusForm.status = status;
     statusForm.comment = statusForm.comment.trim(); // Ensure no leading/trailing spaces
+    statusForm.role = page.props.userRoles?.[0]?.toLowerCase() || "";
 
     // Update the invoice status via an API request
     statusForm.put(route("invoices.updateStatus", selectedInvoice.value.id), {
