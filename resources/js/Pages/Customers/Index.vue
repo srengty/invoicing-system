@@ -275,13 +275,19 @@ const page = usePage();
 const userPermissions = computed(() => {
     const roles = page.props.userRoles || [];
     return {
-        canCreateCustomer: roles.some((role) =>
-            role.toLowerCase().includes("division staff")
+        canCreateCustomer: roles.some(
+            (role) =>
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("revenue manager") ||
+                role.toLowerCase().includes("director")
         ),
         canAction: roles.some(
             (role) =>
                 role.toLowerCase().includes("division staff") ||
-                role.toLowerCase().includes("chef department")
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("revenue manager") ||
+                role.toLowerCase().includes("director")
         ),
     };
 });

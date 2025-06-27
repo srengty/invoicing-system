@@ -75,19 +75,20 @@ class AppServiceProvider extends ServiceProvider
                 if (auth()->check()) {
                     $pendinQuotation = Quotation::where('status', 'Pending')->count();
                     $reviseQuotation = Quotation::where('status', 'Revise')->count();
-                    return $pendinQuotation + $reviseQuotation;
+                    $updatedQuotation = Quotation::where('status', 'Updated')->count();
+                    return $pendinQuotation + $reviseQuotation + $updatedQuotation;
                 }
                 return 0;
             },
-            'pendingInvoicesCount' => function () {
-                if (auth()->check()) {
-                    $pendinInvoices = Invoice::where('status', 'Pending')->count();
-                    $reviseInvoices = Invoice::where('status', 'Revise')->count();
-                    return $pendinInvoices + $reviseInvoices;
+            // 'pendingInvoicesCount' => function () {
+            //     if (auth()->check()) {
+            //         $pendinInvoices = Invoice::where('status', 'Pending')->count();
+            //         $reviseInvoices = Invoice::where('status', 'Revise')->count();
+            //         return $pendinInvoices + $reviseInvoices;
 
-                }
-                return 0;
-            },
+            //     }
+            //     return 0;
+            // },
             'hdPendingCount' => function () {
                 return Auth::check()
                     ? Invoice::whereIn('hdStatus', ['Pending','Revise'])->count()
@@ -96,17 +97,13 @@ class AppServiceProvider extends ServiceProvider
 
             'rmPendingCount' => function () {
                 return Auth::check()
-                    ? Invoice::where('hdStatus', 'approved')
-                            ->whereIn('rmStatus', ['Pending','Revise'])
-                            ->count()
+                    ? Invoice::whereIn('rmStatus', ['Pending','Revise'])->count()
                     : 0;
             },
 
             'directorPendingCount' => function () {
-                return Auth::check()
-                    ? Invoice::where('rmStatus', 'approved')
-                            ->whereIn('status', ['Pending','Revise'])
-                            ->count()
+                 return Auth::check()
+                    ? Invoice::whereIn('status', ['Pending','Revise'])->count()
                     : 0;
             },
             'pendingItemsCount' => function () {
