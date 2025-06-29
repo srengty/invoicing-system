@@ -104,6 +104,7 @@
                                 style="width: 30px; height: 30px"
                                 @click="viewCustomer(slotProps.data.id)"
                                 outlined
+                                :disabled="!slotProps.data.active"
                             />
                             <Button
                                 v-if="userPermissions.canAction"
@@ -114,6 +115,7 @@
                                 style="width: 30px; height: 30px"
                                 @click="editCustomer(slotProps.data.id)"
                                 outlined
+                                :disabled="!slotProps.data.active"
                             />
                             <Button
                                 v-if="userPermissions.canAction"

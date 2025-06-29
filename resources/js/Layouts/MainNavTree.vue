@@ -155,7 +155,8 @@ const userPermissions = computed(() => {
         canAlterItems: roles.some(
             (role) =>
                 role.toLowerCase().includes("chef department") ||
-                role.toLowerCase().includes("division staff")
+                role.toLowerCase().includes("division staff") ||
+                role.toLowerCase().includes("director")
         ),
         canAlterHDStatus: roles.some((role) =>
             role.toLowerCase().includes("chef department")

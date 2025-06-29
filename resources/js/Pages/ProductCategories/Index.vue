@@ -77,12 +77,12 @@
                     <Column
                         field="description_khmer"
                         header="Description"
-                        style="width: 15%; font-size: 12px"
+                        style="width: 10%; font-size: 12px"
                     ></Column>
                     <Column
                         field="description_english"
                         header="Description En"
-                        style="width: 15%; font-size: 12px"
+                        style="width: 10%; font-size: 12px"
                     ></Column>
                     <Column
                         field="created_at"
@@ -97,28 +97,26 @@
                             }}
                         </template>
                     </Column>
-                    <Column
-                        header="Actions"
-                        style="width: 5%; font-size: 12px"
-                    >
+                    <Column header="Actions" style="width: 5%; font-size: 12px">
                         <template #body="slotProps">
-                            <Button
-                                icon="pi pi-eye"
-                                size="small"
-                                severity="info"
-                                style="width: 30px; height: 30px"
-                                @click="openDetailModal(slotProps.data)"
-                                outlined
-                            />
-                            <Button
-                                v-if="userPermissions.canAction"
-                                icon="pi pi-pencil"
-                                size="small"
-                                class="ml-2"
-                                style="width: 30px; height: 30px"
-                                @click="openEditModal(slotProps.data)"
-                                outlined
-                            />
+                            <div class="flex gap-2">
+                                <Button
+                                    icon="pi pi-eye"
+                                    size="small"
+                                    severity="info"
+                                    style="width: 30px; height: 30px"
+                                    @click="openDetailModal(slotProps.data)"
+                                    outlined
+                                />
+                                <Button
+                                    v-if="userPermissions.canAction"
+                                    icon="pi pi-pencil"
+                                    size="small"
+                                    style="width: 30px; height: 30px"
+                                    @click="openEditModal(slotProps.data)"
+                                    outlined
+                                />
+                            </div>
                         </template>
                     </Column>
                 </DataTable>

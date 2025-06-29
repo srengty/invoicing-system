@@ -463,6 +463,11 @@
 
                 <!-- Form -->
                 <form @submit.prevent="submitForm" class="ml-6 mr-6">
+                    <input
+                        type="hidden"
+                        name="_token"
+                        :value="page.props.csrf_token"
+                    />
                     <div class="grid gap-4 mb-4">
                         <div class="grid grid-cols-3 gap-4">
                             <!-- Division -->
@@ -777,16 +782,14 @@ const page = usePage();
 const userPermissions = computed(() => {
     const roles = page.props.userRoles || [];
     return {
-        canApprove: roles.some(
-            (role) =>
-                role.toLowerCase().includes("director")
+        canApprove: roles.some((role) =>
+            role.toLowerCase().includes("director")
         ),
         canCreateItem: roles.some((role) =>
             role.toLowerCase().includes("chef department")
         ),
-        canAction: roles.some(
-            (role) =>
-                role.toLowerCase().includes("chef department")
+        canAction: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
         ),
     };
 });
@@ -1134,7 +1137,7 @@ const clearFilters = () => {
     endDateFilter.value = null;
 };
 const submitForm = () => {
-    console.log("Form data being submitted:", form.data());
+    // console.log("Form data being submitted:", form.data());
     if (
         !form.division_id ||
         !form.category_id ||
@@ -1167,8 +1170,13 @@ const submitForm = () => {
     if (form.id) {
         form.transform((data) => ({
             ...data,
+            _token: page.props.csrf_token,
             _method: "PUT",
         })).post(route("products.update", form.id), {
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             onSuccess: () => {
                 setTimeout(() => {
                     showToast("update", "success");
@@ -1183,7 +1191,12 @@ const submitForm = () => {
         });
     } else {
         form.post(route("products.store"), {
+            _token: page.props.csrf_token,
             forceFormData: true,
+            headers: {
+                "X-CSRF-TOKEN": page.props.csrf_token,
+                "X-Requested-With": "XMLHttpRequest",
+            },
             onSuccess: () => {
                 console.log("Create success");
                 setTimeout(() => {

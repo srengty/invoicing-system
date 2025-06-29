@@ -72,17 +72,6 @@ class QuotationController extends Controller
     {
         $quotation = Quotation::findOrFail($id);
 
-         // Get user roles from session
-        // $userRoles = $request->session()->get('roles', []);
-
-        // $canApprove = in_array('chef department', $userRoles) || in_array('director', $userRoles);
-
-        // if (!$canApprove) {
-        //     return response()->json([
-        //         'message' => 'Unauthorized - You do not have permission to approve/revise quotations'
-        //     ], 403);
-        // }
-
         $validated = $request->validate([
             'status' => 'required|string',
         ]);
@@ -118,16 +107,13 @@ class QuotationController extends Controller
 
         // Improved customer_status logic
         if ($newCustomerStatus) {
-            // Use explicitly provided customer_status
             $quotation->customer_status = $newCustomerStatus;
         } else {
-            // Default mapping from quotation status to customer_status
             $statusMap = [
                 'Draft' => 'Draft',
                 'New' => 'New',
                 'Sent' => 'Pending',
                 'Approved' => 'Approved',
-                'Revised' => 'Pending', // Revised puts it back to pending
                 'Rejected' => 'Rejected',
                 'Cancelled' => 'Cancelled'
             ];
@@ -390,7 +376,6 @@ class QuotationController extends Controller
         // Automatically update status if it was previously 'Revise'
         if ($quotation->status === 'Revise') {
             $quotation->status = 'Updated';
-            $quotation->customer_status = 'Pending';
 
             // Add comment for tracking
             $quotation->comments()->create([

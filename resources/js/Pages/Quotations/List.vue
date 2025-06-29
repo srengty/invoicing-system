@@ -169,6 +169,10 @@
                         <template #body="slotProps">
                             <div class="flex items-center">
                                 <span
+                                    v-if="
+                                        slotProps.data.customer_status !==
+                                            'Revise' && 'Pending'
+                                    "
                                     @click="handleStatusClick(slotProps.data)"
                                     class="p-2 rounded w-24 h-8 flex items-center justify-center"
                                     :class="{
@@ -211,7 +215,10 @@
                                 <Button
                                     v-if="
                                         slotProps.data.comments &&
-                                        slotProps.data.comments.length > 0
+                                        slotProps.data.comments.length > 0 &&
+                                        slotProps.data.customer_status !==
+                                            'Revise' &&
+                                        'Pending'
                                     "
                                     icon="pi pi-comment"
                                     class="p-button-info ml-2"
