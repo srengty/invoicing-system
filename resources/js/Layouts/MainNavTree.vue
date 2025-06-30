@@ -135,11 +135,12 @@ const userPermissions = computed(() => {
         canSeenManagements: roles.some(
             (role) =>
                 role.toLowerCase().includes("chef department") ||
-                role.toLowerCase().includes("director")
+                role.toLowerCase().includes("director") ||
+                role.toLowerCase().includes("division staff")
         ),
         canSeenCustomers: roles.some(
             (role) =>
-                role.toLowerCase().includes("division staff") ||
+                // role.toLowerCase().includes("division staff") ||
                 role.toLowerCase().includes("revenue manager")
         ),
         canAlterQuotations: roles.some(
@@ -292,7 +293,7 @@ const items = ref([
                   label: "Customers",
                   href: "/settings/customers",
                   icon: "pi pi-user",
-                  shortcut: "⌘+W",
+                  item: [],
               },
           ]
         : []),
