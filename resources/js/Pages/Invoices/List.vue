@@ -1,6 +1,7 @@
 <template>
     <Head title="Invoices" />
     <input type="hidden" name="_token" :value="page.props.csrf_token" />
+    <Toast position="top-center" />
     <GuestLayout>
         <NavbarLayout class="fixed top-0 z-50 w-5/6" />
         <!-- PrimeVue Breadcrumb -->
@@ -974,6 +975,8 @@ import {
     KeyFilter,
     Breadcrumb,
 } from "primevue";
+import { useToast } from "primevue/usetoast";
+const toast = useToast();
 
 // Props
 const props = defineProps({
@@ -1219,14 +1222,23 @@ const changeHdStatus = (status) => {
             "X-Requested-With": "XMLHttpRequest",
         },
         onSuccess: () => {
-            // close the details dialog
             isViewHdDialogVisible.value = false;
-
-            // reset for next time
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: `Invoice ${status} by Division Head`,
+                life: 3000,
+            });
             statusForm.reset();
             selectedInvoice.value = null;
         },
         onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: `Failed to ${status} invoice`,
+                life: 3000,
+            });
             console.error("Status update failed:", errors);
         },
     });
@@ -1254,14 +1266,23 @@ const changeRmStatus = (status) => {
             "X-Requested-With": "XMLHttpRequest",
         },
         onSuccess: () => {
-            // close the details dialog
             isViewRmDialogVisible.value = false;
-
-            // reset for next time
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: `Invoice ${status} by Revenue Manager`,
+                life: 3000,
+            });
             statusForm.reset();
             selectedInvoice.value = null;
         },
         onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: `Failed to ${status} invoice`,
+                life: 3000,
+            });
             console.error("Status update failed:", errors);
         },
     });
@@ -1289,14 +1310,23 @@ const changeStatus = (status) => {
             "X-Requested-With": "XMLHttpRequest",
         },
         onSuccess: () => {
-            // close the details dialog
             isViewDialogVisible.value = false;
-
-            // reset for next time
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: `Invoice ${status} by Deputy Director`,
+                life: 3000,
+            });
             statusForm.reset();
             selectedInvoice.value = null;
         },
         onError: (errors) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: `Failed to ${status} invoice`,
+                life: 3000,
+            });
             console.error("Status update failed:", errors);
         },
     });

@@ -379,7 +379,6 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.list')->with('success', 'Invoice RM status updated successfully.');
     }
 
-
     public function updateStatus(Request $request, Invoice $invoice)
     {
         // Validate the incoming request
@@ -390,6 +389,8 @@ class InvoiceController extends Controller
         ]);
 
         // Update the status of the invoice
+        $invoice->status = $validated['status'];
+
         $status = $validated['status'];
 
         if ($invoice->rmStatus === 'revise') {
@@ -420,10 +421,7 @@ class InvoiceController extends Controller
             ]);
 
             $invoice->save();
-
-        
         }
-
 
         // Check if the invoice status is 'approved'
         if ($invoice->status === 'approved') {
