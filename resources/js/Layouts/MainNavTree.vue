@@ -376,7 +376,7 @@ const expandedKeys = ref(
 .p-badge.p-badge-danger {
     background: #ef4444;
     color: white;
-    animation: pulse 2s infinite;
+    /* animation: pulse 2s infinite; */
 }
 
 .p-badge.p-badge-info {

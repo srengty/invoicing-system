@@ -259,7 +259,7 @@
                                     "
                                     @click="editQuotation(slotProps.data)"
                                 />
-                                <div>
+                                <div class="">
                                     <Button
                                         v-if="userPermissions.canPrintQuotation"
                                         icon="pi pi-print"
@@ -284,10 +284,39 @@
                                         "
                                     />
                                 </div>
+                                <div>
+                                    <Button
+                                        :icon="
+                                            slotProps.data.active
+                                                ? 'pi pi-unlock'
+                                                : 'pi pi-lock'
+                                        "
+                                        :label="
+                                            slotProps.data.active
+                                                ? 'Activate'
+                                                : 'Deactivate'
+                                        "
+                                        :severity="
+                                            slotProps.data.active
+                                                ? 'success'
+                                                : 'danger'
+                                        "
+                                        :class="{
+                                            'p-button-success':
+                                                slotProps.data.active,
+                                            'p-button-danger':
+                                                !slotProps.data.active,
+                                            ' w-28 h-8 flex items-center justify-center': true,
+                                        }"
+                                        @click="toggleActive(slotProps.data)"
+                                        size="small"
+                                        outlined
+                                    />
+                                </div>
                             </div>
                         </template>
                     </Column>
-                    <Column
+                    <!-- <Column
                         header="Active"
                         style="width: 10%; font-size: 12px"
                         v-if="userPermissions.canDeactivateQuotation"
@@ -317,7 +346,7 @@
                                 outlined
                             />
                         </template>
-                    </Column>
+                    </Column> -->
                 </DataTable>
 
                 <!-- View Dialog display -->

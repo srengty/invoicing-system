@@ -32,9 +32,9 @@ class AgreementController extends Controller
         return Inertia::render('Agreements/Index', [
             'agreements' => $agreements,
         ]);
-        
+
     }
-    
+
 
 
     protected function determineAgreementStatus($agreement)
@@ -65,11 +65,17 @@ class AgreementController extends Controller
     public function create()
     {
         $baseAgreementNo = 25000000;
-        return Inertia::render('Agreements/Create',[
+
+        return Inertia::render('Agreements/Create', [
             'customers' => Customer::where('active', true)->get(),
             'agreement_max' => (Agreement::max('agreement_no') ?? $baseAgreementNo) + 1,
             'csrf_token' => csrf_token(),
-            'quotations' => Quotation::all(),
+
+            // ✅ Only Approved & Active Quotations without Agreement
+            'quotations' => Quotation::where('status', 'Approved')
+                ->where('active', true)
+                ->whereDoesntHave('agreement') // not linked to an agreement yet
+                ->get(),
         ]);
     }
 
@@ -135,7 +141,7 @@ class AgreementController extends Controller
                 'short_description' => $value['short_description'],
                 'currency' => $value['currency'],
                 'exchange_rate' => $value['exchange_rate'] ?? ($value['currency'] === 'KHR' ? $exchangeRate : 1),
-                'invoice_generated' => false, 
+                'invoice_generated' => false,
             ]);
             $schedule->updateStatus();
             $schedule->save();
@@ -347,10 +353,15 @@ class AgreementController extends Controller
         ]);
 
         $quotation = Quotation::where('quotation_no', $request->quotation_no)
-                              ->where('active', true)
-                              ->whereDoesntHave('agreement')
-                              ->with('customer')
-                              ->first();
+                            ->where('status', 'Approved') // ✅ only approved
+                            ->where('active', true)
+                            ->whereDoesntHave('agreement') // ✅ no agreement yet
+                            ->with('customer')
+                            ->first();
+
+        if (!$quotation) {
+            return response()->json(['error' => 'Quotation not found or already used'], 404);
+        }
 
         return response()->json([
             'customer_name' => $quotation->customer->name,
