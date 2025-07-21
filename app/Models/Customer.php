@@ -18,6 +18,7 @@ class Customer extends Model
         'email',
         'phone_number',
         'telegram_number',
+        'username',
         'credit_period',
         'website',
         'bank_name',

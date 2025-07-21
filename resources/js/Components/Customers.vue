@@ -222,6 +222,23 @@
                     />
                 </div>
 
+                <div>
+                    <label
+                        for="username"
+                        class="block text-sm font-medium"
+                    >
+                        Username's Telegram
+                    </label>
+                    <InputText
+                        id="username"
+                        v-model="form.username"
+                        class="w-full"
+                        size="small"
+                        placeholder="Enter username's telegram"
+                        :disabled="mode === 'view'"
+                    />
+                </div>
+
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm font-medium">
@@ -379,6 +396,7 @@ const form = useForm({
     phone_number: props.customer.phone_number || "",
     contact_person: props.customer.contact_person || "",
     telegram_number: props.customer.telegram_number || "",
+    username: props.customer.username || "",
     credit_period: props.customer.credit_period || "15",
     website: props.customer.website || "",
     bank_name: props.customer.bank_name || "",
