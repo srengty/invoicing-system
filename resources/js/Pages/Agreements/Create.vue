@@ -1,7 +1,7 @@
 <template>
     <Head title="Create Agreements"></Head>
     <GuestLayout>
-        <NavbarLayout  class="fixed top-0 z-50 w-5/6 pr-3"/>
+        <NavbarLayout class="fixed top-0 z-50 w-5/6 pr-3" />
         <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
@@ -24,7 +24,9 @@
                 :initial-values="form"
                 class="mt-6"
             >
-                  <inputAdd commentMore actions
+                <inputAdd
+                    commentMore
+                    actions
                     type="hidden"
                     name="_token"
                     :value="page.props.csrf_token"
@@ -41,25 +43,14 @@
                             <!-- Quotation No Input with Search -->
                             <span class="text-sm">Quotation No. </span>
                             <div class="flex gap-2 text-sm">
-                                <InputText
+                                <Dropdown
                                     v-model="form.quotation_no"
+                                    :options="quotations"
+                                    optionLabel="quotation_no"
+                                    optionValue="quotation_no"
                                     placeholder="Enter Quotation No."
                                     class="w-full"
-                                    size="small"
-                                    @blur="searchQuotation"
-                                >
-                                    <template #suffix>
-                                        <i
-                                            v-if="form.quotation_no"
-                                            class="pi pi-times cursor-pointer text-gray-500 hover:text-gray-700"
-                                            @click="resetQuotationFields"
-                                        />
-                                        <i
-                                            v-else
-                                            class="pi pi-search text-gray-400"
-                                        />
-                                    </template>
-                                </InputText>
+                                />
                                 <Button
                                     icon="pi pi-search"
                                     @click="searchQuotation"
@@ -530,6 +521,7 @@ const props = defineProps({
     agreement_max: Number,
     agreement: Object,
     edit: Boolean,
+    quotations: Array,
 });
 const riels = computed({
     get: () => form.currency === "KHR",
@@ -588,13 +580,12 @@ const searchQuotation = async () => {
         });
 
         if (response.data) {
-            form.customer_name = response.data.customer_name; // Update form directly
+            form.customer_name = response.data.customer_name;
             form.address = response.data.address;
             form.customer_id = response.data.customer_id;
             form.agreement_amount = response.data.agreement_amount;
             schedule.value.agreement_amount = response.data.agreement_amount;
 
-            // Set currency based on quotation
             if (response.data.currency === "USD") {
                 schedule.value.exchange_rate =
                     response.data.exchange_rate || 4100;
@@ -644,7 +635,7 @@ watch(
         }
         const timer = setTimeout(() => {
             searchQuotation();
-        }, 5000);
+        }, 10);
 
         return () => clearTimeout(timer);
     }
@@ -789,7 +780,7 @@ const submit = ({ states, valid }) => {
     form.agreement_amount = schedule.value.agreement_amount;
     const data = {
         ...form,
-         _token: page.props.csrf_token,
+        _token: page.props.csrf_token,
         agreement_date: form.agreement_date
             ? moment(form.agreement_date).format("DD/MM/YYYY")
             : null,

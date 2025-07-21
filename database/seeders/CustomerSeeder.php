@@ -36,7 +36,7 @@ class CustomerSeeder extends Seeder
                 'active' => true,
             ],
             [
-                'name' => 'DIN PIC',
+                'name' => 'DIN PICH',
                 'code' => 'C002',
                 'credit_period' => 20,
                 'address' => '789 Industrial Park, Chicago, IL 60601',

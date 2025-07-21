@@ -295,6 +295,16 @@
                                 size="small"
                                 outlined
                             />
+                            <Button
+                                v-if="userPermissions.canViewDivivsionStaff"
+                                icon="pi pi-eye"
+                                aria-label="View"
+                                severity="info"
+                                class="custom-button"
+                                @click="viewInvoice(data)"
+                                size="small"
+                                outlined
+                            />
                             <div v-if="userPermissions.canEditInvoices">
                                 <Button
                                     :disabled="!canEditInvoice(data)"
@@ -1011,7 +1021,8 @@ const userPermissions = computed(() => {
             (role) =>
                 role.toLowerCase().includes("director") ||
                 role.toLowerCase().includes("chef department") ||
-                role.toLowerCase().includes("revenue manager")
+                role.toLowerCase().includes("revenue manager") ||
+                role.toLowerCase().includes("division staff")
         ),
         canApproveDivivsionHead: roles.some(
             (role) =>
@@ -1039,6 +1050,9 @@ const userPermissions = computed(() => {
         ),
         canViewDirector: roles.some((role) =>
             role.toLowerCase().includes("director")
+        ),
+        canViewDivivsionStaff: roles.some((role) =>
+            role.toLowerCase().includes("division staff")
         ),
     };
 });
