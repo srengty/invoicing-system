@@ -866,72 +866,72 @@ class InvoiceController extends Controller
         //     return;
         // }
 
-        try {
-        // Validate email only if sending email
-        if ($request->input('send_email')) {
-            $customerEmail = $invoice->customer->email;
-            if (!$customerEmail) {
-                throw new \Exception('Customer email not found.');
-            }
-        }
-
-        // Validate & store the PDF file
-        if ($request->hasFile('pdf_file')) {
-            $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
-            Log::info('Invoice PDF saved to: ' . $pdfPath);
-        } else {
-            throw new \Exception('Invoice PDF file not found.');
-        }
-
-        // === Send Email ===
-        if ($request->input('send_email')) {
-            Log::info('Sending email to: ' . $customerEmail);
-            Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
-
-            // Update status
-            $invoice->customer_status = 'Pending';
-            $invoice->customer->update(['customer_status' => 'Pending']);
-        }
-
-        // === Send Telegram ===
-        if ($request->input('send_telegram')) {
-            $chatId = $invoice->customer->telegram_chat_id;
-
-            if (!$chatId) {
-                Log::warning('Customer does not have a Telegram chat ID.');
-                throw new \Exception('Customer has no Telegram chat ID.');
+            try {
+            // Validate email only if sending email
+            if ($request->input('send_email')) {
+                $customerEmail = $invoice->customer->email;
+                if (!$customerEmail) {
+                    throw new \Exception('Customer email not found.');
+                }
             }
 
-            $message = "📄 Invoice #{$invoice->invoice_no} is ready.\n"
-                     . "Customer: {$invoice->customer->name}\n"
-                     . "Total: " . number_format($invoice->grand_total, 2) . "៛";
-
-            $response = Http::post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message,
-                'parse_mode' => 'HTML'
-            ]);
-
-            if (!$response->successful()) {
-                Log::error('Telegram API Error: ' . $response->body());
-                throw new \Exception('Telegram message could not be sent.');
+            // Validate & store the PDF file
+            if ($request->hasFile('pdf_file')) {
+                $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
+                Log::info('Invoice PDF saved to: ' . $pdfPath);
+            } else {
+                throw new \Exception('Invoice PDF file not found.');
             }
 
-            Log::info("Telegram message sent to chat ID: {$chatId}");
+            // === Send Email ===
+            if ($request->input('send_email')) {
+                Log::info('Sending email to: ' . $customerEmail);
+                Mail::to($customerEmail)->send(new InvoiceEmail($invoice, $request->file('pdf_file')));
 
-            // Update status if not already updated
-            $invoice->customer_status = 'Pending';
-            $invoice->customer->update(['customer_status' => 'Pending']);
+                // Update status
+                $invoice->customer_status = 'Pending';
+                $invoice->customer->update(['customer_status' => 'Pending']);
+            }
+
+            // === Send Telegram ===
+            if ($request->input('send_telegram')) {
+                $chatId = $invoice->customer->telegram_chat_id;
+
+                if (!$chatId) {
+                    Log::warning('Customer does not have a Telegram chat ID.');
+                    throw new \Exception('Customer has no Telegram chat ID.');
+                }
+
+                $message = "📄 Invoice #{$invoice->invoice_no} is ready.\n"
+                        . "Customer: {$invoice->customer->name}\n"
+                        . "Total: " . number_format($invoice->grand_total, 2) . "៛";
+
+                $response = Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => $message,
+                    'parse_mode' => 'HTML'
+                ]);
+
+                if (!$response->successful()) {
+                    Log::error('Telegram API Error: ' . $response->body());
+                    throw new \Exception('Telegram message could not be sent.');
+                }
+
+                Log::info("Telegram message sent to chat ID: {$chatId}");
+
+                // Update status if not already updated
+                $invoice->customer_status = 'Pending';
+                $invoice->customer->update(['customer_status' => 'Pending']);
+            }
+
+            // Save invoice status updates
+            $invoice->save();
+
+            return redirect()->route('invoices.list')->with('success', 'Invoice sent successfully!');
+        } catch (\Exception $e) {
+            Log::error('Failed to send invoice: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Send failed: ' . $e->getMessage());
         }
-
-        // Save invoice status updates
-        $invoice->save();
-
-        return redirect()->route('invoices.list')->with('success', 'Invoice sent successfully!');
-    } catch (\Exception $e) {
-        Log::error('Failed to send invoice: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Send failed: ' . $e->getMessage());
-    }
 
         // try {
         //     $sendMethods = $request->input('send_methods', []);
