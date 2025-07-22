@@ -931,7 +931,6 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.list')->with('success', 'Invoice sent successfully!');
         } catch (\Exception $e) {
             Log::error('Failed to send invoice: ' . $e->getMessage());
-            dd( $e->getMessage());
             return redirect()->back()->with('error', 'Send failed: ' . $e->getMessage());
         }
 
