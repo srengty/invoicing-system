@@ -28,7 +28,7 @@
         <!-- Send Email Button -->
         <div class="flex justify-center mt-6 mb-2 relative group">
             <Button
-                label="Send Invoice via Email"
+                label="Send Invoice"
                 icon="pi pi-send"
                 class="px-4 py-2"
                 @click="showConfirmationDialog"

@@ -147,7 +147,7 @@ jobs:
         MAIL_ENCRYPTION=tls
         MAIL_FROM_ADDRESS="itcfinance168@gmail.com"
         MAIL_FROM_NAME="ITC Finance"
-
+        MAIL_PASSWORD="rvle ineh zvpa dutt"
         AWS_ACCESS_KEY_ID=
         AWS_SECRET_ACCESS_KEY=
         AWS_DEFAULT_REGION=us-east-1   
