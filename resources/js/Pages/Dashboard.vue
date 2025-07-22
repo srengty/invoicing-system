@@ -173,11 +173,11 @@
                                     Recent Transactions
                                 </div>
                                 <div class="p-4">
-                                    <div class="grid gap-6 mb-4">
+                                    <div class="gap-6 mb-4 ">
                                         <div
                                             v-for="transaction in transactions"
                                             :key="transaction.label"
-                                            class="flex justify-between text-gray-500 items-center p-2 border-b-2 border-b-gray-200"
+                                            class="flex justify-between text-gray-500 items-center p-2 border-b-2 border-b-gray-200 mt-6 mb-6"
                                         >
                                             <span
                                                 class="text-600 font-medium"
@@ -199,7 +199,7 @@
                                         class="flex justify-between items-center p-3 bg-gray-50 border-round"
                                     >
                                         <span class="text-600 font-medium"
-                                            >Total Invoices Outstanding</span
+                                            >Total Outstanding</span
                                         >
                                         <span class="text-900 font-bold">
                                             {{

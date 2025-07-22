@@ -153,7 +153,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/invoices/{invoice}/update-status', [InvoiceController::class, 'updateStatus'])->name('invoices.updateStatus');
     Route::put('/invoices/{invoice}/update-status-hd', [InvoiceController::class, 'updateStatusHD'])->name('invoices.updateStatusHD');
     Route::put('/invoices/{invoice}/update-status-rm', [InvoiceController::class, 'updateStatusRM'])->name('invoices.updateStatusRM');
-    Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.send');
+    Route::post('/invoices/send',[InvoiceController::class, 'sendInvoice'])->name('invoices.sendInvoice');
 
     /*
     |--------------------------------------------------------------------------

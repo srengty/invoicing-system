@@ -44,6 +44,7 @@ class DashboardController extends Controller
         });
 
         // Calculate the total paid amounts for invoices, receipts, and payment schedules
+        $quotationPaidAmount = Quotation::sum('total');
         $invoicePaidAmount = Invoice::sum('paid_amount');
         $receiptPaidAmount = Receipt::sum('paid_amount');
         $paymentSchedulePaidAmount = PaymentSchedule::sum('paid_amount');
@@ -53,6 +54,7 @@ class DashboardController extends Controller
 
         // Prepare transactions data to show on the dashboard
         $transactions = [
+            ['label' => 'Quotations', 'value' => $quotationPaidAmount],
             ['label' => 'Invoices', 'value' => $invoicePaidAmount],
             ['label' => 'Receipts', 'value' => $receiptPaidAmount],
             ['label' => 'Payment Schedules', 'value' => $paymentSchedulePaidAmount],

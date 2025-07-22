@@ -259,48 +259,35 @@
             v-model:visible="isSendDialogVisible"
             header="Confirm Send"
             footer="dialog-footer"
+            :modal="true"
+            style="width: 350px;"
         >
             <div v-if="invoice" class="flex flex-col gap-4 ml-2 mr-2">
                 <!-- Display Selected Invoice Info -->
-                <div>
-                    <strong>Invoice No:</strong>
-                    <p>{{ invoice.invoice_no }}</p>
-                </div>
-                <div>
-                    <strong>Customer Name:</strong>
-                    <p>{{ invoice.customer_name || "N/A" }}</p>
+                <div class="bg-blue-50 p-4 rounded-md">
+                    <p class="font-semibold">Invoice #{{ invoice.invoice_no }}</p>
+                    <p>Customer: {{ invoice.customer_name }}</p>
                 </div>
 
                 <!-- Email Checkbox -->
-                <div class="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="emailCheckbox"
-                        v-model="sendForm.emailChecked"
-                        class="mr-2"
-                    />
-                    <label for="emailCheckbox" class="font-bold"
-                        >Email: {{ invoice.email || "N/A" }}</label
-                    >
+                 <div class="flex items-start gap-3 p-3 border rounded-md">
+                    <Checkbox v-model="sendForm.emailChecked" :binary="true" :disabled="!hasCustomerEmail" />
+                    <div>
+                        <label class="font-medium block">Email</label>
+                        <p class="text-sm">
+                            {{ invoice.email || 'No email available' }}
+                        </p>
+                    </div>
                 </div>
 
-                <!-- Telegram Checkbox -->
-                <div class="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="telegramCheckbox"
-                        v-model="sendForm.telegramChecked"
-                        class="mr-2"
-                    />
-                    <label for="telegramCheckbox" class="font-bold">
-                        Telegram: {{
-                            invoice.telegram_chat_id
-                                ? "Linked"
-                                : invoice.phone_number
-                                    ? invoice.phone_number + " (not linked)"
-                                    : "Not available"
-                        }}
-                    </label>
+                <div class="flex items-start gap-3 p-3 border rounded-md">
+                    <Checkbox v-model="sendForm.telegramChecked" :binary="true" :disabled="!hasTelegram" />
+                    <div>
+                        <label class="font-medium block">Telegram</label>
+                        <p class="text-sm" :class="{'text-gray-500': !hasTelegram}">
+                            {{ invoice.telegram_chat_id ? 'Telegram account linked' : 'No Telegram account linked' }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -335,6 +322,7 @@ import Dialog from "primevue/dialog";
 import { Head } from "@inertiajs/vue3";
 import Toast from "primevue/toast";
 import { useForm } from "@inertiajs/vue3";
+import Checkbox from "primevue/checkbox";
 
 const toast = useToast();
 
@@ -349,6 +337,9 @@ const sendMail = useForm({
     send_telegram: false,
     pdf_file: null,
 });
+
+const hasCustomerEmail = ref(true)
+const hasTelegram = ref(true)
 
 const isSendDialogVisible = ref(false);
 const isSending = ref(false);

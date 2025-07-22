@@ -18,6 +18,7 @@ class Customer extends Model
         'email',
         'phone_number',
         'telegram_number',
+        'telegram_chat_id',
         'username',
         'credit_period',
         'website',
