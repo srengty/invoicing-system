@@ -114,7 +114,7 @@
                                     outlined
                                 />
                                 <Button
-                                    v-if="userPermissions.canAction"
+                                    v-if="userPermissions.canSeenEdit"
                                     class="custom-button"
                                     icon="pi pi-pencil"
                                     severity="warning"
@@ -246,12 +246,10 @@ const userPermissions = computed(() => {
     const roles = page.props.userRoles || [];
     return {
         canCreateCustomerCategory: roles.some((role) =>
-            role.toLowerCase().includes("division staff")
+            role.toLowerCase().includes("chef department")
         ),
-        canAction: roles.some(
-            (role) =>
-                role.toLowerCase().includes("division staff") ||
-                role.toLowerCase().includes("chef department")
+        canSeenEdit: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
         ),
     };
 });

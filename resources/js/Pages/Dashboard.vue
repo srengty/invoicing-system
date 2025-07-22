@@ -183,10 +183,11 @@
                                                 class="text-600 font-medium"
                                                 >{{ transaction.label }}</span
                                             >
-                                            <span class="text-900 font-semibold"
-                                                >៛
+                                            <span
+                                                class="text-900 font-semibold"
+                                            >
                                                 {{
-                                                    formatNumber(
+                                                    formatCurrency(
                                                         transaction.value
                                                     )
                                                 }}</span
@@ -200,10 +201,11 @@
                                         <span class="text-600 font-medium"
                                             >Total Invoices Outstanding</span
                                         >
-                                        <span class="text-900 font-bold"
-                                            >៛
+                                        <span class="text-900 font-bold">
                                             {{
-                                                totalOutstanding.toFixed(2)
+                                                formatCurrency(
+                                                    totalOutstanding.toFixed(2)
+                                                )
                                             }}</span
                                         >
                                     </div>
@@ -244,11 +246,14 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-users text-[#10B981]"></i>
-                                    <span class="text-lg font-bold"
-                                        >Recent Customers ({{
-                                            customers.length
-                                        }})</span
+                                    <Link
+                                        href="/settings/customers"
+                                        class="text-lg font-bold hover:text-[#10B981]"
                                     >
+                                        Recent Customers ({{
+                                            customers.length
+                                        }})
+                                    </Link>
                                 </div>
                             </template>
                             <Column
@@ -283,11 +288,12 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-box text-[#10B981]"></i>
-                                    <span class="text-lg font-bold"
-                                        >Recent Items ({{
-                                            products.length
-                                        }})</span
+                                    <Link
+                                        href="/settings/products"
+                                        class="text-lg font-bold hover:text-[#10B981]"
                                     >
+                                        Recent Items ({{ products.length }})
+                                    </Link>
                                 </div>
                             </template>
                             <Column field="code" header="Code"></Column>
@@ -318,11 +324,14 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-file text-[#10B981]"></i>
-                                    <span class="text-lg font-bold"
-                                        >Recent Quotations ({{
-                                            quotations.length
-                                        }})</span
+                                    <Link
+                                        href="/quotations"
+                                        class="text-lg font-bold hover:text-[#10B981]"
                                     >
+                                        Recent Quotations ({{
+                                            quotations.length
+                                        }})
+                                    </Link>
                                 </div>
                             </template>
                             <Column
@@ -373,11 +382,12 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-receipt text-[#10B981]"></i>
-                                    <span class="text-lg font-bold"
-                                        >Recent Receipts ({{
-                                            receipts.length
-                                        }})</span
+                                    <Link
+                                        href="/receipts"
+                                        class="text-lg font-bold hover:text-[#10B981]"
                                     >
+                                        Recent Receipts ({{ receipts.length }})
+                                    </Link>
                                 </div>
                             </template>
                             <Column
@@ -429,11 +439,14 @@
                                     <i
                                         class="pi pi-file-edit text-[#10B981]"
                                     ></i>
-                                    <span class="text-lg font-bold"
-                                        >Recent Agreements ({{
-                                            agreements.length
-                                        }})</span
+                                    <Link
+                                        href="/agreements"
+                                        class="text-lg font-bold hover:text-[#10B981]"
                                     >
+                                        Recent Agreements ({{
+                                            agreements.length
+                                        }})
+                                    </Link>
                                 </div>
                             </template>
                             <Column
@@ -478,11 +491,12 @@
                             <template #header>
                                 <div class="flex items-center gap-2 mb-1">
                                     <i class="pi pi-file text-[#10B981]"></i>
-                                    <span class="text-lg font-bold"
-                                        >Recent Invoices ({{
-                                            invoices.length
-                                        }})</span
+                                    <Link
+                                        href="/invoices"
+                                        class="text-lg font-bold hover:text-[#10B981]"
                                     >
+                                        Recent Invoices ({{ invoices.length }})
+                                    </Link>
                                 </div>
                             </template>
                             <Column
@@ -594,12 +608,28 @@ import Chart from "primevue/chart";
 
 const formatNumber = (value) => {
     const number = Number(value);
-    return isNaN(number) ? "0.00" : number.toFixed(2);
+    return isNaN(number)
+        ? "0.00"
+        : new Intl.NumberFormat("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+          }).format(number);
 };
 
 const formatCurrency = (value) => {
     return `៛ ${formatNumber(value)}`;
 };
+// const formatCurrency = (value) => {
+//     const number = Number(value);
+//     const currency = selectedLanguage.value?.code || "KHR";
+//     const locale = currency === "USD" ? "en-US" : "km-KH";
+
+//     return new Intl.NumberFormat(locale, {
+//         style: "currency",
+//         currency: currency,
+//         minimumFractionDigits: 2,
+//     }).format(number);
+// };
 
 const page = usePage();
 const {

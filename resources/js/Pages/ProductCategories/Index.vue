@@ -2,7 +2,6 @@
     <Head title="Create Agreement" />
     <GuestLayout>
         <NavbarLayout class="fixed top-0 z-50 w-5/6" />
-        <!-- PrimeVue Breadcrumb -->
         <div class="py-3 mt-16">
             <Breadcrumb :model="items" class="border-none bg-transparent p-0">
                 <template #item="{ item }">
@@ -17,12 +16,9 @@
             </Breadcrumb>
         </div>
         <Toast />
-        <!-- <BodyLayout> -->
         <div class="px-4">
             <div class="flex justify-between items-center ml-4">
-                <h1 class="text-xl font-semibold text-gray-800">
-                    <!-- Products Categories -->
-                </h1>
+                <h1 class="text-xl font-semibold text-gray-800"></h1>
                 <div class="flex items-center gap-2">
                     <Dropdown
                         v-model="searchType"
@@ -48,7 +44,7 @@
                         variant="outlined"
                     />
                     <Button
-                        v-if="userPermissions.canCreateItemCategory"
+                        v-if="userPermissions.canCreateItemsCategory"
                         icon="pi pi-plus"
                         label="New Item Categories"
                         @click="openModal"
@@ -109,7 +105,7 @@
                                     outlined
                                 />
                                 <Button
-                                    v-if="userPermissions.canAction"
+                                    v-if="userPermissions.canSeenEdit"
                                     icon="pi pi-pencil"
                                     size="small"
                                     style="width: 30px; height: 30px"
@@ -249,12 +245,10 @@ const userPermissions = computed(() => {
     const roles = page.props.userRoles || [];
     return {
         canCreateItemsCategory: roles.some((role) =>
-            role.toLowerCase().includes("division staff")
+            role.toLowerCase().includes("chef department")
         ),
-        canAction: roles.some(
-            (role) =>
-                role.toLowerCase().includes("division staff") ||
-                role.toLowerCase().includes("chef department")
+        canSeenEdit: roles.some((role) =>
+            role.toLowerCase().includes("chef department")
         ),
     };
 });

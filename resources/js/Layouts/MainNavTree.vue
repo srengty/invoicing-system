@@ -136,13 +136,25 @@ const userPermissions = computed(() => {
             (role) =>
                 role.toLowerCase().includes("chef department") ||
                 role.toLowerCase().includes("director") ||
+                role.toLowerCase().includes("revenue manager") ||
                 role.toLowerCase().includes("division staff")
         ),
-        canSeenCustomers: roles.some(
+        canSeenItems: roles.some(
             (role) =>
-                // role.toLowerCase().includes("division staff") ||
-                role.toLowerCase().includes("revenue manager")
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
         ),
+        canSeenCustomerCategories: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+        canSeenItemCategories: roles.some(
+            (role) =>
+                role.toLowerCase().includes("chef department") ||
+                role.toLowerCase().includes("director")
+        ),
+
         canAlterQuotations: roles.some(
             (role) =>
                 role.toLowerCase().includes("division staff") ||
@@ -216,7 +228,7 @@ const items = ref([
                                     label: "New quotation",
                                     href: "/quotations/create",
                                     icon: "pi pi-chart-line",
-                                    shortcut: "⌘+O",
+                                    // shortcut: "⌘+O",
                                 },
                             ]
                           : []),
@@ -240,7 +252,7 @@ const items = ref([
                                     label: "Create Agreement",
                                     href: "/agreements/create",
                                     icon: "pi pi-plus",
-                                    shortcut: "⌘+O",
+                                    // shortcut: "⌘+O",
                                 },
                             ]
                           : []),
@@ -260,7 +272,7 @@ const items = ref([
                 label: "List Invoice",
                 href: "/invoices/list",
                 icon: "pi pi-list",
-                shortcut: "⌘+O",
+                // shortcut: "⌘+O",
             },
             ...(userPermissions.value.canCreateInvoices
                 ? [
@@ -268,7 +280,7 @@ const items = ref([
                           label: "Create Invoice",
                           href: "/invoices/create",
                           icon: "pi pi-cog",
-                          shortcut: "⌘+O",
+                          //   shortcut: "⌘+O",
                       },
                   ]
                 : []),
@@ -286,18 +298,6 @@ const items = ref([
               },
           ]
         : []),
-    ...(userPermissions.value.canSeenCustomers
-        ? [
-              {
-                  key: 6,
-                  label: "Customers",
-                  href: "/settings/customers",
-                  icon: "pi pi-user",
-                  item: [],
-              },
-          ]
-        : []),
-
     ...(userPermissions.value.canSeenManagements
         ? [
               {
@@ -311,26 +311,38 @@ const items = ref([
                           label: "Customers",
                           href: "/settings/customers",
                           icon: "pi pi-user",
-                          shortcut: "⌘+W",
+                          //   shortcut: "⌘+W",
                       },
-                      {
-                          label: "Items",
-                          href: "/settings/products",
-                          icon: "pi pi-box",
-                          shortcut: "⌘+P",
-                      },
-                      {
-                          label: "Customer Categories",
-                          href: "/settings/customer-categories",
-                          icon: "pi pi-box",
-                          shortcut: "⌘+P",
-                      },
-                      {
-                          label: "Product Categories",
-                          href: "/settings/product-categories",
-                          icon: "pi pi-box",
-                          shortcut: "⌘+P",
-                      },
+                      ...(userPermissions.value.canSeenItems
+                          ? [
+                                {
+                                    label: "Items",
+                                    href: "/settings/products",
+                                    icon: "pi pi-box",
+                                    // shortcut: "⌘+P",
+                                },
+                            ]
+                          : []),
+                      ...(userPermissions.value.canSeenCustomerCategories
+                          ? [
+                                {
+                                    label: "Customer Categories",
+                                    href: "/settings/customer-categories",
+                                    icon: "pi pi-box",
+                                    // shortcut: "⌘+P",
+                                },
+                            ]
+                          : []),
+                      ...(userPermissions.value.canSeenItemCategories
+                          ? [
+                                {
+                                    label: "Product Categories",
+                                    href: "/settings/product-categories",
+                                    icon: "pi pi-box",
+                                    // shortcut: "⌘+P",
+                                },
+                            ]
+                          : []),
                   ],
               },
           ]

@@ -16,7 +16,7 @@ class CustomerCategoryController extends Controller
     {
         $customers = Customer::all();
         $customerCategories = CustomerCategory::all(); // Fetch customer categories
-    
+
         return Inertia::render('CustomerCategories/Index', [
             'customers' => $customers,
             'customerCategories' => $customerCategories, // Pass customer categories
@@ -28,7 +28,7 @@ class CustomerCategoryController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('CustomerCategories/Create');
     }
 
     /**
@@ -36,7 +36,17 @@ class CustomerCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'category_name_khmer' => 'required|string|max:255',
+            'category_name_english' => 'required|string|max:255',
+            'description_khmer' => 'nullable|string',
+            'description_english' => 'nullable|string',
+        ]);
+
+        CustomerCategory::create($validated);
+
+        return redirect()->route('customerCategories.index')
+            ->with('success', 'Customer category created successfully.');
     }
 
     /**
@@ -44,7 +54,9 @@ class CustomerCategoryController extends Controller
      */
     public function show(CustomerCategory $customerCategory)
     {
-        //
+        return Inertia::render('CustomerCategories/Show', [
+            'customerCategory' => $customerCategory,
+        ]);
     }
 
     /**
@@ -62,7 +74,17 @@ class CustomerCategoryController extends Controller
      */
     public function update(Request $request, CustomerCategory $customerCategory)
     {
-        //
+        $validated = $request->validate([
+            'category_name_khmer' => 'required|string|max:255',
+            'category_name_english' => 'required|string|max:255',
+            'description_khmer' => 'nullable|string',
+            'description_english' => 'nullable|string',
+        ]);
+
+        $customerCategory->update($validated);
+
+        return redirect()->route('customerCategories.index')
+            ->with('success', 'Customer category updated successfully.');
     }
 
     /**
@@ -70,6 +92,8 @@ class CustomerCategoryController extends Controller
      */
     public function destroy(CustomerCategory $customerCategory)
     {
-        //
+        $customerCategory->delete();
+        return redirect()->route('customerCategories.index')
+            ->with('success', 'Customer category deleted successfully.');
     }
 }

@@ -18,9 +18,12 @@
                     <template #header>
                         <div class="flex items-center gap-2">
                             <i class="pi pi-users text-[#10B981]"></i>
-                            <span class="text-lg font-bold"
-                                >Recent Customers ({{ customers.length }})</span
+                            <Link
+                                href="/settings/customers"
+                                class="text-lg font-bold text-blue-600 hover:underline"
                             >
+                                Recent Customers ({{ customers.length }})
+                            </Link>
                         </div>
                     </template>
                     <Column field="code" header="Code" sortable></Column>
@@ -37,8 +40,6 @@
                     ></Column>
                 </DataTable>
             </div>
-
-            <!-- Items Table -->
             <div class="card-style shadow-md border-2">
                 <DataTable
                     :value="items"
@@ -248,6 +249,7 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Tag from "primevue/tag";
 import axios from "axios";
+import Link from "@inertiajs/vue3";
 
 // Reactive data
 const customers = ref([]);
