@@ -830,8 +830,6 @@ class InvoiceController extends Controller
         // Find the invoice by its ID
         $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
         
-        
-
             try {
             // Validate email only if sending email
             if ($request->input('send_email')) {
@@ -858,7 +856,7 @@ class InvoiceController extends Controller
                 $invoice->customer_status = 'Pending';
                 $invoice->customer->update(['customer_status' => 'Pending']);
             }
-            // === Send Telegram ===
+            
             if ($request->input('send_telegram')) {
                 $chatId = $invoice->customer->telegram_chat_id;
 
@@ -866,20 +864,31 @@ class InvoiceController extends Controller
                     Log::warning('Customer does not have a Telegram chat ID.');
                     throw new \Exception('Customer has no Telegram chat ID.');
                 }
-                
+
+                if (!$request->hasFile('pdf_file')) {
+                    throw new \Exception('No PDF file provided for Telegram sending.');
+                }
+
                 $pdfFile = $request->file('pdf_file');
                 $message = "📄 Invoice #{$invoice->invoice_no} is ready.\n"
-                        . "Customer: {$invoice->customer->name}\n"
-                        . "Total: " . number_format($invoice->grand_total, 2) . "៛";
-                        // dd($chatId,config("app.telegram_token"));
-                        
+                    . "Customer: {$invoice->customer->name}\n"
+                    . "Total: " . number_format($invoice->grand_total, 2) . "៛";
+                $message = "<b>📄 New Invoice Notification</b>\n\n";
+                $message .= "Invoice #: <b>{$invoice->invoice_no}</b>\n";
+                $message .= "Amount: <b>{$invoice->grand_total} {$invoice->currency}</b>\n";
+                $message .= "Due Date: <b>" . Carbon::parse($invoice->end_date)->format('M d, Y') . "</b>\n\n";
+                $message .= "Please check your email for the detailed invoice or contact us for any questions.\n\n";
+                $message .= "Thank you for your business!";
+
+                $telegramToken = config("app.telegram_token");
+
                 $response = Http::withoutVerifying()->attach(
                     'document',
                     file_get_contents($pdfFile->getRealPath()),
                     $pdfFile->getClientOriginalName()
-                )->post("https://api.telegram.org/bot" . config("app.telegram_token") . "/sendMessage", [
+                )->post("https://api.telegram.org/bot{$telegramToken}/sendDocument", [
                     'chat_id' => $chatId,
-                    'text' => $message,
+                    'caption' => $message,
                     'parse_mode' => 'HTML'
                 ]);
 
@@ -888,8 +897,6 @@ class InvoiceController extends Controller
                     throw new \Exception('Telegram message could not be sent.');
                 }
 
-                Log::info("Telegram message sent to chat ID: {$chatId}");
-
                 // Update status if not already updated
                 $invoice->customer_status = 'Pending';
                 $invoice->customer->update(['customer_status' => 'Pending']);
@@ -897,24 +904,11 @@ class InvoiceController extends Controller
 
             // Save invoice status updates
             $invoice->save();
-
             return redirect()->route('invoices.list')->with('success', 'Invoice sent successfully!');
-        } catch (\Exception $e) {
-            Log::error('Failed to send invoice: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Send failed: ' . $e->getMessage());
+        }  catch (\Exception $e) {
+            Log::error('Error sending invoice: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to send invoice: ' . $e->getMessage());
         }
-    }
-
-    private function generateTelegramMessage(Invoice $invoice): string
-    {
-        $message = "<b>📄 New Invoice Notification</b>\n\n";
-        $message .= "Invoice #: <b>{$invoice->invoice_no}</b>\n";
-        $message .= "Amount: <b>{$invoice->grand_total} {$invoice->currency}</b>\n";
-        $message .= "Due Date: <b>" . Carbon::parse($invoice->end_date)->format('M d, Y') . "</b>\n\n";
-        $message .= "Please check your email for the detailed invoice or contact us for any questions.\n\n";
-        $message .= "Thank you for your business!";
-        
-        return $message;
     }
 
     public function updatePaymentStatus($invoiceId, Request $request)

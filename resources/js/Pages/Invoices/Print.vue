@@ -640,63 +640,51 @@ const sendPDFViaEmail = async (pdfBlob, filename) => {
 
         const formData = new FormData();
         formData.append("invoice_id", invoice.value.id);
-        formData.append("send_email", sendEmail);
         formData.append("pdf_file", pdfBlob, filename);
+        if (sendEmail) formData.append("send_email", true);
+        if (sendTelegram) formData.append("send_telegram", true);
 
-        // Send Email
+        const res = await axios.post("/invoices/send", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        // Show toasts based on response
         if (sendEmail) {
-            await axios.post("/invoices/send", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+            toast.add({
+                severity: "success",
+                summary: "Email Sent",
+                detail: "Invoice sent via email successfully.",
+                life: 5000,
+                group: "tr",
             });
         }
 
-        // Send Telegram
-        if (sendTelegram && invoice.value.customer_id) {
-        formData.append("send_telegram", "nono");
-
-            const res = await axios.post("/invoices/send-telegram", formData);
-
-            const data = res.data;
-
-            if (data.summary.sent > 0) {
-                toast.add({
-                    severity: "success",
-                    summary: "Telegram Sent",
-                    detail: `${data.summary.sent} of ${data.summary.total} messages sent successfully.`,
-                    life: 5000,
-                    group: "tr",
-                });
-            } else {
-                toast.add({
-                    severity: "error",
-                    summary: "Telegram Failed",
-                    detail: "Message could not be delivered. Please check customer's Telegram setup.",
-                    life: 5000,
-                    group: "tr",
-                });
-            }
-
-            // Optional: Log full details
-            console.table(data.details);
+        if (sendTelegram) {
+            toast.add({
+                severity: "success",
+                summary: "Telegram Sent",
+                detail: "Invoice sent via Telegram successfully.",
+                life: 5000,
+                group: "tr",
+            });
         }
 
         isSendDialogVisible.value = false;
-        // window.location.href = route("invoices.list");
     } catch (error) {
-        console.error("Send failed:", error);
+        console.error("Error sending invoice:", error);
+
         toast.add({
             severity: "error",
-            summary: "Send Error",
-            detail: "Invoice could not be sent.",
-            life: 5000,
+            summary: "Sending Failed",
+            detail: "Could not send the invoice.",
             group: "tr",
+            life: 5000,
         });
     } finally {
         isSending.value = false;
     }
 };
+
 
 const formatPaymentNumber = (num) => {
     if (num === null || num === undefined) return "N/A";
