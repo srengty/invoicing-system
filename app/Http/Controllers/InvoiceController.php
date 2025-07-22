@@ -826,6 +826,7 @@ class InvoiceController extends Controller
 
     public function sendInvoice(Request $request)
     {
+
         // Find the invoice by its ID
         $invoice = Invoice::with('customer')->find($request->input('invoice_id'));
         
@@ -880,7 +881,7 @@ class InvoiceController extends Controller
                 $pdfPath = $request->file('pdf_file')->store('invoices', 'public');
                 Log::info('Invoice PDF saved to: ' . $pdfPath);
             } else {
-                throw new \Exception('Invoice PDF file not found.');
+                // throw new \Exception('Invoice PDF file not found.');
             }
 
             // === Send Email ===
@@ -892,7 +893,6 @@ class InvoiceController extends Controller
                 $invoice->customer_status = 'Pending';
                 $invoice->customer->update(['customer_status' => 'Pending']);
             }
-
             // === Send Telegram ===
             if ($request->input('send_telegram')) {
                 $chatId = $invoice->customer->telegram_chat_id;
@@ -905,7 +905,6 @@ class InvoiceController extends Controller
                 $message = "📄 Invoice #{$invoice->invoice_no} is ready.\n"
                         . "Customer: {$invoice->customer->name}\n"
                         . "Total: " . number_format($invoice->grand_total, 2) . "៛";
-
                 $response = Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
                     'chat_id' => $chatId,
                     'text' => $message,
@@ -930,6 +929,7 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.list')->with('success', 'Invoice sent successfully!');
         } catch (\Exception $e) {
             Log::error('Failed to send invoice: ' . $e->getMessage());
+            dd( $e->getMessage());
             return redirect()->back()->with('error', 'Send failed: ' . $e->getMessage());
         }
 

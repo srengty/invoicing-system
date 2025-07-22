@@ -654,10 +654,9 @@ const sendPDFViaEmail = async (pdfBlob, filename) => {
 
         // Send Telegram
         if (sendTelegram && invoice.value.customer_id) {
-            const res = await axios.post("/invoices/send-telegram", {
-                message: `Invoice #${invoice.value.invoice_no} is ready.`,
-                customer_ids: [invoice.value.customer_id],
-            });
+        formData.append("send_telegram", "nono");
+
+            const res = await axios.post("/invoices/send-telegram", formData);
 
             const data = res.data;
 
