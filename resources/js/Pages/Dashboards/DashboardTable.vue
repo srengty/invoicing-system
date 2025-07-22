@@ -249,7 +249,6 @@ import DataTable from "primevue/datatable";
 import Column from "primevue/column";
 import Tag from "primevue/tag";
 import axios from "axios";
-import Link from "@inertiajs/vue3";
 
 // Reactive data
 const customers = ref([]);
