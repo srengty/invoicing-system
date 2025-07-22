@@ -905,9 +905,9 @@ class InvoiceController extends Controller
                 $message = "📄 Invoice #{$invoice->invoice_no} is ready.\n"
                         . "Customer: {$invoice->customer->name}\n"
                         . "Total: " . number_format($invoice->grand_total, 2) . "៛";
-                        dd($chatId,config("app.telegram_token"));
+                        // dd($chatId,config("app.telegram_token"));
                         
-                $response = Http::withoutVerifying()->post("https://api.telegram.org/bot" . env('TELEGRAM_BOT_TOKEN') . "/sendMessage", [
+                $response = Http::withoutVerifying()->post("https://api.telegram.org/bot" . config("app.telegram_token") . "/sendMessage", [
                     'chat_id' => $chatId,
                     'text' => $message,
                     'parse_mode' => 'HTML'
