@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: 🧪 Run Tail check script
         run: |
-          tail /var/log/nginx/finance_error.log
+          tail -n 200 /var/log/nginx/finance_error.log
   nginx_access:
     name: 🔐 Log Access from Nginx Log
     runs-on: self-hosted
@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: 🧪 Run Tail check script
         run: |
-          tail /var/log/nginx/finance_access.log
+          tail -n 200 /var/log/nginx/finance_access.log
   laravel_log:
     name: ℹ️ Log Access or error from Laravel
     runs-on: self-hosted
@@ -37,7 +37,7 @@ jobs:
 
           # Check if files exist and are not literal "*.log"
           if [ -e "${LOG_FILES[0]}" ]; then
-              tail -f "${LOG_FILES[@]}"
+              tail -n 200 "${LOG_FILES[@]}"
           else
               echo "📁 No .log files found in $LOG_DIR"
           fi
