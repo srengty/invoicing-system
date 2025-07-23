@@ -1,4 +1,4 @@
-name: 🔍 Check Log Error
+name: 🔍 Check Log
 
 on:
   workflow_dispatch:
