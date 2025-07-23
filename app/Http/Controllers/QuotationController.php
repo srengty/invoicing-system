@@ -137,7 +137,6 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
-
         // Validate the incoming request
         $validated = Validator::make($request->all(), [
             'quotation_no'   => 'nullable|integer|unique:quotations,quotation_no',
@@ -238,8 +237,8 @@ class QuotationController extends Controller
                 }
             }
         }
-    // Redirect with a success message
-    return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
+        // Redirect with a success message
+        return redirect()->route('quotations.list')->with('success', 'Quotation created successfully!');
     }
 
     /**
@@ -277,6 +276,7 @@ class QuotationController extends Controller
                 'customer_name' => $quotation->customer->name,
                 'address' => $quotation->address,
                 'phone_number' => $quotation->phone_number,
+                'telegram_chat_id' => $quotation->telegram_chat_id ?? $quotation->customer->telegram_chat_id,
                 'email' => $quotation->email ?? $quotation->customer->email,
                 'products' => $quotation->products,
                 'total' => $quotation->total,
@@ -497,51 +497,85 @@ class QuotationController extends Controller
 
     public function sendQuotation(Request $request)
     {
+        // Find the quotation by its ID
         $quotation = Quotation::with('customer')->find($request->input('quotation_id'));
 
         if (!$quotation) {
-            return response()->json(['error' => 'Quotation not found'], 404);
+            return redirect()->back()->with('error', 'Quotation not found.');
         }
 
         try {
-            // Email validation (only if sending email)
+            // Validate email only if sending email
             if ($request->input('send_email')) {
                 $customerEmail = $quotation->customer->email;
                 if (!$customerEmail) {
-                    throw new Exception('Customer email not found.');
+                    throw new \Exception('Customer email not found.');
                 }
             }
 
-            // PDF handling
+            // Validate & store the PDF file
             if ($request->hasFile('pdf_file')) {
                 $pdfPath = $request->file('pdf_file')->store('quotations', 'public');
-                Log::info('PDF saved to: ' . $pdfPath);
+                Log::info('Quotation PDF saved to: ' . $pdfPath);
             } else {
-                throw new Exception('PDF file not found.');
+                throw new \Exception('Quotation PDF file not found.');
             }
 
-            // Email sending
+            // === Send Email ===
             if ($request->input('send_email')) {
                 Log::info('Sending email to: ' . $customerEmail);
                 Mail::to($customerEmail)->send(new QuotationEmail($quotation, $request->file('pdf_file')));
 
-                // Automatically update statuses when sending email
-                $quotation->customer_status = 'Pending'; // Change from Sent to Pending
+                // Update status
+                $quotation->customer_status = 'Pending';
                 $quotation->customer->update(['customer_status' => 'Pending']);
             }
 
-            // Save the quotation (status remains Approved unless changed elsewhere)
-            $quotation->save();
+            // === Send Telegram ===
+            if ($request->input('send_telegram')) {
+                $chatId = $quotation->customer->telegram_chat_id;
 
-            return response()->json([
-                'success' => $request->input('send_email')
-                    ? 'Quotation sent successfully via email'
-                    : 'Quotation processed successfully',
-                'pdf_path' => $pdfPath,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to send quotation: ' . $e->getMessage());
-            return response();
+                if (!$chatId) {
+                    Log::warning('Customer does not have a Telegram chat ID.');
+                    throw new \Exception('Customer has no Telegram chat ID.');
+                }
+
+                $pdfFile = $request->file('pdf_file');
+                $message = "<b>📄 New Quotation Notification</b>\n\n";
+                $message .= "Invoice #: <b>{$quotation->quotation_no}</b>\n";
+                $message .= "Amount: <b>{$quotation->total} KHR</b>\n";
+                $message .= "Date: <b>" . Carbon::parse($quotation->end_date)->format('M d, Y') . "</b>\n\n";
+                $message .= "Please check your email for the detailed quotation or contact us for any questions.\n\n";
+                $message .= "Thank you for your business!";
+
+                $telegramToken = config("app.telegram_token");
+
+                $response = Http::withoutVerifying()->attach(
+                    'document',
+                    file_get_contents($pdfFile->getRealPath()),
+                    $pdfFile->getClientOriginalName()
+                )->post("https://api.telegram.org/bot{$telegramToken}/sendDocument", [
+                    'chat_id' => $chatId,
+                    'caption' => $message,
+                    'parse_mode' => 'HTML'
+                ]);
+
+                if (!$response->successful()) {
+                    Log::error('Telegram API Error: ' . $response->body());
+                    throw new \Exception('Telegram message could not be sent.');
+                }
+
+                // Update status if not already updated
+                $quotation->customer_status = 'Pending';
+                $quotation->customer->update(['customer_status' => 'Pending']);
+            }
+
+            // Save quotation status updates
+            $quotation->save();
+            return redirect()->route('quotations.list')->with('success', 'Quotation sent successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error sending quotation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to send quotation: ' . $e->getMessage());
         }
     }
 
@@ -568,8 +602,6 @@ class QuotationController extends Controller
 
         // Handle the PDF (e.g., save it or process it)
         $path = $pdf->storeAs('quotations', 'quotation_' . $request->quotation_id . '.pdf');
-
-        // Process the email sending here, assuming the email logic is implemented
 
         return response()->json(['success' => true]);
     }

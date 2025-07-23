@@ -189,42 +189,53 @@
             v-model:visible="isSendDialogVisible"
             header="Confirm Send"
             footer="dialog-footer"
+            :modal="true"
+            style="width: 350px"
         >
             <div v-if="quotation" class="flex flex-col gap-4 ml-2 mr-2">
                 <!-- Display Selected Quotation Info -->
-                <div>
-                    <strong>Quotation No:</strong>
-                    <p>{{ quotation.quotation_no }}</p>
-                </div>
-                <div>
-                    <strong>Customer Name:</strong>
-                    <p>{{ quotation.customer_name || "N/A" }}</p>
+                <div class="bg-blue-50 p-4 rounded-md">
+                    <p class="font-semibold">
+                        Quotation #{{ quotation.quotation_no || "Draft" }}
+                    </p>
+                    <p>Customer: {{ quotation.customer_name }}</p>
                 </div>
 
                 <!-- Email Checkbox -->
-                <div class="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="emailCheckbox"
+                <div class="flex items-start gap-3 p-3 border rounded-md">
+                    <Checkbox
                         v-model="sendForm.emailChecked"
-                        class="mr-2"
+                        :binary="true"
+                        :disabled="!hasCustomerEmail"
                     />
-                    <label for="emailCheckbox" class="font-bold"
-                        >Email: {{ quotation.email || "N/A" }}</label
-                    >
+                    <div>
+                        <label class="font-medium block">Email</label>
+                        <p class="text-sm">
+                            {{ quotation.email || "No email available" }}
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Telegram Checkbox -->
-                <div class="flex items-center">
-                    <input
-                        type="checkbox"
-                        id="telegramCheckbox"
+                <div class="flex items-start gap-3 p-3 border rounded-md">
+                    <Checkbox
                         v-model="sendForm.telegramChecked"
-                        class="mr-2"
+                        :binary="true"
+                        :disabled="!hasTelegram"
                     />
-                    <label for="telegramCheckbox" class="font-bold"
-                        >Telegram: {{ quotation.phone_number || "N/A" }}</label
-                    >
+                    <div>
+                        <label class="font-medium block">Telegram</label>
+                        <p
+                            class="text-sm"
+                            :class="{ 'text-gray-500': !hasTelegram }"
+                        >
+                            {{
+                                quotation.telegram_chat_id
+                                    ? "Telegram account linked"
+                                    : "No Telegram account linked"
+                            }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -253,12 +264,22 @@ import { PDFDocument } from "pdf-lib";
 import { useToast } from "primevue/usetoast";
 import { Head } from "@inertiajs/vue3";
 import html2pdf from "html2pdf.js";
-import { ToggleSwitch, Dialog, Button } from "primevue";
+import { ToggleSwitch, Dialog, Button, Checkbox } from "primevue";
+import { useForm } from "@inertiajs/vue3";
 
 const toast = useToast();
+const hasCustomerEmail = ref(true);
+const hasTelegram = ref(true);
 const sendForm = ref({
     emailChecked: false,
     telegramChecked: false,
+});
+
+const sendMail = useForm({
+    quotation_id: null,
+    send_email: false,
+    send_telegram: false,
+    pdf_file: null,
 });
 onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -482,35 +503,71 @@ const downloadPDF = (pdfBytes, filename) => {
     document.body.removeChild(link);
 };
 
-// Send the generated PDF via email
-const sendPDFViaEmail = (pdfBytes, filename) => {
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const formData = new FormData();
-    formData.append("quotation_id", quotation.value.id);
-    formData.append("send_email", "send bro");
-    formData.append("pdf_file", blob, filename);
-    formData.append("update_status", "Pending");
+const sendPDFViaEmail = async (pdfBytes, filename) => {
+    isSending.value = true;
 
-    fetch("/quotations/send", {
-        method: "POST",
-        headers: {
-            "X-CSRF-TOKEN": document
-                .querySelector('meta[name="csrf_token"]')
-                .getAttribute("content"),
-        },
-        body: formData,
-    })
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.success) {
-                console.log("PDF sent via email successfully!");
-            } else {
-                console.error("Error sending PDF via email.");
-            }
-        })
-        .catch((error) => {
-            console.error("Error sending PDF to server:", error);
+    try {
+        const sendEmail = sendForm.value.emailChecked;
+        const sendTelegram = sendForm.value.telegramChecked;
+
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const formData = new FormData();
+        formData.append("quotation_id", quotation.value.id);
+        formData.append("pdf_file", blob, filename);
+        formData.append("update_status", "Pending");
+
+        if (sendEmail) formData.append("send_email", true);
+        if (sendTelegram) formData.append("send_telegram", true);
+
+        const response = await fetch("/quotations/send", {
+            method: "POST",
+            headers: {
+                "X-CSRF-TOKEN": document
+                    .querySelector('meta[name="csrf_token"]')
+                    .getAttribute("content"),
+            },
+            body: formData,
         });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (sendEmail) {
+                toast.add({
+                    severity: "success",
+                    summary: "Email Sent",
+                    detail: "Quotation sent via email successfully.",
+                    life: 5000,
+                    group: "tr",
+                });
+            }
+
+            if (sendTelegram) {
+                toast.add({
+                    severity: "success",
+                    summary: "Telegram Sent",
+                    detail: "Quotation sent via Telegram successfully.",
+                    life: 5000,
+                    group: "tr",
+                });
+            }
+
+            isSendDialogVisible.value = false;
+        } else {
+            throw new Error("Server returned an error.");
+        }
+    } catch (error) {
+        console.error("Error sending quotation:", error);
+        toast.add({
+            severity: "error",
+            summary: "Sending Failed",
+            detail: "Could not send the quotation.",
+            group: "tr",
+            life: 5000,
+        });
+    } finally {
+        isSending.value = false;
+    }
 };
 </script>
 
