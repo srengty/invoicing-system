@@ -118,7 +118,8 @@
                                         slotProps.data.hdStatus === 'revise',
                                     'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.hdStatus === 'approved',
-                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.hdStatus === 'Update',
+                                    'bg-blue-100 text-blue-800 border-blue-400':
+                                        slotProps.data.hdStatus === 'Update',
                                 }"
                             >
                                 <i
@@ -132,7 +133,9 @@
                                         'pi pi-check':
                                             slotProps.data.hdStatus ===
                                             'approved',
-                                        'pi pi-refresh': slotProps.data.hdStatus === 'Update',
+                                        'pi pi-refresh':
+                                            slotProps.data.hdStatus ===
+                                            'Update',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.hdStatus) }}
@@ -171,7 +174,8 @@
                                         slotProps.data.rmStatus === 'revise',
                                     'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.rmStatus === 'approved',
-                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.rmStatus === 'Update',
+                                    'bg-blue-100 text-blue-800 border-blue-400':
+                                        slotProps.data.rmStatus === 'Update',
                                 }"
                             >
                                 <i
@@ -185,7 +189,9 @@
                                         'pi pi-check':
                                             slotProps.data.rmStatus ===
                                             'approved',
-                                        'pi pi-refresh': slotProps.data.rmStatus === 'Update',
+                                        'pi pi-refresh':
+                                            slotProps.data.rmStatus ===
+                                            'Update',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.rmStatus) }}
@@ -224,7 +230,8 @@
                                         slotProps.data.status === 'revise',
                                     'bg-green-100 text-green-800 border-green-400':
                                         slotProps.data.status === 'approved',
-                                    'bg-blue-100 text-blue-800 border-blue-400': slotProps.data.status === 'Update',
+                                    'bg-blue-100 text-blue-800 border-blue-400':
+                                        slotProps.data.status === 'Update',
                                 }"
                             >
                                 <i
@@ -236,7 +243,8 @@
                                         'pi pi-check':
                                             slotProps.data.status ===
                                             'approved',
-                                        'pi pi-refresh': slotProps.data.status === 'Update',
+                                        'pi pi-refresh':
+                                            slotProps.data.status === 'Update',
                                     }"
                                 ></i>
                                 {{ capitalize(slotProps.data.status) }}
@@ -301,7 +309,7 @@
                                 aria-label="View"
                                 severity="info"
                                 class="custom-button"
-                                @click="viewInvoice(data)"
+                                @click="viewStaffInvoice(data)"
                                 size="small"
                                 outlined
                             />
@@ -421,7 +429,7 @@
             <!-- View Detail Invoices for RM -->
             <Dialog
                 v-model:visible="isViewRmDialogVisible"
-                header="Invoice Details for RM"
+                header="Invoice Details for Revernue Manager"
                 modal
                 :style="{ width: '40rem' }"
                 class="text-sm"
@@ -582,7 +590,7 @@
             <!-- View Detail Invoices for HD -->
             <Dialog
                 v-model:visible="isViewHdDialogVisible"
-                header="Invoice Details for HD"
+                header="Invoice Details for Division Head"
                 modal
                 :style="{ width: '40rem' }"
                 class="text-sm"
@@ -751,7 +759,7 @@
             <!-- View Detail Invoices for Director -->
             <Dialog
                 v-model:visible="isViewDialogVisible"
-                header="Invoice Details"
+                header="Invoice Details for Deputy-Director"
                 modal
                 :style="{ width: '40rem' }"
                 class="text-sm"
@@ -917,6 +925,132 @@
                 </template>
             </Dialog>
 
+            <!-- View Detail Invoices for Division Staff -->
+            <!-- View Detail Invoices for Division Staff (View Only) -->
+            <Dialog
+                v-model:visible="isViewStaffDialogVisible"
+                header="Invoice Details"
+                modal
+                :style="{ width: '40rem' }"
+                class="text-sm"
+                :draggable="false"
+                :resizable="false"
+                :position="'center'"
+                :closeOnEscape="false"
+            >
+                <div v-if="selectedInvoice" class="p-4 space-y-4">
+                    <!-- Header Info -->
+                    <div class="flex justify-between">
+                        <div class="flex flex-col w-1/2 gap-4">
+                            <p>
+                                <strong>Customer Name:</strong>
+                                {{ selectedInvoice.customer?.name || "N/A" }}
+                            </p>
+                            <p>
+                                <strong>Address:</strong>
+                                {{ selectedInvoice.address }}
+                            </p>
+                            <p>
+                                <strong>Email:</strong>
+                                <a
+                                    v-if="
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    "
+                                    :href="`mailto:${
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    }`"
+                                    class="text-blue-600 hover:underline"
+                                >
+                                    {{
+                                        selectedInvoice.email ||
+                                        selectedInvoice.customer?.email
+                                    }}
+                                </a>
+                                <span v-else>N/A</span>
+                            </p>
+                        </div>
+                        <div class="flex flex-col w-1/2 items-end gap-4">
+                            <div class="grid gap-4">
+                                <p v-if="selectedInvoice.quotation_no">
+                                    <strong>Quotation No.:</strong>
+                                    {{ selectedInvoice.quotation_no }}
+                                </p>
+                                <p v-else-if="selectedInvoice.agreement_no">
+                                    <strong>Agreement No.:</strong>
+                                    {{ selectedInvoice.agreement_no }}
+                                </p>
+                                <p>
+                                    <strong>Invoice No.:</strong>
+                                    {{ selectedInvoice.invoice_no }}
+                                </p>
+                                <p>
+                                    <strong>Invoice Date:</strong>
+                                    {{ selectedInvoice.invoice_date }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Table -->
+                    <span class="font-bold block mb-2 text-center">Items</span>
+                    <DataTable
+                        v-if="selectedInvoice.payment_schedules?.length"
+                        :value="selectedInvoice.payment_schedules"
+                        responsiveLayout="scroll"
+                        class="text-sm mb-4"
+                    >
+                        <Column field="id" header="Payment Schedule ID" />
+                        <Column field="amount" header="Amount">
+                            <template #body="{ data }">
+                                {{ formatCurrency(data.amount) }}
+                            </template>
+                        </Column>
+                        <Column
+                            field="short_description"
+                            header="Description"
+                        />
+                    </DataTable>
+
+                    <DataTable
+                        v-else
+                        :value="selectedInvoice.products"
+                        responsiveLayout="scroll"
+                        class="text-sm"
+                    >
+                        <Column field="name" header="Item" />
+                        <Column field="pivot.quantity" header="Qty" />
+                        <Column header="Unit Price">
+                            <template #body="{ data }">
+                                {{ formatCurrency(data.pivot.price) }}
+                            </template>
+                        </Column>
+                    </DataTable>
+
+                    <!-- Totals -->
+                    <div class="text-left">
+                        <br />
+                        <p>
+                            <strong>Total:</strong>
+                            {{ formatCurrency(selectedInvoice.grand_total) }}
+                            <span class="text-xs text-gray-500 ml-1"
+                                >(KHR)</span
+                            >
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <template #footer>
+                    <Button
+                        label="Close"
+                        severity="secondary"
+                        @click="isViewStaffDialogVisible = false"
+                    />
+                </template>
+            </Dialog>
+
             <!-- Comment Dialog -->
             <Dialog
                 v-model:visible="isCommentDialogVisible"
@@ -1069,6 +1203,7 @@ const selectedInvoice = ref(null);
 const isViewHdDialogVisible = ref(false);
 const isViewRmDialogVisible = ref(false);
 const isViewDialogVisible = ref(false);
+const isViewStaffDialogVisible = ref(false);
 const isFeedbackDialogVisible = ref(false);
 const comment = ref("");
 
@@ -1090,6 +1225,11 @@ const viewInvoice = (invoice) => {
     statusForm.reset();
     selectedInvoice.value = invoice;
     isViewDialogVisible.value = true;
+};
+
+const viewStaffInvoice = (invoice) => {
+    selectedInvoice.value = invoice;
+    isViewStaffDialogVisible.value = true;
 };
 
 const formatCurrency = (value) => {
