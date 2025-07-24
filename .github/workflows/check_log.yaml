@@ -1,0 +1,43 @@
+name: 🔍 Check Log
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Checking log error'
+        required: true
+        default: 'checking_log'
+
+jobs:
+  nginx_error:
+    name: ❌ Log Error from Nginx Log
+    runs-on: self-hosted
+
+    steps:
+      - name: 🧪 Run Tail check script
+        run: |
+          tail -n 200 /var/log/nginx/finance_error.log
+  nginx_access:
+    name: 🔐 Log Access from Nginx Log
+    runs-on: self-hosted
+
+    steps:
+      - name: 🧪 Run Tail check script
+        run: |
+          tail -n 200 /var/log/nginx/finance_access.log
+  laravel_log:
+    name: ℹ️ Log Access or error from Laravel
+    runs-on: self-hosted
+
+    steps:
+      - name: 🧪 Run MySQL check script
+        run: |
+          LOG_DIR="/var/www/invoice/current/storage/logs/*.log"
+          LOG_FILES=("$LOG_DIR"/*.log)
+
+          # Check if files exist and are not literal "*.log"
+          if [ -e "${LOG_FILES[0]}" ]; then
+              tail -n 200 "${LOG_FILES[@]}"
+          else
+              echo "📁 No .log files found in $LOG_DIR"
+          fi

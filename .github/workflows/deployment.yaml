@@ -1,8 +1,14 @@
-name: Deploy Invoice
+name: 🚀 Deploy Invoice
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
+    workflow_dispatch:
+      inputs:
+        environment:
+          description: 'Environment to deploy to production'
+          required: true
+          default: 'production'
 env:
   PASSWORD_SERVER: dice@gic
   DB_CONNECTION: mysql
@@ -150,7 +156,7 @@ jobs:
         MAIL_PASSWORD="rvle ineh zvpa dutt"
         AWS_ACCESS_KEY_ID=
         AWS_SECRET_ACCESS_KEY=
-        AWS_DEFAULT_REGION=us-east-1   
+        AWS_DEFAULT_REGION=us-east-1
         AWS_BUCKET=
         AWS_USE_PATH_STYLE_ENDPOINT=false
 

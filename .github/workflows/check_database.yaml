@@ -1,0 +1,22 @@
+name: 🔍 Check MySQL Status
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'checking'
+
+jobs:
+  mysql-check:
+    name: 🧪 Verify MySQL and Table
+    runs-on: self-hosted
+
+    steps:
+      - name: 📥 Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: 🧪 Run MySQL check script
+        run: |
+          bash scripts/check-mysql.sh
