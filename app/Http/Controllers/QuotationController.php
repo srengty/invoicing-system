@@ -14,6 +14,7 @@ use App\Models\ProductQuotation;
 use App\Models\Division;
 use App\Models\Category;
 use App\Mail\QuotationEmail;
+use App\Mail\QuotationTelegram;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
@@ -531,7 +532,7 @@ class QuotationController extends Controller
                 $quotation->customer->update(['customer_status' => 'Pending']);
             }
 
-            // === Send Telegram ===
+             // === Send Telegram ===
             if ($request->input('send_telegram')) {
                 $chatId = $quotation->customer->telegram_chat_id;
 
@@ -541,12 +542,7 @@ class QuotationController extends Controller
                 }
 
                 $pdfFile = $request->file('pdf_file');
-                $message = "<b>📄 New Quotation Notification</b>\n\n";
-                $message .= "Invoice #: <b>{$quotation->quotation_no}</b>\n";
-                $message .= "Amount: <b>{$quotation->total} KHR</b>\n";
-                $message .= "Date: <b>" . Carbon::parse($quotation->end_date)->format('M d, Y') . "</b>\n\n";
-                $message .= "Please check your email for the detailed quotation or contact us for any questions.\n\n";
-                $message .= "Thank you for your business!";
+                $telegramMessage = (new QuotationTelegram($quotation))->getMessage();
 
                 $telegramToken = config("app.telegram_token");
 
@@ -556,7 +552,7 @@ class QuotationController extends Controller
                     $pdfFile->getClientOriginalName()
                 )->post("https://api.telegram.org/bot{$telegramToken}/sendDocument", [
                     'chat_id' => $chatId,
-                    'caption' => $message,
+                    'caption' => $telegramMessage,
                     'parse_mode' => 'HTML'
                 ]);
 
@@ -564,12 +560,7 @@ class QuotationController extends Controller
                     Log::error('Telegram API Error: ' . $response->body());
                     throw new \Exception('Telegram message could not be sent.');
                 }
-
-                // Update status if not already updated
-                $quotation->customer_status = 'Pending';
-                $quotation->customer->update(['customer_status' => 'Pending']);
             }
-
             // Save quotation status updates
             $quotation->save();
             return redirect()->route('quotations.list')->with('success', 'Quotation sent successfully!');
@@ -584,7 +575,7 @@ class QuotationController extends Controller
         // Validate the request
         $validated = $request->validate([
             'quotation_id' => 'required|exists:quotations,id',
-            'pdf_file' => 'required|file|mimes:pdf|max:10240', // Example validation
+            'pdf_file' => 'required|file|mimes:pdf|max:10240',
             'send_email' => 'required|boolean',
         ]);
 
@@ -597,10 +588,8 @@ class QuotationController extends Controller
             ], 403);
         }
 
-        // Get the uploaded file
         $pdf = $request->file('pdf_file');
 
-        // Handle the PDF (e.g., save it or process it)
         $path = $pdf->storeAs('quotations', 'quotation_' . $request->quotation_id . '.pdf');
 
         return response()->json(['success' => true]);
