@@ -23,4 +23,4 @@
 
 Please review the attached quotation PDF and let us know if you have any questions.
 
-Thank you for your business and we look forward to serving you again!
+Thank you for your business and we look forward to serving you again!!
