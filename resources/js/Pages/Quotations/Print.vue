@@ -331,6 +331,7 @@ const showConfirmationDialog = () => {
             summary: "Quotation Not Approved",
             detail: "Only approved quotations can be sent.",
             life: 3000,
+            group: "tr",
         });
         return;
     }
@@ -456,6 +457,7 @@ const generateAndDownloadPDF = async () => {
 
 // Function to handle sending the PDF via email
 const generateAndSendPDF = async () => {
+    isSending.value = true;
     try {
         if (!printArea.value) {
             console.error("Print area is not available");
@@ -467,11 +469,28 @@ const generateAndSendPDF = async () => {
         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
 
         const filename = `Quotation_${quotation.value.customer_name}_${quotation.value.quotation_no}.pdf`;
-        sendPDFViaEmail(mergedPDF, filename);
+        await sendPDFViaEmail(mergedPDF, filename);
+
+        toast.add({
+            severity: "success",
+            summary: "Quotation Sent",
+            detail: "The quotation has been sent successfully.",
+            group: "tr",
+            life: 5000,
+        });
         isSendDialogVisible.value = false;
         window.location.href = route("quotations.print");
     } catch (error) {
         console.error("Error generating PDFs:", error);
+        // toast.add({
+        //     severity: "error",
+        //     summary: "Sending Failed",
+        //     detail: "Could not send the quotation.",
+        //     group: "tr",
+        //     life: 5000,
+        // });
+    } finally {
+        isSending.value = false;
     }
 };
 
@@ -580,13 +599,13 @@ const sendPDFViaEmail = async (pdfBytes, filename) => {
         }
     } catch (error) {
         console.error("Error sending quotation:", error);
-        toast.add({
-            severity: "error",
-            summary: "Sending Failed",
-            detail: "Could not send the quotation.",
-            group: "tr",
-            life: 5000,
-        });
+        // toast.add({
+        //     severity: "error",
+        //     summary: "Sending Failed",
+        //     detail: "Could not send the quotation.",
+        //     group: "tr",
+        //     life: 5000,
+        // });
     } finally {
         isSending.value = false;
     }
