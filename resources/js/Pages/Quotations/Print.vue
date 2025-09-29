@@ -1,8 +1,10 @@
 <template>
     <Head title="Quotations Printing" />
-    <div class="flex justify-start items-center gap-4 ml-10">
-        <!-- Toggle Currency -->
-        <div class="flex items-center gap-3 mt-6">
+    <Toast position="top-right" group="tr" />
+    <div
+        class="flex justify-start items-center gap-4 ml-10 mt-5 print:ml-0 print:gap-2"
+    >
+        <div class="flex items-center gap-3">
             <p class="text-sm font-semibold">{{ toggleLabel }}</p>
             <ToggleSwitch
                 v-model="isKhmer"
@@ -10,9 +12,7 @@
                 @change="handleToggleChange"
             />
         </div>
-        <Toast position="top-right" group="tr" />
-        <!-- Print Button -->
-        <div class="flex justify-center mt-6 mb-2">
+        <div class="">
             <Button
                 label="Print Quotation"
                 icon="pi pi-print"
@@ -21,10 +21,9 @@
                 size="small"
             />
         </div>
-        <!-- Send Email Button -->
-        <div class="flex justify-center mt-6 mb-2">
+        <div class="">
             <Button
-                label="Send Quotation via Email"
+                label="Send Quotation"
                 icon="pi pi-send"
                 class="px-4 py-2"
                 @click="showConfirmationDialog"
@@ -38,8 +37,16 @@
                 Only approved quotations can be sent
             </div>
         </div>
+        <div class="">
+            <Button
+                label="Back"
+                icon="pi pi-arrow-left"
+                class="px-4 py-2"
+                size="small"
+                @click="goBack"
+            />
+        </div>
     </div>
-
     <div
         ref="printArea"
         class="flex-col justify-center print-area a4-size text-sm"
@@ -130,7 +137,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Total Amount Section -->
             <div class="pt-6">
                 <div class="pt-6 flex justify-end">
@@ -193,7 +199,6 @@
             style="width: 350px"
         >
             <div v-if="quotation" class="flex flex-col gap-4 ml-2 mr-2">
-                <!-- Display Selected Quotation Info -->
                 <div class="bg-blue-50 p-4 rounded-md">
                     <p class="font-semibold">
                         Quotation #{{ quotation.quotation_no || "Draft" }}
@@ -264,12 +269,29 @@ import { PDFDocument } from "pdf-lib";
 import { useToast } from "primevue/usetoast";
 import { Head } from "@inertiajs/vue3";
 import html2pdf from "html2pdf.js";
-import { ToggleSwitch, Dialog, Button, Checkbox } from "primevue";
 import { useForm } from "@inertiajs/vue3";
+import { ToggleSwitch, Dialog, Button, Checkbox, Toast } from "primevue";
 
 const toast = useToast();
+const showSuccessToast = () => {
+    toast.add({
+        severity: "success",
+        summary: "Success Message",
+        detail: "Message Content",
+        life: 3000,
+    });
+};
+const showErrorToast = (detail) => {
+    toast.add({
+        severity: "error",
+        summary: "Error",
+        detail: detail || "An error occurred",
+        life: 5000,
+    });
+};
 const hasCustomerEmail = ref(true);
 const hasTelegram = ref(true);
+
 const sendForm = ref({
     emailChecked: false,
     telegramChecked: false,
@@ -309,6 +331,7 @@ const showConfirmationDialog = () => {
             summary: "Quotation Not Approved",
             detail: "Only approved quotations can be sent.",
             life: 3000,
+            group: "tr",
         });
         return;
     }
@@ -425,7 +448,7 @@ const generateAndDownloadPDF = async () => {
                 "Customer"
             }_${quotation.value.quotation_no}.pdf`;
             downloadPDF(mergedPDF, filename);
-            router.get(route("quotations.list"), {}, { preserveScroll: true });
+            router.get(route("quotations.print"), {}, { preserveScroll: true });
         }, 1000);
     } catch (error) {
         console.error("Error generating PDF:", error);
@@ -434,6 +457,7 @@ const generateAndDownloadPDF = async () => {
 
 // Function to handle sending the PDF via email
 const generateAndSendPDF = async () => {
+    isSending.value = true;
     try {
         if (!printArea.value) {
             console.error("Print area is not available");
@@ -445,11 +469,28 @@ const generateAndSendPDF = async () => {
         const mergedPDF = await mergePDFs([quotationPDF, ...catalogPDFs]);
 
         const filename = `Quotation_${quotation.value.customer_name}_${quotation.value.quotation_no}.pdf`;
-        sendPDFViaEmail(mergedPDF, filename);
+        await sendPDFViaEmail(mergedPDF, filename);
+
+        toast.add({
+            severity: "success",
+            summary: "Quotation Sent",
+            detail: "The quotation has been sent successfully.",
+            group: "tr",
+            life: 5000,
+        });
         isSendDialogVisible.value = false;
-        window.location.href = route("quotations.list");
+        window.location.href = route("quotations.print");
     } catch (error) {
         console.error("Error generating PDFs:", error);
+        // toast.add({
+        //     severity: "error",
+        //     summary: "Sending Failed",
+        //     detail: "Could not send the quotation.",
+        //     group: "tr",
+        //     life: 5000,
+        // });
+    } finally {
+        isSending.value = false;
     }
 };
 
@@ -558,16 +599,19 @@ const sendPDFViaEmail = async (pdfBytes, filename) => {
         }
     } catch (error) {
         console.error("Error sending quotation:", error);
-        toast.add({
-            severity: "error",
-            summary: "Sending Failed",
-            detail: "Could not send the quotation.",
-            group: "tr",
-            life: 5000,
-        });
+        // toast.add({
+        //     severity: "error",
+        //     summary: "Sending Failed",
+        //     detail: "Could not send the quotation.",
+        //     group: "tr",
+        //     life: 5000,
+        // });
     } finally {
         isSending.value = false;
     }
+};
+const goBack = () => {
+    window.history.back();
 };
 </script>
 

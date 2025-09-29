@@ -42,6 +42,15 @@
                 Only approved invoices can be sent
             </div>
         </div>
+        <div class="flex justify-center mt-6 mb-2 relative group">
+            <Button
+                label="Back"
+                icon="pi pi-arrow-left"
+                class="px-4 py-2"
+                size="small"
+                @click="goBack"
+            />
+        </div>
     </div>
 
     <div
@@ -260,32 +269,49 @@
             header="Confirm Send"
             footer="dialog-footer"
             :modal="true"
-            style="width: 350px;"
+            style="width: 350px"
         >
             <div v-if="invoice" class="flex flex-col gap-4 ml-2 mr-2">
                 <!-- Display Selected Invoice Info -->
                 <div class="bg-blue-50 p-4 rounded-md">
-                    <p class="font-semibold">Invoice #{{ invoice.invoice_no }}</p>
+                    <p class="font-semibold">
+                        Invoice #{{ invoice.invoice_no }}
+                    </p>
                     <p>Customer: {{ invoice.customer_name }}</p>
                 </div>
 
                 <!-- Email Checkbox -->
-                 <div class="flex items-start gap-3 p-3 border rounded-md">
-                    <Checkbox v-model="sendForm.emailChecked" :binary="true" :disabled="!hasCustomerEmail" />
+                <div class="flex items-start gap-3 p-3 border rounded-md">
+                    <Checkbox
+                        v-model="sendForm.emailChecked"
+                        :binary="true"
+                        :disabled="!hasCustomerEmail"
+                    />
                     <div>
                         <label class="font-medium block">Email</label>
                         <p class="text-sm">
-                            {{ invoice.email || 'No email available' }}
+                            {{ invoice.email || "No email available" }}
                         </p>
                     </div>
                 </div>
 
                 <div class="flex items-start gap-3 p-3 border rounded-md">
-                    <Checkbox v-model="sendForm.telegramChecked" :binary="true" :disabled="!hasTelegram" />
+                    <Checkbox
+                        v-model="sendForm.telegramChecked"
+                        :binary="true"
+                        :disabled="!hasTelegram"
+                    />
                     <div>
                         <label class="font-medium block">Telegram</label>
-                        <p class="text-sm" :class="{'text-gray-500': !hasTelegram}">
-                            {{ invoice.telegram_chat_id ? 'Telegram account linked' : 'No Telegram account linked' }}
+                        <p
+                            class="text-sm"
+                            :class="{ 'text-gray-500': !hasTelegram }"
+                        >
+                            {{
+                                invoice.telegram_chat_id
+                                    ? "Telegram account linked"
+                                    : "No Telegram account linked"
+                            }}
                         </p>
                     </div>
                 </div>
@@ -338,8 +364,8 @@ const sendMail = useForm({
     pdf_file: null,
 });
 
-const hasCustomerEmail = ref(true)
-const hasTelegram = ref(true)
+const hasCustomerEmail = ref(true);
+const hasTelegram = ref(true);
 
 const isSendDialogVisible = ref(false);
 const isSending = ref(false);
@@ -685,7 +711,6 @@ const sendPDFViaEmail = async (pdfBlob, filename) => {
     }
 };
 
-
 const formatPaymentNumber = (num) => {
     if (num === null || num === undefined) return "N/A";
     const suffixes = ["th", "st", "nd", "rd"];
@@ -701,6 +726,9 @@ onMounted(() => {
         isUSD.value = true;
     }
 });
+const goBack = () => {
+    window.history.back();
+};
 </script>
 
 <style scoped>
