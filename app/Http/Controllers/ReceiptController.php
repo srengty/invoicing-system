@@ -52,8 +52,8 @@ class ReceiptController extends Controller
 
     public function store(Request $request)
     {
-        dd("hi");
-        $validated = $request->validate([
+        try {
+                 $validated = $request->validate([
             'receipt_no' => 'required|string|unique:receipts',
             'receipt_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',
@@ -216,6 +216,11 @@ class ReceiptController extends Controller
             }
         }
         return redirect()->route('receipts.index')->with('success', 'Receipt created successfully!');
+        } catch (\Throwable $th) {
+            //throw $th;
+            dd($th);
+            // return response()->json()
+        }
     }
 
     private function determinePaymentStatus(PaymentSchedule $schedule)
