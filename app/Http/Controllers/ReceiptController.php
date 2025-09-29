@@ -189,7 +189,6 @@ class ReceiptController extends Controller
 
             // Any leftover not applied to invoices is stored as receipt installment
             $receipt->installment_paid = $remainingPaid;
-            dd($receipt);
             $receipt->save();
         }
 
@@ -215,7 +214,8 @@ class ReceiptController extends Controller
                 }
             }
         }
-
+        dd("hi");
+        dd($receipt);
         return redirect()->route('receipts.index')->with('success', 'Receipt created successfully!');
     }
 
