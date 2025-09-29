@@ -53,15 +53,15 @@ class ReceiptController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-        'receipt_no' => 'required|string|unique:receipts',
-        'receipt_date' => 'required|date',
-        'customer_id' => 'required|exists:customers,id',
-        'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
-        'paid_amount' => [
-            'required',
-            'numeric',
-            'min:0.01',
-            function ($attribute, $value, $fail) use ($request) {
+            'receipt_no' => 'required|string|unique:receipts',
+            'receipt_date' => 'required|date',
+            'customer_id' => 'required|exists:customers,id',
+            'payment_method' => 'required|string|in:Cash,Bank Transfer,Credit Card',
+            'paid_amount' => [
+                'required',
+                'numeric',
+                'min:0.01',
+                function ($attribute, $value, $fail) use ($request) {
                     if (!empty($request->invoices) && is_array($request->invoices) && count($request->invoices) > 0) {
                         $invoices = \App\Models\Invoice::whereIn('invoice_no', $request->invoices)->get();
 
@@ -72,12 +72,14 @@ class ReceiptController extends Controller
                             return;
                         }
 
+                        // Check all invoices belong to same agreement
                         $agreementNos = $invoices->pluck('agreement_no')->unique();
                         if ($agreementNos->count() > 1) {
                             $fail("All invoices must belong to the same agreement.");
                             return;
                         }
 
+                        // Check total remaining balance
                         $totalRemaining = 0;
                         foreach ($invoices as $invoice) {
                             $remaining = $invoice->grand_total - $invoice->paid_amount;
@@ -101,9 +103,9 @@ class ReceiptController extends Controller
             return redirect()->back()->with('error', 'Customer not found.');
         }
 
+        // Validate payment schedules and invoices agreement/customer consistency
         if (!empty($validated['payment_schedule_ids'])) {
             $schedules = \App\Models\PaymentSchedule::whereIn('id', $validated['payment_schedule_ids'])->get();
-
             $agreementIds = $schedules->pluck('agreement_id')->unique();
 
             if ($agreementIds->count() > 1) {
@@ -116,7 +118,6 @@ class ReceiptController extends Controller
 
             if (!empty($validated['invoices'])) {
                 $invoices = \App\Models\Invoice::whereIn('invoice_no', $validated['invoices'])->get();
-
                 $invoiceAgreementIds = $invoices->pluck('agreement_id')->unique();
 
                 if ($invoiceAgreementIds->count() > 1 || !$invoiceAgreementIds->contains($agreementId)) {
@@ -150,54 +151,56 @@ class ReceiptController extends Controller
             'installment_paid' => 0,
         ]);
 
-        // Process invoices and payment schedules
+        /**
+         * 🔹 Process invoices (distribute payments and absorb old installment_paid)
+         */
         if (!empty($validated['invoices'])) {
             $invoices = Invoice::whereIn('invoice_no', $validated['invoices'])->get();
             $receipt->invoices()->sync($invoices->pluck('id'));
 
+            $remainingPaid = $validated['paid_amount'];
+
             foreach ($invoices as $invoice) {
-                $totalPrice = $invoice->grand_total;
-                $receiptPaid = $validated['paid_amount'];
-
-                if ($receiptPaid > $totalPrice) {
-                    // Overpaid - invoice can't exceed total
-                    $invoice->paid_amount = $totalPrice;
+                // Step 1: absorb old installment into paid_amount
+                if ($invoice->installment_paid > 0) {
+                    $invoice->paid_amount += $invoice->installment_paid;
                     $invoice->installment_paid = 0;
-
-                    // Store leftover installment on receipt
-                    $receipt->installment_paid = $receiptPaid - $totalPrice;
-                } elseif ($receiptPaid < $totalPrice) {
-                    // Underpaid - invoice partial payment
-                    $invoice->paid_amount = $receiptPaid;
-                    $invoice->installment_paid = $totalPrice - $receiptPaid;
-
-                    // No leftover on receipt
-                    $receipt->installment_paid = 0;
-                } else {
-                    // Exact payment
-                    $invoice->paid_amount = $receiptPaid;
-                    $invoice->installment_paid = 0;
-                    $receipt->installment_paid = 0;
                 }
-                $invoice->receipt_no = $receipt->receipt_no;
 
+                if ($remainingPaid <= 0) break;
+
+                // Step 2: calculate how much is due now
+                $invoiceDue = $invoice->grand_total - $invoice->paid_amount;
+
+                if ($remainingPaid >= $invoiceDue) {
+                    // Fully settle invoice
+                    $invoice->paid_amount += $invoiceDue;
+                    $remainingPaid -= $invoiceDue;
+                } else {
+                    // Partial payment
+                    $invoice->paid_amount += $remainingPaid;
+                    $invoice->installment_paid = $invoiceDue - $remainingPaid;
+                    $remainingPaid = 0;
+                }
+
+                $invoice->receipt_no = $receipt->receipt_no;
                 $invoice->save();
             }
 
-            // After all invoices updated, save receipt too
+            // Any leftover not applied to invoices is stored as receipt installment
+            $receipt->installment_paid = $remainingPaid;
             $receipt->save();
-
         }
 
+        /**
+         * 🔹 Process payment schedules
+         */
         if (!empty($validated['payment_schedule_ids'])) {
-            // Get the total number of schedules
-            $scheduleCount = count($validated['payment_schedule_ids']);
             $remainingAmount = $validated['paid_amount'];
 
             foreach ($validated['payment_schedule_ids'] as $scheduleId) {
                 $schedule = PaymentSchedule::find($scheduleId);
                 if ($schedule && $remainingAmount > 0) {
-                    // Calculate how much to apply (min between remaining and due)
                     $dueAmount = $schedule->amount - $schedule->paid_amount;
                     $appliedAmount = min($remainingAmount, $dueAmount);
 
@@ -205,10 +208,8 @@ class ReceiptController extends Controller
                     $schedule->status = $this->determinePaymentStatus($schedule);
                     $schedule->save();
 
-                    // Safe attach to pivot table
                     $receipt->paymentSchedules()->syncWithoutDetaching([$scheduleId]);
 
-                    // Reduce remaining paid amount
                     $remainingAmount -= $appliedAmount;
                 }
             }
