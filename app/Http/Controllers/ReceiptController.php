@@ -52,6 +52,7 @@ class ReceiptController extends Controller
 
     public function store(Request $request)
     {
+        dd("hi");
         $validated = $request->validate([
             'receipt_no' => 'required|string|unique:receipts',
             'receipt_date' => 'required|date',
@@ -214,8 +215,6 @@ class ReceiptController extends Controller
                 }
             }
         }
-        dd("hi");
-        dd($receipt);
         return redirect()->route('receipts.index')->with('success', 'Receipt created successfully!');
     }
 
