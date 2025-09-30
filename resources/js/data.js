@@ -218,7 +218,7 @@ async function getDepartment(){
             "id": 31,
             "def_id": "67ceb2f6b6c48fa8d6410fc2",
             "name": "ការិយាល័យគណនេយ្យ",
-            "status":"noservice",
+            "status":"service",
             "code":"ACC"
         },
         {
